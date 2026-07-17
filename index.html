@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EyeCon — UI/UX Design Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><ellipse cx=%2230%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><ellipse cx=%2270%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/><circle cx=%2268%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="a11y-announcer" aria-live="polite" class="sr-only"></div>
+
+<div id="app-root">
+
+  <div class="screen-area" id="screen-area">
+
+  <!-- ============ HOME / LOGIN SCREEN ============ -->
+  <section id="screen-home" class="screen active" aria-label="Home">
+    <div class="desk-scene">
+      <div class="sticky-note" aria-hidden="true">
+        <span class="pin"></span>
+        road to<br/>radiant
+        <div class="note-arrow">↑</div>
+      </div>
+      <div class="plant" aria-hidden="true"><div class="pot"></div><div class="leaf l1"></div><div class="leaf l2"></div><div class="leaf l3"></div></div>
+
+      <div class="tower" aria-hidden="true">
+        <div class="tower-light"></div>
+        <div class="tower-slot"></div>
+        <div class="tower-slot small"></div>
+        <div class="tower-buttons"><span class="dot red"></span><span class="dot green"></span></div>
+        <div class="tower-disc"></div>
+      </div>
+
+      <div class="monitor">
+        <div class="monitor-screen">
+          <div class="eyecon-logo big">
+            <div class="eye"><div class="pupil"></div></div>
+            <div class="eye"><div class="pupil"></div></div>
+          </div>
+          <div class="eyecon-wordmark">eyecon</div>
+        </div>
+      </div>
+      <button id="btn-start" class="start-pedestal">
+        <span class="pedestal-base"></span>
+        <span class="pedestal-btn">start</span>
+      </button>
+
+      <div class="keyboard" aria-hidden="true">
+        <div class="keys-row"></div><div class="keys-row"></div><div class="keys-row"></div>
+      </div>
+      <div class="mouse" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ============ DESKTOP ============ -->
+  <section id="screen-desktop" class="screen" aria-label="Desktop">
+    <div class="desktop-wallpaper" id="desktop-wallpaper">
+      <div class="desktop-watermark">
+        <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+        <span>EyeCon OS</span>
+      </div>
+      <div class="desktop-icons">
+        <button class="desktop-icon" id="icon-mail" aria-label="Open Mail app">
+          <span class="desktop-icon-glyph" id="glyph-mail">📬</span>
+          <span class="desktop-icon-label">Mail</span>
+          <span class="badge-count desktop-icon-badge" id="desktop-inbox-badge">0</span>
+        </button>
+        <button class="desktop-icon" id="icon-stats" aria-label="Open Stats app">
+          <span class="desktop-icon-glyph" id="glyph-stats">📊</span>
+          <span class="desktop-icon-label">Stats</span>
+        </button>
+        <button class="desktop-icon" id="icon-shop" aria-label="Open Shop app">
+          <span class="desktop-icon-glyph" id="glyph-shop">🛍️</span>
+          <span class="desktop-icon-label">Shop</span>
+        </button>
+        <button class="desktop-icon" id="icon-settings" aria-label="Open Settings app">
+          <span class="desktop-icon-glyph" id="glyph-settings">⚙️</span>
+          <span class="desktop-icon-label">Settings</span>
+        </button>
+      </div>
+      <div class="desktop-decor" id="desktop-decor" aria-hidden="true"></div>
+      <div class="desktop-hint">Welcome back, Junior Designer. Open <b>Mail</b> to see your assignments.</div>
+    </div>
+  </section>
+
+  <!-- ============ MAIL APP ============ -->
+  <section id="screen-shell" class="screen" aria-label="Eye Mail">
+    <header class="mail-header">
+      <button class="app-back-btn" id="mail-back-btn" aria-label="Back to desktop">←</button>
+      <div class="mail-logo">
+        <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+        <span>Eye Mail</span>
+      </div>
+      <div class="mail-search">
+        <span class="icon-search">🔍</span>
+        <input type="text" id="mail-search-input" placeholder="Search Mail" aria-label="Search Mail"/>
+      </div>
+      <div class="mail-header-right">
+        <div class="xp-chip" id="xp-chip" title="Level & XP">Lv. <span id="hdr-level">1</span></div>
+      </div>
+    </header>
+
+    <div class="mail-body">
+      <nav class="mail-sidebar" aria-label="Mail folders">
+        <button class="side-btn active" data-folder="inbox">
+          <span class="side-icon">✉️</span> Inbox
+          <span class="badge-count" id="inbox-count">0</span>
+        </button>
+        <button class="side-btn" data-folder="completed">
+          <span class="side-icon">📝</span> Completed
+        </button>
+      </nav>
+
+      <div class="mail-panel">
+        <div id="mail-list" class="mail-list" role="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS APP ============ -->
+  <section id="screen-stats" class="screen" aria-label="Stats">
+    <header class="mail-header">
+      <button class="app-back-btn" id="stats-back-btn" aria-label="Back to desktop">←</button>
+      <div class="mail-logo"><span>📊 Studio Stats</span></div>
+    </header>
+    <div class="app-content-wrap">
+      <div id="stats-panel" class="content-panel"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS APP ============ -->
+  <section id="screen-settings" class="screen" aria-label="Settings">
+    <header class="mail-header">
+      <button class="app-back-btn" id="settings-back-btn" aria-label="Back to desktop">←</button>
+      <div class="mail-logo"><span>⚙️ Settings</span></div>
+    </header>
+    <div class="app-content-wrap">
+      <div id="settings-panel" class="content-panel"></div>
+    </div>
+  </section>
+
+  <!-- ============ SHOP APP ============ -->
+  <section id="screen-shop" class="screen" aria-label="Shop">
+    <header class="mail-header">
+      <button class="app-back-btn" id="shop-back-btn" aria-label="Back to desktop">←</button>
+      <div class="mail-logo"><span>🛍️ Shop</span></div>
+      <div class="mail-header-right"><div class="currency-chip" id="shop-currency-chip" title="Sparks">✨ 0</div></div>
+    </header>
+    <div class="app-content-wrap">
+      <div id="shop-panel" class="content-panel"></div>
+    </div>
+  </section>
+
+  <!-- ============ EDITOR SCREEN ============ -->
+  <section id="screen-editor" class="screen" aria-label="Design Editor">
+    <div class="editor-topbar">
+      <div class="edit-mode-chip">📌 Edit Mode</div>
+      <div class="editor-tools-left">
+        <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)">↺ Undo</button>
+        <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)">↻ Redo</button>
+      </div>
+      <div class="editor-tools-center">
+        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility">▦ Grid</button>
+        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings">⚙</button>
+        <button class="tool-btn toggle-btn" id="tool-snap" title="Toggle snap-to-grid">🧲 Snap</button>
+        <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides">📐 Guides</button>
+        <button class="tool-btn toggle-btn hidden" id="tool-contrast" title="Toggle contrast checker">◐ Contrast</button>
+        <button class="tool-btn toggle-btn hidden" id="tool-a11y" title="Toggle accessibility inspector">♿ A11y</button>
+        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Hold to measure distances">📏 Measure</button>
+        <button class="tool-btn" id="tool-hint" title="Get a hint">💡 Hint</button>
+        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide">🔠 Type Scale</button>
+      </div>
+      <div class="editor-tools-right">
+        <div class="tool-btn live-score-chip hidden" id="live-score-chip" title="Live score estimate — updates as you edit">Score: --</div>
+        <button class="tool-btn" id="zoom-badge" title="Scroll on the canvas to zoom — click to reset to 100%">🔍 100%</button>
+        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original">👁 Hold to Compare</button>
+        <button class="tool-btn btn-save" id="tool-save" title="Save & submit">💾 Save</button>
+      </div>
+    </div>
+
+    <div class="editor-hint-banner" id="editor-hint-banner">Click on any element to edit.</div>
+    <div class="typescale-popover" id="typescale-panel" hidden></div>
+    <div class="typescale-popover grid-settings-popover" id="grid-settings-panel" hidden>
+      <h4>Grid Settings</h4>
+      <div class="field-group">
+        <label>Grid Size (<span id="grid-size-readout">8</span>px)</label>
+        <input type="range" id="grid-size-slider" min="8" max="64" step="8" value="8"/>
+        <div class="field-hint">Locked to multiples of 8px</div>
+      </div>
+      <div class="field-group">
+        <label>Grid Opacity (<span id="grid-opacity-readout">35</span>%)</label>
+        <input type="range" id="grid-opacity-slider" min="0" max="1" step="0.05" value="0.35"/>
+      </div>
+    </div>
+
+    <div class="editor-main">
+      <div class="editor-canvas-wrap" id="editor-canvas-wrap">
+        <div class="editor-canvas" id="editor-canvas"></div>
+      </div>
+
+      <aside class="element-settings" id="element-settings">
+        <h3>Element Settings</h3>
+        <div id="settings-fields"><p class="settings-placeholder">Select an element on the canvas to edit its properties.</p></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ FEEDBACK / REPORT SCREEN ============ -->
+  <section id="screen-report" class="screen" aria-label="Design Report">
+    <div class="report-wrap">
+      <div class="report-grade-col">
+        <div class="grade-stamp" id="grade-stamp">
+          <span id="grade-letter">A</span>
+        </div>
+        <div class="xp-gain" id="xp-gain">+0 XP</div>
+        <button class="btn tool-btn" id="btn-toggle-compare">Before / After</button>
+        <div class="compare-thumbs" id="compare-thumbs"></div>
+      </div>
+      <div class="report-main-col">
+        <h2>Design Review — <span id="report-client-name"></span></h2>
+        <div class="score-bars" id="score-bars"></div>
+        <div class="feedback-list" id="feedback-list"></div>
+        <div class="report-actions">
+          <button class="btn btn-ghost" id="btn-report-details">Show Explanations</button>
+          <button class="btn btn-accept" id="btn-report-continue">Continue</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /screen-area -->
+
+  <footer class="taskbar" id="global-taskbar">
+    <button class="taskbar-btn" id="taskbar-profile" title="Profile & Stats" aria-label="Profile and stats">👤</button>
+    <button class="taskbar-btn" id="taskbar-home" title="Desktop" aria-label="Go to desktop">🏠</button>
+    <button class="taskbar-btn" id="taskbar-shop" title="Shop" aria-label="Open shop">🛍️</button>
+    <div class="taskbar-spacer"></div>
+    <div class="taskbar-currency" id="taskbar-currency" title="Sparks — spend at the Shop">✨ 0</div>
+    <div class="taskbar-clock" id="taskbar-clock">8:00 AM</div>
+  </footer>
+
+  <!-- ============ MAIL DETAIL MODAL ============ -->
+  <div id="modal-mail-detail" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mail-detail-title">
+    <div class="modal-card mail-detail-card">
+      <div class="mail-detail-head">
+        <div class="avatar-circle">👤</div>
+        <div>
+          <div class="mail-detail-level-tag" id="mail-detail-level-tag"></div>
+          <h2 id="mail-detail-title">Client</h2>
+        </div>
+      </div>
+      <div class="mail-detail-body" id="mail-detail-body"></div>
+      <div class="mail-detail-attachment" id="mail-detail-attachment"></div>
+      <div class="mail-detail-actions">
+        <button class="btn btn-ghost" id="btn-close-mail">Close</button>
+        <button class="btn btn-accept" id="btn-accept-job">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ATTACHMENT PREVIEW MODAL ============ -->
+  <div id="modal-preview" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Attachment preview">
+    <div class="preview-frame">
+      <button class="preview-close" id="btn-close-preview" aria-label="Close preview">✕</button>
+      <div id="preview-stage-mount"></div>
+    </div>
+  </div>
+
+  <!-- SAVE/SUBMIT CONFIRM -->
+  <div id="modal-confirm-submit" class="modal-overlay hidden" role="alertdialog" aria-modal="true" aria-label="Save and submit">
+    <div class="confirm-card">
+      <p>Save and Submit?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-no" id="btn-confirm-no">No</button>
+        <button class="btn btn-yes" id="btn-confirm-yes">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COMPOSE REPLY SCREEN ============ -->
+  <div id="modal-compose" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Compose reply">
+    <div class="compose-card">
+      <div class="compose-to">TO: <span id="compose-to-name"></span></div>
+      <div id="compose-body" class="compose-body" tabindex="0" aria-label="Reply message — press any key to type it out"><span class="revealed"></span><span class="type-cursor" aria-hidden="true"></span><span class="ghost"></span></div>
+      <div class="compose-hint" id="compose-hint">Press any key to type your reply…</div>
+      <div class="compose-attach-row">
+        <button class="attach-btn" id="compose-attach-btn" type="button">📎 Attach file</button>
+        <div class="attachment-chip hidden" id="compose-attachment-chip"></div>
+        <div class="attach-popover hidden" id="attach-popover"></div>
+      </div>
+      <button class="btn btn-send" id="btn-send-mail" disabled>Send</button>
+    </div>
+  </div>
+
+  <!-- LEVEL UP TOAST -->
+  <div id="toast-levelup" class="toast hidden"></div>
+
+  <!-- ============ GACHA REVEAL MODAL ============ -->
+  <div id="modal-gacha-reveal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Gacha reveal">
+    <div class="gacha-reveal-card" id="gacha-reveal-card">
+      <div class="gacha-charge-fx hidden" id="gacha-charge-fx"><span>✦</span><span>✦</span><span>✦</span></div>
+      <div id="gacha-reveal-content"></div>
+      <button class="btn btn-accept hidden" id="btn-gacha-continue">Nice!</button>
+    </div>
+  </div>
+
+  <!-- ============ COSMETIC PREVIEW MODAL (mock desktop) ============ -->
+  <div id="modal-cosmetic-preview" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Cosmetic preview">
+    <div class="modal-card cosmetic-preview-card">
+      <button class="preview-close" id="cosmetic-preview-close" aria-label="Close preview">✕</button>
+      <div class="cosmetic-preview-mockup" id="cosmetic-preview-mockup">
+        <div class="mockup-icons" id="mockup-icons"></div>
+        <div class="mockup-decor" id="mockup-decor"></div>
+      </div>
+      <div class="cosmetic-preview-info">
+        <div class="cosmetic-preview-badge" id="cosmetic-preview-rarity"></div>
+        <h3 id="cosmetic-preview-name"></h3>
+        <div class="cosmetic-preview-status" id="cosmetic-preview-status"></div>
+        <button class="btn btn-accept hidden" id="cosmetic-preview-equip">Equip</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/wcag.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/cosmetics.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/grading.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/mail.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
