@@ -940,6 +940,97 @@
       runZoomAnimation();
     });
 
+    // Explicit +/- zoom buttons — precise, discoverable zoom control for
+    // touch users (pinch alone is imprecise) and anyone without a wheel/trackpad.
+    function stepZoom(factor){
+      const wrap = document.getElementById('editor-canvas-wrap');
+      zoomAt(wrap.getBoundingClientRect().left + wrap.clientWidth/2, wrap.getBoundingClientRect().top + wrap.clientHeight/2, factor);
+    }
+    document.getElementById('tool-zoom-in').addEventListener('click', ()=>stepZoom(1.25));
+    document.getElementById('tool-zoom-out').addEventListener('click', ()=>stepZoom(1/1.25));
+
+    // ---------------- Touch gestures: one-finger pan on empty canvas,
+    // two-finger pinch-to-zoom anchored on the touch midpoint ----------------
+    const activeTouches = new Map(); // pointerId -> {x,y}
+    let touchPanState = null;        // { pointerId, startX, startY, startPanX, startPanY }
+    let pinchState = null;           // { startDist, startZoom, anchorCanvasX, anchorCanvasY }
+
+    function touchPoints(){ return Array.from(activeTouches.values()); }
+    function touchDistance(){
+      const pts = touchPoints();
+      return pts.length < 2 ? 0 : Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+    }
+    function touchMidpoint(){
+      const pts = touchPoints();
+      return { x:(pts[0].x+pts[1].x)/2, y:(pts[0].y+pts[1].y)/2 };
+    }
+    function beginPinch(){
+      touchPanState = null;
+      if(state.dragging){ state.dragging = null; document.body.classList.remove('eyecon-dragging'); }
+      if(zoomAnimId){ cancelAnimationFrame(zoomAnimId); zoomAnimId = null; }
+      const rect = canvasWrap.getBoundingClientRect();
+      const mid = touchMidpoint();
+      const scale = getScale();
+      pinchState = {
+        startDist: touchDistance(),
+        startZoom: state.zoom,
+        anchorCanvasX: (mid.x - rect.left - state.panX) / scale,
+        anchorCanvasY: (mid.y - rect.top - state.panY) / scale,
+      };
+    }
+
+    canvasWrap.addEventListener('pointerdown', e=>{
+      if(e.pointerType !== 'touch') return;
+      activeTouches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if(activeTouches.size === 2){
+        beginPinch();
+      } else if(activeTouches.size === 1 && !state.dragging){
+        const elDiv = e.target.closest('.el');
+        const isInteractive = elDiv && !elDiv.dataset.locked;
+        if(!isInteractive){
+          touchPanState = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startPanX: state.panX, startPanY: state.panY };
+        }
+      }
+    });
+
+    canvasWrap.addEventListener('pointermove', e=>{
+      if(e.pointerType !== 'touch' || !activeTouches.has(e.pointerId)) return;
+      activeTouches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if(pinchState && activeTouches.size >= 2){
+        const dist = touchDistance();
+        if(dist > 0 && pinchState.startDist > 0){
+          state.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinchState.startZoom * (dist/pinchState.startDist)));
+          state.displayZoom = state.zoom;
+          const rect = canvasWrap.getBoundingClientRect();
+          const mid = touchMidpoint();
+          const scale = getScale();
+          state.panX = (mid.x - rect.left) - pinchState.anchorCanvasX*scale;
+          state.panY = (mid.y - rect.top) - pinchState.anchorCanvasY*scale;
+          applyCanvasTransform();
+        }
+      } else if(touchPanState && e.pointerId === touchPanState.pointerId){
+        state.panX = touchPanState.startPanX + (e.clientX - touchPanState.startX);
+        state.panY = touchPanState.startPanY + (e.clientY - touchPanState.startY);
+        applyCanvasTransform();
+      }
+    });
+
+    function endTouch(e){
+      if(e.pointerType !== 'touch') return;
+      activeTouches.delete(e.pointerId);
+      if(touchPanState && e.pointerId === touchPanState.pointerId) touchPanState = null;
+      if(pinchState && activeTouches.size < 2){
+        pinchState = null;
+        const remainingIds = Array.from(activeTouches.keys());
+        if(remainingIds.length === 1){
+          const pt = activeTouches.get(remainingIds[0]);
+          touchPanState = { pointerId: remainingIds[0], startX: pt.x, startY: pt.y, startPanX: state.panX, startPanY: state.panY };
+        }
+      }
+    }
+    canvasWrap.addEventListener('pointerup', endTouch);
+    canvasWrap.addEventListener('pointercancel', endTouch);
+
     document.addEventListener('keydown', e=>{
       if(!document.getElementById('screen-editor').classList.contains('active')) return;
       const typing = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);

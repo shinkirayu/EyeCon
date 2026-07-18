@@ -116,7 +116,6 @@
 
   function renderSettingsTabBody(tabId){
     const schema = getSettingsSchema().filter(d=>d.tab===tabId);
-    const meta = SETTINGS_TABS.find(t=>t.id===tabId);
     let html = '';
     if(tabId === 'general'){
       html += `<p class="settings-tab-desc">Your EyeCon Studio profile — Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}, ${profile.completed.length}/${window.EC_LEVELS.length} projects completed, ${profile.inventory.length} cosmetics collected.</p>`;
@@ -917,8 +916,7 @@
 
   // ---------------- Bootstrap ----------------
   function init(){
-    applySettings();
-    applyCosmetics();
+    applySettings(); // also applies cosmetics (wallpaper/theme/icons/cursor/decor/particles)
     refreshHeader();
     updateClock();
     setInterval(updateClock, 15000);
@@ -944,6 +942,10 @@
       window.EC_MODAL.hide('modal-gacha-reveal');
       refreshHeader();
       if(document.getElementById('screen-shop').classList.contains('active')) renderShopPanel();
+    });
+    document.getElementById('cosmetic-preview-close').addEventListener('click', ()=>window.EC_MODAL.hide('modal-cosmetic-preview'));
+    document.getElementById('modal-cosmetic-preview').addEventListener('click', e=>{
+      if(e.target.id === 'modal-cosmetic-preview') window.EC_MODAL.hide('modal-cosmetic-preview');
     });
 
     document.querySelectorAll('.side-btn').forEach(btn=>{

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#bfe9db" />
 <title>EyeCon — UI/UX Design Studio</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><ellipse cx=%2230%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><ellipse cx=%2270%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/><circle cx=%2268%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -176,7 +177,11 @@
       </div>
       <div class="editor-tools-right">
         <div class="tool-btn live-score-chip hidden" id="live-score-chip" title="Live score estimate — updates as you edit">Score: --</div>
-        <button class="tool-btn" id="zoom-badge" title="Scroll on the canvas to zoom — click to reset to 100%">🔍 100%</button>
+        <div class="zoom-control">
+          <button class="tool-btn zoom-step-btn" id="tool-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+          <button class="tool-btn" id="zoom-badge" title="Scroll or pinch on the canvas to zoom — tap to reset to 100%">🔍 100%</button>
+          <button class="tool-btn zoom-step-btn" id="tool-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        </div>
         <button class="tool-btn" id="tool-preview" title="Press and hold to see the original">👁 Hold to Compare</button>
         <button class="tool-btn btn-save" id="tool-save" title="Save & submit">💾 Save</button>
       </div>
@@ -302,7 +307,7 @@
   <!-- ============ GACHA REVEAL MODAL ============ -->
   <div id="modal-gacha-reveal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Gacha reveal">
     <div class="gacha-reveal-card" id="gacha-reveal-card">
-      <div class="gacha-charge-fx hidden" id="gacha-charge-fx"><span>✦</span><span>✦</span><span>✦</span></div>
+      <div class="gacha-charge-fx" id="gacha-charge-fx"><span>✦</span><span>✦</span><span>✦</span></div>
       <div id="gacha-reveal-content"></div>
       <button class="btn btn-accept hidden" id="btn-gacha-continue">Nice!</button>
     </div>
