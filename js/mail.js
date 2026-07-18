@@ -98,15 +98,25 @@
   }
 
   // ---------------- Compose: typewriter reveal + attach file ----------------
+  // Rebuilds the whole contenteditable's innerHTML from scratch every call,
+  // rather than querying/patching its existing children — necessary because
+  // on mobile the browser's own contenteditable engine mutates this DOM
+  // arbitrarily as the user types (see the 'input' listener below), so any
+  // previous structure can't be trusted to still be there.
   function renderComposeText(){
     const container = document.getElementById('compose-body');
+    const done = composeState.revealed >= composeState.fullText.length;
+    container.innerHTML = '<span class="revealed"></span><span class="type-cursor" aria-hidden="true"></span><span class="ghost"></span>';
     container.querySelector('.revealed').textContent = composeState.fullText.slice(0, composeState.revealed);
     container.querySelector('.ghost').textContent = composeState.fullText.slice(composeState.revealed);
-    const done = composeState.revealed >= composeState.fullText.length;
+    container.querySelector('.type-cursor').style.visibility = done ? 'hidden' : 'visible';
     document.getElementById('compose-hint').textContent = done
       ? 'Message complete.'
-      : 'Press any key to type your reply…';
-    container.querySelector('.type-cursor').style.visibility = done ? 'hidden' : 'visible';
+      : 'Tap or press any key to type your reply…';
+    // Once fully revealed there's nothing left to type — turn editing off so
+    // mobile browsers dismiss the on-screen keyboard automatically.
+    container.contentEditable = done ? 'false' : 'true';
+    if(done) container.blur();
     updateSendEnabled();
   }
 
@@ -175,11 +185,18 @@
       handlers.onAccept(activeLevel);
     });
 
-    document.getElementById('compose-body').addEventListener('keydown', e=>{
-      if(composeState.revealed >= composeState.fullText.length) return;
-      if(['Shift','Control','Alt','Meta','Tab','CapsLock','Escape'].includes(e.key)) return;
-      e.preventDefault();
-      composeState.revealed++;
+    // 'input' fires for every real content change — physical-keyboard typing,
+    // mobile virtual-keyboard taps, IME composition, autocomplete, voice
+    // dictation, paste — unlike 'keydown', which mobile virtual keyboards
+    // often don't dispatch in a usable way (and which never fires at all
+    // unless the field is genuinely editable, hence contenteditable above).
+    // Whatever the browser actually inserted is discarded and redrawn from
+    // composeState on every event, so it never matters *where* the browser
+    // put it or *what* it was — only that something happened.
+    document.getElementById('compose-body').addEventListener('input', e=>{
+      if(composeState.revealed >= composeState.fullText.length){ renderComposeText(); return; }
+      const n = (e.data && e.data.length) ? e.data.length : 1;
+      composeState.revealed = Math.min(composeState.fullText.length, composeState.revealed + n);
       renderComposeText();
     });
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);

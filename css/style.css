@@ -547,7 +547,17 @@ button{ font-family: inherit; }
 .element-settings{
   width:300px; background: var(--cream-panel); border-left: 3px solid var(--purple); padding: 18px; overflow-y:auto; flex-shrink:0;
 }
+.element-settings-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .element-settings h3{ margin-top:0; font-family:var(--font-display); }
+/* Only meaningful on the mobile/tablet layout below, where the panel stacks
+   under the canvas and competes with it for vertical space — on desktop's
+   side-by-side layout there's always room for both, so the button is hidden
+   and .collapsed is never applied. */
+.settings-collapse-btn{
+  display:none; background: var(--cream-deep); border:none; border-radius:10px; width:32px; height:32px; flex-shrink:0;
+  font-size:14px; cursor:pointer; color: var(--ink); transition: transform .15s ease;
+}
+.element-settings:not(.collapsed) .settings-collapse-btn{ transform: rotate(90deg); }
 .settings-placeholder{ font-size:14px; color: var(--ink-soft); line-height:1.5; }
 .field-group{ margin-bottom:16px; }
 .field-group label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; margin-bottom:6px; }
@@ -958,7 +968,12 @@ button{ font-family: inherit; }
 @media (max-width: 900px){
   .mail-sidebar{ width:150px; }
   .editor-main{ flex-direction:column; }
-  .element-settings{ width:100%; border-left:none; border-top: 3px solid var(--purple); max-height:40vh; }
+  .editor-canvas-wrap{ min-height:160px; }
+  .element-settings{
+    width:100%; border-left:none; border-top: 3px solid var(--purple); max-height:40vh; transition: max-height .18s ease;
+  }
+  .element-settings.collapsed{ max-height:52px; overflow:hidden; }
+  .settings-collapse-btn{ display:block; }
   .report-wrap{ flex-direction:column; }
   .settings-body{ flex-direction:column; }
   .settings-nav{
@@ -1104,11 +1119,15 @@ button{ font-family: inherit; }
   .mail-header, .editor-topbar{ padding-top:8px; padding-bottom:8px; }
   .modal-card, .confirm-card, .compose-card{ max-height:92vh; }
   .gacha-reveal-card{ min-height:0; }
-  .element-settings{ max-height:45vh; padding:10px 14px; }
+  /* Landscape phones have width to spare but almost no height, so the
+     canvas — the actual thing being edited — gets priority: the settings
+     panel opens over a much smaller slice (and stays collapsed by default;
+     see editor.js) rather than the 40/45vh used when there's more height. */
+  .element-settings{ max-height:30vh; padding:8px 14px; }
+  .editor-canvas-wrap{ min-height:120px; padding:10px; }
   .editor-topbar{ flex-wrap:nowrap; overflow-x:auto; }
   .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
-  .editor-canvas-wrap{ padding:10px; }
   .editor-hint-banner{ padding:3px; font-size:12px; }
 }
 

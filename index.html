@@ -207,8 +207,11 @@
         <div class="editor-canvas" id="editor-canvas"></div>
       </div>
 
-      <aside class="element-settings" id="element-settings">
-        <h3>Element Settings</h3>
+      <aside class="element-settings collapsed" id="element-settings">
+        <div class="element-settings-head">
+          <h3>Element Settings</h3>
+          <button class="settings-collapse-btn" id="toggle-element-settings" aria-expanded="false" aria-controls="settings-fields" aria-label="Show or hide element settings">▸</button>
+        </div>
         <div id="settings-fields"><p class="settings-placeholder">Select an element on the canvas to edit its properties.</p></div>
       </aside>
     </div>
@@ -290,7 +293,7 @@
   <div id="modal-compose" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Compose reply">
     <div class="compose-card">
       <div class="compose-to">TO: <span id="compose-to-name"></span></div>
-      <div id="compose-body" class="compose-body" tabindex="0" aria-label="Reply message — press any key to type it out"><span class="revealed"></span><span class="type-cursor" aria-hidden="true"></span><span class="ghost"></span></div>
+      <div id="compose-body" class="compose-body" contenteditable="true" tabindex="0" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Reply message — tap or press any key to type it out"><span class="revealed"></span><span class="type-cursor" aria-hidden="true"></span><span class="ghost"></span></div>
       <div class="compose-hint" id="compose-hint">Press any key to type your reply…</div>
       <div class="compose-attach-row">
         <button class="attach-btn" id="compose-attach-btn" type="button">📎 Attach file</button>

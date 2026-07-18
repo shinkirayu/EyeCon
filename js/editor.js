@@ -102,6 +102,7 @@
     setHint('Click on any element to edit.');
     document.getElementById('typescale-panel').hidden = true;
     document.getElementById('grid-settings-panel').hidden = true;
+    setElementSettingsCollapsed(true);
   }
 
   // Scale that fits the whole canvas inside the visible viewport ("100%" baseline).
@@ -314,6 +315,11 @@
     const div = state.domNodes[id];
     if(div) div.classList.add('selected');
     showSettings(el);
+    // On the mobile/tablet stacked layout the settings panel starts
+    // collapsed so the canvas keeps the space — picking something to edit
+    // is the one moment it should open itself; the button next to its
+    // heading still lets you close it again to get the canvas back.
+    setElementSettingsCollapsed(false);
   }
 
   function deselect(){
@@ -326,6 +332,18 @@
   }
 
   // ---------------- Settings panel ----------------
+  // Collapse toggle only actually changes anything at the mobile/tablet
+  // breakpoints (see .element-settings.collapsed in style.css) — on the
+  // desktop side-by-side layout the panel always has room and this is a no-op.
+  function setElementSettingsCollapsed(collapsed){
+    const panel = document.getElementById('element-settings');
+    const btn = document.getElementById('toggle-element-settings');
+    if(!panel || !btn) return;
+    panel.classList.toggle('collapsed', collapsed);
+    btn.setAttribute('aria-expanded', String(!collapsed));
+    btn.textContent = collapsed ? '▸' : '▾';
+  }
+
   // Always visible (right-hand dock) — shows a placeholder until something
   // is selected, rather than collapsing away.
   function resetSettingsPlaceholder(){
@@ -829,6 +847,9 @@
   }
 
   function initToolbarOnce(){
+    document.getElementById('toggle-element-settings').addEventListener('click', ()=>{
+      setElementSettingsCollapsed(!document.getElementById('element-settings').classList.contains('collapsed'));
+    });
     document.getElementById('tool-undo').addEventListener('click', undo);
     document.getElementById('tool-redo').addEventListener('click', redo);
     document.getElementById('tool-grid').addEventListener('click', ()=>{ state.tools.gridVisible=!state.tools.gridVisible; updateToolButtonStates(); });
