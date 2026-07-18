@@ -341,6 +341,7 @@ button{ font-family: inherit; }
   padding: 0 max(24px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(24px, env(safe-area-inset-left));
 }
 .taskbar-btn{ background:var(--cream); border:none; border-radius:50%; width:44px;height:44px; font-size:20px; cursor:pointer; box-shadow: var(--shadow-sm); }
+.taskbar-btn.active{ background: var(--teal); color:#fff; }
 .taskbar-spacer{ flex:1; }
 .taskbar-clock{ background: var(--cream); padding:10px 18px; border-radius: 14px; font-weight:700; box-shadow: var(--shadow-sm); }
 
@@ -991,6 +992,33 @@ button{ font-family: inherit; }
 @keyframes fxFall{ from{ transform:translateY(-40px) rotate(0deg); } to{ transform:translateY(110vh) rotate(360deg); } }
 .reduce-motion .skin-fx-particle{ animation:none; display:none; }
 
+/* ---- Touch devices: enlarge tap targets regardless of viewport width ----
+   Placed before the width/orientation breakpoints below on purpose: those
+   are more specific to *this* screen shape and should win the cascade when
+   they also set a size for the same element (e.g. a cramped landscape phone
+   deliberately sizing the taskbar smaller than this baseline) — equal
+   selector specificity means source order decides ties, so this touch
+   baseline has to come first for that override to actually take effect. */
+@media (pointer: coarse){
+  .tool-btn, .btn, .taskbar-btn, .app-back-btn, .desktop-icon, .side-btn,
+  .shop-tab-btn, .wardrobe-cat-btn, .settings-nav-btn, .seg-btn{
+    min-height:44px;
+  }
+  .btn{ padding:13px 30px; }
+  .taskbar-btn{ width:48px; height:48px; }
+  .app-back-btn{ width:44px; height:44px; }
+  .wardrobe-preview-btn{ width:32px; height:32px; }
+  .toggle-switch{ width:52px; height:30px; }
+  .toggle-switch .thumb{ width:24px; height:24px; }
+  .toggle-switch input:checked + .track .thumb{ transform: translateX(22px); }
+  .info-tip{ width:22px; height:22px; }
+  /* Resize handles stay visually small (their position math is exact and
+     tightly coupled to the 10px size — see the comment above .el.selected)
+     but get a much larger invisible hit-box layered on via ::before, which
+     doesn't affect layout or the handle's own centering. */
+  .el-handle::before{ content:''; position:absolute; inset:-11px; }
+}
+
 /* =====================================================
    RESPONSIVE BREAKPOINTS
    Mobile-first intent, authored as layered overrides on
@@ -1037,7 +1065,7 @@ button{ font-family: inherit; }
   .mail-logo{ font-size:0; gap:0; }
   .mail-logo .eyecon-logo{ display:none; }
   .mail-logo span{ font-size:19px; }
-  .app-back-btn{ width:36px; height:36px; font-size:16px; }
+  .app-back-btn{ width:36px; height:36px; min-height:0; font-size:16px; }
 
   /* Mail: sidebar becomes a horizontal pill strip above the list instead of
      a fixed-width column, so the message list gets the full width back. */
@@ -1115,10 +1143,10 @@ button{ font-family: inherit; }
   .gacha-reveal-card{ padding:28px 22px; min-height:240px; }
   .gacha-reveal-icon{ width:90px; height:90px; font-size:46px; }
 
-  .taskbar{ padding-left:max(14px, env(safe-area-inset-left)); padding-right:max(14px, env(safe-area-inset-right)); gap:8px; }
-  .taskbar-btn{ width:40px; height:40px; font-size:18px; }
-  .taskbar-clock{ padding:8px 12px; font-size:14px; }
-  .taskbar-currency{ padding:8px 12px; font-size:14px; }
+  .taskbar{ height: calc(52px + env(safe-area-inset-bottom, 0px)); padding-left:max(12px, env(safe-area-inset-left)); padding-right:max(12px, env(safe-area-inset-right)); gap:6px; }
+  .taskbar-btn{ width:36px; height:36px; min-height:0; font-size:16px; }
+  .taskbar-clock{ padding:6px 11px; font-size:13px; }
+  .taskbar-currency{ padding:6px 11px; font-size:13px; }
 
   .desktop-wallpaper{ padding:24px 20px; }
   .desktop-icons{ gap:20px; width:96px; }
@@ -1151,42 +1179,43 @@ button{ font-family: inherit; }
   .desk-scene .monitor{ top:4%; width:46%; }
   .start-pedestal{ top:auto; bottom:6%; }
   .keyboard, .mouse, .tower, .sticky-note, .plant{ display:none; }
-  .mail-header, .editor-topbar{ padding-top:8px; padding-bottom:8px; }
+  .mail-header, .editor-topbar{ padding-top:6px; padding-bottom:6px; }
   .modal-card, .confirm-card, .compose-card{ max-height:92vh; }
   .gacha-reveal-card{ min-height:0; }
-  /* Landscape phones have width to spare but almost no height, so the
-     canvas — the actual thing being edited — gets priority: the settings
-     panel opens over a much smaller slice (and stays collapsed by default;
-     see editor.js) rather than the 40/45vh used when there's more height. */
-  .element-settings{ max-height:30vh; padding:8px 14px; }
-  .editor-canvas-wrap{ min-height:120px; padding:10px; }
+
+  /* Landscape phones have width to spare but almost no height — so unlike
+     the portrait/stacked layout, keep Element Settings as a side column
+     (same shape as desktop) rather than stacking it under the canvas,
+     which would burn the one dimension that's actually scarce here. It
+     still starts collapsed (a slim edge tab) and only widens once you
+     select something; see setElementSettingsCollapsed in editor.js. */
+  .editor-main{ flex-direction:row; }
+  .editor-canvas-wrap{ min-height:0; padding:10px; }
+  .element-settings{
+    width:210px; max-height:none; height:auto; padding:10px 12px; overflow-y:auto;
+    border-left: 3px solid var(--purple); border-top:none; transition: width .18s ease;
+  }
+  .element-settings.collapsed{ width:38px; padding:10px 4px; overflow:hidden; }
+  .element-settings.collapsed .element-settings-head{ justify-content:center; }
+  .element-settings.collapsed .element-settings-head h3,
+  .element-settings.collapsed #settings-fields{ display:none; }
+
   .editor-topbar{ flex-wrap:nowrap; overflow-x:auto; }
   .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
   .editor-hint-banner{ padding:3px; font-size:12px; }
   .mobile-more-btn{ display:inline-flex; }
+  .btn-label, .btn-label-full{ display:none; } /* icon-only top bar: undo/redo/edit-mode/compare all read fine from their glyph alone here */
+  .edit-mode-chip{ padding:8px 10px; }
   .grid-settings-popover{
     left:12px; right:12px; top:auto; bottom:60px; width:auto; z-index:160;
   }
-}
 
-/* ---- Touch devices: enlarge tap targets regardless of viewport width ---- */
-@media (pointer: coarse){
-  .tool-btn, .btn, .taskbar-btn, .app-back-btn, .desktop-icon, .side-btn,
-  .shop-tab-btn, .wardrobe-cat-btn, .settings-nav-btn, .seg-btn{
-    min-height:44px;
-  }
-  .btn{ padding:13px 30px; }
-  .taskbar-btn{ width:48px; height:48px; }
-  .app-back-btn{ width:44px; height:44px; }
-  .wardrobe-preview-btn{ width:32px; height:32px; }
-  .toggle-switch{ width:52px; height:30px; }
-  .toggle-switch .thumb{ width:24px; height:24px; }
-  .toggle-switch input:checked + .track .thumb{ transform: translateX(22px); }
-  .info-tip{ width:22px; height:22px; }
-  /* Resize handles stay visually small (their position math is exact and
-     tightly coupled to the 10px size — see the comment above .el.selected)
-     but get a much larger invisible hit-box layered on via ::before, which
-     doesn't affect layout or the handle's own centering. */
-  .el-handle::before{ content:''; position:absolute; inset:-11px; }
+  /* Taskbar: shrink further than the general phone breakpoint below — this
+     is the tightest vertical squeeze the app has to handle, and the clock
+     is the one piece of taskbar info that isn't actually load-bearing. */
+  .taskbar{ height:auto; padding-top:4px; padding-bottom: max(4px, env(safe-area-inset-bottom)); gap:6px; }
+  .taskbar-btn{ width:32px; height:32px; min-height:0; font-size:15px; }
+  .taskbar-currency{ padding:5px 10px; font-size:12.5px; }
+  .taskbar-clock{ display:none; }
 }

@@ -890,6 +890,50 @@
     pop.addEventListener('click', e=>{ if(e.target===pop) pop.remove(); });
   }
 
+  // ---------------- Fullscreen (like a video player's expand button) ----------------
+  // A webpage can't hide the browser's own chrome during normal browsing —
+  // that's the browser's call, not the page's — but the standard Fullscreen
+  // API *is* something a page can invoke directly from a tap, and modern
+  // mobile browsers (iOS 16.4+, Android Chrome) honor it: it drops the
+  // address bar/toolbars the same way a fullscreen video does. Falls back
+  // to vendor-prefixed variants for older WebKit; the button hides itself
+  // entirely if nothing is supported at all.
+  function getFullscreenEl(){
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+  }
+  function requestFn(){
+    const el = document.documentElement;
+    return el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  }
+  function exitFn(){
+    return document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  }
+  function toggleFullscreen(){
+    if(getFullscreenEl()){
+      const fn = exitFn();
+      if(fn) fn.call(document);
+    } else {
+      const fn = requestFn();
+      if(fn) fn.call(document.documentElement).catch(()=>{});
+    }
+  }
+  function updateFullscreenBtn(){
+    const btn = document.getElementById('taskbar-fullscreen');
+    if(!btn) return;
+    const active = !!getFullscreenEl();
+    btn.classList.toggle('active', active);
+    btn.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+    btn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+  }
+  function initFullscreenToggle(){
+    const btn = document.getElementById('taskbar-fullscreen');
+    if(!requestFn()){ btn.style.display = 'none'; return; }
+    btn.addEventListener('click', toggleFullscreen);
+    ['fullscreenchange','webkitfullscreenchange','MSFullscreenChange'].forEach(evt=>{
+      document.addEventListener(evt, updateFullscreenBtn);
+    });
+  }
+
   // ---------------- Clock ----------------
   function updateClock(){
     const now = new Date();
@@ -920,6 +964,7 @@
     refreshHeader();
     updateClock();
     setInterval(updateClock, 15000);
+    initFullscreenToggle();
 
     document.getElementById('btn-start').addEventListener('click', ()=>{
       showScreen('screen-desktop');

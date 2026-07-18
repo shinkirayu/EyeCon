@@ -172,10 +172,10 @@
   <!-- ============ EDITOR SCREEN ============ -->
   <section id="screen-editor" class="screen" aria-label="Design Editor">
     <div class="editor-topbar">
-      <div class="edit-mode-chip">📌 Edit Mode</div>
+      <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
       <div class="editor-tools-left">
-        <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)">↺ Undo</button>
-        <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)">↻ Redo</button>
+        <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)">↺ <span class="btn-label">Undo</span></button>
+        <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)">↻ <span class="btn-label">Redo</span></button>
       </div>
       <button class="tool-btn mobile-more-btn" id="tool-mobile-more" title="More tools" aria-haspopup="true">⋯ Tools</button>
       <div class="editor-tools-center">
@@ -196,7 +196,7 @@
           <button class="tool-btn" id="zoom-badge" title="Scroll or pinch on the canvas to zoom — tap to reset to 100%">🔍 100%</button>
           <button class="tool-btn zoom-step-btn" id="tool-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
         </div>
-        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original">👁 Hold to Compare</button>
+        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original">👁 <span class="btn-label-full">Hold to </span><span class="btn-label">Compare</span></button>
         <button class="tool-btn btn-save" id="tool-save" title="Save & submit">💾 Save</button>
       </div>
     </div>
@@ -271,6 +271,7 @@
     <button class="taskbar-btn" id="taskbar-profile" title="Profile & Stats" aria-label="Profile and stats">👤</button>
     <button class="taskbar-btn" id="taskbar-home" title="Desktop" aria-label="Go to desktop">🏠</button>
     <button class="taskbar-btn" id="taskbar-shop" title="Shop" aria-label="Open shop">🛍️</button>
+    <button class="taskbar-btn" id="taskbar-fullscreen" title="Enter fullscreen" aria-label="Toggle fullscreen">⛶</button>
     <div class="taskbar-spacer"></div>
     <div class="taskbar-currency" id="taskbar-currency" title="Sparks — spend at the Shop">✨ 0</div>
     <div class="taskbar-clock" id="taskbar-clock">8:00 AM</div>
