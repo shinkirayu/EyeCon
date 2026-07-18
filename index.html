@@ -6,6 +6,19 @@
 <meta name="theme-color" content="#bfe9db" />
 <title>EyeCon — UI/UX Design Studio</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><ellipse cx=%2230%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><ellipse cx=%2270%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/><circle cx=%2268%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/></svg>">
+
+<!-- ============ PWA / "Add to Home Screen" fullscreen support ============
+     A regular webpage can never hide Safari's own URL bar while browsing
+     normally — that chrome is the browser's, not the page's, to control.
+     The only way to get a true fullscreen, no-URL-bar experience is via
+     "Add to Home Screen": launching from that icon opens the page in its
+     own standalone window using the settings below. ============ -->
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="EyeCon" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css" />
@@ -164,6 +177,7 @@
         <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)">↺ Undo</button>
         <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)">↻ Redo</button>
       </div>
+      <button class="tool-btn mobile-more-btn" id="tool-mobile-more" title="More tools" aria-haspopup="true">⋯ Tools</button>
       <div class="editor-tools-center">
         <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility">▦ Grid</button>
         <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings">⚙</button>
@@ -199,6 +213,17 @@
       <div class="field-group">
         <label>Grid Opacity (<span id="grid-opacity-readout">35</span>%)</label>
         <input type="range" id="grid-opacity-slider" min="0" max="1" step="0.05" value="0.35"/>
+      </div>
+    </div>
+
+    <!-- Secondary tools live here permanently on mobile/short-landscape (see
+         editor.js applyToolbarLayout) — an on-demand bottom sheet so the
+         canvas keeps the screen instead of a toolbar row eating it. -->
+    <div class="mobile-tools-overlay hidden" id="mobile-tools-overlay">
+      <div class="mobile-tools-sheet" id="mobile-tools-sheet">
+        <div class="mobile-tools-sheet-handle" aria-hidden="true"></div>
+        <div class="mobile-tools-sheet-title">Editor Tools</div>
+        <div class="mobile-tools-sheet-grid" id="mobile-tools-sheet-grid"></div>
       </div>
     </div>
 

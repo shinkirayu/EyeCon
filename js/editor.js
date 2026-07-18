@@ -846,10 +846,62 @@
     document.getElementById('typescale-panel').innerHTML = html;
   }
 
+  // ---------------- Mobile "more tools" bottom sheet ----------------
+  // Same condition as the matching CSS breakpoints in style.css (narrow
+  // phones, or a short landscape phone regardless of width) — secondary
+  // tools relocate into an on-demand sheet there so the canvas keeps the
+  // screen instead of a permanent toolbar row eating it.
+  const MOBILE_TOOLS_MQ = window.matchMedia('(max-width: 640px), (max-height: 480px) and (orientation: landscape)');
+  let secondaryToolItems = null; // [{el, parent, next}], captured once in original DOM order
+
+  function captureSecondaryToolItems(){
+    const ids = ['tool-grid', 'tool-grid-settings', 'tool-snap', 'tool-guides', 'tool-hint', 'live-score-chip'];
+    const items = ids.map(id => {
+      const el = document.getElementById(id);
+      return { el, parent: el.parentNode, next: el.nextElementSibling };
+    });
+    const zoomControl = document.querySelector('.zoom-control');
+    items.push({ el: zoomControl, parent: zoomControl.parentNode, next: zoomControl.nextElementSibling });
+    return items;
+  }
+
+  function applyToolbarLayout(isMobile){
+    if(!secondaryToolItems) secondaryToolItems = captureSecondaryToolItems();
+    const sheetGrid = document.getElementById('mobile-tools-sheet-grid');
+    if(isMobile){
+      secondaryToolItems.forEach(item => sheetGrid.appendChild(item.el));
+    } else {
+      hideMobileToolsSheet();
+      // Reverse order: each item's stored `next` may itself be one of these
+      // items, which only becomes a valid insertBefore() reference once IT
+      // has already been reinserted — restoring back-to-front guarantees
+      // that's always already happened by the time we need it.
+      secondaryToolItems.slice().reverse().forEach(item => item.parent.insertBefore(item.el, item.next));
+    }
+  }
+
+  function showMobileToolsSheet(){
+    document.getElementById('mobile-tools-overlay').classList.remove('hidden', 'closing');
+  }
+  function hideMobileToolsSheet(){
+    const overlay = document.getElementById('mobile-tools-overlay');
+    if(overlay.classList.contains('hidden')) return;
+    overlay.classList.add('closing');
+    setTimeout(()=>{ overlay.classList.add('hidden'); overlay.classList.remove('closing'); }, 220);
+  }
+
   function initToolbarOnce(){
     document.getElementById('toggle-element-settings').addEventListener('click', ()=>{
       setElementSettingsCollapsed(!document.getElementById('element-settings').classList.contains('collapsed'));
     });
+
+    applyToolbarLayout(MOBILE_TOOLS_MQ.matches);
+    MOBILE_TOOLS_MQ.addEventListener('change', e => applyToolbarLayout(e.matches));
+    document.getElementById('tool-mobile-more').addEventListener('click', showMobileToolsSheet);
+    document.getElementById('mobile-tools-overlay').addEventListener('click', e=>{
+      if(e.target.id === 'mobile-tools-overlay') hideMobileToolsSheet();
+    });
+
     document.getElementById('tool-undo').addEventListener('click', undo);
     document.getElementById('tool-redo').addEventListener('click', redo);
     document.getElementById('tool-grid').addEventListener('click', ()=>{ state.tools.gridVisible=!state.tools.gridVisible; updateToolButtonStates(); });
@@ -859,6 +911,7 @@
       document.getElementById('typescale-panel').hidden = true;
       if(willShow) syncGridSettingsUI();
       panel.hidden = !willShow;
+      if(willShow) hideMobileToolsSheet(); // so the grid/opacity change is visible on the canvas, not hidden behind the sheet
     });
     document.getElementById('grid-size-slider').addEventListener('input', e=>{
       state.tools.gridSize = Number(e.target.value);
@@ -876,7 +929,7 @@
     document.getElementById('tool-contrast').addEventListener('click', ()=>{ state.tools.contrast=!state.tools.contrast; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-a11y').addEventListener('click', ()=>{ state.tools.a11y=!state.tools.a11y; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates(); });
-    document.getElementById('tool-hint').addEventListener('click', showHint);
+    document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
     document.getElementById('tool-typescale').addEventListener('click', ()=>{
       const panel = document.getElementById('typescale-panel');
       const willShow = panel.hidden;

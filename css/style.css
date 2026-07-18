@@ -479,6 +479,38 @@ button{ font-family: inherit; }
 .zoom-control{ display:flex; align-items:center; gap:4px; }
 .zoom-step-btn{ width:34px; padding:8px 0; text-align:center; font-size:16px; line-height:1; font-weight:800; }
 
+/* "⋯ Tools" only exists to open the mobile bottom sheet below — on desktop
+   the tools it would open are already sitting inline in the toolbar. */
+.mobile-more-btn{ display:none; flex-shrink:0; }
+
+/* ---- Mobile "more tools" bottom sheet ----
+   Canva/mobile-editor pattern: secondary tools (grid, snap, guides, hint,
+   zoom, live score) live here on small/short screens instead of permanently
+   occupying toolbar rows, so the canvas — the thing actually being edited —
+   gets the screen by default. Opened on demand, closed by tapping the
+   backdrop or the tools button again. */
+.mobile-tools-overlay{
+  position:fixed; inset:0; z-index:150; background: rgba(40,32,40,0.5);
+  display:flex; align-items:flex-end; justify-content:center; animation: overlayFadeIn .18s ease;
+}
+.mobile-tools-overlay.hidden{ display:none; }
+.mobile-tools-overlay.closing{ animation: overlayFadeOut .2s ease forwards; }
+.mobile-tools-sheet{
+  width:100%; max-width:640px; max-height:70vh; overflow-y:auto; background: var(--cream-panel);
+  border-radius: 22px 22px 0 0; box-shadow: var(--shadow-lg); padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+  animation: sheetSlideUp .22s cubic-bezier(.25,.9,.35,1.15);
+}
+.mobile-tools-overlay.closing .mobile-tools-sheet{ animation: sheetSlideDown .18s ease forwards; }
+@keyframes sheetSlideUp{ from{ transform: translateY(100%); } to{ transform: translateY(0); } }
+@keyframes sheetSlideDown{ from{ transform: translateY(0); } to{ transform: translateY(100%); } }
+.reduce-motion .mobile-tools-sheet{ animation:none; }
+.mobile-tools-sheet-handle{ width:40px; height:5px; background: var(--cream-deep); border-radius:4px; margin: 0 auto 12px; }
+.mobile-tools-sheet-title{ font-family: var(--font-display); font-weight:700; font-size:15px; margin-bottom:12px; text-align:center; }
+.mobile-tools-sheet-grid{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.mobile-tools-sheet-grid .tool-btn{ flex:1 1 auto; min-width:110px; }
+.mobile-tools-sheet-grid .live-score-chip{ flex-basis:100%; }
+.mobile-tools-sheet-grid .zoom-control{ flex-basis:100%; justify-content:center; }
+
 .editor-main{ flex:1; display:flex; overflow:hidden; background: var(--cream-deep); position:relative; }
 /* Pan + zoom are both handled entirely via a translate()+scale() transform
    on #editor-canvas itself (see editor.js), not native scrolling — so this
@@ -1048,9 +1080,11 @@ button{ font-family: inherit; }
   .wardrobe-progress{ flex-direction:column; align-items:stretch; text-align:center; }
   .cosmetic-preview-mockup{ height:160px; }
 
-  /* Editor: the toolbar becomes one horizontally-scrollable strip instead of
-     wrapping into several rows (which would eat most of the vertical space
-     available for the actual canvas on a phone). */
+  /* Editor: secondary tools (grid/snap/guides/hint/zoom/live-score) move into
+     the "⋯ Tools" bottom sheet (see editor.js applyToolbarLayout), so what's
+     left in the topbar — Edit Mode, Undo/Redo, Hold to Compare, Save — is
+     short enough to fit in one row without needing to wrap or eat canvas
+     space. overflow-x:auto stays on as a safety net on very narrow phones. */
   .editor-topbar{
     flex-wrap:nowrap; overflow-x:auto; padding:10px 12px; gap:8px;
     -webkit-overflow-scrolling:touch;
@@ -1058,12 +1092,13 @@ button{ font-family: inherit; }
   .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
   .edit-mode-chip{ flex-shrink:0; white-space:nowrap; }
+  .mobile-more-btn{ display:inline-flex; }
   .tool-btn{ padding:8px 11px; font-size:13px; white-space:nowrap; }
   .live-score-chip{ min-width:76px; }
   .editor-canvas-wrap{ padding:14px; }
   .element-settings{ padding:14px; max-height:36vh; }
   .typescale-popover{ right:12px; left:12px; width:auto; top:auto; }
-  .grid-settings-popover{ left:12px; right:auto; }
+  .grid-settings-popover{ left:12px; right:12px; bottom:60px; top:auto; width:auto; z-index:160; }
 
   /* Report screen */
   .report-wrap{ padding:20px 16px; gap:20px; }
@@ -1129,6 +1164,10 @@ button{ font-family: inherit; }
   .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
   .editor-hint-banner{ padding:3px; font-size:12px; }
+  .mobile-more-btn{ display:inline-flex; }
+  .grid-settings-popover{
+    left:12px; right:12px; top:auto; bottom:60px; width:auto; z-index:160;
+  }
 }
 
 /* ---- Touch devices: enlarge tap targets regardless of viewport width ---- */

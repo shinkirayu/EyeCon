@@ -1,0 +1,15 @@
+{
+  "name": "EyeCon — UI/UX Design Studio",
+  "short_name": "EyeCon",
+  "description": "Learn UI/UX design and accessibility principles by fixing flawed client posters.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#bfe9db",
+  "theme_color": "#bfe9db",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
