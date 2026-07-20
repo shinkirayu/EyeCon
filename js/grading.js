@@ -106,6 +106,16 @@
       candidates.forEach(el => {
         const d = nearestDist(el.x, xs);
         if(d <= tol) hits++;
+        else{
+          // Per-element note, tagged editorOnly so it drives the live
+          // in-editor Inspector (which needs an exact offender to point at)
+          // without also cluttering the Design Review screen, which keeps
+          // the summary version below instead.
+          feedback.push({ type:'bad', category:'Alignment', elId: el.id, editorOnly:true,
+            title: `"${el.text || el.role}" isn't aligned to the grid`,
+            detail: `Its left edge sits ${Math.round(d)}px from the nearest column line.`,
+            suggest: 'Turn on Snap and drag it so the left edge locks onto a grid line.' });
+        }
       });
       const frac = hits / candidates.length;
       scores.alignment = Math.round(frac*100);
@@ -119,6 +129,12 @@
       }
       // out-of-bounds check feeds into usability, but also worth an alignment note
       const oob = candidates.filter(el => el.x < 0 || el.y < 0 || el.x+el.w > canvasW || el.y+el.h > canvasH);
+      oob.forEach(el => {
+        feedback.push({ type:'bad', category:'Alignment', elId: el.id, editorOnly:true,
+          title: `"${el.text || el.role}" spills outside the canvas`,
+          detail: 'Part of this element extends past the visible frame.',
+          suggest: 'Resize or reposition it so it stays fully inside the canvas.' });
+      });
       if(oob.length){
         feedback.push({ type:'bad', category:'Alignment', title:`${oob.length} element(s) spill outside the canvas.`,
           detail: oob.map(e=>e.id).join(', ') + ' extend past the visible frame.',
@@ -176,20 +192,26 @@
       const stackRoles = ['heading','subheading','body','label','nav','small'];
       const candidates = editable.filter(el => stackRoles.includes(el.role))
         .slice().sort((a,b)=>a.y-b.y);
-      const gaps = [];
+      const pairs = [];
       for(let i=0;i<candidates.length-1;i++){
         const a = candidates[i], b = candidates[i+1];
         const horizOverlap = Math.max(0, Math.min(a.x+a.w,b.x+b.w) - Math.max(a.x,b.x));
         if(horizOverlap < 10) continue; // not really stacked in the same column
         const gap = b.y - (a.y + a.h);
-        if(gap > -2 && gap < 300) gaps.push(gap);
+        if(gap > -2 && gap < 300) pairs.push({ a, b, gap });
       }
+      const gaps = pairs.map(p=>p.gap);
       if(gaps.length === 0){ scores.spacing = 100; return; }
       const tol = Math.max(4, unit*0.4);
       let consistent = 0;
-      gaps.forEach(g => {
-        const nearestMultiple = Math.round(g/unit)*unit;
-        if(Math.abs(g-nearestMultiple) <= tol && g >= 0) consistent++;
+      pairs.forEach(p => {
+        const nearestMultiple = Math.round(p.gap/unit)*unit;
+        const ok = Math.abs(p.gap-nearestMultiple) <= tol && p.gap >= 0;
+        if(ok) consistent++;
+        else feedback.push({ type:'bad', category:'Spacing', elId: p.b.id, editorOnly:true,
+          title: `"${p.b.text || p.b.role}" sits an uneven ${Math.round(p.gap)}px below "${p.a.text || p.a.role}"`,
+          detail: `Nearest ${unit}px-multiple gap would be ${Math.round(nearestMultiple)}px.`,
+          suggest: `Nudge it so the gap above lands on a multiple of ${unit}px.` });
       });
       const frac = consistent/gaps.length;
       scores.spacing = Math.round(frac*100);
@@ -204,11 +226,17 @@
       const overlaps = [];
       for(let i=0;i<candidates.length-1;i++){
         const a=candidates[i], b=candidates[i+1];
-        if(rectsOverlap(a,b) && overlapArea(a,b) > 40) overlaps.push([a.id,b.id]);
+        if(rectsOverlap(a,b) && overlapArea(a,b) > 40) overlaps.push([a,b]);
       }
+      overlaps.forEach(([a,b]) => {
+        feedback.push({ type:'bad', category:'Spacing', elId: b.id, editorOnly:true,
+          title: `"${b.text || b.role}" overlaps "${a.text || a.role}"`,
+          detail: 'These two elements currently cover part of each other.',
+          suggest: 'Move or resize one so they no longer overlap.' });
+      });
       if(overlaps.length){
         feedback.push({ type:'bad', category:'Spacing', title:'Some elements overlap each other.',
-          detail: overlaps.map(o=>o.join(' / ')).join(', '),
+          detail: overlaps.map(([a,b])=>a.id+' / '+b.id).join(', '),
           suggest:'Add breathing room so overlapping text and controls do not obscure one another.' });
       }
     })();
@@ -301,7 +329,14 @@
         nonDecorative.forEach(el => {
           const ok = el.x >= safeMargin && el.y >= safeMargin &&
             (el.x+el.w) <= (canvasW-safeMargin) && (el.y+el.h) <= (canvasH-safeMargin);
-          if(ok) withinMargin++; else offenders.push(el.id);
+          if(ok) withinMargin++;
+          else{
+            offenders.push(el.id);
+            feedback.push({ type:'bad', category:'Usability', elId: el.id, editorOnly:true,
+              title: `"${el.text || el.role}" crowds the screen edge`,
+              detail: `Needs at least ${safeMargin}px of clearance from the nearest edge.`,
+              suggest: 'Move it further from the edge for comfortable breathing room.' });
+          }
         });
         const marginFrac = nonDecorative.length ? withinMargin/nonDecorative.length : 1;
         usability = (usability + marginFrac) / 2;

@@ -33,8 +33,14 @@
 
   <!-- ============ HOME / LOGIN SCREEN ============ -->
   <section id="screen-home" class="screen active" aria-label="Home">
-    <div class="desk-scene">
-      <div class="sticky-note" aria-hidden="true">
+    <div class="desk-scene" id="desk-scene">
+      <div class="desk-surface" aria-hidden="true"></div>
+      <div class="desk-posters" id="desk-posters" aria-hidden="true"></div>
+      <div class="desk-decor" id="desk-decor" aria-hidden="true"></div>
+      <!-- Doubles as the Settings shortcut — clicking it pops the same
+           floating app window used elsewhere, just skinned to look like the
+           note itself (see openMonitorAppPopup(..., {noteStyle:true})). -->
+      <div class="sticky-note" id="sticky-note-settings" role="button" tabindex="0" aria-label="Open Settings">
         <span class="pin"></span>
         road to<br/>radiant
         <div class="note-arrow">↑</div>
@@ -49,19 +55,57 @@
         <div class="tower-disc"></div>
       </div>
 
+      <!-- The monitor IS the entry point now — it shows a live miniature of
+           the real desktop (icons, badge, watermark, taskbar). Clicking the
+           background enters the game on the desktop; clicking one of its
+           icons pops a floating app window up over the monitor instead of
+           navigating away (see openMonitorAppPopup in app.js). -->
       <div class="monitor">
         <div class="monitor-screen">
-          <div class="eyecon-logo big">
-            <div class="eye"><div class="pupil"></div></div>
-            <div class="eye"><div class="pupil"></div></div>
+          <div class="mini-desktop" id="mini-desktop" role="button" tabindex="0" aria-label="Open EyeCon">
+            <div class="mini-watermark"><span class="eyecon-logo small"><span class="eye"><span class="pupil"></span></span><span class="eye"><span class="pupil"></span></span></span>EyeCon OS</div>
+            <div class="mini-icons">
+              <div class="mini-desktop-icon" data-app="mail">
+                <div class="mini-icon-glyph" id="mini-icon-mail">📬<span class="mini-badge" id="mini-badge-mail">0</span></div>
+                <div class="mini-icon-label">Mail</div>
+              </div>
+              <div class="mini-desktop-icon" data-app="stats">
+                <div class="mini-icon-glyph" id="mini-icon-stats">📊</div>
+                <div class="mini-icon-label">Stats</div>
+              </div>
+              <div class="mini-desktop-icon" data-app="shop">
+                <div class="mini-icon-glyph" id="mini-icon-shop">🛍️</div>
+                <div class="mini-icon-label">Shop</div>
+              </div>
+              <div class="mini-desktop-icon" data-app="settings">
+                <div class="mini-icon-glyph" id="mini-icon-settings">⚙️</div>
+                <div class="mini-icon-label">Settings</div>
+              </div>
+            </div>
+            <div class="mini-hint">Welcome back, Junior Designer.</div>
+            <div class="mini-taskbar">
+              <span class="mini-taskbar-icon">👤</span>
+              <span class="mini-taskbar-icon">🏠</span>
+              <span class="mini-taskbar-icon">🛍️</span>
+              <span class="mini-taskbar-spacer"></span>
+              <span class="mini-taskbar-currency" id="mini-taskbar-currency">✨ 0</span>
+              <span class="mini-taskbar-clock" id="mini-taskbar-clock">8:00 AM</span>
+            </div>
           </div>
-          <div class="eyecon-wordmark">eyecon</div>
         </div>
       </div>
-      <button id="btn-start" class="start-pedestal">
-        <span class="pedestal-base"></span>
-        <span class="pedestal-btn">start</span>
-      </button>
+
+      <!-- Floating "app window" — pops up above/over the monitor when a mini
+           icon is clicked, showing the real, live app content (reparented in
+           from its normal screen and back out again on close). -->
+      <div class="monitor-app-popup hidden" id="monitor-app-popup" role="dialog" aria-modal="true" aria-labelledby="monitor-app-popup-title">
+        <div class="monitor-app-popup-titlebar">
+          <span class="monitor-app-popup-icon" id="monitor-app-popup-icon" aria-hidden="true">📬</span>
+          <span class="monitor-app-popup-title" id="monitor-app-popup-title">Eye Mail</span>
+          <button class="monitor-app-popup-close" id="monitor-app-popup-close" aria-label="Close">✕</button>
+        </div>
+        <div class="monitor-app-popup-body" id="monitor-app-popup-body"></div>
+      </div>
 
       <div class="keyboard" aria-hidden="true">
         <div class="keys-row"></div><div class="keys-row"></div><div class="keys-row"></div>
@@ -73,10 +117,10 @@
   <!-- ============ DESKTOP ============ -->
   <section id="screen-desktop" class="screen" aria-label="Desktop">
     <div class="desktop-wallpaper" id="desktop-wallpaper">
-      <div class="desktop-watermark">
+      <button class="desktop-watermark" id="desktop-watermark-btn" title="Back to title screen" aria-label="Back to title screen">
         <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
         <span>EyeCon OS</span>
-      </div>
+      </button>
       <div class="desktop-icons">
         <button class="desktop-icon" id="icon-mail" aria-label="Open Mail app">
           <span class="desktop-icon-glyph" id="glyph-mail">📬</span>
@@ -172,36 +216,47 @@
   <!-- ============ EDITOR SCREEN ============ -->
   <section id="screen-editor" class="screen" aria-label="Design Editor">
     <div class="editor-topbar">
-      <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
-      <div class="editor-tools-left">
-        <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)">↺ <span class="btn-label">Undo</span></button>
-        <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)">↻ <span class="btn-label">Redo</span></button>
+      <!-- Left zone: identity + history -->
+      <div class="editor-topbar-zone zone-identity">
+        <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
+        <div class="editor-tools-left">
+          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo">↺</button>
+          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo">↻</button>
+        </div>
       </div>
-      <button class="tool-btn mobile-more-btn" id="tool-mobile-more" title="More tools" aria-haspopup="true">⋯ Tools</button>
-      <div class="editor-tools-center">
-        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility">▦ Grid</button>
+
+      <button class="tool-btn mobile-more-btn" id="tool-mobile-more" title="More tools" aria-label="More tools" aria-haspopup="true">⋯</button>
+
+      <!-- Center zone: view aids, grouped into one pill so they read as
+           "one toolset" rather than four separate decisions -->
+      <div class="editor-tools-center tool-pill">
+        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid">▦</button>
         <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings">⚙</button>
-        <button class="tool-btn toggle-btn" id="tool-snap" title="Toggle snap-to-grid">🧲 Snap</button>
-        <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides">📐 Guides</button>
-        <button class="tool-btn toggle-btn hidden" id="tool-contrast" title="Toggle contrast checker">◐ Contrast</button>
-        <button class="tool-btn toggle-btn hidden" id="tool-a11y" title="Toggle accessibility inspector">♿ A11y</button>
-        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Hold to measure distances">📏 Measure</button>
-        <button class="tool-btn" id="tool-hint" title="Get a hint">💡 Hint</button>
-        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide">🔠 Type Scale</button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <button class="tool-btn toggle-btn" id="tool-snap" title="Toggle snap-to-grid" aria-label="Toggle snap to grid">🧲</button>
+        <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides">📐</button>
+        <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector">🩺</button>
+        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Hold to measure distances" aria-label="Measure distances">📏</button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint">💡</button>
+        <button class="tool-btn" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements">👀</button>
+        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide">🔠</button>
       </div>
-      <div class="editor-tools-right">
-        <div class="tool-btn live-score-chip hidden" id="live-score-chip" title="Live score estimate — updates as you edit">Score: --</div>
+
+      <!-- Right zone: output actions -->
+      <div class="editor-topbar-zone zone-output editor-tools-right">
+        <div class="tool-btn live-score-chip" id="live-score-chip" title="Live score estimate — updates as you edit">Score: --</div>
+        <button class="tool-btn issues-chip" id="issues-chip" title="Open issues — click to review">✓ 0</button>
         <div class="zoom-control">
           <button class="tool-btn zoom-step-btn" id="tool-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
           <button class="tool-btn" id="zoom-badge" title="Scroll or pinch on the canvas to zoom — tap to reset to 100%">🔍 100%</button>
           <button class="tool-btn zoom-step-btn" id="tool-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
         </div>
-        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original">👁 <span class="btn-label-full">Hold to </span><span class="btn-label">Compare</span></button>
-        <button class="tool-btn btn-save" id="tool-save" title="Save & submit">💾 Save</button>
+        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original">👁</button>
+        <button class="tool-btn btn-save" id="tool-save" title="Save & submit" aria-label="Save and submit">💾</button>
       </div>
     </div>
 
-    <div class="editor-hint-banner" id="editor-hint-banner">Click on any element to edit.</div>
     <div class="typescale-popover" id="typescale-panel" hidden></div>
     <div class="typescale-popover grid-settings-popover" id="grid-settings-panel" hidden>
       <h4>Grid Settings</h4>
@@ -215,6 +270,7 @@
         <input type="range" id="grid-opacity-slider" min="0" max="1" step="0.05" value="0.35"/>
       </div>
     </div>
+    <div class="typescale-popover issues-panel" id="issues-panel" hidden></div>
 
     <!-- Secondary tools live here permanently on mobile/short-landscape (see
          editor.js applyToolbarLayout) — an on-demand bottom sheet so the
@@ -229,13 +285,20 @@
 
     <div class="editor-main">
       <div class="editor-canvas-wrap" id="editor-canvas-wrap">
+        <div class="editor-hint-pill" id="editor-hint-banner">
+          <span id="editor-hint-text">Click on any element to edit.</span>
+          <button class="hint-pill-dismiss" id="hint-pill-dismiss" title="Dismiss" aria-label="Dismiss hint">✕</button>
+        </div>
         <div class="editor-canvas" id="editor-canvas"></div>
       </div>
 
       <aside class="element-settings collapsed" id="element-settings">
         <div class="element-settings-head">
-          <h3>Element Settings</h3>
-          <button class="settings-collapse-btn" id="toggle-element-settings" aria-expanded="false" aria-controls="settings-fields" aria-label="Show or hide element settings">▸</button>
+          <h3 id="element-settings-title">Element Settings</h3>
+          <div class="element-settings-head-actions">
+            <button class="icon-btn hidden" id="f-reset-icon" title="Reset this element" aria-label="Reset this element">↺</button>
+            <button class="settings-collapse-btn" id="toggle-element-settings" aria-expanded="false" aria-controls="settings-fields" aria-label="Show or hide element settings">▸</button>
+          </div>
         </div>
         <div id="settings-fields"><p class="settings-placeholder">Select an element on the canvas to edit its properties.</p></div>
       </aside>
@@ -267,7 +330,18 @@
 
   </div><!-- /screen-area -->
 
-  <footer class="taskbar" id="global-taskbar">
+  <!-- Brief loading transition between "Accept" on a mail job and the
+       editor actually opening — see showLoadingTransition in app.js. -->
+  <div class="app-loading-screen hidden" id="app-loading-screen" aria-hidden="true">
+    <div class="loading-spinner">
+      <span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span>
+      <span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span>
+      <span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span>
+    </div>
+    <div class="loading-label">Opening your workspace…</div>
+  </div>
+
+  <footer class="taskbar desktop-hidden" id="global-taskbar">
     <button class="taskbar-btn" id="taskbar-profile" title="Profile & Stats" aria-label="Profile and stats">👤</button>
     <button class="taskbar-btn" id="taskbar-home" title="Desktop" aria-label="Go to desktop">🏠</button>
     <button class="taskbar-btn" id="taskbar-shop" title="Shop" aria-label="Open shop">🛍️</button>

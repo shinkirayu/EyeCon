@@ -148,6 +148,15 @@ button{ font-family: inherit; }
   to{ opacity:1; transform: translateY(0) scale(1); }
 }
 .reduce-motion .screen.active{ animation:none; }
+/* Closing beat before a screen actually switches — see showScreen() in
+   app.js, which keeps the outgoing screen visible (display:flex) for the
+   duration of this animation instead of cutting to display:none instantly. */
+.screen.closing{ display:flex; animation: screenFadeOut .18s ease forwards; }
+@keyframes screenFadeOut{
+  from{ opacity:1; transform: translateY(0) scale(1); }
+  to{ opacity:0; transform: translateY(-6px) scale(.99); }
+}
+.reduce-motion .screen.closing{ animation:none; }
 
 /* =====================================================
    HOME SCREEN
@@ -157,7 +166,39 @@ button{ font-family: inherit; }
   position:relative; width:100%; height:100%;
   background: linear-gradient(180deg, var(--mint) 0%, var(--mint-deep) 100%);
   overflow:hidden;
+  transform-origin: 50% 50%;
 }
+
+/* Equipped wall posters — up to 2, hung in the strip of wall above the
+   monitor. Positioned/sized to stay clear of the sticky note and tower
+   sitting on either side at this height. */
+.desk-posters{
+  position:absolute; top:1%; left:50%; transform:translateX(-50%);
+  display:flex; gap:16px; z-index:1;
+}
+.poster-item{
+  width:52px; height:64px; border-radius:6px; box-shadow: var(--shadow-md);
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+  border: 3px solid #fff;
+}
+
+/* Equipped decorative desk items (from the gacha wardrobe) sit along the
+   front edge of the desk, in the open space below the monitor and above
+   the keyboard — the same emoji stickers shown on the OS desktop screen. */
+.desk-surface{
+  position:absolute; left:0; right:0; bottom:0; height:24%;
+  background: linear-gradient(180deg, #dba86e 0%, #b98849 55%, #a6763c 100%);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18) inset;
+}
+.desk-surface::before{
+  content:''; position:absolute; inset:0; opacity:.35; pointer-events:none;
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 3px, transparent 3px, transparent 46px);
+}
+.desk-decor{
+  position:absolute; bottom:23%; left:50%; transform:translateX(-50%);
+  display:flex; gap:22px; font-size:34px; z-index:2;
+}
+.desk-decor .decor-item{ filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
 .monitor{
   position:absolute; left:50%; top:8%; transform:translateX(-50%);
   width:56%; max-width:900px; aspect-ratio: 16/10.5;
@@ -167,6 +208,7 @@ button{ font-family: inherit; }
   display:flex; align-items:center; justify-content:center;
 }
 .monitor-screen{
+  position:relative;
   width:92%; height:86%;
   background: var(--cream-panel);
   border: 6px solid var(--cream);
@@ -185,27 +227,155 @@ button{ font-family: inherit; }
 .eyecon-logo.small .pupil{ width:9px;height:9px; }
 .eyecon-logo.small{ gap:4px; }
 .pupil{ width:30px; height:30px; background: var(--ink); border-radius:50%; }
-.eyecon-wordmark{
-  font-family: var(--font-display); font-weight:700; color: var(--coral);
-  font-size: clamp(28px, 4vw, 52px); letter-spacing:1px;
+
+/* ---- The monitor's mini live desktop — the entry point into the app now,
+   not a separate logo + Start button. A miniature, functional replica of
+   the real desktop screen: clicking its background enters the game on the
+   desktop; clicking one of its icons enters *straight into that app*. ---- */
+.mini-desktop{
+  position:absolute; inset:0; border-radius:14px; overflow:hidden; cursor:pointer;
+  background: linear-gradient(160deg, var(--mint) 0%, var(--mint-deep) 100%);
+  transition: filter .15s ease;
 }
-.start-pedestal{
-  position:absolute; left:50%; top:56%; transform:translateX(-50%);
-  background:none; border:none; cursor:pointer; padding:0;
-  display:flex; flex-direction:column; align-items:center;
+.mini-desktop:hover, .mini-desktop:focus-visible{ filter: brightness(1.04); }
+.mini-watermark{
+  position:absolute; top:6%; right:5%; display:flex; align-items:center; gap:4px;
+  font-family: var(--font-display); font-weight:700; color: var(--teal-dark); opacity:.7;
+  font-size: clamp(7px, 1.5vw, 11px); white-space:nowrap;
 }
-.pedestal-base{
-  width:180px; height:36px; background: var(--teal); border-radius: 50% 50% 40% 40%/60% 60% 40% 40%;
-  margin-top:-14px;
+.mini-watermark .eyecon-logo.small .eye{ width:10px; height:8px; border-width:1px; }
+.mini-watermark .eyecon-logo.small .pupil{ width:4px; height:4px; }
+.mini-watermark .eyecon-logo.small{ gap:2px; }
+.mini-icons{ position:absolute; top:8%; left:6%; display:flex; flex-direction:column; gap:7%; }
+.mini-desktop-icon{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+/* Sized and shaped like a real desktop app icon (see .desktop-icon-glyph) —
+   just scaled down, so the monitor genuinely reads as a shrunk desktop
+   rather than a row of tiny unrelated dots. */
+.mini-icon-glyph{
+  /* width is the only sized dimension — percentages resolve against the
+     container's width and height separately, and this box's container is
+     shorter than it is wide, so setting both via % previously produced a
+     visibly non-square "icon." aspect-ratio keeps it a true square at any size. */
+  position:relative; width: clamp(32px, 10%, 52px); aspect-ratio: 1 / 1; background: var(--cream);
+  border-radius:24%; display:flex; align-items:center; justify-content:center; font-size: clamp(17px, 5.6%, 30px);
+  box-shadow: var(--shadow-sm);
 }
-.pedestal-btn{
-  background: var(--coral); color:#fff; font-family:var(--font-display); font-weight:700;
-  font-size:22px; padding: 14px 42px; border-radius: 10px; box-shadow: var(--shadow-md);
-  transition: transform .15s ease, box-shadow .15s ease;
+.mini-badge{
+  position:absolute; top:-5px; right:-5px; background: var(--danger); color:#fff; border-radius:50%;
+  width:15px; height:15px; font-size:8px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 0 0 2px var(--cream);
 }
-.start-pedestal:hover .pedestal-btn, .start-pedestal:focus-visible .pedestal-btn{
-  transform: translateY(-4px); box-shadow: var(--shadow-lg);
+.mini-icon-label{
+  font-size: clamp(7px, 1.5vw, 10px); font-weight:700; color: var(--ink);
+  background: rgba(253,243,230,0.82); padding:1px 5px; border-radius:4px; white-space:nowrap;
 }
+.mini-hint{
+  position:absolute; bottom:14%; left:50%; transform:translateX(-50%); background: var(--cream);
+  padding:3px 10px; border-radius:8px; font-size: clamp(6px, 1.3vw, 9px); font-weight:600;
+  color: var(--ink-soft); white-space:nowrap; box-shadow: var(--shadow-sm);
+}
+.mini-taskbar{
+  position:absolute; bottom:0; left:0; right:0; height:10%; background: var(--mint-deep);
+  display:flex; align-items:center; padding:0 4%; gap:5px;
+}
+.mini-taskbar-icon{ font-size: clamp(7px, 1.8vw, 11px); }
+.mini-taskbar-spacer{ flex:1; }
+.mini-taskbar-currency, .mini-taskbar-clock{
+  background: var(--cream); padding:2px 6px; border-radius:6px; font-weight:700;
+  font-size: clamp(6px, 1.4vw, 9px); white-space:nowrap;
+}
+
+/* Floating "app window" popup — appears above the monitor instead of
+   navigating away from the title screen. Its body is a mount point that
+   real app content (mail list, stats, shop, settings) gets reparented into
+   and back out of, the same move-and-restore trick the editor's mobile
+   tools sheet already uses. */
+.monitor-app-popup{
+  position:absolute; left:50%; top:2%; transform:translateX(-50%);
+  width:min(85%, 860px); height:82%; max-height:660px;
+  background: var(--cream-panel); border: 4px solid var(--cream); border-radius:20px;
+  box-shadow: var(--shadow-lg); z-index:10; display:flex; flex-direction:column; overflow:hidden;
+  animation: monitorAppPopIn .22s cubic-bezier(.25,.9,.35,1.25);
+}
+.monitor-app-popup.hidden{ display:none; }
+@keyframes monitorAppPopIn{
+  from{ opacity:0; transform:translateX(-50%) scale(.93) translateY(10px); }
+  to{ opacity:1; transform:translateX(-50%) scale(1) translateY(0); }
+}
+.reduce-motion .monitor-app-popup{ animation:none; }
+.monitor-app-popup.closing{ animation: monitorAppPopOut .18s ease forwards; }
+@keyframes monitorAppPopOut{
+  from{ opacity:1; transform:translateX(-50%) scale(1) translateY(0); }
+  to{ opacity:0; transform:translateX(-50%) scale(.93) translateY(10px); }
+}
+.reduce-motion .monitor-app-popup.closing{ animation:none; }
+.monitor-app-popup-titlebar{
+  display:flex; align-items:center; gap:10px; padding:12px 16px; flex-shrink:0;
+  background: var(--cream); border-bottom:2px solid var(--cream-deep);
+}
+.monitor-app-popup-icon{ font-size:19px; }
+.monitor-app-popup-title{ font-family:var(--font-display); font-weight:700; flex:1; color:var(--ink); }
+.monitor-app-popup-close{
+  background:none; border:none; cursor:pointer; font-size:15px; width:30px; height:30px; border-radius:8px;
+  color: var(--ink); transition: background .12s ease;
+}
+.monitor-app-popup-close:hover, .monitor-app-popup-close:focus-visible{ background: rgba(0,0,0,0.08); }
+.monitor-app-popup-body{ flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; }
+
+/* Note-style skin — used when the popup is opened from the desk's sticky
+   note rather than a monitor icon, so Settings shows up looking like the
+   note itself (yellow, pinned, handwritten title). Straight, not tilted —
+   only the physical desk prop (.sticky-note) keeps its own little rotation. */
+.monitor-app-popup.note-style{
+  background: var(--yellow); border-color: var(--yellow);
+}
+.monitor-app-popup.note-style::before{
+  content:''; position:absolute; top:-12px; left:50%; transform:translateX(-50%) rotate(45deg);
+  width:20px; height:20px; background: var(--coral); border-radius:50% 50% 50% 0; z-index:2;
+}
+.monitor-app-popup.note-style .monitor-app-popup-titlebar{
+  background:none; border-bottom: 2px dashed rgba(192,57,43,0.3);
+}
+.monitor-app-popup.note-style .monitor-app-popup-title{ font-family: var(--font-hand); font-size:23px; color:#c0392b; }
+.monitor-app-popup.note-style .monitor-app-popup-close{ color:#c0392b; }
+.monitor-app-popup.note-style .monitor-app-popup-close:hover, .monitor-app-popup.note-style .monitor-app-popup-close:focus-visible{ background: rgba(192,57,43,0.12); }
+.monitor-app-popup.note-style .monitor-app-popup-body{ background: var(--yellow); }
+/* Settings' own shell/cards default to the standard cream-and-white design —
+   override them here so the whole page reads as "the note," not a white
+   panel awkwardly floating inside a yellow frame. */
+.monitor-app-popup.note-style .settings-shell{ background: var(--yellow); border-radius:0; box-shadow:none; }
+.monitor-app-popup.note-style .settings-search-row{ border-bottom-color: rgba(192,57,43,0.25); }
+.monitor-app-popup.note-style .settings-search{ background: rgba(255,255,255,0.55); border-color: rgba(192,57,43,0.25); }
+.monitor-app-popup.note-style .settings-search:focus-within{ border-color:#c0392b; }
+.monitor-app-popup.note-style .settings-tab-title{ border-bottom-color: rgba(192,57,43,0.25); }
+.monitor-app-popup.note-style .settings-card{ background: rgba(255,255,255,0.6); }
+.monitor-app-popup.note-style .settings-footer{ background: rgba(0,0,0,0.05); border-top-color: rgba(192,57,43,0.25); }
+
+/* ---- Loading transition (any screen -> screen) ----
+   Currently used between "Accept" on a mail job and the editor opening —
+   see showLoadingTransition() in app.js. Sits above everything as a fixed
+   overlay so it doesn't care what screen it's covering. */
+.app-loading-screen{
+  position:fixed; inset:0; z-index:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+  background: linear-gradient(160deg, var(--mint) 0%, var(--mint-deep) 100%);
+  opacity:1; transition: opacity .35s ease;
+}
+.app-loading-screen.hidden{ display:none; }
+.app-loading-screen.entering, .app-loading-screen.leaving{ opacity:0; }
+.loading-spinner{ position:relative; width:64px; height:64px; }
+.loading-spinner span{
+  position:absolute; top:50%; left:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px;
+  border-radius:50%; background: var(--purple);
+  transform: rotate(calc(var(--i) * 30deg)) translateY(-27px);
+  animation: loadingDotFade 1.2s linear infinite;
+  animation-delay: calc(var(--i) * -0.1s);
+}
+@keyframes loadingDotFade{ 0%{ opacity:1; } 100%{ opacity:.15; } }
+.loading-label{
+  font-family: var(--font-display); font-weight:700; color: var(--teal-dark); font-size:15px;
+}
+.reduce-motion .loading-spinner span{ animation:none; opacity:.6; }
+
 .tower{
   position:absolute; left:4%; top:12%; width:14%; min-width:120px; height:62%;
   background: var(--cream); border-radius:18px; box-shadow: var(--shadow-md);
@@ -222,8 +392,9 @@ button{ font-family: inherit; }
   position:absolute; right:5%; top:6%; width:14%; min-width:150px;
   background: var(--yellow); color:#c0392b; font-family: var(--font-hand); font-size:22px;
   text-align:center; line-height:1.15; padding: 18px 10px 26px; border-radius:4px; box-shadow: var(--shadow-md);
-  transform: rotate(2deg);
+  transform: rotate(2deg); cursor:pointer; transition: transform .15s ease;
 }
+.sticky-note:hover, .sticky-note:focus-visible{ transform: rotate(2deg) translateY(-3px); }
 .pin{ position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:16px;height:16px; background:var(--coral); border-radius:50% 50% 50% 0; rotate:45deg; }
 .note-arrow{ font-size:26px; }
 .plant{ position:absolute; right:4%; top:32%; width:12%; min-width:110px; }
@@ -253,7 +424,9 @@ button{ font-family: inherit; }
 .desktop-watermark{
   position:absolute; top:24px; right:36px; display:flex; align-items:center; gap:10px;
   color: var(--teal-dark); opacity:.55; font-family: var(--font-display); font-weight:700; font-size:18px;
+  background:none; border:none; cursor:pointer; padding:6px 8px; border-radius:10px; transition: opacity .12s ease, background .12s ease;
 }
+.desktop-watermark:hover, .desktop-watermark:focus-visible{ opacity:.85; background: rgba(255,255,255,0.3); }
 .desktop-icons{ display:flex; flex-direction:column; gap:28px; width:110px; }
 .desktop-icon{
   position:relative; background:none; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -320,8 +493,8 @@ button{ font-family: inherit; }
 }
 .mail-item:hover{ background: var(--cream-deep); }
 .mail-item .avatar-circle{ width:44px;height:44px; }
-.mail-item-name{ font-weight:700; white-space:nowrap; }
-.mail-item-preview{ color: var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.mail-item-name{ font-weight:700; flex:1 1 160px; min-width:0; }
+.mail-item-preview{ color: var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 80px; min-width:0; }
 .tag{ padding:5px 12px; border-radius:12px; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
 .tag.novice{ background: var(--success); }
 .tag.intermediate{ background: var(--orange); }
@@ -340,7 +513,15 @@ button{ font-family: inherit; }
   background: var(--mint-deep); display:flex; align-items:center; flex-shrink:0; gap:14px;
   padding: 0 max(24px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(24px, env(safe-area-inset-left));
 }
-.taskbar-btn{ background:var(--cream); border:none; border-radius:50%; width:44px;height:44px; font-size:20px; cursor:pointer; box-shadow: var(--shadow-sm); }
+/* Plain icon buttons, not chips — these are navigation, not primary
+   actions, so they shouldn't visually compete with the currency/clock
+   status chips they share the bar with. */
+.taskbar-btn{
+  background:none; border:none; border-radius:10px; width:40px;height:40px; font-size:19px; cursor:pointer;
+  box-shadow:none; color: var(--ink-soft); display:flex; align-items:center; justify-content:center;
+  transition: background .12s ease, color .12s ease;
+}
+.taskbar-btn:hover, .taskbar-btn:focus-visible{ background: rgba(58,46,57,0.1); color: var(--ink); }
 .taskbar-btn.active{ background: var(--teal); color:#fff; }
 .taskbar-spacer{ flex:1; }
 .taskbar-clock{ background: var(--cream); padding:10px 18px; border-radius: 14px; font-weight:700; box-shadow: var(--shadow-sm); }
@@ -411,6 +592,11 @@ button{ font-family: inherit; }
 .compose-body{
   width:100%; min-height:220px; font-family: var(--font-body); font-size:16px; line-height:1.7;
   white-space:pre-wrap; outline:none; cursor:text; padding:6px 4px; border-radius:8px; color:var(--ink);
+  /* The real caret is meaningless here (content is rebuilt from composeState
+     on every tick, not actually edited in place) and resets to the start of
+     the element each rebuild — visible as a second blinking cursor sitting
+     at the front while the real .type-cursor tracks the actual reveal point. */
+  caret-color: transparent;
 }
 .compose-body:focus-visible{ box-shadow: 0 0 0 3px rgba(155,127,212,0.35); }
 .compose-body .ghost{ color: rgba(58,46,57,0.28); }
@@ -452,6 +638,12 @@ button{ font-family: inherit; }
 .edit-mode-chip{ background: var(--yellow); padding:8px 14px; border-radius:10px; font-weight:700; box-shadow: var(--shadow-sm); }
 .editor-tools-left, .editor-tools-center, .editor-tools-right{ display:flex; gap:8px; flex-wrap:wrap; }
 .editor-tools-center{ margin-left:auto; margin-right:auto; }
+
+/* Three zones — identity+history / view aids / output — separated by real
+   gap instead of borders, so grouping reads from whitespace, not boxes. */
+.editor-topbar{ gap:22px; }
+.editor-topbar-zone{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
 .tool-btn{
   background: var(--cream-panel); border: 2px solid var(--cream-deep); border-radius: 10px; padding: 8px 14px; font-weight:700;
   cursor:pointer; font-size:14px; color:var(--ink); box-shadow: var(--shadow-sm);
@@ -463,16 +655,68 @@ button{ font-family: inherit; }
 .live-score-chip.mid{ background: var(--yellow); border-color: var(--yellow-dark); }
 .live-score-chip.bad{ background: var(--danger); color:#fff; border-color: var(--danger); }
 
-.editor-hint-banner{ background: var(--yellow); color: var(--ink); text-align:center; padding:6px; font-weight:700; font-size:14px; flex-shrink:0; }
+/* Issues chip: a quiet "Problems panel" trigger, VS Code style — a count,
+   not a lecture. Green when clear, amber for a couple of things, red once
+   there's a real pile-up, so its color alone is a glance-able signal. */
+.issues-chip{ font-family: var(--font-display); min-width:64px; text-align:center; }
+.issues-chip.good{ background: var(--success); color:#fff; border-color: var(--success); }
+.issues-chip.mid{ background: var(--yellow); border-color: var(--yellow-dark); }
+.issues-chip.bad{ background: var(--danger); color:#fff; border-color: var(--danger); }
+
+/* Grid/Snap/Guides/Hint read as "one toolset" — a single pill-shaped shell
+   with its own border/shadow, holding plain borderless buttons inside
+   rather than four individually-boxed chips competing for attention. */
+.tool-pill{
+  background: var(--cream-panel); border: 2px solid var(--cream-deep); border-radius: 14px;
+  padding: 4px; gap:2px; box-shadow: var(--shadow-sm);
+}
+.tool-pill .tool-btn{ background:none; border:none; box-shadow:none; border-radius:9px; padding:7px 12px; }
+.tool-pill .tool-btn.active{ background: var(--teal); color:#fff; }
+.tool-pill-divider{ width:1px; align-self:stretch; background: var(--cream-deep); margin:2px 2px; }
+
+/* ---- Dismissible onboarding hint ----
+   Floats over the top of the canvas viewport itself rather than taking its
+   own row between the topbar and the canvas — a live overlay, not a banner
+   that pushes content down. Lives inside .editor-canvas-wrap (not the
+   pannable/zoomable .editor-canvas), so it stays put on screen regardless
+   of pan or zoom. */
+.editor-hint-pill{
+  position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:50;
+  display:inline-flex; align-items:center; gap:10px;
+  background: var(--yellow); color: var(--ink); font-weight:700; font-size:13.5px;
+  padding:8px 10px 8px 16px; border-radius:20px; box-shadow: var(--shadow-md);
+  max-width: calc(100% - 28px);
+}
+.editor-hint-pill.hidden{ display:none; }
+.hint-pill-dismiss{
+  background: rgba(0,0,0,0.1); border:none; border-radius:50%; width:20px;height:20px; flex-shrink:0;
+  font-size:11px; line-height:1; cursor:pointer; color: var(--ink); display:flex; align-items:center; justify-content:center;
+}
+.hint-pill-dismiss:hover{ background: rgba(0,0,0,0.18); }
 
 .typescale-popover{
-  position:absolute; top:96px; right:24px; z-index:20; width:260px; background: var(--cream-panel);
+  position:absolute; top:96px; right:24px; z-index:60; width:260px; background: var(--cream-panel);
   border: 2px solid var(--purple); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-lg);
 }
 .typescale-popover[hidden]{ display:none; }
 .typescale-popover h4{ margin:0 0 8px; font-family:var(--font-display); }
 .grid-settings-popover{ left:24px; right:auto; width:240px; }
 .grid-settings-popover .field-group{ margin-bottom:14px; }
+
+/* Issues popover — the Inspector's "Problems list": same shell as the other
+   editor popovers, just wider since each row carries real explanatory text. */
+.issues-panel{ width:320px; max-height:60vh; overflow-y:auto; }
+.issues-empty{ margin:0; color: var(--ink-soft); font-size:13px; }
+.issues-list{ display:flex; flex-direction:column; gap:8px; }
+.issue-row{
+  display:flex; gap:10px; text-align:left; background: var(--cream); border:none;
+  border-radius:8px; padding:10px 12px; cursor:pointer; font-family:inherit; color:var(--ink);
+  transition: background .12s ease;
+}
+.issue-row:hover, .issue-row:focus-visible{ background: var(--cream-deep); }
+.issue-row-icon{ font-size:14px; flex-shrink:0; }
+.issue-row-body{ font-size:13px; line-height:1.4; }
+.issue-row-tip{ color: var(--ink-soft); margin-top:3px; font-size:12px; }
 .grid-settings-popover .field-group:last-child{ margin-bottom:0; }
 .grid-settings-popover input[type=range]{ width:100%; }
 .field-hint{ font-size:11px; color: var(--ink-faint); margin-top:4px; }
@@ -509,7 +753,7 @@ button{ font-family: inherit; }
 .mobile-tools-sheet-title{ font-family: var(--font-display); font-weight:700; font-size:15px; margin-bottom:12px; text-align:center; }
 .mobile-tools-sheet-grid{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
 .mobile-tools-sheet-grid .tool-btn{ flex:1 1 auto; min-width:110px; }
-.mobile-tools-sheet-grid .live-score-chip{ flex-basis:100%; }
+.mobile-tools-sheet-grid .live-score-chip, .mobile-tools-sheet-grid .issues-chip{ flex-basis:100%; }
 .mobile-tools-sheet-grid .zoom-control{ flex-basis:100%; justify-content:center; }
 
 .editor-main{ flex:1; display:flex; overflow:hidden; background: var(--cream-deep); position:relative; }
@@ -534,19 +778,23 @@ button{ font-family: inherit; }
    CSS `left`/`top` use, so a `left`/`top` value there is *inside* the
    element, not on the ring. A handle's own `left`/`top` sets its near edge,
    so to land the handle's CENTER on that -3px line it needs to start a
-   further half-diameter out: -3 - (10/2) = -8px. */
+   further half-diameter out: -3 - (8/2) = -7px. */
 .el.selected{ outline: 2px solid var(--purple); outline-offset:2px; }
+/* Hover affordance — a light dashed outline shows an element is actually
+   editable before you click it, so it's never a guessing game which parts
+   of the design respond and which are just structural background/cards. */
+.el:not(.selected):not([data-locked="1"]):hover{ outline: 2px dashed var(--purple); outline-offset:2px; }
 .el[data-locked="1"]{ cursor:default; }
-.el-handle{ display:none; position:absolute; width:10px;height:10px; background:#fff; border:2px solid var(--purple); border-radius:50%; }
+.el-handle{ display:none; position:absolute; width:8px;height:8px; background:#fff; border:2px solid var(--purple); border-radius:50%; }
 .el.selected .el-handle{ display:block; }
-.el-handle.nw{ top:-8px; left:-8px; cursor:nwse-resize; }
-.el-handle.ne{ top:-8px; right:-8px; cursor:nesw-resize; }
-.el-handle.sw{ bottom:-8px; left:-8px; cursor:nesw-resize; }
-.el-handle.se{ bottom:-8px; right:-8px; cursor:nwse-resize; }
-.el-handle.n{ top:-8px; left:calc(50% - 5px); cursor:ns-resize; }
-.el-handle.s{ bottom:-8px; left:calc(50% - 5px); cursor:ns-resize; }
-.el-handle.w{ left:-8px; top:calc(50% - 5px); cursor:ew-resize; }
-.el-handle.e{ right:-8px; top:calc(50% - 5px); cursor:ew-resize; }
+.el-handle.nw{ top:-7px; left:-7px; cursor:nwse-resize; }
+.el-handle.ne{ top:-7px; right:-7px; cursor:nesw-resize; }
+.el-handle.sw{ bottom:-7px; left:-7px; cursor:nesw-resize; }
+.el-handle.se{ bottom:-7px; right:-7px; cursor:nwse-resize; }
+.el-handle.n{ top:-7px; left:calc(50% - 4px); cursor:ns-resize; }
+.el-handle.s{ bottom:-7px; left:calc(50% - 4px); cursor:ns-resize; }
+.el-handle.w{ left:-7px; top:calc(50% - 4px); cursor:ew-resize; }
+.el-handle.e{ right:-7px; top:calc(50% - 4px); cursor:ew-resize; }
 
 .before-overlay{
   position:absolute; inset:0; z-index:1000; pointer-events:none;
@@ -565,23 +813,64 @@ button{ font-family: inherit; }
 }
 .reduce-motion .el.hint-highlight{ animation:none; }
 
+/* One-shot teaching flash — every editable element pulses once when a
+   level opens, so "what's clickable" is answered immediately rather than
+   left for the player to discover by randomly hovering around. */
+.el.intro-flash{ animation: introFlash 0.9s ease-out; }
+@keyframes introFlash{
+  0%{ outline: 3px solid var(--purple); outline-offset:5px; }
+  100%{ outline: 3px solid transparent; outline-offset:5px; }
+}
+.reduce-motion .el.intro-flash{ animation:none; }
+
 .guide-line{ position:absolute; background: #ff3d9a; }
 .guide-line.v{ width:1px; top:0; bottom:0; }
 .guide-line.h{ height:1px; left:0; right:0; }
 /* The canvas-center guide (as opposed to guides snapping to other elements'
    edges) is drawn bold so the middle of the composition stands out while
    dragging something toward it. */
-.guide-line.center.v{ width:3px; margin-left:-1px; }
-.guide-line.center.h{ height:3px; margin-top:-1px; }
+.guide-line.center.v{ width:2px; margin-left:-0.5px; }
+.guide-line.center.h{ height:2px; margin-top:-0.5px; }
 .measure-label{ position:absolute; background:var(--ink); color:#fff; font-size:12px; padding:2px 6px; border-radius:4px; white-space:nowrap; }
-.a11y-flag{ position:absolute; inset:0; border: 3px solid var(--danger); pointer-events:none; border-radius:4px; }
-.a11y-flag::after{ content: attr(data-msg); position:absolute; bottom:100%; left:0; background:var(--danger); color:#fff; font-size:11px; padding:2px 6px; border-radius:4px; white-space:nowrap; margin-bottom:3px; }
+
+/* Inspector issue badge: a small corner flag rather than a border wrapping
+   the whole element — enough to notice, not enough to drown out the design
+   underneath it. The real explanation only appears on hover/focus, same
+   "learn by poking at it" idea as the rest of the editor's affordances. */
+.issue-flag{
+  position:absolute; transform: translate(-40%,-40%); width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center; cursor:help; z-index:1001;
+  pointer-events:auto; /* .guide-layer is pointer-events:none so guides never block the canvas — this badge opts back in */
+}
+.issue-flag-dot{
+  width:18px; height:18px; border-radius:50%; background: var(--danger); color:#fff;
+  font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 0 0 2px #fff, var(--shadow-sm); animation: issueFlagPop .2s ease-out;
+}
+@keyframes issueFlagPop{ from{ transform:scale(.5); opacity:0; } to{ transform:scale(1); opacity:1; } }
+.reduce-motion .issue-flag-dot{ animation:none; }
+.issue-tooltip{
+  display:none; position:absolute; top:100%; left:0; margin-top:6px; z-index:7;
+  background: var(--ink); color:#fff; font-size:12px; line-height:1.45; padding:8px 10px;
+  border-radius:8px; width:max-content; max-width:240px; box-shadow: var(--shadow-lg); text-align:left;
+}
+.issue-tooltip hr{ border:none; border-top:1px solid rgba(255,255,255,0.2); margin:6px 0; }
+.issue-tooltip-tip{ color: var(--mint); margin-top:2px; }
+.issue-flag:hover .issue-tooltip, .issue-flag:focus-visible .issue-tooltip{ display:block; }
 
 .element-settings{
   width:300px; background: var(--cream-panel); border-left: 3px solid var(--purple); padding: 18px; overflow-y:auto; flex-shrink:0;
 }
 .element-settings-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.element-settings h3{ margin-top:0; font-family:var(--font-display); }
+.element-settings h3{
+  margin-top:0; font-family:var(--font-display); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+}
+.element-settings-head-actions{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.icon-btn{
+  background:none; border:none; border-radius:8px; width:28px; height:28px; flex-shrink:0; cursor:pointer;
+  font-size:15px; color: var(--ink-soft); display:flex; align-items:center; justify-content:center; transition: background .12s ease, color .12s ease;
+}
+.icon-btn:hover{ background: var(--cream-deep); color: var(--ink); }
 /* Only meaningful on the mobile/tablet layout below, where the panel stacks
    under the canvas and competes with it for vertical space — on desktop's
    side-by-side layout there's always room for both, so the button is hidden
@@ -592,6 +881,15 @@ button{ font-family: inherit; }
 }
 .element-settings:not(.collapsed) .settings-collapse-btn{ transform: rotate(90deg); }
 .settings-placeholder{ font-size:14px; color: var(--ink-soft); line-height:1.5; }
+.level-tools-note{
+  background: #eef7f0; border: 2px solid var(--success); border-radius:10px; padding:10px 12px;
+  font-size:12.5px; line-height:1.5; margin-bottom:14px; color: var(--ink);
+}
+.level-tools-note b{ font-family: var(--font-display); }
+/* Reads as "coming soon", not a warning — plain inline text, no box. */
+.level-tools-next{
+  font-size:11.5px; color: var(--ink-faint); margin: -6px 0 14px; padding:0;
+}
 .field-group{ margin-bottom:16px; }
 .field-group label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; margin-bottom:6px; }
 .field-group select, .field-group input[type=number], .field-group input[type=text]{
@@ -599,6 +897,24 @@ button{ font-family: inherit; }
 }
 .field-row-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .field-row-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center; }
+
+/* Compact X/Y, W/H, P/M rows: the label lives inside the control itself
+   instead of a separate heading above it, so three field-groups' worth of
+   "Position (X, Y)" / "Width & Height" / "Padding & Margin" section titles
+   go away without losing any information. */
+.mini-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.mini-field{
+  display:flex; align-items:stretch; background:#fff; border:2px solid var(--cream-deep); border-radius:8px; overflow:hidden;
+}
+.mini-field .mini-label{
+  display:flex; align-items:center; justify-content:center; background: var(--cream-deep); color:var(--ink-soft);
+  font-size:11px; font-weight:800; text-transform:uppercase; padding:0 9px; flex-shrink:0;
+}
+.mini-field input{
+  border:none; padding:8px 8px; width:100%; min-width:0; font-family:inherit; font-size:14px; background:transparent; color:var(--ink);
+}
+.mini-field input:focus{ outline:none; }
+.mini-field:focus-within{ border-color: var(--purple); }
 .color-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .color-row input[type=color]{ width:38px;height:32px; border:none; border-radius:6px; padding:0; background:none; }
 .color-row .hex{ font-size:13px; color:var(--ink-soft); flex:1; }
@@ -743,19 +1059,12 @@ button{ font-family: inherit; }
 .settings-search:focus-within{ border-color: var(--purple); }
 .settings-search input{ flex:1; border:none; outline:none; background:none; font-family:inherit; font-size:14.5px; color:var(--ink); }
 .settings-search .icon-search{ opacity:.6; }
-.settings-body{ display:flex; min-height:400px; flex:1; }
-.settings-nav{ width:190px; flex-shrink:0; display:flex; flex-direction:column; gap:3px; padding:16px 10px; border-right:2px solid var(--cream-deep); }
-.settings-nav-btn{
-  display:flex; align-items:center; gap:10px; background:none; border:none; border-radius:12px; padding:11px 13px;
-  font-family:var(--font-body); font-weight:700; font-size:13.5px; color: var(--ink-soft); cursor:pointer; text-align:left;
-  transition: background .12s ease, color .12s ease;
-}
-.settings-nav-btn:hover{ background: var(--cream-deep); }
-.settings-nav-btn.active{ background: var(--purple); color:#fff; }
-.settings-nav-icon{ font-size:16px; }
 .settings-content{ flex:1; padding:20px 26px; overflow-y:auto; }
-.settings-tab-title{ font-family:var(--font-display); margin:0 0 4px; font-size:19px; }
-.settings-tab-desc{ color:var(--ink-soft); font-size:12.5px; margin:0 0 18px; }
+.settings-content-single{ display:flex; flex-direction:column; }
+.settings-section{ margin-bottom:28px; }
+.settings-section:last-child{ margin-bottom:0; }
+.settings-tab-title{ font-family:var(--font-display); margin:0 0 4px; font-size:19px; padding-bottom:8px; border-bottom:2px solid var(--cream-deep); }
+.settings-tab-desc{ color:var(--ink-soft); font-size:12.5px; margin:12px 0 18px; }
 .settings-card{ background:#fff; border-radius:14px; padding:4px 18px; margin-bottom:14px; box-shadow: var(--shadow-sm); }
 .settings-item{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px 0; border-bottom:1px solid var(--cream-deep); flex-wrap:wrap; }
 .settings-item:last-child{ border-bottom:none; }
@@ -766,15 +1075,13 @@ button{ font-family: inherit; }
 .slider-readout{ font-size:12px; font-weight:700; color: var(--ink-soft); min-width:38px; text-align:right; }
 .settings-danger-card{ border:2px solid var(--danger); background:#fff6f6; }
 .settings-danger-card .settings-item-label{ color: var(--danger); }
+.settings-testing-card{ border:2px solid var(--teal); background:#f2fbf9; }
+.settings-testing-card .settings-item-label{ color: var(--teal-dark); }
 .settings-footer{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 24px; border-top:2px solid var(--cream-deep); background: var(--cream); flex-shrink:0; flex-wrap:wrap; }
 .settings-footer .footer-group{ display:flex; gap:10px; align-items:center; }
 .settings-dirty-note{ font-size:12px; color: var(--orange-dark); font-weight:700; opacity:0; transition: opacity .15s ease; }
 .settings-dirty-note.show{ opacity:1; }
 .settings-search-results{ display:flex; flex-direction:column; gap:10px; }
-.settings-search-result-tag{
-  font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:800; color: var(--purple);
-  background:#efe8fb; padding:3px 9px; border-radius:8px; margin-left:8px; cursor:pointer;
-}
 .settings-no-results{ text-align:center; color: var(--ink-faint); padding:50px 0; font-size:14px; }
 .btn-sm{ padding:9px 20px; font-size:13.5px; }
 .btn-apply{ background: var(--teal); color:#fff; }
@@ -1001,7 +1308,7 @@ button{ font-family: inherit; }
    baseline has to come first for that override to actually take effect. */
 @media (pointer: coarse){
   .tool-btn, .btn, .taskbar-btn, .app-back-btn, .desktop-icon, .side-btn,
-  .shop-tab-btn, .wardrobe-cat-btn, .settings-nav-btn, .seg-btn{
+  .shop-tab-btn, .wardrobe-cat-btn, .seg-btn{
     min-height:44px;
   }
   .btn{ padding:13px 30px; }
@@ -1035,12 +1342,6 @@ button{ font-family: inherit; }
   .element-settings.collapsed{ max-height:52px; overflow:hidden; }
   .settings-collapse-btn{ display:block; }
   .report-wrap{ flex-direction:column; }
-  .settings-body{ flex-direction:column; }
-  .settings-nav{
-    width:100%; flex-direction:row; overflow-x:auto; gap:6px; padding:12px;
-    border-right:none; border-bottom:2px solid var(--cream-deep);
-  }
-  .settings-nav-btn{ flex-shrink:0; }
   .gacha-hero{ padding:26px 20px; }
   .cosmetic-preview-mockup{ height:180px; }
 }
@@ -1051,12 +1352,13 @@ button{ font-family: inherit; }
 
   /* Home screen: the decorative desk scene overlaps itself below ~640px
      (several props carry min-width floors), so we drop everything but the
-     monitor + start button — the only screen with an actual interaction. */
+     monitor — the only screen with an actual interaction. */
   .tower, .sticky-note, .plant, .mouse{ display:none; }
   .monitor{ width:82%; top:12%; }
   .keyboard{ width:70%; bottom:8%; }
-  .start-pedestal{ top:60%; }
-  .pedestal-btn{ font-size:18px; padding:12px 32px; }
+  .monitor-app-popup{ width:94%; height:90%; top:1%; }
+  .monitor-app-popup-body .mail-body{ padding:0 12px 12px; }
+  .monitor-app-popup-body .app-content-wrap{ padding:8px 12px 16px; }
 
   /* App headers: back button + title stay put; search collapses to fill
      whatever's left and the logo wordmark drops rather than truncating badly. */
@@ -1117,10 +1419,15 @@ button{ font-family: inherit; }
     flex-wrap:nowrap; overflow-x:auto; padding:10px 12px; gap:8px;
     -webkit-overflow-scrolling:touch;
   }
-  .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
+  .editor-tools-left, .editor-tools-center, .editor-tools-right, .editor-topbar-zone{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
   .edit-mode-chip{ flex-shrink:0; white-space:nowrap; }
   .mobile-more-btn{ display:inline-flex; }
+  /* Its buttons all relocate into the mobile tools sheet (see
+     editor.js applyToolbarLayout), leaving this empty — the pill shell
+     and its dividers would otherwise float in the topbar with nothing in them. */
+  .editor-tools-center.tool-pill{ background:none; border:none; box-shadow:none; padding:0; gap:0; }
+  .tool-pill-divider{ display:none; }
   .tool-btn{ padding:8px 11px; font-size:13px; white-space:nowrap; }
   .live-score-chip{ min-width:76px; }
   .editor-canvas-wrap{ padding:14px; }
@@ -1163,7 +1470,6 @@ button{ font-family: inherit; }
 /* ---- Small phones ---- */
 @media (max-width: 400px){
   .monitor{ width:90%; }
-  .eyecon-wordmark{ font-size:clamp(22px,7vw,34px); }
   .stat-grid{ grid-template-columns: repeat(2,1fr); }
   .badge-chip{ width:80px; }
   .pool-grid, .wardrobe-grid{ grid-template-columns: repeat(2,1fr); }
@@ -1177,7 +1483,6 @@ button{ font-family: inherit; }
    is exactly as height-starved as one). ---- */
 @media (max-height: 480px) and (orientation: landscape){
   .desk-scene .monitor{ top:4%; width:46%; }
-  .start-pedestal{ top:auto; bottom:6%; }
   .keyboard, .mouse, .tower, .sticky-note, .plant{ display:none; }
   .mail-header, .editor-topbar{ padding-top:6px; padding-bottom:6px; }
   .modal-card, .confirm-card, .compose-card{ max-height:92vh; }
@@ -1198,12 +1503,15 @@ button{ font-family: inherit; }
   .element-settings.collapsed{ width:38px; padding:10px 4px; overflow:hidden; }
   .element-settings.collapsed .element-settings-head{ justify-content:center; }
   .element-settings.collapsed .element-settings-head h3,
+  .element-settings.collapsed #f-reset-icon,
   .element-settings.collapsed #settings-fields{ display:none; }
 
   .editor-topbar{ flex-wrap:nowrap; overflow-x:auto; }
-  .editor-tools-left, .editor-tools-center, .editor-tools-right{ flex-wrap:nowrap; flex-shrink:0; }
+  .editor-tools-left, .editor-tools-center, .editor-tools-right, .editor-topbar-zone{ flex-wrap:nowrap; flex-shrink:0; }
   .editor-tools-center{ margin-left:0; margin-right:0; }
-  .editor-hint-banner{ padding:3px; font-size:12px; }
+  .editor-tools-center.tool-pill{ background:none; border:none; box-shadow:none; padding:0; gap:0; }
+  .tool-pill-divider{ display:none; }
+  .editor-hint-pill{ top:8px; padding:6px 8px 6px 12px; font-size:12px; }
   .mobile-more-btn{ display:inline-flex; }
   .btn-label, .btn-label-full{ display:none; } /* icon-only top bar: undo/redo/edit-mode/compare all read fine from their glyph alone here */
   .edit-mode-chip{ padding:8px 10px; }

@@ -10,8 +10,11 @@
   let pendingGradeResult = null;
 
   // Typewriter-reveal compose state: the reply is pre-written but shown
-  // greyed out; any keypress reveals the next character.
+  // greyed out; any keypress reveals the next few characters (not just one —
+  // a long reply at 1 char/keypress took far too many presses — but not a
+  // whole word either, which just looked like chunks popping in rather than typing).
   let composeState = { fullText:'', revealed:0, attached:false, attachedFileName:'', editedLevel:null, editedElements:null };
+  const REVEAL_CHARS_PER_KEY = 3;
 
   // DEV: every level is unlocked regardless of player level, for testing —
   // flip to false to restore normal progression-gated unlocking.
@@ -120,12 +123,33 @@
     updateSendEnabled();
   }
 
+  // Reveals up to `target` one character at a time on a fast tick, instead
+  // of jumping straight there — a single keypress advancing several
+  // characters at once read as chunks popping in rather than typing.
+  // Re-targeting an already-running reveal (rapid keypresses) just extends
+  // it from wherever it currently is, so nothing skips or double-counts.
+  let revealTimer = null;
+  function queueReveal(target){
+    target = Math.min(composeState.fullText.length, target);
+    clearInterval(revealTimer);
+    revealTimer = setInterval(()=>{
+      if(composeState.revealed >= target){
+        clearInterval(revealTimer);
+        revealTimer = null;
+        return;
+      }
+      composeState.revealed++;
+      renderComposeText();
+    }, 25);
+  }
+
   function updateSendEnabled(){
     const done = composeState.revealed >= composeState.fullText.length;
     document.getElementById('btn-send-mail').disabled = !(done && composeState.attached);
   }
 
   function openCompose(level, gradeResult){
+    clearInterval(revealTimer); revealTimer = null; // stop any leftover cascade from a previous compose
     activeLevel = level; pendingGradeResult = gradeResult;
     document.getElementById('compose-to-name').textContent = level.clientName;
     let template;
@@ -196,8 +220,20 @@
     document.getElementById('compose-body').addEventListener('input', e=>{
       if(composeState.revealed >= composeState.fullText.length){ renderComposeText(); return; }
       const n = (e.data && e.data.length) ? e.data.length : 1;
-      composeState.revealed = Math.min(composeState.fullText.length, composeState.revealed + n);
+      // The browser has *already* inserted whatever was typed into the real
+      // DOM by the time 'input' fires (that's the whole point of the event) —
+      // queueReveal's first tick doesn't land for another 25ms, so without
+      // this, that stray real character was visible (at wherever the native
+      // caret happened to be, usually the very start) for a whole tick
+      // before getting wiped: it visibly typed itself in, then vanished.
+      // Discarding it synchronously, right here, closes that window.
       renderComposeText();
+      // Reveal several characters per keystroke rather than exactly one —
+      // long replies used to need a keypress per letter, which dragged on
+      // far past the point of feeling like a fun typing flourish — but
+      // stagger them on a fast tick (queueReveal) rather than jumping there
+      // instantly, so it still reads as typing and not chunks popping in.
+      queueReveal(composeState.revealed + n * REVEAL_CHARS_PER_KEY);
     });
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);
 

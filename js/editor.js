@@ -8,6 +8,64 @@
   const WEIGHTS = [ ['400','Regular'], ['500','Medium'], ['600','Semibold'], ['700','Bold'], ['800','Extra Bold'] ];
   const SNAP_THRESHOLD = 6;
 
+  // ---------------- Tutorial-style progressive unlock ----------------
+  // Each level teaches one new concept on top of everything before it, so
+  // the Element Settings panel only ever exposes fields for what's actually
+  // been taught so far — by Level 7 ("combines every prior concept") every
+  // field is available, matching the level design in levels.js.
+  const SETTINGS_UNLOCK = {
+    position:   1, // Position (X,Y) + move/align actions — Level 1: Basic Alignment
+    sizing:     2, // Width/Height + Padding/Margin        — Level 2: Consistent Spacing
+    typography: 3, // Font, size, weight, text alignment   — Level 3: Typography Hierarchy
+    color:      4, // Text & background color              — Level 4: Color Contrast (WCAG)
+    shape:      5, // Border radius + border                — Level 5: Accessibility Improvements
+    effects:    6, // Shadow + opacity                       — Level 6: Responsive Layout
+  };
+  const UNLOCK_ORDER = ['position','sizing','typography','color','shape','effects'];
+  const UNLOCK_LABELS = {
+    position:'Position & Alignment', sizing:'Sizing & Spacing', typography:'Typography',
+    color:'Color', shape:'Shape & Border', effects:'Effects',
+  };
+
+  // ---------------- Inspector: which grading categories are "fair game" yet ----------------
+  // The grading engine (grading.js) always checks everything, but surfacing a
+  // Contrast warning before Level 4 has taught color would just be noise —
+  // so the live Inspector (and the Hint tool) only ever show issues for
+  // concepts the player has actually been taught so far, same pacing idea as
+  // SETTINGS_UNLOCK above.
+  const CATEGORY_UNLOCK = {
+    Alignment: 1, Usability: 1, Spacing: 2, Hierarchy: 3, Contrast: 4, Accessibility: 5, Consistency: 6,
+  };
+  function unlockedFeedback(feedback, lvl){
+    return feedback.filter(f => (CATEGORY_UNLOCK[f.category] || 1) <= lvl);
+  }
+
+  function levelToolsNoteHtml(lvl){
+    const unlockedSoFar = UNLOCK_ORDER.filter(k => lvl >= SETTINGS_UNLOCK[k]).map(k => UNLOCK_LABELS[k]);
+    const nextKey = UNLOCK_ORDER.find(k => lvl < SETTINGS_UNLOCK[k]);
+    let html = `<div class="level-tools-note"><b>🎓 Level ${lvl} tools:</b> ${unlockedSoFar.join(' · ')}</div>`;
+    if(nextKey) html += `<div class="level-tools-next">🔒 ${UNLOCK_LABELS[nextKey]} unlocks at Level ${SETTINGS_UNLOCK[nextKey]}</div>`;
+    return html;
+  }
+
+  // ---------------- Friendly element name (settings panel title) ----------------
+  // Shows what's actually selected — its own text in quotes plus a plain
+  // role label — instead of a generic "Element Settings" heading, so the
+  // panel tells you what you're editing without an extra click to check.
+  const ROLE_LABELS = {
+    heading:'Heading', subheading:'Subheading', body:'Text', small:'Caption',
+    button:'Button', nav:'Nav Link', label:'Label', card:'Card',
+    decorative:'Shape', background:'Background',
+  };
+  function friendlyElementName(el){
+    const roleLabel = ROLE_LABELS[el.role] || 'Element';
+    if(el.text){
+      const t = el.text.length > 20 ? el.text.slice(0,20)+'…' : el.text;
+      return `“${t}” ${roleLabel}`;
+    }
+    return roleLabel;
+  }
+
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function roundTo8(n){ return Math.max(8, Math.round(n/8)*8); }
   const ZOOM_MIN = 0.3, ZOOM_MAX = 4;
@@ -21,7 +79,7 @@
     selectedId: null,
     history: [],
     future: [],
-    tools: { gridVisible:true, snap:true, guides:true, contrast:false, a11y:false, measure:false, gridSize:8, gridOpacity:0.35 },
+    tools: { gridVisible:true, snap:true, guides:true, inspector:false, measure:false, gridSize:8, gridOpacity:0.35 },
     zoom: 1,
     displayZoom: 1,
     panX: 0,
@@ -52,6 +110,58 @@
     chip.textContent = `Score: ${result.score}`;
     chip.classList.remove('good','mid','bad');
     chip.classList.add(result.score>=80?'good':result.score>=60?'mid':'bad');
+    updateIssuesChip();
+  }
+
+  // ---------------- Issues panel (Inspector's "Problems list") ----------------
+  // A compact, on-demand list of everything currently wrong (within what's
+  // been taught so far) — click an entry to jump straight to that element,
+  // rather than hunting for it. Kept as a popover instead of a permanent
+  // bottom bar so it doesn't eat canvas space when you're not looking at it.
+  function currentIssues(){
+    if(!state.level) return [];
+    const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
+    return unlockedFeedback(result.feedback, state.level.levelNumber).filter(f=>f.type==='bad');
+  }
+
+  function updateIssuesChip(){
+    const chip = document.getElementById('issues-chip');
+    if(!chip || !state.level) return;
+    const bad = currentIssues();
+    chip.textContent = bad.length ? `⚠ ${bad.length}` : '✓ 0';
+    chip.title = bad.length ? `${bad.length} open issue${bad.length===1?'':'s'} — click to review` : 'No open issues — nice work!';
+    chip.classList.remove('good','mid','bad');
+    chip.classList.add(bad.length===0 ? 'good' : bad.length<=2 ? 'mid' : 'bad');
+    const panel = document.getElementById('issues-panel');
+    if(panel && !panel.hidden) renderIssuesPanel(bad);
+  }
+
+  function renderIssuesPanel(bad){
+    const panel = document.getElementById('issues-panel');
+    if(!bad.length){
+      panel.innerHTML = '<h4>Issues</h4><p class="issues-empty">✨ Nothing open in what you\'ve learned so far — nice work!</p>';
+      return;
+    }
+    let html = '<h4>Issues (' + bad.length + ')</h4><div class="issues-list">';
+    bad.forEach((f,i)=>{
+      html += `<button type="button" class="issue-row" data-idx="${i}">
+        <span class="issue-row-icon">❌</span>
+        <span class="issue-row-body"><b>${f.category}:</b> ${f.title}${f.suggest?`<div class="issue-row-tip">Tip: ${f.suggest}</div>`:''}</span>
+      </button>`;
+    });
+    html += '</div>';
+    panel.innerHTML = html;
+    panel.querySelectorAll('.issue-row').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        const f = bad[Number(row.dataset.idx)];
+        if(f.elId && byId(f.elId)){
+          selectElement(f.elId);
+          const div = state.domNodes[f.elId];
+          if(div) div.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
+        }
+        panel.hidden = true;
+      });
+    });
   }
 
   // ---------------- History ----------------
@@ -84,8 +194,10 @@
     state.selectedId = null;
     state.history = [];
     state.future = [];
-    state.tools.gridVisible = true; state.tools.snap = true; state.tools.guides = true;
-    state.tools.a11y = false; state.tools.contrast = false; state.tools.measure = true;
+    // Every view aid starts off — an empty canvas to begin with, rather
+    // than grid/snap/guides already cluttering it before you've asked for them.
+    state.tools.gridVisible = false; state.tools.snap = false; state.tools.guides = false;
+    state.tools.inspector = false; state.tools.measure = false;
     state.tools.gridSize = roundTo8(level.rubric.spacingUnit || 8);
     state.tools.gridOpacity = 0.35;
     state.zoom = 1;
@@ -96,12 +208,16 @@
     if(hintHighlightTimeout){ clearTimeout(hintHighlightTimeout); hintHighlightTimeout = null; }
     pushHistory();
     buildCanvas();
+    playIntroFlash();
     updateToolButtonStates();
     syncGridSettingsUI();
     resetSettingsPlaceholder();
     setHint('Click on any element to edit.');
+    const chipLabel = document.querySelector('.edit-mode-chip .btn-label');
+    if(chipLabel) chipLabel.textContent = `Lv.${level.levelNumber} · ${level.concept}`;
     document.getElementById('typescale-panel').hidden = true;
     document.getElementById('grid-settings-panel').hidden = true;
+    document.getElementById('issues-panel').hidden = true;
     setElementSettingsCollapsed(true);
   }
 
@@ -223,6 +339,23 @@
     else resetSettingsPlaceholder();
   }
 
+  // Teaches "these are the clickable parts" the moment a level opens — a
+  // brief outline sweep across every editable element, rather than leaving
+  // it to be discovered purely by hovering around (see the hover rule on
+  // .el in style.css, which stays on as the ongoing/ambient signal).
+  function playIntroFlash(){
+    if(!state.canvasEl) return;
+    const els = state.canvasEl.querySelectorAll('.el:not([data-locked="1"])');
+    els.forEach((div, i)=>{
+      setTimeout(()=>{
+        div.classList.add('intro-flash');
+        const clear = ()=>div.classList.remove('intro-flash');
+        div.addEventListener('animationend', clear, { once:true });
+        setTimeout(clear, 950); // safety net if reduce-motion skips the animation entirely
+      }, i * 40);
+    });
+  }
+
   function textAlignToFlex(align){
     return { left:'flex-start', center:'center', right:'flex-end' }[align] || 'center';
   }
@@ -320,6 +453,9 @@
     // is the one moment it should open itself; the button next to its
     // heading still lets you close it again to get the canvas back.
     setElementSettingsCollapsed(false);
+    // "Click on any element to edit" has done its job the moment you do
+    // exactly that — no reason for it to keep sitting over the canvas.
+    document.getElementById('editor-hint-banner').classList.add('hidden');
   }
 
   function deselect(){
@@ -347,8 +483,12 @@
   // Always visible (right-hand dock) — shows a placeholder until something
   // is selected, rather than collapsing away.
   function resetSettingsPlaceholder(){
+    const lvl = (state.level && state.level.levelNumber) || 1;
     document.getElementById('settings-fields').innerHTML =
+      levelToolsNoteHtml(lvl) +
       '<p class="settings-placeholder">Select an element on the canvas to edit its properties.</p>';
+    document.getElementById('element-settings-title').textContent = 'Element Settings';
+    document.getElementById('f-reset-icon').classList.add('hidden');
   }
 
   function contrastBadgeHtml(el){
@@ -364,14 +504,22 @@
   function showSettings(el){
     const fields = document.getElementById('settings-fields');
     const isLocked = !!el.locked;
+    document.getElementById('element-settings-title').textContent = friendlyElementName(el);
 
     if(isLocked){
       fields.innerHTML = `<p class="settings-placeholder">This is a structural background element and can't be edited directly.</p>`;
+      document.getElementById('f-reset-icon').classList.add('hidden');
       return;
     }
+    document.getElementById('f-reset-icon').classList.remove('hidden');
 
-    let html = '';
-    if(el.text){
+    const lvl = state.level.levelNumber || 1;
+    const unlocked = key => lvl >= SETTINGS_UNLOCK[key];
+
+    let html = levelToolsNoteHtml(lvl);
+    const introHtmlLen = html.length;
+
+    if(el.text && unlocked('typography')){
       html += `<div class="field-group"><label>Text Font</label>
         <select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select>
       </div>`;
@@ -388,73 +536,82 @@
           <option value="right" ${el.align==='right'?'selected':''}>Right</option>
         </select>
       </div>`;
+    }
+    if(el.text && unlocked('color')){
       html += `<div class="field-group"><label>Text Color</label>
         <div class="color-row"><input type="color" id="f-color" value="${el.color}"/><span class="hex">${el.color}</span></div>
         <div id="f-contrast">${contrastBadgeHtml(el)}</div>
       </div>`;
     }
-    if(el.bg){
+    if(el.bg && unlocked('color')){
       html += `<div class="field-group"><label>Background Color</label>
         <div class="color-row"><input type="color" id="f-bg" value="${el.bg}"/><span class="hex">${el.bg}</span></div>
       </div>`;
     }
-    html += `<hr class="section-divider"/>`;
-    html += `<div class="field-group"><label>Position (X, Y)</label>
-      <div class="field-row-2">
-        <input type="number" id="f-x" value="${Math.round(el.x)}" aria-label="X position"/>
-        <input type="number" id="f-y" value="${Math.round(el.y)}" aria-label="Y position"/>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><label>Width &amp; Height</label>
-      <div class="field-row-2">
-        <input type="number" id="f-w" value="${Math.round(el.w)}" aria-label="Width"/>
-        <input type="number" id="f-h" value="${Math.round(el.h)}" aria-label="Height"/>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><label>Padding &amp; Margin (px)</label>
-      <div class="field-row-2">
-        <input type="number" id="f-padding" value="${el.padding}" min="0" max="60" aria-label="Padding"/>
-        <input type="number" id="f-margin" value="${el.margin}" min="0" max="80" aria-label="Margin"/>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><label>Border Radius (px)</label>
-      <input type="number" id="f-radius" value="${el.radius||0}" min="0" max="200"/>
-    </div>`;
-    html += `<div class="field-group"><label>Border</label>
-      <div class="field-row-3">
-        <input type="number" id="f-border-w" value="${el.border.width}" min="0" max="12" title="Border width"/>
-        <select id="f-border-style">
-          <option value="solid" ${el.border.style==='solid'?'selected':''}>Solid</option>
-          <option value="dashed" ${el.border.style==='dashed'?'selected':''}>Dashed</option>
-          <option value="dotted" ${el.border.style==='dotted'?'selected':''}>Dotted</option>
-        </select>
-        <input type="color" id="f-border-color" value="${el.border.color}"/>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><label>Shadow</label>
-      <div class="field-row-3">
-        <label style="text-transform:none;font-weight:600;display:flex;align-items:center;gap:6px"><input type="checkbox" id="f-shadow-on" ${el.shadow.enabled?'checked':''}/> On</label>
-        <input type="number" id="f-shadow-blur" value="${el.shadow.blur}" min="0" max="60" title="Blur"/>
-        <input type="color" id="f-shadow-color" value="#000000"/>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><label>Opacity</label>
-      <input type="range" id="f-opacity" min="0" max="1" step="0.05" value="${el.opacity}"/>
-      <div class="opacity-readout">${Math.round(el.opacity*100)}%</div>
-    </div>`;
-    html += `<hr class="section-divider"/>`;
-    html += `<div class="field-group"><label>Alignment Controls</label>
-      <div class="align-actions">
-        <button data-align="left" title="Align Left">⭰ Left</button>
-        <button data-align="right" title="Align Right">Right ⭲</button>
-        <button data-align="top" title="Align Top">⭱ Top</button>
-        <button data-align="bottom" title="Align Bottom">Bottom ⭳</button>
-        <button data-align="centerH" title="Center Horizontally">↔ Center H</button>
-        <button data-align="centerV" title="Center Vertically">↕ Center V</button>
-        <button data-align="centerText" title="Center Text">🅲 Center Text</button>
-      </div>
-    </div>`;
-    html += `<div class="field-group"><button class="tool-btn" id="f-reset" style="width:100%">↺ Reset this element</button></div>`;
+
+    if(html.length > introHtmlLen) html += `<hr class="section-divider"/>`;
+
+    if(unlocked('position')){
+      html += `<div class="mini-row">
+        <label class="mini-field"><span class="mini-label">X</span><input type="number" id="f-x" value="${Math.round(el.x)}" aria-label="X position"/></label>
+        <label class="mini-field"><span class="mini-label">Y</span><input type="number" id="f-y" value="${Math.round(el.y)}" aria-label="Y position"/></label>
+      </div>`;
+    }
+    if(unlocked('sizing')){
+      html += `<div class="mini-row">
+        <label class="mini-field"><span class="mini-label">W</span><input type="number" id="f-w" value="${Math.round(el.w)}" aria-label="Width"/></label>
+        <label class="mini-field"><span class="mini-label">H</span><input type="number" id="f-h" value="${Math.round(el.h)}" aria-label="Height"/></label>
+      </div>`;
+      html += `<div class="mini-row">
+        <label class="mini-field"><span class="mini-label">P</span><input type="number" id="f-padding" value="${el.padding}" min="0" max="60" aria-label="Padding"/></label>
+        <label class="mini-field"><span class="mini-label">M</span><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" aria-label="Margin"/></label>
+      </div>`;
+    }
+    if(unlocked('shape')){
+      html += `<div class="field-group"><label>Border Radius (px)</label>
+        <input type="number" id="f-radius" value="${el.radius||0}" min="0" max="200"/>
+      </div>`;
+      html += `<div class="field-group"><label>Border</label>
+        <div class="field-row-3">
+          <input type="number" id="f-border-w" value="${el.border.width}" min="0" max="12" title="Border width"/>
+          <select id="f-border-style">
+            <option value="solid" ${el.border.style==='solid'?'selected':''}>Solid</option>
+            <option value="dashed" ${el.border.style==='dashed'?'selected':''}>Dashed</option>
+            <option value="dotted" ${el.border.style==='dotted'?'selected':''}>Dotted</option>
+          </select>
+          <input type="color" id="f-border-color" value="${el.border.color}"/>
+        </div>
+      </div>`;
+    }
+    if(unlocked('effects')){
+      html += `<div class="field-group"><label>Shadow</label>
+        <div class="field-row-3">
+          <label style="text-transform:none;font-weight:600;display:flex;align-items:center;gap:6px"><input type="checkbox" id="f-shadow-on" ${el.shadow.enabled?'checked':''}/> On</label>
+          <input type="number" id="f-shadow-blur" value="${el.shadow.blur}" min="0" max="60" title="Blur"/>
+          <input type="color" id="f-shadow-color" value="#000000"/>
+        </div>
+      </div>`;
+      html += `<div class="field-group"><label>Opacity</label>
+        <input type="range" id="f-opacity" min="0" max="1" step="0.05" value="${el.opacity}"/>
+        <div class="opacity-readout">${Math.round(el.opacity*100)}%</div>
+      </div>`;
+    }
+
+    if(unlocked('position')){
+      const alignButtons = [
+        `<button data-align="left" title="Align Left">⭰ Left</button>`,
+        `<button data-align="right" title="Align Right">Right ⭲</button>`,
+        `<button data-align="top" title="Align Top">⭱ Top</button>`,
+        `<button data-align="bottom" title="Align Bottom">Bottom ⭳</button>`,
+        `<button data-align="centerH" title="Center Horizontally">↔ Center H</button>`,
+        `<button data-align="centerV" title="Center Vertically">↕ Center V</button>`,
+      ];
+      if(el.text && unlocked('typography')) alignButtons.push(`<button data-align="centerText" title="Center Text">🅲 Center Text</button>`);
+      html += `<hr class="section-divider"/>
+        <div class="field-group"><label>Alignment Controls</label>
+          <div class="align-actions">${alignButtons.join('')}</div>
+        </div>`;
+    }
 
     fields.innerHTML = html;
     const q = sel => fields.querySelector(sel);
@@ -533,11 +690,6 @@
       });
     });
 
-    if(q('#f-reset')) q('#f-reset').addEventListener('click', ()=>{
-      const orig = state.original.find(o=>o.id===el.id);
-      Object.assign(el, clone(orig));
-      refreshElementDom(el); showSettings(el); pushHistory(); refreshLiveOverlays();
-    });
   }
 
   function refreshContrastBadge(el){
@@ -551,10 +703,17 @@
     state.guideLayerEl.querySelectorAll('.overlay-node').forEach(n=>n.remove());
   }
 
+  // The Inspector shows two things at once, same as Figma/VS Code style
+  // design tools: a small contrast-ratio readout above text (so you can see
+  // *why* something reads as low-contrast, not just that it does), and a
+  // small corner badge on any element with an unresolved issue — hover or
+  // focus it to read the actual explanation, not just "there's a problem here."
   function renderOverlays(){
     clearOverlayNodes();
-    if(!state.guideLayerEl) return;
-    if(state.tools.contrast){
+    if(!state.guideLayerEl || !state.tools.inspector) return;
+    const lvl = state.level.levelNumber;
+
+    if(CATEGORY_UNLOCK.Contrast <= lvl){
       state.elements.filter(el=>!el.locked && el.text && el.color).forEach(el=>{
         const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
         const bold = Number(el.fontWeight) >= 700;
@@ -568,23 +727,24 @@
         state.guideLayerEl.appendChild(tag);
       });
     }
-    if(state.tools.a11y){
-      const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-      const flaggedIds = new Set(result.feedback.filter(f=>f.type==='bad' && f.elId && f.category==='Accessibility').map(f=>f.elId));
-      flaggedIds.forEach(id=>{
-        const el = byId(id);
-        if(!el) return;
-        const flag = document.createElement('div');
-        flag.className = 'overlay-node a11y-flag';
-        flag.style.left = el.x + 'px';
-        flag.style.top = el.y + 'px';
-        flag.style.width = el.w + 'px';
-        flag.style.height = el.h + 'px';
-        const msg = result.feedback.find(f=>f.elId===id);
-        flag.dataset.msg = msg ? msg.category : 'Issue';
-        state.guideLayerEl.appendChild(flag);
-      });
-    }
+
+    const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
+    const bad = unlockedFeedback(result.feedback, lvl).filter(f=>f.type==='bad' && f.elId);
+    const byElement = new Map();
+    bad.forEach(f => { if(!byElement.has(f.elId)) byElement.set(f.elId, []); byElement.get(f.elId).push(f); });
+    byElement.forEach((issues, id) => {
+      const el = byId(id);
+      if(!el) return;
+      const flag = document.createElement('div');
+      flag.className = 'overlay-node issue-flag';
+      flag.style.left = el.x + 'px';
+      flag.style.top = el.y + 'px';
+      flag.tabIndex = 0;
+      flag.setAttribute('role','note');
+      flag.innerHTML = `<span class="issue-flag-dot">${issues.length > 1 ? issues.length : '!'}</span>
+        <span class="issue-tooltip">${issues.map(f=>`<b>${f.category}:</b> ${f.title}${f.suggest?`<div class="issue-tooltip-tip">Tip: ${f.suggest}</div>`:''}`).join('<hr>')}</span>`;
+      state.guideLayerEl.appendChild(flag);
+    });
   }
 
   function refreshLiveOverlays(){
@@ -600,6 +760,33 @@
     state.guideLayerEl.classList.toggle('show-grid', state.tools.gridVisible);
     state.guideLayerEl.style.backgroundSize = `${state.tools.gridSize}px ${state.tools.gridSize}px`;
     state.guideLayerEl.style.setProperty('--grid-opacity', state.tools.gridOpacity);
+  }
+
+  // Anchors the popover directly under the gear button that opened it,
+  // recomputed fresh each time it opens (the button itself can live in the
+  // desktop topbar or, on mobile, inside the "more tools" sheet). On mobile
+  // the sheet's own CSS already positions it sensibly (there's often no
+  // room directly below a button crammed in a bottom sheet), so this only
+  // takes over on the desktop layout where the button has a stable spot.
+  function positionPopoverBelow(panel, btn){
+    const sheetGrid = document.getElementById('mobile-tools-sheet-grid');
+    if(sheetGrid && sheetGrid.contains(btn)){
+      panel.style.position = '';
+      panel.style.top = ''; panel.style.left = ''; panel.style.right = '';
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const panelWidth = panel.offsetWidth || 240;
+    let left = r.left;
+    if(left + panelWidth > window.innerWidth - 8) left = window.innerWidth - panelWidth - 8;
+    if(left < 8) left = 8;
+    panel.style.position = 'fixed';
+    panel.style.top = (r.bottom + 8) + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+  }
+  function positionGridSettingsPanel(btn){
+    positionPopoverBelow(document.getElementById('grid-settings-panel'), btn);
   }
 
   function syncGridSettingsUI(){
@@ -779,13 +966,18 @@
     document.getElementById('tool-grid').classList.toggle('active', state.tools.gridVisible);
     document.getElementById('tool-snap').classList.toggle('active', state.tools.snap);
     document.getElementById('tool-guides').classList.toggle('active', state.tools.guides);
-    document.getElementById('tool-contrast').classList.toggle('active', state.tools.contrast);
-    document.getElementById('tool-a11y').classList.toggle('active', state.tools.a11y);
+    document.getElementById('tool-inspector').classList.toggle('active', state.tools.inspector);
     document.getElementById('tool-measure').classList.toggle('active', state.tools.measure);
     updateGridBackground();
   }
 
-  function setHint(text){ document.getElementById('editor-hint-banner').textContent = text; }
+  // Re-shows the pill whenever there's something new to say — e.g. tapping
+  // the Hint tool — even if the player already dismissed the onboarding
+  // message earlier; only an explicit dismiss (or a fresh level) hides it.
+  function setHint(text){
+    document.getElementById('editor-hint-text').textContent = text;
+    document.getElementById('editor-hint-banner').classList.remove('hidden');
+  }
 
   // Short, generic nudges per category — deliberately vaguer than the report
   // feedback (no exact numbers/instructions), since a hint should point you
@@ -816,7 +1008,7 @@
 
   function showHint(){
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-    const bad = result.feedback.find(f=>f.type==='bad');
+    const bad = unlockedFeedback(result.feedback, state.level.levelNumber).find(f=>f.type==='bad');
     if(!bad){
       clearHintHighlight();
       setHint('✨ Looking great — no major issues detected. Try Save when ready!');
@@ -855,7 +1047,7 @@
   let secondaryToolItems = null; // [{el, parent, next}], captured once in original DOM order
 
   function captureSecondaryToolItems(){
-    const ids = ['tool-grid', 'tool-grid-settings', 'tool-snap', 'tool-guides', 'tool-hint', 'live-score-chip'];
+    const ids = ['tool-grid', 'tool-grid-settings', 'tool-snap', 'tool-guides', 'tool-inspector', 'tool-hint', 'tool-show-clickable', 'live-score-chip', 'issues-chip'];
     const items = ids.map(id => {
       const el = document.getElementById(id);
       return { el, parent: el.parentNode, next: el.nextElementSibling };
@@ -895,6 +1087,21 @@
       setElementSettingsCollapsed(!document.getElementById('element-settings').classList.contains('collapsed'));
     });
 
+    document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
+      document.getElementById('editor-hint-banner').classList.add('hidden');
+    });
+
+    // Lives permanently in the panel header (see showSettings), so it's
+    // wired once here rather than rebuilt on every render — resolves the
+    // currently-selected element at click time instead of closing over one.
+    document.getElementById('f-reset-icon').addEventListener('click', ()=>{
+      const el = byId(state.selectedId);
+      if(!el) return;
+      const orig = state.original.find(o=>o.id===el.id);
+      Object.assign(el, clone(orig));
+      refreshElementDom(el); showSettings(el); pushHistory(); refreshLiveOverlays();
+    });
+
     applyToolbarLayout(MOBILE_TOOLS_MQ.matches);
     MOBILE_TOOLS_MQ.addEventListener('change', e => applyToolbarLayout(e.matches));
     document.getElementById('tool-mobile-more').addEventListener('click', showMobileToolsSheet);
@@ -905,11 +1112,15 @@
     document.getElementById('tool-undo').addEventListener('click', undo);
     document.getElementById('tool-redo').addEventListener('click', redo);
     document.getElementById('tool-grid').addEventListener('click', ()=>{ state.tools.gridVisible=!state.tools.gridVisible; updateToolButtonStates(); });
-    document.getElementById('tool-grid-settings').addEventListener('click', ()=>{
+    document.getElementById('tool-grid-settings').addEventListener('click', e=>{
       const panel = document.getElementById('grid-settings-panel');
       const willShow = panel.hidden;
       document.getElementById('typescale-panel').hidden = true;
-      if(willShow) syncGridSettingsUI();
+      document.getElementById('issues-panel').hidden = true;
+      if(willShow){
+        syncGridSettingsUI();
+        positionGridSettingsPanel(e.currentTarget);
+      }
       panel.hidden = !willShow;
       if(willShow) hideMobileToolsSheet(); // so the grid/opacity change is visible on the canvas, not hidden behind the sheet
     });
@@ -926,14 +1137,27 @@
     });
     document.getElementById('tool-snap').addEventListener('click', ()=>{ state.tools.snap=!state.tools.snap; updateToolButtonStates(); });
     document.getElementById('tool-guides').addEventListener('click', ()=>{ state.tools.guides=!state.tools.guides; updateToolButtonStates(); });
-    document.getElementById('tool-contrast').addEventListener('click', ()=>{ state.tools.contrast=!state.tools.contrast; updateToolButtonStates(); renderOverlays(); });
-    document.getElementById('tool-a11y').addEventListener('click', ()=>{ state.tools.a11y=!state.tools.a11y; updateToolButtonStates(); renderOverlays(); });
+    document.getElementById('tool-inspector').addEventListener('click', ()=>{ state.tools.inspector=!state.tools.inspector; updateToolButtonStates(); renderOverlays(); });
+    document.getElementById('issues-chip').addEventListener('click', e=>{
+      const panel = document.getElementById('issues-panel');
+      const willShow = panel.hidden;
+      document.getElementById('grid-settings-panel').hidden = true;
+      document.getElementById('typescale-panel').hidden = true;
+      if(willShow){
+        renderIssuesPanel(currentIssues());
+        positionPopoverBelow(panel, e.currentTarget);
+        hideMobileToolsSheet();
+      }
+      panel.hidden = !willShow;
+    });
     document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates(); });
     document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
+    document.getElementById('tool-show-clickable').addEventListener('click', ()=>{ playIntroFlash(); hideMobileToolsSheet(); });
     document.getElementById('tool-typescale').addEventListener('click', ()=>{
       const panel = document.getElementById('typescale-panel');
       const willShow = panel.hidden;
       document.getElementById('grid-settings-panel').hidden = true;
+      document.getElementById('issues-panel').hidden = true;
       if(willShow) buildTypeScalePanel();
       panel.hidden = !willShow;
     });

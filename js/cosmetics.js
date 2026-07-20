@@ -54,6 +54,42 @@
     { id:'decor-cat',    category:'decor', name:'Studio Cat',    rarity:'epic',      emoji:'🐱' },
     { id:'decor-trophy', category:'decor', name:'Golden Trophy', rarity:'legendary', emoji:'🏆' },
 
+    // ---- Wall posters (up to 2 equipped at once, hung above the desk) ----
+    { id:'poster-motivation', category:'poster', name:'Motivational Print', rarity:'common',    emoji:'🌟', css:'#fff3d6' },
+    { id:'poster-artprint',   category:'poster', name:'Art Print',          rarity:'rare',      emoji:'🎨', css:'#e3d6f7', isNew:true },
+    { id:'poster-cityscape',  category:'poster', name:'Cityscape',          rarity:'epic',      emoji:'🌆', css:'#cfe3ea' },
+    { id:'poster-galaxy',     category:'poster', name:'Galaxy Print',       rarity:'legendary', emoji:'🌌', css:'#1b1035', featured:true },
+
+    // ---- Desk surface skins ----
+    { id:'desk-oak',    category:'deskSkin', name:'Oak Desk',      rarity:'common',    css:'linear-gradient(180deg, #dba86e 0%, #b98849 55%, #a6763c 100%)' },
+    { id:'desk-walnut', category:'deskSkin', name:'Walnut Desk',   rarity:'rare',      css:'linear-gradient(180deg, #8a5a3c 0%, #6b4128 55%, #4f2f1c 100%)' },
+    { id:'desk-white',  category:'deskSkin', name:'Studio White',  rarity:'epic',      css:'linear-gradient(180deg, #ffffff 0%, #f0f0f0 55%, #e2e2e2 100%)', isNew:true },
+    { id:'desk-neon',   category:'deskSkin', name:'Neon Desk',     rarity:'legendary', css:'linear-gradient(90deg, #ff5f9e 0%, #7c5fc4 50%, #3fc9c2 100%)', featured:true },
+
+    // ---- Keyboard skins ----
+    { id:'kb-cream',  category:'keyboardSkin', name:'Classic Cream', rarity:'common',    css:'#ffffff' },
+    { id:'kb-black',  category:'keyboardSkin', name:'Blackout',      rarity:'rare',      css:'#2b2b30' },
+    { id:'kb-pastel', category:'keyboardSkin', name:'Pastel Keys',   rarity:'epic',      css:'linear-gradient(90deg,#ffd6e8,#d6e8ff,#d6ffe0)' },
+    { id:'kb-rgb',    category:'keyboardSkin', name:'RGB Keys',      rarity:'legendary', css:'linear-gradient(90deg,#ff3d6e,#ffcf3d,#3dff8f,#3dc9ff,#a83dff)', featured:true },
+
+    // ---- Mouse skins ----
+    { id:'mouse-white', category:'mouseSkin', name:'Classic White', rarity:'common',    css:'#ffffff' },
+    { id:'mouse-black', category:'mouseSkin', name:'Blackout',      rarity:'rare',      css:'#2b2b30' },
+    { id:'mouse-pink',  category:'mouseSkin', name:'Bubblegum',     rarity:'epic',      css:'#f7b6d2' },
+    { id:'mouse-rgb',   category:'mouseSkin', name:'RGB Mouse',     rarity:'legendary', css:'linear-gradient(135deg,#ff3d6e,#a83dff,#3dc9ff)', featured:true },
+
+    // ---- PC tower skins ----
+    { id:'tower-cream', category:'towerSkin', name:'Classic Cream', rarity:'common',    css:'var(--cream)' },
+    { id:'tower-black', category:'towerSkin', name:'Blackout',      rarity:'rare',      css:'#2b2b30' },
+    { id:'tower-glass', category:'towerSkin', name:'Tempered Glass',rarity:'epic',      css:'linear-gradient(160deg, rgba(255,255,255,0.6), rgba(180,210,230,0.4))', isNew:true },
+    { id:'tower-rgb',   category:'towerSkin', name:'RGB Tower',     rarity:'legendary', css:'linear-gradient(160deg,#ff3d6e,#a83dff,#3dc9ff)', featured:true },
+
+    // ---- Monitor bezel skins ----
+    { id:'monitor-cream', category:'monitorSkin', name:'Classic Cream', rarity:'common',    css:'var(--cream)' },
+    { id:'monitor-black', category:'monitorSkin', name:'Blackout',      rarity:'rare',      css:'#2b2b30' },
+    { id:'monitor-white', category:'monitorSkin', name:'Studio White',  rarity:'epic',      css:'#ffffff' },
+    { id:'monitor-rgb',   category:'monitorSkin', name:'RGB Bezel',     rarity:'legendary', css:'linear-gradient(90deg,#ff3d6e,#ffcf3d,#3dff8f,#3dc9ff,#a83dff)', featured:true },
+
     // ---- UI skins / visual effects ----
     { id:'skin-default',  category:'uiSkin', name:'Standard',        rarity:'common',    effect:'none' },
     { id:'skin-sparkle',  category:'uiSkin', name:'Sparkle Trails',  rarity:'epic',      effect:'sparkle' },
@@ -62,13 +98,19 @@
 
   const CATEGORY_LABELS = {
     wallpaper:'Wallpaper', windowTheme:'Window Theme', iconPack:'Icon Pack',
-    cursor:'Cursor', decor:'Desk Decor', uiSkin:'UI Skin',
+    cursor:'Cursor', decor:'Desk Decor', poster:'Posters',
+    deskSkin:'Desk', keyboardSkin:'Keyboard', mouseSkin:'Mouse', towerSkin:'PC Tower', monitorSkin:'Monitor',
+    uiSkin:'UI Skin',
   };
-  const CATEGORY_ORDER = ['wallpaper','windowTheme','iconPack','cursor','decor','uiSkin'];
+  const CATEGORY_ORDER = [
+    'wallpaper','windowTheme','iconPack','cursor','decor','poster',
+    'deskSkin','keyboardSkin','mouseSkin','towerSkin','monitorSkin','uiSkin',
+  ];
   // Every player starts owning (and wearing) these baseline items.
   const CATEGORY_DEFAULT = {
     wallpaper:'wp-mint', windowTheme:'theme-classic', iconPack:'icons-classic',
     cursor:'cursor-default', uiSkin:'skin-default',
+    deskSkin:'desk-oak', keyboardSkin:'kb-cream', mouseSkin:'mouse-white', towerSkin:'tower-cream', monitorSkin:'monitor-cream',
   };
 
   function getItem(id){ return ITEMS.find(i=>i.id===id); }

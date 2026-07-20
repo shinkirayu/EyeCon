@@ -15,18 +15,160 @@
   // ---- Settings screen draft state (Apply/Cancel pattern) ----
   let settingsDraft = Object.assign({}, profile.settings);
   let settingsDirty = false;
-  let settingsTab = 'general';
   let settingsQuery = '';
 
   function announce(text){
     document.getElementById('a11y-announcer').textContent = text;
   }
 
-  function showScreen(name){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById(name).classList.add('active');
-    document.getElementById('global-taskbar').classList.toggle('desktop-hidden', name === 'screen-home');
-    announce(name.replace('screen-','').replace('-',' ') + ' screen');
+  // onShown fires exactly when `name` actually gets .active applied — which
+  // is NOT necessarily synchronous with this call returning, since the
+  // outgoing screen may still be mid-closing-animation. Anything that reads
+  // layout (e.g. EC_EDITOR.open() measuring the canvas wrap's size) MUST
+  // wait for onShown rather than running right after showScreen() returns,
+  // or it'll measure a still-display:none element and compute a bogus size.
+  function showScreen(name, onShown){
+    // Guarantee any content currently on loan to the monitor popup (see
+    // openMonitorAppPopup) is back in its real screen before that screen
+    // might be shown for real — otherwise it would appear empty. Instant,
+    // not animated — the screen switch itself is about to animate anyway.
+    closeMonitorAppPopup(true);
+    const current = document.querySelector('.screen.active');
+    const reduceMotion = document.body.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const swap = () => {
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','closing'));
+      document.getElementById(name).classList.add('active');
+      document.getElementById('global-taskbar').classList.toggle('desktop-hidden', name === 'screen-home');
+      announce(name.replace('screen-','').replace('-',' ') + ' screen');
+      if(onShown) onShown();
+    };
+    if(current && current.id !== name && !reduceMotion){
+      current.classList.add('closing');
+      setTimeout(swap, 180);
+    } else {
+      swap();
+    }
+  }
+
+  // A brief loading transition between screens — currently used between
+  // "Accept" on a mail job and the editor actually opening, since cutting
+  // straight in feels abrupt for what's framed as "opening your workspace."
+  // There's no real async work to wait on, so this is a fixed-length,
+  // purely cosmetic beat; skipped entirely under reduced motion.
+  //
+  // onDone receives a `finishFade` callback instead of the overlay fading
+  // itself out immediately — the screen switch it triggers (showScreen)
+  // can itself take another beat to actually swap (its own closing
+  // animation on the outgoing screen), and fading the loading overlay out
+  // before that swap has actually happened let the old screen show through.
+  // The caller is expected to call finishFade() only once the new screen
+  // has genuinely finished showing (e.g. from showScreen's onShown).
+  function showLoadingTransition(onDone){
+    const overlay = document.getElementById('app-loading-screen');
+    const reduceMotion = document.body.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finishFade = () => {
+      overlay.classList.add('leaving');
+      setTimeout(()=> overlay.classList.add('hidden'), 350);
+    };
+    if(!overlay || reduceMotion){ onDone(()=>{}); return; }
+    overlay.classList.remove('hidden', 'leaving');
+    overlay.classList.add('entering');
+    // Double rAF: the first lets the browser actually paint the opacity:0
+    // "entering" state before the second one removes it, so the transition
+    // to opacity:1 plays instead of being coalesced into a single frame.
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=> overlay.classList.remove('entering'));
+    });
+    setTimeout(()=> onDone(finishFade), 600);
+  }
+
+  // ---------------- Title-screen monitor: live mini desktop ----------------
+  // The monitor IS the entry point now (no separate logo/Start button) — it
+  // shows a small honest live view of the real desktop. Clicking the
+  // background takes you straight to the real desktop; clicking a mini icon
+  // instead pops a floating app window up over the monitor (see
+  // openMonitorAppPopup below) — no navigation, no transition. Profile data
+  // is already loaded at this point (see the top of this file), so these
+  // numbers are accurate immediately.
+  function updateMiniDesktop(){
+    const unread = window.EC_LEVELS.filter(l=>!profile.completed.includes(l.id)).length;
+    const badge = document.getElementById('mini-badge-mail');
+    if(badge){
+      badge.textContent = unread;
+      badge.style.display = unread > 0 ? '' : 'none';
+    }
+    const currency = document.getElementById('mini-taskbar-currency');
+    if(currency) currency.textContent = `✨ ${profile.currency}`;
+    const clock = document.getElementById('mini-taskbar-clock');
+    const realClock = document.getElementById('taskbar-clock');
+    if(clock && realClock) clock.textContent = realClock.textContent;
+  }
+
+  // ---------------- Monitor app popup (title-screen floating window) ----------------
+  // Clicking a mini icon doesn't navigate anywhere — it borrows that app's
+  // real content pane (same render function, same listeners, already wired
+  // once at init) into a floating window over the monitor, then hands it
+  // back to its normal screen on close. Same move-and-restore idea as the
+  // editor's mobile tools sheet, just for one element instead of many.
+  const MONITOR_APPS = {
+    mail:     { title:'Eye Mail',     icon:'📬', screenId:'screen-shell',    contentSelector:'.mail-body',        render: ()=>renderCurrentFolder() },
+    stats:    { title:'Studio Stats', icon:'📊', screenId:'screen-stats',    contentSelector:'.app-content-wrap', render: ()=>renderStatsPanel() },
+    shop:     { title:'Shop',         icon:'🛍️', screenId:'screen-shop',     contentSelector:'.app-content-wrap', render: ()=>{ renderShopPanel(); updateCurrencyDisplays(); } },
+    settings: { title:'Settings',     icon:'⚙️', screenId:'screen-settings', contentSelector:'.app-content-wrap', render: ()=>renderSettingsPanel() },
+  };
+  let monitorPopupBorrowed = null; // { el, parent, next } of whatever content is currently on loan
+
+  function openMonitorAppPopup(appKey, opts){
+    const spec = MONITOR_APPS[appKey];
+    if(!spec) return;
+    closeMonitorAppPopup(true); // instant — about to replace its content anyway, no need to animate the old one out
+    const screenEl = document.getElementById(spec.screenId);
+    const contentEl = screenEl && screenEl.querySelector(spec.contentSelector);
+    if(!contentEl) return;
+    monitorPopupBorrowed = { el: contentEl, parent: contentEl.parentNode, next: contentEl.nextElementSibling };
+    document.getElementById('monitor-app-popup-body').appendChild(contentEl);
+    spec.render();
+    document.getElementById('monitor-app-popup-icon').textContent = spec.icon;
+    document.getElementById('monitor-app-popup-title').textContent = spec.title;
+    const popup = document.getElementById('monitor-app-popup');
+    popup.classList.toggle('note-style', !!(opts && opts.noteStyle));
+    popup.classList.remove('hidden');
+  }
+
+  function closeMonitorAppPopup(instant){
+    const popup = document.getElementById('monitor-app-popup');
+    if(!popup || popup.classList.contains('hidden')) return;
+    const reduceMotion = document.body.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const restore = () => {
+      if(monitorPopupBorrowed){
+        monitorPopupBorrowed.parent.insertBefore(monitorPopupBorrowed.el, monitorPopupBorrowed.next);
+        monitorPopupBorrowed = null;
+      }
+    };
+    if(instant || reduceMotion){
+      popup.classList.remove('closing');
+      popup.classList.add('hidden');
+      restore();
+      return;
+    }
+    popup.classList.add('closing');
+    setTimeout(()=>{
+      popup.classList.remove('closing');
+      popup.classList.add('hidden');
+      restore();
+    }, 180);
+  }
+
+  // Clicking the monitor's plain background: if a popup window is open,
+  // this just dismisses it (same as clicking outside any other floating
+  // window); otherwise it's the "enter" action.
+  function miniDesktopBackgroundAction(){
+    const popup = document.getElementById('monitor-app-popup');
+    if(popup && !popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
+    showScreen('screen-desktop');
   }
 
   // ---------------- Settings application ----------------
@@ -73,7 +215,9 @@
     ];
   }
 
-  const SETTINGS_TABS = [
+  // Still called "tab" in the schema (def.tab) purely as a grouping key —
+  // there's no actual tab UI anymore, every section renders on one page.
+  const SETTINGS_SECTIONS = [
     { id:'general', icon:'🏠', label:'General' },
     { id:'audio', icon:'🔊', label:'Audio' },
     { id:'graphics', icon:'🎨', label:'Graphics' },
@@ -101,13 +245,11 @@
     return { tip, control };
   }
 
-  function renderSettingRow(def, value, opts){
-    opts = opts || {};
+  function renderSettingRow(def, value){
     const { tip, control } = settingRowControlHtml(def, value);
-    const tabTag = opts.showTabTag ? `<span class="settings-search-result-tag" data-jump-tab="${def.tab}">${SETTINGS_TABS.find(t=>t.id===def.tab).label}</span>` : '';
     return `<div class="settings-item" data-row-for="${def.id}">
       <div class="settings-item-text">
-        <div class="settings-item-label">${def.label}${tip}${tabTag}</div>
+        <div class="settings-item-label">${def.label}${tip}</div>
         ${def.desc?`<div class="settings-item-desc">${def.desc}</div>`:''}
       </div>
       <div class="settings-item-control">${control}</div>
@@ -119,6 +261,11 @@
     let html = '';
     if(tabId === 'general'){
       html += `<p class="settings-tab-desc">Your EyeCon Studio profile — Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}, ${profile.completed.length}/${window.EC_LEVELS.length} projects completed, ${profile.inventory.length} cosmetics collected.</p>`;
+      html += `<div class="settings-card settings-testing-card"><div class="settings-item">
+        <div class="settings-item-text"><div class="settings-item-label">🧪 Testing: Add Sparks</div>
+        <div class="settings-item-desc">Grants a big batch of Sparks so you can try the gacha freely. Temporary testing aid.</div></div>
+        <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-add-sparks">+99,999 ✨</button></div>
+      </div></div>`;
       html += `<div class="settings-card settings-danger-card"><div class="settings-item">
         <div class="settings-item-text"><div class="settings-item-label">Reset All Progress</div>
         <div class="settings-item-desc">Erases XP, Sparks, inventory and completed levels. This cannot be undone.</div></div>
@@ -130,11 +277,17 @@
     return html;
   }
 
+  function renderAllSectionsHtml(){
+    return SETTINGS_SECTIONS.map(sec =>
+      `<section class="settings-section"><h3 class="settings-tab-title">${sec.icon} ${sec.label}</h3>${renderSettingsTabBody(sec.id)}</section>`
+    ).join('');
+  }
+
   function renderSettingsSearchResults(query){
     const q = query.trim().toLowerCase();
     const matches = getSettingsSchema().filter(d => d.label.toLowerCase().includes(q) || (d.desc||'').toLowerCase().includes(q));
     if(matches.length === 0) return `<div class="settings-no-results">No settings match "${query}".</div>`;
-    return `<div class="settings-search-results">${matches.map(def=>renderSettingRow(def, settingsDraft[def.id], {showTabTag:true})).join('')}</div>`;
+    return `<div class="settings-search-results">${matches.map(def=>renderSettingRow(def, settingsDraft[def.id])).join('')}</div>`;
   }
 
   function renderSettingsPanel(){
@@ -142,18 +295,13 @@
     settingsDraft = Object.assign({}, profile.settings);
     settingsDirty = false;
 
-    panel.innerHTML = `<div class="settings-shell">
+    panel.innerHTML = `<div class="settings-shell settings-shell-single">
       <div class="settings-search-row">
         <div class="settings-search"><span class="icon-search">🔍</span>
           <input type="text" id="settings-search-input" placeholder="Search settings…" value="${settingsQuery}" aria-label="Search settings"/>
         </div>
       </div>
-      <div class="settings-body">
-        <nav class="settings-nav" id="settings-nav">
-          ${SETTINGS_TABS.map(t=>`<button class="settings-nav-btn ${settingsTab===t.id?'active':''}" data-tab="${t.id}"><span class="settings-nav-icon">${t.icon}</span>${t.label}</button>`).join('')}
-        </nav>
-        <div class="settings-content" id="settings-content"></div>
-      </div>
+      <div class="settings-content settings-content-single" id="settings-content"></div>
       <div class="settings-footer">
         <div class="footer-group"><span class="settings-dirty-note" id="settings-dirty-note">Unsaved changes</span></div>
         <div class="footer-group">
@@ -166,12 +314,7 @@
 
     function renderBody(){
       const content = document.getElementById('settings-content');
-      if(settingsQuery.trim()){
-        content.innerHTML = renderSettingsSearchResults(settingsQuery);
-      } else {
-        const meta = SETTINGS_TABS.find(t=>t.id===settingsTab);
-        content.innerHTML = `<h3 class="settings-tab-title">${meta.icon} ${meta.label}</h3>` + renderSettingsTabBody(settingsTab);
-      }
+      content.innerHTML = settingsQuery.trim() ? renderSettingsSearchResults(settingsQuery) : renderAllSectionsHtml();
       wireContentControls();
     }
 
@@ -183,15 +326,19 @@
 
     function wireContentControls(){
       const content = document.getElementById('settings-content');
-      content.querySelectorAll('[data-jump-tab]').forEach(tag=>{
-        tag.addEventListener('click', ()=>{ settingsTab = tag.dataset.jumpTab; settingsQuery=''; document.getElementById('settings-search-input').value=''; refreshNavAndBody(); });
-      });
       const resetBtn = document.getElementById('set-reset-progress');
       if(resetBtn) resetBtn.addEventListener('click', ()=>{
         if(window.confirm('Reset all EyeCon progress? This cannot be undone.')){
           profile = window.EC_STORE.defaultProfile();
           save(); applySettings(); refreshHeader(); renderSettingsPanel();
         }
+      });
+      const addSparksBtn = document.getElementById('set-add-sparks');
+      if(addSparksBtn) addSparksBtn.addEventListener('click', ()=>{
+        profile.currency += 99999;
+        save();
+        updateCurrencyDisplays();
+        window.EC_SOUND.play('coin');
       });
       content.querySelectorAll('[data-type="toggle"]').forEach(input=>{
         input.addEventListener('change', ()=>{
@@ -236,19 +383,6 @@
       });
     }
 
-    function refreshNavAndBody(){
-      document.querySelectorAll('.settings-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===settingsTab));
-      renderBody();
-    }
-
-    document.getElementById('settings-nav').querySelectorAll('.settings-nav-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        settingsTab = btn.dataset.tab;
-        settingsQuery = ''; document.getElementById('settings-search-input').value = '';
-        window.EC_SOUND.play('tabSwitch');
-        refreshNavAndBody();
-      });
-    });
     document.getElementById('settings-search-input').addEventListener('input', e=>{
       settingsQuery = e.target.value;
       renderBody();
@@ -288,6 +422,7 @@
     document.getElementById('inbox-count').textContent = unreadCount;
     document.getElementById('desktop-inbox-badge').textContent = unreadCount;
     updateCurrencyDisplays();
+    updateMiniDesktop();
   }
 
   function updateCurrencyDisplays(){
@@ -296,6 +431,7 @@
     if(taskbar) taskbar.textContent = text;
     const shopChip = document.getElementById('shop-currency-chip');
     if(shopChip) shopChip.textContent = text;
+    updateMiniDesktop();
   }
 
   // ---------------- Mail folder switching (within the Mail app) ----------------
@@ -348,38 +484,17 @@
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 4 4, auto`;
   }
 
-  function applyCosmetics(){
-    const eq = profile.equipped;
-    const C = window.EC_COSMETICS;
+  // Applies the equipped wallpaper, decor stickers and particle effect to
+  // any "scene" host + its decor container — used for both the OS desktop
+  // and the title screen's desk, so a cosmetic you've equipped shows up
+  // everywhere your workspace is visible, not just after you hit Start.
+  function applyCosmeticsToScene(sceneEl, decorHost, fxLayerId, wp, decorIds, skin){
+    if(sceneEl) sceneEl.style.background = wp ? wp.css : '';
 
-    const wallpaperEl = document.getElementById('desktop-wallpaper');
-    const wp = C.getItem(eq.wallpaper);
-    if(wallpaperEl) wallpaperEl.style.background = wp ? wp.css : '';
-
-    const theme = C.getItem(eq.windowTheme);
-    if(theme){
-      document.documentElement.style.setProperty('--purple', theme.accent);
-      document.documentElement.style.setProperty('--teal', theme.secondary);
-      document.documentElement.style.setProperty('--teal-dark', theme.secondaryDark);
-    }
-
-    const pack = C.getItem(eq.iconPack);
-    if(pack){
-      const map = { mail:'glyph-mail', stats:'glyph-stats', settings:'glyph-settings', shop:'glyph-shop' };
-      Object.keys(map).forEach(k=>{
-        const el = document.getElementById(map[k]);
-        if(el && pack.icons[k]) el.textContent = pack.icons[k];
-      });
-    }
-
-    const cursorItem = C.getItem(eq.cursor);
-    document.body.style.cursor = (cursorItem && cursorItem.emoji) ? buildEmojiCursorCss(cursorItem.emoji) : '';
-
-    const decorHost = document.getElementById('desktop-decor');
     if(decorHost){
       decorHost.innerHTML = '';
-      (eq.decor||[]).forEach(id=>{
-        const item = C.getItem(id);
+      (decorIds||[]).forEach(id=>{
+        const item = window.EC_COSMETICS.getItem(id);
         if(!item) return;
         const span = document.createElement('span');
         span.className = 'decor-item';
@@ -388,13 +503,12 @@
       });
     }
 
-    if(wallpaperEl){
-      const oldFx = document.getElementById('skin-fx-layer');
+    if(sceneEl){
+      const oldFx = document.getElementById(fxLayerId);
       if(oldFx) oldFx.remove();
-      const skin = C.getItem(eq.uiSkin);
       if(skin && skin.effect && skin.effect !== 'none' && currentParticleSetting !== 'off'){
         const fxLayer = document.createElement('div');
-        fxLayer.id = 'skin-fx-layer';
+        fxLayer.id = fxLayerId;
         fxLayer.className = 'skin-fx-layer';
         const glyph = skin.effect === 'sparkle' ? '✨' : '🎉';
         const count = currentParticleSetting === 'reduced' ? 6 : 14;
@@ -408,9 +522,95 @@
           p.style.fontSize = (14+Math.random()*10).toFixed(0)+'px';
           fxLayer.appendChild(p);
         }
-        wallpaperEl.appendChild(fxLayer);
+        sceneEl.appendChild(fxLayer);
       }
     }
+  }
+
+  function applyCosmetics(){
+    const eq = profile.equipped;
+    const C = window.EC_COSMETICS;
+
+    const wp = C.getItem(eq.wallpaper);
+    const skin = C.getItem(eq.uiSkin);
+
+    applyCosmeticsToScene(
+      document.getElementById('desktop-wallpaper'), document.getElementById('desktop-decor'),
+      'skin-fx-layer', wp, eq.decor, skin
+    );
+    applyCosmeticsToScene(
+      document.getElementById('desk-scene'), document.getElementById('desk-decor'),
+      'desk-skin-fx-layer', wp, eq.decor, skin
+    );
+    // The monitor's mini desktop mirrors the real desktop's wallpaper (no
+    // decor/particles at that scale — too small to read).
+    const miniDesktop = document.getElementById('mini-desktop');
+    if(miniDesktop) miniDesktop.style.background = wp ? wp.css : '';
+
+    // Workstation prop skins — desk surface, keyboard, mouse, PC tower,
+    // monitor bezel. Each just overrides that element's background via
+    // inline style; clearing it (no equipped item) falls back to the CSS
+    // default, so an old save with no deskSkin/etc. equipped still looks
+    // exactly as it did before this system existed.
+    const propSkinTargets = {
+      deskSkin: '#desk-scene .desk-surface',
+      keyboardSkin: '#desk-scene .keyboard',
+      mouseSkin: '#desk-scene .mouse',
+      towerSkin: '#desk-scene .tower',
+      monitorSkin: '#desk-scene .monitor',
+    };
+    Object.keys(propSkinTargets).forEach(cat=>{
+      const el = document.querySelector(propSkinTargets[cat]);
+      if(!el) return;
+      const item = C.getItem(eq[cat]);
+      el.style.background = item ? item.css : '';
+    });
+
+    // Wall posters — up to 2 equipped at once, hung above the desk.
+    const postersHost = document.getElementById('desk-posters');
+    if(postersHost){
+      postersHost.innerHTML = '';
+      (eq.poster||[]).forEach(id=>{
+        const item = C.getItem(id);
+        if(!item) return;
+        const frame = document.createElement('div');
+        frame.className = 'poster-item';
+        frame.style.background = item.css;
+        frame.textContent = item.emoji;
+        postersHost.appendChild(frame);
+      });
+    }
+
+    const theme = C.getItem(eq.windowTheme);
+    if(theme){
+      document.documentElement.style.setProperty('--purple', theme.accent);
+      document.documentElement.style.setProperty('--teal', theme.secondary);
+      document.documentElement.style.setProperty('--teal-dark', theme.secondaryDark);
+    }
+
+    const pack = C.getItem(eq.iconPack);
+    if(pack){
+      const map = {
+        mail:['glyph-mail','mini-icon-mail'], stats:['glyph-stats','mini-icon-stats'],
+        settings:['glyph-settings','mini-icon-settings'], shop:['glyph-shop','mini-icon-shop'],
+      };
+      Object.keys(map).forEach(k=>{
+        if(!pack.icons[k]) return;
+        map[k].forEach(id=>{
+          const el = document.getElementById(id);
+          if(!el) return;
+          // mini-icon-mail nests a live badge span — only touch the glyph's
+          // own text node so the badge (added/updated by updateMiniDesktop)
+          // survives an icon-pack swap.
+          const textNode = Array.from(el.childNodes).find(n=>n.nodeType===Node.TEXT_NODE);
+          if(textNode) textNode.nodeValue = pack.icons[k];
+          else el.insertBefore(document.createTextNode(pack.icons[k]), el.firstChild);
+        });
+      });
+    }
+
+    const cursorItem = C.getItem(eq.cursor);
+    document.body.style.cursor = (cursorItem && cursorItem.emoji) ? buildEmojiCursorCss(cursorItem.emoji) : '';
   }
 
   // ---------------- Shop / Wardrobe / Gacha ----------------
@@ -420,12 +620,17 @@
     renderShopPanel();
   }
 
+  const SKIN_CATEGORIES = ['deskSkin','keyboardSkin','mouseSkin','towerSkin','monitorSkin'];
+  const SKIN_GLYPHS = { deskSkin:'🪑', keyboardSkin:'⌨️', mouseSkin:'🖱️', towerSkin:'🖥️', monitorSkin:'🖼️' };
+
   function itemPreviewHtml(item){
     if(item.category==='wallpaper') return `<div class="wardrobe-item-preview" style="background:${item.css}"></div>`;
     if(item.category==='windowTheme') return `<div class="wardrobe-item-preview" style="background:linear-gradient(135deg, ${item.accent}, ${item.secondary})"></div>`;
     if(item.category==='iconPack') return `<div class="wardrobe-item-preview">${item.icons.mail}</div>`;
     if(item.category==='cursor') return `<div class="wardrobe-item-preview">${item.emoji||'🖱️'}</div>`;
     if(item.category==='decor') return `<div class="wardrobe-item-preview">${item.emoji}</div>`;
+    if(item.category==='poster') return `<div class="wardrobe-item-preview" style="background:${item.css}">${item.emoji}</div>`;
+    if(SKIN_CATEGORIES.includes(item.category)) return `<div class="wardrobe-item-preview" style="background:${item.css}"></div>`;
     if(item.category==='uiSkin') return `<div class="wardrobe-item-preview">${item.effect==='sparkle'?'✨':item.effect==='confetti'?'🎉':'🧩'}</div>`;
     return '<div class="wardrobe-item-preview">❔</div>';
   }
@@ -436,12 +641,14 @@
     if(item.category==='iconPack') return item.icons.mail;
     if(item.category==='cursor') return item.emoji||'🖱️';
     if(item.category==='decor') return item.emoji;
+    if(item.category==='poster') return item.emoji;
+    if(SKIN_CATEGORIES.includes(item.category)) return SKIN_GLYPHS[item.category];
     if(item.category==='uiSkin') return item.effect==='sparkle'?'✨':item.effect==='confetti'?'🎉':'🧩';
     return '🎁';
   }
 
   function isEquipped(item){
-    if(item.category==='decor') return (profile.equipped.decor||[]).includes(item.id);
+    if(window.EC_STORE.MULTI_SLOT_CATEGORIES[item.category]) return (profile.equipped[item.category]||[]).includes(item.id);
     return profile.equipped[item.category] === item.id;
   }
 
@@ -533,8 +740,9 @@
     const items = C.itemsByCategory(wardrobeCategory);
     const ownedTotal = profile.inventory.length;
     const catalogTotal = C.ITEMS.length;
-    const extra = wardrobeCategory==='decor'
-      ? `<div class="wardrobe-item-slot-count">${(profile.equipped.decor||[]).length}/3 decor slots used — click an owned item to toggle it</div>`
+    const slotCap = window.EC_STORE.MULTI_SLOT_CATEGORIES[wardrobeCategory];
+    const extra = slotCap
+      ? `<div class="wardrobe-item-slot-count">${(profile.equipped[wardrobeCategory]||[]).length}/${slotCap} ${C.CATEGORY_LABELS[wardrobeCategory].toLowerCase()} slots used — click an owned item to toggle it</div>`
       : '';
     const cards = items.map(item=>{
       const owned = profile.inventory.includes(item.id);
@@ -823,7 +1031,10 @@
     const fl = document.getElementById('feedback-list');
     fl.classList.remove('show-details');
     fl.innerHTML = '';
-    result.feedback.forEach(f=>{
+    // editorOnly items exist purely to give the live in-editor Inspector an
+    // exact element to point at — the Design Review keeps its original,
+    // less repetitive summary-style feedback.
+    result.feedback.filter(f=>!f.editorOnly).forEach(f=>{
       const icon = f.type==='good' ? '✅' : f.type==='bad' ? '❌' : '💡';
       fl.innerHTML += `<div class="feedback-item ${f.type}"><span class="fi-icon">${icon}</span>
         <div class="fi-body"><b>${f.title}</b>${f.detail?`<div>${f.detail}</div>`:''}${f.suggest?`<div class="fi-suggest">Tip: ${f.suggest}</div>`:''}</div></div>`;
@@ -941,6 +1152,7 @@
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12; if(h===0) h = 12;
     document.getElementById('taskbar-clock').textContent = `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+    updateMiniDesktop();
   }
 
   // ---------------- Desktop apps ----------------
@@ -966,14 +1178,37 @@
     setInterval(updateClock, 15000);
     initFullscreenToggle();
 
-    document.getElementById('btn-start').addEventListener('click', ()=>{
-      showScreen('screen-desktop');
+    // Centralized on the whole desk scene rather than just the monitor,
+    // since the popup window floats well beyond the monitor's own bounds —
+    // clicking anywhere outside it (not just within the tiny monitor) should
+    // dismiss it, same as any other floating window.
+    document.getElementById('desk-scene').addEventListener('click', e=>{
+      // composedPath() is captured at dispatch time, before any handler runs —
+      // e.target.closest() would break here, because clicking something
+      // inside the popup (e.g. a Shop tab) can re-render that content via
+      // innerHTML, detaching e.target from the document before this bubble
+      // listener runs, which would make .closest() wrongly report "outside."
+      const path = e.composedPath();
+      const popup = document.getElementById('monitor-app-popup');
+      if(path.includes(popup)) return;
+      if(!popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
+      if(path.includes(document.getElementById('sticky-note-settings'))){ openMonitorAppPopup('settings', { noteStyle:true }); return; }
+      const iconEl = e.target.closest('.mini-desktop-icon');
+      if(iconEl){ openMonitorAppPopup(iconEl.dataset.app); return; }
+      if(path.includes(document.getElementById('mini-desktop'))) showScreen('screen-desktop');
     });
+    document.getElementById('sticky-note-settings').addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openMonitorAppPopup('settings', { noteStyle:true }); }
+    });
+    document.getElementById('mini-desktop').addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); miniDesktopBackgroundAction(); }
+    });
+    document.getElementById('monitor-app-popup-close').addEventListener('click', ()=>closeMonitorAppPopup());
 
     document.getElementById('icon-mail').addEventListener('click', openMailApp);
     document.getElementById('icon-stats').addEventListener('click', openStatsApp);
-    document.getElementById('icon-settings').addEventListener('click', openSettingsApp);
     document.getElementById('icon-shop').addEventListener('click', openShopApp);
+    document.getElementById('icon-settings').addEventListener('click', openSettingsApp);
 
     document.getElementById('mail-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     document.getElementById('stats-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
@@ -981,6 +1216,9 @@
     document.getElementById('shop-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
 
     document.getElementById('taskbar-home').addEventListener('click', ()=>showScreen('screen-desktop'));
+    // A way back to the title screen from the real desktop — matters most in
+    // fullscreen, where there's no browser chrome to fall back on.
+    document.getElementById('desktop-watermark-btn').addEventListener('click', ()=>showScreen('screen-home'));
     document.getElementById('taskbar-profile').addEventListener('click', openStatsApp);
     document.getElementById('taskbar-shop').addEventListener('click', openShopApp);
     document.getElementById('btn-gacha-continue').addEventListener('click', ()=>{
@@ -1009,10 +1247,14 @@
 
     window.EC_MAIL.setHandlers({
       onAccept: level => {
-        showScreen('screen-editor');
-        window.EC_EDITOR.open(level);
-        levelStartTime = Date.now();
-        startTimerIfNeeded();
+        showLoadingTransition((finishFade)=>{
+          showScreen('screen-editor', ()=>{
+            window.EC_EDITOR.open(level);
+            levelStartTime = Date.now();
+            startTimerIfNeeded();
+            finishFade();
+          });
+        });
       },
       onSend: (level, result) => {
         showToast(`✉️ Reply sent to ${level.clientName}!`, 2500);

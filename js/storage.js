@@ -46,7 +46,7 @@
       history: [],         // {levelId, name, date, score, grade, scores:{...}}
       unlockedBadges: [],
       inventory: startingItems.slice(),          // owned cosmetic item ids
-      equipped: Object.assign({ decor: [] }, window.EC_COSMETICS.CATEGORY_DEFAULT),
+      equipped: Object.assign({ decor: [], poster: [] }, window.EC_COSMETICS.CATEGORY_DEFAULT),
       pity: { sinceEpic: 0, sinceLegendary: 0 },
       settings: defaultSettings(),
     };
@@ -210,13 +210,18 @@
     return results;
   }
 
+  // Categories where several items can be worn at once, each with its own
+  // slot cap — decor (desk stickers) and poster (wall art).
+  const MULTI_SLOT_CATEGORIES = { decor: 3, poster: 2 };
+
   function equipItem(profile, item){
-    if(item.category === 'decor'){
-      const list = profile.equipped.decor || (profile.equipped.decor = []);
+    const slotCap = MULTI_SLOT_CATEGORIES[item.category];
+    if(slotCap){
+      const list = profile.equipped[item.category] || (profile.equipped[item.category] = []);
       const idx = list.indexOf(item.id);
       if(idx >= 0){ list.splice(idx,1); }
       else {
-        if(list.length >= 3) return false; // slots full
+        if(list.length >= slotCap) return false; // slots full
         list.push(item.id);
       }
     } else {
@@ -228,7 +233,7 @@
 
   window.EC_STORE = {
     load, save, defaultProfile, defaultSettings, levelFromTotalXp, xpForLevel, recordSubmission, xpAwardForGrade, BADGES,
-    computeLevelReward, pullGacha, pullGachaX10, equipItem, getPityInfo,
+    computeLevelReward, pullGacha, pullGachaX10, equipItem, getPityInfo, MULTI_SLOT_CATEGORIES,
     GACHA_COST, GACHA_COST_X10, PITY_EPIC_AT, PITY_LEGENDARY_AT,
   };
 })();
