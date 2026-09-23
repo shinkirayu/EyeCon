@@ -1,0 +1,9 @@
+node_modules/
+playwright-report/
+test-results/
+.vite/
+dist/
+.vercel/
+.env
+.env.*
+!.env.example

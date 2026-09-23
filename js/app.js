@@ -5,10 +5,10 @@
 
   let profile = window.EC_STORE.load();
   let currentFolder = 'inbox';
-  let lastReportLevel = null, lastReportResult = null;
+  let pendingSubmission = null;
   let timerInterval = null;
   let levelStartTime = null;
-  let shopTab = 'gacha';
+  let shopTab = 'featured';
   let wardrobeCategory = 'wallpaper';
   let currentParticleSetting = profile.settings.particles || 'full';
 
@@ -49,6 +49,126 @@
     } else {
       swap();
     }
+  }
+
+  // ---------------- First-day guide ----------------
+  // The first trip from the title screen lands on the desk, then Pixel gives
+  // the player a compact explanation before their very first client email.
+  // Piko's guide sequence: null | 'mail' | 'inbox' | 'attachment' | 'accept' | 'element' | 'controls' | 'save' | 'send'
+  const pikoEnabled = false;
+  let pikoStage = null;
+  function isFirstDay(){
+    return !profile.onboarding?.seen && profile.completed.length === 0 && profile.history.length === 0;
+  }
+  // Piko's intro: three lines, then he points at the Mail icon once the
+  // first client email arrives — same beats as the reference build's
+  // pikoScript.tutorial, just driven by EC_PIKO instead of a static modal.
+  function runPikoIntro(){
+    const P = window.EC_PIKO, lines = P.SCRIPT.tutorial;
+    P.say(lines[0], { onDone: ()=>{
+      P.say(lines[1], { onDone: ()=>{
+        window.EC_SOUND.play('newMail');
+        const mailIcon = document.getElementById('icon-mail');
+        if(mailIcon) mailIcon.classList.add('tutorial-mail-pulse');
+        announce('New email received.');
+        P.say(lines[2], { onDone: ()=>{
+          pikoStage = 'mail';
+          P.pointAt(mailIcon);
+        }});
+      }});
+    }});
+  }
+  function startFirstDayGuide(){
+    if(!pikoEnabled || !isFirstDay()) return;
+    runPikoIntro();
+  }
+  // Settings > Testing: re-runs Piko's whole guide chain from the desktop,
+  // bypassing the isFirstDay() gate so it can be replayed on a save that's
+  // already past day one.
+  function replayPikoTutorial(){
+    if(!pikoEnabled) return;
+    pikoStage = null;
+    window.EC_PIKO.clearTarget();
+    window.EC_PIKO.hideBubble();
+    showScreen('screen-desktop', ()=>{
+      document.getElementById('icon-mail')?.classList.remove('tutorial-mail-pulse');
+      runPikoIntro();
+    });
+  }
+  // Called once Mail is opened while Piko is waiting on the 'mail' stage —
+  // points at the first ticket row and asks the player to open it.
+  function pikoAdvanceToInbox(){
+    if(pikoStage !== 'mail') return;
+    // Drop the spotlight immediately (screen is mid-transition to Mail) and
+    // wait for it to actually settle before re-showing it on the inbox row —
+    // re-measuring too early is what put the cursor in the corner before.
+    window.EC_PIKO.clearTarget();
+    document.getElementById('icon-mail')?.classList.remove('tutorial-mail-pulse');
+    pikoStage = 'inbox';
+    setTimeout(()=>{
+      const row = document.querySelector('#mail-list .mail-item');
+      const level = window.EC_STORE.commissionInbox(profile)[0];
+      if(row && level){
+        window.EC_PIKO.pointAt(row);
+        window.EC_PIKO.say(window.EC_PIKO.SCRIPT.inboxGuide(level.clientName));
+      }
+    }, 450);
+  }
+  // The rest of Piko's chain (attachment → accept → element → controls →
+  // save → send) is driven by delegated clicks — see initPikoGuideChain().
+  function initPikoGuideChain(){
+    document.addEventListener('click', e=>{
+      if(pikoStage === 'inbox' && e.target.closest('#mail-list .mail-item')){
+        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
+        pikoStage = 'attachment';
+        requestAnimationFrame(()=>{
+          const chip = document.getElementById('attachment-chip');
+          if(chip){ window.EC_PIKO.pointAt(chip); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.previewGuide); }
+        });
+        return;
+      }
+      if((pikoStage === 'attachment' || pikoStage === 'accept') && e.target.closest('#btn-accept-job')){
+        pikoStage = 'element';
+        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
+        return;
+      }
+      if(pikoStage === 'attachment' && e.target.closest('#attachment-chip')){
+        pikoStage = 'accept';
+        requestAnimationFrame(()=>{
+          window.EC_PIKO.pointAt(document.getElementById('btn-accept-job'));
+          window.EC_PIKO.say(window.EC_PIKO.SCRIPT.acceptGuide, { top:true });
+        });
+        return;
+      }
+      if(pikoStage === 'element' && e.target.closest('#editor-canvas .el:not([data-locked="1"])')){
+        pikoStage = 'controls';
+        window.EC_PIKO.clearTarget();
+        requestAnimationFrame(()=>{
+          const panel = document.getElementById('element-settings');
+          window.EC_PIKO.pointAt(panel);
+          window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.controls, { top:true, onDone: ()=>{
+            pikoStage = 'save';
+            window.EC_PIKO.pointAt(document.getElementById('tool-save'));
+          }});
+        });
+        return;
+      }
+      if(pikoStage === 'save' && e.target.closest('#tool-save')){
+        pikoStage = 'send';
+        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
+        requestAnimationFrame(()=>{
+          const yes = document.getElementById('btn-confirm-yes');
+          if(yes){ window.EC_PIKO.pointAt(yes); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.send, { top:true }); }
+        });
+        return;
+      }
+      if(pikoStage === 'send' && e.target.closest('#btn-confirm-yes')){
+        pikoStage = null;
+        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
+        profile.onboarding.seen = true;
+        save();
+      }
+    });
   }
 
   // A brief loading transition between screens — currently used between
@@ -93,7 +213,7 @@
   // is already loaded at this point (see the top of this file), so these
   // numbers are accurate immediately.
   function updateMiniDesktop(){
-    const unread = window.EC_LEVELS.filter(l=>!profile.completed.includes(l.id)).length;
+    const unread = window.EC_STORE.commissionInbox(profile).length;
     const badge = document.getElementById('mini-badge-mail');
     if(badge){
       badge.textContent = unread;
@@ -103,7 +223,7 @@
     if(currency) currency.textContent = `✨ ${profile.currency}`;
     const clock = document.getElementById('mini-taskbar-clock');
     const realClock = document.getElementById('taskbar-clock');
-    if(clock && realClock) clock.textContent = realClock.textContent;
+    if(clock && realClock) clock.textContent = realClock.dataset.time || realClock.textContent;
   }
 
   // ---------------- Monitor app popup (title-screen floating window) ----------------
@@ -168,7 +288,7 @@
   function miniDesktopBackgroundAction(){
     const popup = document.getElementById('monitor-app-popup');
     if(popup && !popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
-    showScreen('screen-desktop');
+    showScreen('screen-desktop', startFirstDayGuide);
   }
 
   // ---------------- Settings application ----------------
@@ -183,6 +303,8 @@
     document.body.classList.toggle('reduce-motion', !!s.reduceMotion);
     window.EC_SOUND.setEnabled(!!s.soundEnabled);
     window.EC_SOUND.setVolume(s.soundVolume != null ? s.soundVolume : 0.6);
+    window.EC_SOUND.setMusicEnabled(!!s.musicEnabled);
+    window.EC_SOUND.setMusicVolume(s.musicVolume != null ? s.musicVolume : 0.28);
     currentParticleSetting = s.particles || 'full';
     applyCosmetics();
   }
@@ -195,6 +317,10 @@
         tip:'Turns all UI sound effects on or off. Synthesized in the browser — no audio files.', type:'toggle' },
       { tab:'audio', id:'soundVolume', label:'SFX Volume', desc:'How loud sound effects play.',
         tip:'Only matters while Sound Effects is on.', type:'slider', min:0, max:1, step:0.05, format:v=>Math.round(v*100)+'%' },
+      { tab:'audio', id:'musicEnabled', label:'Background Music', desc:'A mellow R&B groove with warm keys, swung drums and soft bass. Starts when you interact.',
+        tip:'Music is synthesized in the browser and starts only after you interact, as required by browser audio rules.', type:'toggle' },
+      { tab:'audio', id:'musicVolume', label:'Music Volume', desc:'How loud the background music plays.',
+        tip:'Set this to zero for a silent atmosphere while retaining sound effects.', type:'slider', min:0, max:1, step:0.05, format:v=>Math.round(v*100)+'%' },
 
       { tab:'graphics', id:'particles', label:'Particle Effects', desc:'Sparkle / confetti density from your equipped UI Skin.',
         tip:'Off disables particle effects entirely. Reduced shows fewer particles — handy on slower machines.', type:'seg',
@@ -263,8 +389,13 @@
       html += `<p class="settings-tab-desc">Your EyeCon Studio profile — Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}, ${profile.completed.length}/${window.EC_LEVELS.length} projects completed, ${profile.inventory.length} cosmetics collected.</p>`;
       html += `<div class="settings-card settings-testing-card"><div class="settings-item">
         <div class="settings-item-text"><div class="settings-item-label">🧪 Testing: Add Sparks</div>
-        <div class="settings-item-desc">Grants a big batch of Sparks so you can try the gacha freely. Temporary testing aid.</div></div>
+        <div class="settings-item-desc">Grants a big batch of Sparks so you can browse the store freely. Temporary testing aid.</div></div>
         <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-add-sparks">+99,999 ✨</button></div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-item-text"><div class="settings-item-label">🐾 Replay Piko's Tutorial</div>
+        <div class="settings-item-desc">Runs Piko's first-day guide again from the desktop, even if you've already played.</div></div>
+        <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-replay-piko">Replay</button></div>
       </div></div>`;
       html += `<div class="settings-card settings-danger-card"><div class="settings-item">
         <div class="settings-item-text"><div class="settings-item-label">Reset All Progress</div>
@@ -340,6 +471,8 @@
         updateCurrencyDisplays();
         window.EC_SOUND.play('coin');
       });
+      const replayPikoBtn = document.getElementById('set-replay-piko');
+      if(replayPikoBtn) replayPikoBtn.addEventListener('click', replayPikoTutorial);
       content.querySelectorAll('[data-type="toggle"]').forEach(input=>{
         input.addEventListener('change', ()=>{
           const def = getSettingsSchema().find(d=>d.id===input.dataset.settingId);
@@ -418,7 +551,7 @@
   function refreshHeader(){
     const lv = window.EC_STORE.levelFromTotalXp(profile.totalXp);
     document.getElementById('hdr-level').textContent = lv.level;
-    const unreadCount = window.EC_LEVELS.filter(l=>!profile.completed.includes(l.id)).length;
+    const unreadCount = window.EC_STORE.commissionInbox(profile).length;
     document.getElementById('inbox-count').textContent = unreadCount;
     document.getElementById('desktop-inbox-badge').textContent = unreadCount;
     updateCurrencyDisplays();
@@ -431,6 +564,8 @@
     if(taskbar) taskbar.textContent = text;
     const shopChip = document.getElementById('shop-currency-chip');
     if(shopChip) shopChip.textContent = text;
+    const desktopChip = document.getElementById('desktop-currency');
+    if(desktopChip) desktopChip.textContent = text;
     updateMiniDesktop();
   }
 
@@ -457,6 +592,7 @@
         <div class="stat-card"><div class="num">${profile.totalXp}</div><div class="lbl">Total XP</div></div>
         <div class="stat-card"><div class="num">✨ ${profile.currency}</div><div class="lbl">Sparks</div></div>
         <div class="stat-card"><div class="num">${profile.inventory.length}/${window.EC_COSMETICS.ITEMS.length}</div><div class="lbl">Items Owned</div></div>
+        <div class="stat-card"><div class="num">🔥 ${(profile.daily||{}).streak||0}</div><div class="lbl">Daily Streak</div></div>
       </div>
       <h3 style="font-family:var(--font-display)">Badges</h3>
       <div class="badges-row">`;
@@ -613,7 +749,7 @@
     document.body.style.cursor = (cursorItem && cursorItem.emoji) ? buildEmojiCursorCss(cursorItem.emoji) : '';
   }
 
-  // ---------------- Shop / Wardrobe / Gacha ----------------
+  // ---------------- Daily Store / Wardrobe ----------------
   function openShopApp(){
     showScreen('screen-shop');
     updateCurrencyDisplays();
@@ -652,84 +788,38 @@
     return profile.equipped[item.category] === item.id;
   }
 
-  function poolCardHtml(item){
-    const C = window.EC_COSMETICS;
-    const owned = profile.inventory.includes(item.id);
-    return `<div class="pool-card ${owned?'owned':''}" data-preview-id="${item.id}" style="--rarity-color:${C.RARITY[item.rarity].color}">
-      <div class="pc-icon">${previewGlyph(item)}</div>
-      <div class="pc-name">${item.name}</div>
-      <div class="pc-owned ${owned?'yes':'no'}">${owned?'✓ Owned':'Not Owned'}</div>
-    </div>`;
+  function renderDailyShopHtml(){
+    const S = window.EC_STORE, C = window.EC_COSMETICS;
+    const shop = S.dailyShop(), cart = S.getCart(profile);
+    const hours = Math.ceil((shop.refreshAt-Date.now())/3600000);
+    return `<section class="daily-store-hero"><span class="store-eyebrow">SHOPPEYEE / COSMETICS</span><h2>A little refresh for your desk.</h2><p>Five daily finds. Pick your favorites and make them yours.</p><span>New selection in ${hours}h &middot; Refreshes at 00:00 UTC</span></section>
+      <div class="store-section-head"><h3>Daily Specials</h3><button class="btn" data-tab="cart">&#128722; Cart (${cart.ids.length})</button></div>
+      <div class="daily-store-grid">${shop.items.map(item=>{
+        const owned=profile.inventory.includes(item.id), added=cart.ids.includes(item.id);
+        return `<article class="daily-item">${itemPreviewHtml(item)}<h4>${item.name}</h4><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]}</p><strong>${S.itemPrice(item)} Sparks</strong><button class="btn" data-cart-id="${item.id}" ${owned?'disabled':''}>${owned?'Owned':added?'Remove from cart':'Add to cart'}</button><button class="store-preview" data-preview-id="${item.id}">Preview</button></article>`;
+      }).join('')}</div>`;
   }
-
-  function featuredCardHtml(item){
-    const C = window.EC_COSMETICS;
-    const r = C.RARITY[item.rarity];
-    return `<div class="featured-card" data-preview-id="${item.id}" style="--rarity-color:${r.color};--rarity-glow:${r.glow}">
-      <div class="featured-tag">${item.isNew ? 'New & Rare' : 'Featured'}</div>
-      <div class="fc-icon">${previewGlyph(item)}</div>
-      <div class="fc-name">${item.name}</div>
-      <div class="fc-rarity">${r.label}</div>
-    </div>`;
+  function renderCartHtml(){
+    const S=window.EC_STORE, cart=S.getCart(profile), C=window.EC_COSMETICS;
+    const items=cart.ids.map(id=>C.getItem(id));
+    const total=items.reduce((sum,item)=>sum+S.itemPrice(item),0);
+    return `<div class="store-section-head"><h2>Your cart</h2><button class="btn" data-tab="featured">Continue shopping</button></div>
+      <div class="store-cart-list">${items.length ? items.map(item=>`<article class="store-cart-row">${itemPreviewHtml(item)}<div><h3>${item.name}</h3><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]} &middot; 1x</p></div><strong>${S.itemPrice(item)} Sparks</strong><button class="btn" data-cart-id="${item.id}" aria-label="Remove ${item.name}">Remove</button></article>`).join('') : '<p class="store-empty">Your cart is empty. Find something you love in Daily Specials.</p>'}</div>
+      <div class="store-checkout"><span>Total <b>${total} Sparks</b> &middot; Balance ${profile.currency} Sparks</span><button class="btn btn-accept" id="store-checkout" data-date="${cart.date}" ${!items.length || total>profile.currency?'disabled':''}>Checkout</button></div>${total>profile.currency?'<p>Not enough Sparks. Complete a client project to earn more.</p>':''}
+      <details class="store-history"><summary>Purchase history</summary>${(profile.purchases||[]).slice().reverse().map(order=>`<p>${order.date.slice(0,10)} &middot; ${order.ids.map(id=>C.getItem(id)?.name || 'Cosmetic').join(', ')} &middot; ${order.total} Sparks</p>`).join('') || '<p>No purchases yet.</p>'}</details>`;
   }
-
-  function renderGachaTabHtml(){
-    const C = window.EC_COSMETICS;
-    const rates = C.RARITY_WEIGHTS;
-    const total = Object.values(rates).reduce((a,b)=>a+b,0);
-    const rarityPills = Object.keys(C.RARITY).map(key=>{
-      const r = C.RARITY[key];
-      const pct = Math.round(rates[key]/total*100);
-      return `<div class="gacha-rate-pill"><span class="gacha-rate-dot" style="background:${r.color};color:${r.color}"></span>${r.label} ${pct}%</div>`;
-    }).join('');
-    const canAfford1 = profile.currency >= window.EC_STORE.GACHA_COST;
-    const canAfford10 = profile.currency >= window.EC_STORE.GACHA_COST_X10;
-    const pity = window.EC_STORE.getPityInfo(profile);
-    const featured = C.ITEMS.filter(i=>i.featured);
-    const tierOrder = ['legendary','epic','rare','common'];
-
-    let html = `<div class="gacha-hero">
-      <h2>🎰 Mystery Studio Crate</h2>
-      <p>Spend Sparks for a chance at wallpapers, themes, icons, cursors, desk decor and UI skins. 100% cosmetic — never affects your grade.</p>
-      <div class="gacha-balance">✨ ${profile.currency} Sparks</div>
-      <div class="gacha-pull-buttons">
-        <button class="gacha-pull-btn ${canAfford1?'':'insufficient'}" id="gacha-pull-1" title="${canAfford1?'':'Not enough Sparks'}">Pull ×1<span class="sub">${window.EC_STORE.GACHA_COST} ✨</span></button>
-        <button class="gacha-pull-btn x10 ${canAfford10?'':'insufficient'}" id="gacha-pull-10" title="${canAfford10?'':'Not enough Sparks'}">Pull ×10<span class="sub">${window.EC_STORE.GACHA_COST_X10} ✨</span></button>
-      </div>
-      <div class="pity-bars">
-        <div class="pity-bar">
-          <div class="pity-bar-label"><span>Epic+ Pity</span><span>${pity.sinceEpic}/${pity.epicPityAt}</span></div>
-          <div class="pity-bar-track"><div class="pity-bar-fill epic" style="width:${Math.min(100, pity.sinceEpic/pity.epicPityAt*100)}%"></div></div>
-        </div>
-        <div class="pity-bar">
-          <div class="pity-bar-label"><span>Legendary Pity</span><span>${pity.sinceLegendary}/${pity.legendaryPityAt}</span></div>
-          <div class="pity-bar-track"><div class="pity-bar-fill legendary" style="width:${Math.min(100, pity.sinceLegendary/pity.legendaryPityAt*100)}%"></div></div>
-        </div>
-      </div>
-      <div class="gacha-rates">${rarityPills}</div>
-    </div>`;
-
-    if(featured.length){
-      html += `<div class="pool-heading"><h3>⭐ Featured Rewards</h3><span class="count-chip">${featured.length} highlighted</span></div>
-        <div class="featured-row">${featured.map(featuredCardHtml).join('')}</div>`;
-    }
-
-    html += `<div class="pool-heading"><h3>📦 Full Reward Pool</h3><span class="count-chip">${C.ITEMS.length} total items — browse before you pull</span></div>`;
-    tierOrder.forEach(key=>{
-      const r = C.RARITY[key];
-      const pct = Math.round(rates[key]/total*100);
-      const items = C.ITEMS.filter(i=>i.rarity===key);
-      html += `<div class="rarity-tier">
-        <div class="rarity-tier-head">
-          <span class="rarity-tier-dot" style="background:${r.color};color:${r.color}"></span>
-          <span class="rarity-tier-name" style="color:${r.color}">${r.label}</span>
-          <span class="rarity-tier-rate">${pct}% drop rate</span>
-        </div>
-        <div class="pool-grid">${items.map(poolCardHtml).join('')}</div>
-      </div>`;
-    });
-
-    return html;
+  function checkoutCart(date){
+    const result=window.EC_STORE.checkout(profile,date);
+    if(result.error){ window.EC_SOUND.play('error'); showToast(result.error); renderShopPanel(); return; }
+    updateCurrencyDisplays(); renderShopPanel();
+    const message=document.getElementById('delivery-message');
+    const button=document.getElementById('delivery-continue');
+    const truck=document.getElementById('delivery-truck');
+    message.textContent='Shipping your new favorites...'; button.disabled=true; truck.classList.add('shipping');
+    window.EC_MODAL.show('modal-delivery');
+    window.EC_SOUND.play('coin');
+    const reduced=profile.settings.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(()=>{ truck.classList.remove('shipping'); message.textContent=`Delivered! ${result.items.length} item${result.items.length===1?'':'s'} added to your wardrobe.`; button.disabled=false; },reduced?0:900);
   }
 
   function renderWardrobeTabHtml(){
@@ -764,31 +854,30 @@
       <div class="wardrobe-categories">${catBtns}</div>${extra}<div class="wardrobe-grid">${cards}</div>`;
   }
 
-  function doPull(count, btn){
-    const cost = count===1 ? window.EC_STORE.GACHA_COST : window.EC_STORE.GACHA_COST_X10;
-    if(profile.currency < cost){
-      window.EC_SOUND.play('error');
-      btn.classList.add('shake');
-      setTimeout(()=>btn.classList.remove('shake'), 400);
-      return;
-    }
-    window.EC_SOUND.play('pullCharge');
-    const results = count===1 ? [window.EC_STORE.pullGacha(profile)] : window.EC_STORE.pullGachaX10(profile);
-    if(!results || !results[0]) return;
-    updateCurrencyDisplays();
-    showGachaReveal(results);
+  function renderUpgradesTabHtml(){
+    const cards = window.EC_STORE.UPGRADES.map(upgrade => {
+      const owned = window.EC_STORE.hasUpgrade(profile, upgrade.id);
+      const affordable = profile.currency >= upgrade.price;
+      return `<article class="upgrade-card ${owned?'owned':''}">
+        <div class="upgrade-icon">${upgrade.icon}</div>
+        <div class="upgrade-copy"><h3>${upgrade.name}</h3><p>${upgrade.description}</p></div>
+        <button class="upgrade-buy-btn ${affordable || owned ? '' : 'insufficient'}" data-upgrade-id="${upgrade.id}" ${owned?'disabled':''}>${owned ? 'Installed' : `${upgrade.price} ✨ Buy`}</button>
+      </article>`;
+    }).join('');
+    return `<section class="upgrades-hero"><h2>🛠️ Studio Upgrades</h2><p>Spend Sparks on guaranteed, permanent editing assists. They make the workspace friendlier but never change your grade.</p><div class="gacha-balance">✨ ${profile.currency} Sparks</div></section><div class="upgrade-list">${cards}</div>`;
   }
 
   function renderShopPanel(){
     const panel = document.getElementById('shop-panel');
     let html = `<div class="shop-tabs">
-      <button class="shop-tab-btn ${shopTab==='gacha'?'active':''}" data-tab="gacha">🎰 Gacha</button>
+      <button class="shop-tab-btn ${shopTab==='featured'?'active':''}" data-tab="featured">Daily Specials</button>
       <button class="shop-tab-btn ${shopTab==='wardrobe'?'active':''}" data-tab="wardrobe">🧥 Wardrobe</button>
     </div>`;
-    html += shopTab === 'gacha' ? renderGachaTabHtml() : renderWardrobeTabHtml();
+    html = html.replace('</div>', `<button class="shop-tab-btn ${shopTab==='upgrades'?'active':''}" data-tab="upgrades">🛠️ Upgrades</button></div>`);
+    html += shopTab === 'featured' ? renderDailyShopHtml() : shopTab === 'cart' ? renderCartHtml() : shopTab === 'wardrobe' ? renderWardrobeTabHtml() : renderUpgradesTabHtml();
     panel.innerHTML = html;
 
-    panel.querySelectorAll('.shop-tab-btn').forEach(btn=>{
+    panel.querySelectorAll('[data-tab]').forEach(btn=>{
       btn.addEventListener('click', ()=>{ shopTab = btn.dataset.tab; window.EC_SOUND.play('tabSwitch'); renderShopPanel(); });
     });
 
@@ -800,12 +889,12 @@
       });
     });
 
-    if(shopTab === 'gacha'){
-      const btn1 = document.getElementById('gacha-pull-1');
-      if(btn1) btn1.addEventListener('click', ()=>doPull(1, btn1));
-      const btn10 = document.getElementById('gacha-pull-10');
-      if(btn10) btn10.addEventListener('click', ()=>doPull(10, btn10));
-    } else {
+    panel.querySelectorAll('[data-cart-id]').forEach(btn=>btn.addEventListener('click',()=>{
+      window.EC_STORE.toggleCart(profile,btn.dataset.cartId); renderShopPanel();
+    }));
+    const checkoutButton=panel.querySelector('#store-checkout');
+    if(checkoutButton) checkoutButton.addEventListener('click',()=>checkoutCart(checkoutButton.dataset.date));
+    if(shopTab === 'wardrobe') {
       panel.querySelectorAll('.wardrobe-cat-btn').forEach(btn=>{
         btn.addEventListener('click', ()=>{ wardrobeCategory = btn.dataset.cat; window.EC_SOUND.play('tabSwitch'); renderShopPanel(); });
       });
@@ -814,6 +903,17 @@
           if(e.target.closest('.wardrobe-preview-btn')) return;
           const item = window.EC_COSMETICS.getItem(card.dataset.id);
           if(window.EC_STORE.equipItem(profile, item)){ window.EC_SOUND.play('equip'); applyCosmetics(); renderShopPanel(); }
+        });
+      });
+    } else {
+      panel.querySelectorAll('[data-upgrade-id]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const upgrade = window.EC_STORE.buyUpgrade(profile, btn.dataset.upgradeId);
+          if(!upgrade){ window.EC_SOUND.play('error'); return; }
+          window.EC_SOUND.play('equip');
+          updateCurrencyDisplays();
+          showToast(`🛠️ ${upgrade.name} installed!`, 2600);
+          renderShopPanel();
         });
       });
     }
@@ -893,7 +993,7 @@
     document.getElementById('cosmetic-preview-name').textContent = item.name;
     document.getElementById('cosmetic-preview-status').textContent = owned
       ? (equipped ? 'Equipped on your desktop' : 'Owned — not currently equipped')
-      : 'Not owned yet — pull the gacha for a chance at it';
+      : 'Not owned yet - watch for it in Daily Specials';
 
     const equipBtn = document.getElementById('cosmetic-preview-equip');
     if(owned){
@@ -913,80 +1013,6 @@
     window.EC_MODAL.show('modal-cosmetic-preview');
   }
 
-  function showGachaReveal(results){
-    const content = document.getElementById('gacha-reveal-content');
-    const card = document.getElementById('gacha-reveal-card');
-    const chargeFx = document.getElementById('gacha-charge-fx');
-    const continueBtn = document.getElementById('btn-gacha-continue');
-    const C = window.EC_COSMETICS;
-    const best = results.reduce((a,b)=> C.RARITY[b.rarity].order > C.RARITY[a.rarity].order ? b : a);
-    const bestR = C.RARITY[best.rarity];
-
-    card.className = 'gacha-reveal-card charging rarity-' + best.rarity;
-    card.style.setProperty('--rarity-color', bestR.color);
-    card.style.setProperty('--rarity-glow', bestR.glow);
-    chargeFx.classList.add('active');
-    continueBtn.classList.add('hidden');
-    content.innerHTML = '';
-    window.EC_MODAL.show('modal-gacha-reveal');
-
-    setTimeout(()=>{
-      card.classList.remove('charging');
-      chargeFx.classList.remove('active');
-      continueBtn.classList.remove('hidden');
-
-      const anyPity = results.some(r=>r.pityTriggered);
-      const totalRefund = results.filter(r=>r.owned).reduce((s,r)=>s+r.refund, 0);
-
-      if(results.length === 1){
-        const { item, rarity, owned, refund, pityTriggered } = results[0];
-        const r = C.RARITY[rarity];
-        content.innerHTML = `
-          <div class="gacha-reveal-icon">${previewGlyph(item)}</div>
-          <div class="gacha-reveal-rarity">${r.label}</div>
-          <div class="gacha-reveal-name">${item.name}</div>
-          <div class="gacha-reveal-note">${owned ? `Duplicate — converted to bonus Sparks` : `New ${C.CATEGORY_LABELS[item.category]} unlocked!`}</div>
-          ${pityTriggered ? `<div class="gacha-reveal-pity-note">✨ Pity bonus guaranteed this rarity!</div>` : ''}
-          ${owned ? `<div class="gacha-reveal-bonus">✨ +${refund} Sparks</div>` : ''}
-        `;
-      } else {
-        const grid = results.map(res=>{
-          const rr = C.RARITY[res.rarity];
-          return `<div class="mini-item" style="--rarity-color:${rr.color};border-color:${rr.color}">${previewGlyph(res.item)}<span class="mini-name">${res.owned?'+'+res.refund+' ✨':res.item.name}</span></div>`;
-        }).join('');
-        content.innerHTML = `
-          <div class="gacha-reveal-rarity">10-Pull Results</div>
-          <div class="gacha-reveal-name">Best pull: ${best.item.name} (${bestR.label})</div>
-          ${anyPity ? `<div class="gacha-reveal-pity-note">✨ Pity bonus guaranteed a higher rarity this round!</div>` : ''}
-          <div class="gacha-reveal-grid">${grid}</div>
-          ${totalRefund>0 ? `<div class="gacha-reveal-bonus">✨ +${totalRefund} bonus Sparks from duplicates</div>` : ''}
-        `;
-      }
-
-      const soundMap = { common:'revealCommon', rare:'revealRare', epic:'revealEpic', legendary:'revealLegendary' };
-      window.EC_SOUND.play(soundMap[best.rarity] || 'revealCommon');
-      if(best.rarity === 'epic' || best.rarity === 'legendary'){
-        const burst = document.createElement('div');
-        burst.className = 'reveal-burst';
-        const glyph = best.rarity === 'legendary' ? '⭐' : '✦';
-        const n = best.rarity === 'legendary' ? 16 : 10;
-        for(let i=0;i<n;i++){
-          const s = document.createElement('span');
-          const angle = (Math.PI*2*i)/n;
-          const dist = 90 + Math.random()*60;
-          s.style.setProperty('--dx', Math.cos(angle)*dist + 'px');
-          s.style.setProperty('--dy', Math.sin(angle)*dist + 'px');
-          s.style.animationDelay = (Math.random()*0.15)+'s';
-          s.style.color = bestR.color;
-          s.textContent = glyph;
-          burst.appendChild(s);
-        }
-        card.appendChild(burst);
-        setTimeout(()=>burst.remove(), 1000);
-      }
-    }, 700);
-  }
-
   function save(){ window.EC_STORE.save(profile); }
 
   // ---------------- Toast ----------------
@@ -998,50 +1024,77 @@
     showToast._timer = setTimeout(()=>t.classList.add('hidden'), duration||3800);
   }
 
-  // ---------------- Report screen ----------------
-  const CATEGORY_LABELS = { contrast:'Contrast', alignment:'Alignment', hierarchy:'Hierarchy', spacing:'Spacing', consistency:'Consistency', accessibility:'Accessibility', usability:'Usability' };
-  const GRADE_COLORS = { 'S+':'#2e8c7e','S':'#4fb8a9','A':'#3dbd6e','B':'#f5c544','C':'#ff8a3d','Needs Improvement':'#e15252' };
+  // Record progress only after the player sends their reply and attachment.
+  let replyTimer=null;
+  function scheduleClientReply(){
+    clearTimeout(replyTimer);
+    const waiting=profile.pendingClientReply;
+    if(!waiting) return;
+    replyTimer=setTimeout(()=>{
+      const level=window.EC_LEVELS.find(l=>l.id===waiting.levelId);
+      if(!level){delete profile.pendingClientReply;save();return;}
+      pendingSubmission={level,result:waiting.result,elapsedMs:waiting.elapsedMs,elements:waiting.elements};
+      delete profile.pendingClientReply;
+      deliverClientReply();
+    },Math.max(0,waiting.dueAt-Date.now()));
+  }
+  function finishMissionSubmission(){
+    if(!pendingSubmission) return;
+    const {level,result,elapsedMs}=pendingSubmission;
+    profile.pendingClientReply={levelId:level.id,result,elapsedMs,elements:window.EC_EDITOR.getElements(),dueAt:Date.now()+3000};
+    pendingSubmission=null; save(); openMailApp();
+    showToast('Reply sent! Your client is reviewing the attached design.',2800);
+    scheduleClientReply();
+  }
+  // Fires when the "client is reviewing" delay elapses: grades the work and
+  // banks the rewards in the background, but doesn't force the reply open —
+  // it just lands as a normal, clickable reply in the inbox, same as any
+  // other piece of mail, until the player opens it themselves.
+  function deliverClientReply(){
+    if(!pendingSubmission) return;
+    const { level, result, elapsedMs, elements } = pendingSubmission;
+    pendingSubmission = null;
+    window.EC_SOUND.play('newMail');
+    const { newBadges, currencyEarned, daily, needsRevision, missionComplete } = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs);
+    profile.readyReply = { levelId: level.id, result, missionComplete, needsRevision, elements, newBadges, currencyEarned, daily };
+    save();
+    refreshHeader();
+    openMailApp();
+    showToast(`📧 New reply from ${level.clientName}`, 3200);
+  }
 
-  function showReportScreen(level, result){
-    lastReportLevel = level; lastReportResult = result;
-    document.getElementById('report-client-name').textContent = `${level.clientName} — Level ${level.levelNumber}: ${level.concept}`;
-    document.getElementById('grade-letter').textContent = result.grade;
-    document.getElementById('grade-stamp').style.background = GRADE_COLORS[result.grade] || 'var(--orange)';
-    document.getElementById('xp-gain').textContent = `+${result.xpAwarded} XP  ·  Score ${result.score}/100`;
-
-    const thumbs = document.getElementById('compare-thumbs');
-    thumbs.innerHTML = '';
-    const beforeWrap = document.createElement('div'); beforeWrap.className='thumb';
-    const afterWrap = document.createElement('div'); afterWrap.className='thumb';
-    thumbs.appendChild(beforeWrap); thumbs.appendChild(afterWrap);
-    window.EC_EDITOR.renderStatic(beforeWrap, level, window.EC_EDITOR.getOriginalElements(), {maxSize:100});
-    window.EC_EDITOR.renderStatic(afterWrap, level, window.EC_EDITOR.getElements(), {maxSize:100});
-    const bLbl = document.createElement('span'); bLbl.textContent='Before'; beforeWrap.appendChild(bLbl);
-    const aLbl = document.createElement('span'); aLbl.textContent='After'; afterWrap.appendChild(aLbl);
-
-    const bars = document.getElementById('score-bars');
-    bars.innerHTML = '';
-    Object.keys(result.categoryScores).forEach(key=>{
-      const v = result.categoryScores[key];
-      bars.innerHTML += `<div class="score-bar-row"><span class="label">${CATEGORY_LABELS[key]||key}</span>
-        <div class="score-bar-track"><div class="score-bar-fill" style="width:${v}%;background:${v>=80?'var(--success)':v>=60?'var(--yellow-dark)':'var(--danger)'}"></div></div>
-        <span class="val">${v}</span></div>`;
+  // Player opens the reply themselves from the inbox — this is where the
+  // grade/reward toast and the actual reply UI show up, not at delivery time.
+  function openReadyReply(level){
+    const ready = profile.readyReply;
+    if(!ready || ready.levelId !== level.id) return;
+    delete profile.readyReply;
+    save();
+    const { result, missionComplete, needsRevision, elements, newBadges, currencyEarned, daily } = ready;
+    const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
+    const newLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
+    if(needsRevision){
+      showToast(`📧 ${level.clientName} sent this back for another pass.`, 3500);
+    } else {
+      let toastHtml = `🎉 ${result.grade} grade (${result.stars}★) — +${result.xpAwarded} XP · +${currencyEarned} ✨ Sparks!`;
+      if(result.mission.mastery) toastHtml += '<br/>★ Mission mastery bonus earned!';
+      if(newLevel > prevLevel) toastHtml += `<br/>⭐ Level up! You are now Level ${newLevel}.`;
+      if(newBadges.length) toastHtml += `<br/>🏅 New badge: ${newBadges.map(id=>window.EC_STORE.BADGES.find(b=>b.id===id).name).join(', ')}`;
+      if(daily.claimed) toastHtml += `<br/>🔥 Daily mission streak ${daily.streak} — +${daily.bonus} Sparks!`;
+      showToast(toastHtml, 4500);
+    }
+    window.EC_MAIL.openClientReply(level, result, missionComplete, ()=>{
+      renderCurrentFolder();
+      if(!needsRevision) return;
+      showLoadingTransition((finishFade)=>{
+        showScreen('screen-editor', ()=>{
+          window.EC_EDITOR.open(level, elements);
+          levelStartTime = Date.now();
+          startTimerIfNeeded();
+          finishFade();
+        });
+      });
     });
-
-    const fl = document.getElementById('feedback-list');
-    fl.classList.remove('show-details');
-    fl.innerHTML = '';
-    // editorOnly items exist purely to give the live in-editor Inspector an
-    // exact element to point at — the Design Review keeps its original,
-    // less repetitive summary-style feedback.
-    result.feedback.filter(f=>!f.editorOnly).forEach(f=>{
-      const icon = f.type==='good' ? '✅' : f.type==='bad' ? '❌' : '💡';
-      fl.innerHTML += `<div class="feedback-item ${f.type}"><span class="fi-icon">${icon}</span>
-        <div class="fi-body"><b>${f.title}</b>${f.detail?`<div>${f.detail}</div>`:''}${f.suggest?`<div class="fi-suggest">Tip: ${f.suggest}</div>`:''}</div></div>`;
-    });
-
-    document.getElementById('btn-report-details').textContent = 'Show Explanations';
-    showScreen('screen-report');
   }
 
   // ---------------- Timed mode ----------------
@@ -1075,30 +1128,6 @@
     timerInterval = null;
     const timerEl = document.getElementById('editor-timer');
     if(timerEl) timerEl.remove();
-  }
-
-  // ---------------- Compare popup (report screen) ----------------
-  function openBigCompare(){
-    const level = lastReportLevel;
-    if(!level) return;
-    let pop = document.getElementById('report-compare-popup');
-    if(pop){ pop.remove(); return; }
-    pop = document.createElement('div');
-    pop.id = 'report-compare-popup';
-    pop.className = 'modal-overlay';
-    pop.innerHTML = `<div class="modal-card" style="max-width:820px">
-      <h3 style="font-family:var(--font-display);margin-top:0">Before &amp; After</h3>
-      <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
-        <div><div style="text-align:center;font-weight:700;margin-bottom:8px">Before</div><div id="rcmp-before"></div></div>
-        <div><div style="text-align:center;font-weight:700;margin-bottom:8px">After</div><div id="rcmp-after"></div></div>
-      </div>
-      <div class="mail-detail-actions"><button class="btn btn-ghost" id="rcmp-close">Close</button></div>
-    </div>`;
-    document.body.appendChild(pop);
-    window.EC_EDITOR.renderStatic(document.getElementById('rcmp-before'), level, window.EC_EDITOR.getOriginalElements(), {maxSize:320});
-    window.EC_EDITOR.renderStatic(document.getElementById('rcmp-after'), level, window.EC_EDITOR.getElements(), {maxSize:320});
-    document.getElementById('rcmp-close').addEventListener('click', ()=>pop.remove());
-    pop.addEventListener('click', e=>{ if(e.target===pop) pop.remove(); });
   }
 
   // ---------------- Fullscreen (like a video player's expand button) ----------------
@@ -1149,9 +1178,17 @@
   function updateClock(){
     const now = new Date();
     let h = now.getHours(); const m = now.getMinutes();
-    const ampm = h >= 12 ? 'PM' : 'AM';
+    const ampm = h >= 12 ? 'pm' : 'am';
     h = h % 12; if(h===0) h = 12;
-    document.getElementById('taskbar-clock').textContent = `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+    const text = `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+    const startDay = profile.commissions?.startDay;
+    const today = Math.floor(now.getTime()/86400000);
+    const day = Math.max(1, startDay == null ? 1 : today - startDay + 1);
+    const taskbarClock = document.getElementById('taskbar-clock');
+    taskbarClock.dataset.time = text;
+    taskbarClock.innerHTML = `<span>Day ${day}</span><span>${text}</span>`;
+    const desktopClock = document.getElementById('desktop-clock');
+    if(desktopClock) desktopClock.textContent = text;
     updateMiniDesktop();
   }
 
@@ -1160,10 +1197,76 @@
     showScreen('screen-shell');
     currentFolder = 'inbox';
     renderCurrentFolder();
+    pikoAdvanceToInbox();
   }
   function openStatsApp(){
     showScreen('screen-stats');
     renderStatsPanel();
+  }
+
+  // Profile and Stats are quick-glance taskbar tools. Keep the user on the
+  // current screen and lend the existing live stats panel to a small window
+  // anchored immediately above whichever taskbar button opened it.
+  let taskbarStatsBorrowed = null;
+  function profileQuickPanelMarkup(){
+    const average = profile.history.length ? profile.history.reduce((sum,item)=>sum + item.score,0)/profile.history.length : 0;
+    const filledStars = Math.max(0,Math.min(5,Math.round(average/20)));
+    const stars = Array.from({length:5},(_,i)=>`<span class="${i<filledStars?'filled':''}">${i<filledStars?'★':'☆'}</span>`).join('');
+    const unlocked = new Set(profile.unlockedBadges || []);
+    const badges = Array.from({length:12},(_,i)=>`<span class="profile-badge-dot ${window.EC_STORE.BADGES[i] && unlocked.has(window.EC_STORE.BADGES[i].id)?'unlocked':''}"></span>`).join('');
+    return `<section class="profile-quick-card">
+      <img class="profile-quick-avatar" src="assets/icons/profile.svg" alt="" />
+      <h2>Hi, User!</h2>
+      <div class="profile-quick-stars" aria-label="${filledStars} out of 5 stars">${stars}</div>
+      <div class="profile-quick-strip">Junior Designer</div>
+      <div class="profile-quick-strip">EyeCoins: $${Number(profile.currency || 0).toFixed(2)}</div>
+      <div class="profile-quick-strip">Badges</div>
+      <div class="profile-badge-grid">${badges}</div>
+      <button class="profile-quick-action" id="profile-quick-settings">⚙ Settings</button>
+      <button class="profile-quick-action" id="profile-quick-signout">⇥ Sign out</button>
+    </section>`;
+  }
+  function openTaskbarStatsPopup(anchor, mode){
+    closeMonitorAppPopup(true);
+    const popup = document.getElementById('taskbar-stats-popup');
+    const body = document.getElementById('taskbar-stats-popup-body');
+    const content = document.querySelector('#screen-stats .app-content-wrap');
+    if(!popup || !body || !content) return;
+    const isStats = mode === 'stats';
+    popup.classList.toggle('profile-layout', !isStats);
+    if(isStats){
+      if(!taskbarStatsBorrowed){
+        taskbarStatsBorrowed = { el:content, parent:content.parentNode, next:content.nextElementSibling };
+        body.replaceChildren(content);
+      }
+      renderStatsPanel();
+    }else{
+      if(taskbarStatsBorrowed){
+        taskbarStatsBorrowed.parent.insertBefore(taskbarStatsBorrowed.el, taskbarStatsBorrowed.next);
+        taskbarStatsBorrowed = null;
+      }
+      body.innerHTML = profileQuickPanelMarkup();
+      document.getElementById('profile-quick-settings').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); openSettingsApp(); });
+      document.getElementById('profile-quick-signout').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); showScreen('screen-home'); });
+    }
+    document.getElementById('taskbar-stats-popup-title').textContent = isStats ? 'Studio Stats' : 'Profile';
+    document.getElementById('taskbar-stats-popup-icon').src = isStats ? 'assets/icons/stats-icon.svg' : 'assets/icons/profile.svg';
+    popup.classList.remove('hidden');
+    const bar = document.getElementById('global-taskbar').getBoundingClientRect();
+    const button = anchor.getBoundingClientRect();
+    popup.style.left = Math.max(12, Math.min(button.left, innerWidth - popup.offsetWidth - 12)) + 'px';
+    popup.style.bottom = Math.max(8, innerHeight - bar.top + 8) + 'px';
+    document.getElementById('taskbar-profile').setAttribute('aria-expanded', String(!isStats));
+  }
+  function closeTaskbarStatsPopup(){
+    const popup = document.getElementById('taskbar-stats-popup');
+    if(!popup || popup.classList.contains('hidden')) return;
+    popup.classList.add('hidden');
+    if(taskbarStatsBorrowed){
+      taskbarStatsBorrowed.parent.insertBefore(taskbarStatsBorrowed.el, taskbarStatsBorrowed.next);
+      taskbarStatsBorrowed = null;
+    }
+    document.getElementById('taskbar-profile').setAttribute('aria-expanded','false');
   }
   function openSettingsApp(){
     showScreen('screen-settings');
@@ -1194,8 +1297,14 @@
       if(!popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
       if(path.includes(document.getElementById('sticky-note-settings'))){ openMonitorAppPopup('settings', { noteStyle:true }); return; }
       const iconEl = e.target.closest('.mini-desktop-icon');
+      if(iconEl && iconEl.dataset.app === 'stats'){
+        // Profile & Stats has too much detail for the small floating preview
+        // window — jump straight to the real full-screen app instead.
+        showScreen('screen-desktop', ()=> openStatsApp());
+        return;
+      }
       if(iconEl){ openMonitorAppPopup(iconEl.dataset.app); return; }
-      if(path.includes(document.getElementById('mini-desktop'))) showScreen('screen-desktop');
+      if(path.includes(document.getElementById('mini-desktop'))) miniDesktopBackgroundAction();
     });
     document.getElementById('sticky-note-settings').addEventListener('keydown', e=>{
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openMonitorAppPopup('settings', { noteStyle:true }); }
@@ -1204,9 +1313,14 @@
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); miniDesktopBackgroundAction(); }
     });
     document.getElementById('monitor-app-popup-close').addEventListener('click', ()=>closeMonitorAppPopup());
+    initPikoGuideChain();
 
     document.getElementById('icon-mail').addEventListener('click', openMailApp);
-    document.getElementById('icon-stats').addEventListener('click', openStatsApp);
+    document.getElementById('icon-maker').addEventListener('click', ()=>{
+      window.EC_PIKO.hideBubble();window.EC_PIKO.clearTarget();
+      showScreen('screen-maker', ()=>window.EC_MAKER.open());
+    });
+    document.getElementById('icon-stats').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'stats'));
     document.getElementById('icon-shop').addEventListener('click', openShopApp);
     document.getElementById('icon-settings').addEventListener('click', openSettingsApp);
 
@@ -1215,17 +1329,24 @@
     document.getElementById('settings-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     document.getElementById('shop-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
 
-    document.getElementById('taskbar-home').addEventListener('click', ()=>showScreen('screen-desktop'));
+    document.getElementById('taskbar-home').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); showScreen('screen-desktop'); });
     // A way back to the title screen from the real desktop — matters most in
     // fullscreen, where there's no browser chrome to fall back on.
     document.getElementById('desktop-watermark-btn').addEventListener('click', ()=>showScreen('screen-home'));
-    document.getElementById('taskbar-profile').addEventListener('click', openStatsApp);
+    document.getElementById('taskbar-profile').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'profile'));
+    document.getElementById('taskbar-stats-popup-close').addEventListener('click', closeTaskbarStatsPopup);
+    document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeTaskbarStatsPopup(); });
     document.getElementById('taskbar-shop').addEventListener('click', openShopApp);
-    document.getElementById('btn-gacha-continue').addEventListener('click', ()=>{
-      window.EC_MODAL.hide('modal-gacha-reveal');
-      refreshHeader();
-      if(document.getElementById('screen-shop').classList.contains('active')) renderShopPanel();
+    document.getElementById('maker-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
+    window.EC_MAKER.init();
+    document.getElementById('delivery-continue').addEventListener('click',()=>{
+      window.EC_MODAL.hide('modal-delivery'); shopTab='wardrobe'; renderShopPanel();
     });
+    let storeDate=window.EC_STORE.dailyShop().date;
+    setInterval(()=>{
+      const today=window.EC_STORE.dailyShop().date;
+      if(today!==storeDate){ storeDate=today; renderShopPanel(); }
+    },1000);
     document.getElementById('cosmetic-preview-close').addEventListener('click', ()=>window.EC_MODAL.hide('modal-cosmetic-preview'));
     document.getElementById('modal-cosmetic-preview').addEventListener('click', e=>{
       if(e.target.id === 'modal-cosmetic-preview') window.EC_MODAL.hide('modal-cosmetic-preview');
@@ -1253,38 +1374,33 @@
             levelStartTime = Date.now();
             startTimerIfNeeded();
             finishFade();
+            if(pikoStage === 'element'){
+              requestAnimationFrame(()=>{
+                const el = document.querySelector('#editor-canvas .el:not([data-locked="1"])');
+                if(el){ window.EC_PIKO.pointAt(el); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.element, { top:true }); }
+              });
+            }
           });
         });
       },
-      onSend: (level, result) => {
-        showToast(`✉️ Reply sent to ${level.clientName}!`, 2500);
-        renderCurrentFolder();
-      }
+      onSend: () => finishMissionSubmission(),
+      onOpenReply: level => openReadyReply(level)
     });
 
-    // Design Review screen is skipped for now — go straight from Save &
-    // Submit to recording the result (XP/currency/badges via toast) and
-    // composing the reply, instead of showing the full report screen.
+    // Save opens the familiar type-to-reveal reply. The client responds and
+    // rewards are recorded only after the message and edited file are sent.
     window.EC_EDITOR.setOnSubmit(result => {
       stopTimer();
       const level = window.EC_EDITOR.getLevel();
       const elapsedMs = levelStartTime ? (Date.now() - levelStartTime) : 0;
-      levelStartTime = null;
-      const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
-      const { newBadges, currencyEarned } = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs);
-      const newLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
-      refreshHeader();
-      openMailApp();
-
-      let toastHtml = `🎉 ${result.grade} grade — +${result.xpAwarded} XP · +${currencyEarned} ✨ Sparks!`;
-      if(newLevel > prevLevel) toastHtml += `<br/>⭐ Level up! You're now Level ${newLevel}.`;
-      if(newBadges.length) toastHtml += `<br/>🏅 New badge: ${newBadges.map(id=>window.EC_STORE.BADGES.find(b=>b.id===id).name).join(', ')}`;
-      showToast(toastHtml, 4500);
-
+      pendingSubmission = { level, result, elapsedMs };
       window.EC_MAIL.openCompose(level, result);
     });
 
     currentFolder = 'inbox';
+    scheduleClientReply();
+    let inboxDay=Math.floor(Date.now()/86400000);
+    setInterval(()=>{const day=Math.floor(Date.now()/86400000);if(day!==inboxDay){inboxDay=day;refreshHeader();if(document.getElementById('screen-shell').classList.contains('active'))renderCurrentFolder();}},1000);
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

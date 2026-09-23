@@ -35,7 +35,7 @@
       emailPreview:'Our new landing page hero feels messy and things don’t line up...',
       emailBody:`Hello! We're Brewbird Coffee Co.
 
-Welcome aboard! For your first assignment: our landing page hero
+We are getting ready to welcome more customers, but our landing page hero
 looks messy because nothing lines up. Logo, links, heading and
 button all feel randomly placed. Could you snap everything to a
 clean, consistent grid?
@@ -490,6 +490,59 @@ Nimbus Goods`,
       }
     },
   ];
+
+  // Keep every canvas element's position and size on the 8-point grid.
+  const to8=n=>Math.round(n/8)*8;
+  LEVELS.forEach(level=>{
+    level.canvas.w=to8(level.canvas.w); level.canvas.h=to8(level.canvas.h);
+    level.rubric.gridUnit=8; level.rubric.spacingUnit=8;
+    level.elements.forEach(el=>{
+      el.w=Math.max(8,to8(el.w)); el.h=Math.max(8,to8(el.h));
+      el.x=to8(el.x);el.y=to8(el.y);
+      el.x=Math.max(0,Math.min(el.x,level.canvas.w-el.w));
+      el.y=Math.max(0,Math.min(el.y,level.canvas.h-el.h));
+    });
+  });
+  const poster=LEVELS.find(l=>l.id==='almel-canteen');
+  poster.canvas={w:512,h:720,bg:'#f4d444'};
+  const posterChanges={
+    bg:{w:512,h:720,bg:'#f4d444'},
+    paper:{x:72,y:112,w:368,h:464,bg:'#efffff',radius:0,shape:'trapezoid'},
+    title:{x:120,y:32,w:272,h:48,fontFamily:'Just Another Hand',fontSize:28,align:'center'},
+    menuBadge:{x:224,y:96,w:224,h:80,fontFamily:'Just Another Hand',fontSize:40,bg:'#e56b31',radius:24},
+    item1:{x:112,y:192,w:304,h:48,fontFamily:'Modak',fontSize:36},
+    item2:{x:112,y:240,w:304,h:48,fontFamily:'Modak',fontSize:36},
+    item3:{x:112,y:288,w:304,h:48,fontFamily:'Modak',fontSize:36},
+    cash:{x:152,y:384,w:224,h:40,fontFamily:'Fjalla One',fontSize:16,color:'#17201d',text:'WE ACCEPT CASH ONLY'},
+    starburst:{x:136,y:424,w:240,h:240,bg:'#ff7900',radius:0,shape:'starburst'},
+    burstText:{x:168,y:496,w:176,h:88,fontFamily:'Fjalla One',fontSize:32,text:'BEST FOOD\nEVER',color:'#9aa0a6',align:'center'}
+  };
+  poster.elements.forEach(el=>Object.assign(el,posterChanges[el.id]||{}));
+
+  // Normalize the final authored artwork, including the poster overrides.
+  LEVELS.forEach(level=>level.elements.forEach(el=>{
+    for(const key of ['x','y','w','h','padding','margin','radius']){
+      if(typeof el[key] === 'number') el[key] = to8(el[key]);
+    }
+    el.w = Math.max(8, el.w);
+    el.h = Math.max(8, el.h);
+    el.x = Math.max(0, Math.min(el.x, level.canvas.w - el.w));
+    el.y = Math.max(0, Math.min(el.y, level.canvas.h - el.h));
+  }));
+
+  // Invisible answer boxes used by the placement grader. They deliberately
+  // live in level data rather than the editor's element list, so players
+  // cannot see or select them. Each editable element has one identity-matched
+  // destination; imperfect proximity still earns proportional credit.
+  LEVELS.forEach(level=>{
+    level.hiddenTargets = level.elements.filter(el=>!el.locked).map(el=>({
+      id:el.id,
+      x:to8(el.x),
+      y:to8(el.y),
+      w:el.w,
+      h:el.h,
+    }));
+  });
 
   window.EC_LEVELS = LEVELS;
   window.EC_ROLE_DEFAULTS = ROLE_DEFAULTS;

@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman'];
+  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak'];
   const WEIGHTS = [ ['400','Regular'], ['500','Medium'], ['600','Semibold'], ['700','Bold'], ['800','Extra Bold'] ];
   const SNAP_THRESHOLD = 6;
 
@@ -36,8 +36,11 @@
   const CATEGORY_UNLOCK = {
     Alignment: 1, Usability: 1, Spacing: 2, Hierarchy: 3, Contrast: 4, Accessibility: 5, Consistency: 6,
   };
-  function unlockedFeedback(feedback, lvl){
-    return feedback.filter(f => (CATEGORY_UNLOCK[f.category] || 1) <= lvl);
+  function unlockedFeedback(feedback, lvl, activeCategories){
+    return feedback.filter(f =>
+      (CATEGORY_UNLOCK[f.category] || 1) <= lvl &&
+      (!activeCategories || activeCategories.includes(f.category.toLowerCase()))
+    );
   }
 
   function levelToolsNoteHtml(lvl){
@@ -79,7 +82,7 @@
     selectedId: null,
     history: [],
     future: [],
-    tools: { gridVisible:true, snap:true, guides:true, inspector:false, measure:false, gridSize:8, gridOpacity:0.35 },
+    tools: { gridVisible:true, snap:true, guides:true, inspector:false, measure:false, showTargets:false, gridSize:8, gridOpacity:0.35 },
     zoom: 1,
     displayZoom: 1,
     panX: 0,
@@ -94,7 +97,7 @@
   function byId(id){ return state.elements.find(e=>e.id===id); }
 
   function ensureDefaults(el){
-    if(el.padding == null) el.padding = 6;
+    if(el.padding == null) el.padding = 8;
     if(el.margin == null) el.margin = 8;
     if(!el.border) el.border = { width:0, color:'#000000', style:'solid' };
     if(!el.shadow) el.shadow = { enabled:false, blur:10, color:'rgba(0,0,0,0.28)' };
@@ -103,66 +106,11 @@
   }
 
   // ---------------- Live scoring ----------------
-  function updateLiveScore(){
-    const chip = document.getElementById('live-score-chip');
-    if(!chip || !state.level) return;
-    const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-    chip.textContent = `Score: ${result.score}`;
-    chip.classList.remove('good','mid','bad');
-    chip.classList.add(result.score>=80?'good':result.score>=60?'mid':'bad');
-    updateIssuesChip();
-  }
-
-  // ---------------- Issues panel (Inspector's "Problems list") ----------------
-  // A compact, on-demand list of everything currently wrong (within what's
-  // been taught so far) — click an entry to jump straight to that element,
-  // rather than hunting for it. Kept as a popover instead of a permanent
-  // bottom bar so it doesn't eat canvas space when you're not looking at it.
-  function currentIssues(){
-    if(!state.level) return [];
-    const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-    return unlockedFeedback(result.feedback, state.level.levelNumber).filter(f=>f.type==='bad');
-  }
-
-  function updateIssuesChip(){
-    const chip = document.getElementById('issues-chip');
-    if(!chip || !state.level) return;
-    const bad = currentIssues();
-    chip.textContent = bad.length ? `⚠ ${bad.length}` : '✓ 0';
-    chip.title = bad.length ? `${bad.length} open issue${bad.length===1?'':'s'} — click to review` : 'No open issues — nice work!';
-    chip.classList.remove('good','mid','bad');
-    chip.classList.add(bad.length===0 ? 'good' : bad.length<=2 ? 'mid' : 'bad');
-    const panel = document.getElementById('issues-panel');
-    if(panel && !panel.hidden) renderIssuesPanel(bad);
-  }
-
-  function renderIssuesPanel(bad){
-    const panel = document.getElementById('issues-panel');
-    if(!bad.length){
-      panel.innerHTML = '<h4>Issues</h4><p class="issues-empty">✨ Nothing open in what you\'ve learned so far — nice work!</p>';
-      return;
-    }
-    let html = '<h4>Issues (' + bad.length + ')</h4><div class="issues-list">';
-    bad.forEach((f,i)=>{
-      html += `<button type="button" class="issue-row" data-idx="${i}">
-        <span class="issue-row-icon">❌</span>
-        <span class="issue-row-body"><b>${f.category}:</b> ${f.title}${f.suggest?`<div class="issue-row-tip">Tip: ${f.suggest}</div>`:''}</span>
-      </button>`;
-    });
-    html += '</div>';
-    panel.innerHTML = html;
-    panel.querySelectorAll('.issue-row').forEach(row=>{
-      row.addEventListener('click', ()=>{
-        const f = bad[Number(row.dataset.idx)];
-        if(f.elId && byId(f.elId)){
-          selectElement(f.elId);
-          const div = state.domNodes[f.elId];
-          if(div) div.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
-        }
-        panel.hidden = true;
-      });
-    });
-  }
+  // Live score/issues readouts were removed — with client replies now
+  // arriving as a real email instead of an instant verdict, showing a
+  // running score while editing undercut that (see showHint(), which still
+  // gives an on-demand nudge without giving away the number).
+  function updateLiveScore(){}
 
   // ---------------- History ----------------
   function pushHistory(){
@@ -186,19 +134,30 @@
   }
 
   // ---------------- Open / build ----------------
-  function open(level){
+  function open(level, savedElements){
     state.level = level;
-    state.elements = clone(level.elements);
+    state.elements = clone(savedElements || level.elements);
     state.elements.forEach(ensureDefaults);
-    state.original = clone(state.elements);
+    state.elements.forEach(el=>{
+      for(const key of ['x','y','w','h']) el[key] = Math.round(el[key] / 8) * 8;
+      el.w = Math.max(8, el.w);
+      el.h = Math.max(8, el.h);
+      for(const key of ['padding','margin','radius']){
+        if(typeof el[key] === 'number') el[key] = Math.max(0, Math.round(el[key] / 8) * 8);
+      }
+    });
+    state.original = clone(level.elements);
     state.selectedId = null;
     state.history = [];
     state.future = [];
     // Every view aid starts off — an empty canvas to begin with, rather
     // than grid/snap/guides already cluttering it before you've asked for them.
-    state.tools.gridVisible = false; state.tools.snap = false; state.tools.guides = false;
-    state.tools.inspector = false; state.tools.measure = false;
-    state.tools.gridSize = roundTo8(level.rubric.spacingUnit || 8);
+    const profile = window.EC_STORE ? window.EC_STORE.load() : {};
+    const hasUpgrade = id => window.EC_STORE && window.EC_STORE.hasUpgrade(profile, id);
+    state.tools.gridVisible = hasUpgrade('grid-buddy'); state.tools.snap = true;
+    state.tools.guides = hasUpgrade('guide-radar');
+    state.tools.inspector = hasUpgrade('guide-radar'); state.tools.measure = false; state.tools.showTargets = false;
+    state.tools.gridSize = 8;
     state.tools.gridOpacity = 0.35;
     state.zoom = 1;
     state.displayZoom = 1;
@@ -210,23 +169,26 @@
     buildCanvas();
     playIntroFlash();
     updateToolButtonStates();
+    updateLiveScore();
     syncGridSettingsUI();
     resetSettingsPlaceholder();
-    setHint('Click on any element to edit.');
+    // Point straight at the first thing to fix instead of a generic
+    // "click anything" — this is what used to require noticing the mission
+    // panel and clicking "Focus next objective" yourself.
+    showHint();
     const chipLabel = document.querySelector('.edit-mode-chip .btn-label');
-    if(chipLabel) chipLabel.textContent = `Lv.${level.levelNumber} · ${level.concept}`;
+    if(chipLabel) chipLabel.textContent = level.clientName;
     document.getElementById('typescale-panel').hidden = true;
     document.getElementById('grid-settings-panel').hidden = true;
-    document.getElementById('issues-panel').hidden = true;
     setElementSettingsCollapsed(true);
   }
 
   // Scale that fits the whole canvas inside the visible viewport ("100%" baseline).
   function baseFitScale(canvasW, canvasH){
     const wrap = document.getElementById('editor-canvas-wrap');
-    const availW = wrap.clientWidth - 60;
-    const availH = wrap.clientHeight - 60;
-    return Math.max(0.15, Math.min(availW/canvasW, availH/canvasH, 1));
+    const availW = Math.max(1, wrap.clientWidth - 24);
+    const availH = Math.max(1, wrap.clientHeight - 24);
+    return Math.min(availW/canvasW, availH/canvasH);
   }
 
   // Applies the current base-fit * displayZoom scale AND the current pan
@@ -245,6 +207,7 @@
     const scale = base * state.displayZoom;
     canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${scale})`;
     canvas.style.transformOrigin = '0 0';
+    canvas.style.setProperty('--selection-unit', (1 / scale) + 'px');
     updateZoomBadge();
   }
 
@@ -367,6 +330,14 @@
     return (el.shadow && el.shadow.enabled) ? `0px 4px ${el.shadow.blur}px ${el.shadow.color}` : 'none';
   }
 
+  function shapeClip(shape){
+    if(shape==='trapezoid') return 'polygon(7% 0,93% 0,100% 100%,0 100%)';
+    if(shape==='starburst') return 'polygon('+Array.from({length:24},(_,i)=>{
+      const angle=-Math.PI/2+i*Math.PI/12, r=i%2?37:50;
+      return `${50+Math.cos(angle)*r}% ${50+Math.sin(angle)*r}%`;
+    }).join(',')+')';
+    return 'none';
+  }
   function createElementDom(el){
     const div = document.createElement('div');
     div.className = 'el';
@@ -377,7 +348,9 @@
     div.style.height = el.h + 'px';
     div.style.zIndex = el.z;
     div.style.borderRadius = (el.radius||0) + 'px';
+    div.style.clipPath = shapeClip(el.shape);
     div.style.border = borderCss(el);
+    div.style.setProperty('--element-border', (el.border.width || 0) + 'px');
     div.style.boxShadow = shadowCss(el);
     div.style.opacity = el.opacity != null ? el.opacity : 1;
     if(el.bg) div.style.background = el.bg;
@@ -391,6 +364,7 @@
       div.style.fontWeight = el.fontWeight;
       div.style.color = el.color;
       div.style.lineHeight = '1.15';
+      div.style.whiteSpace = 'pre-line';
       div.textContent = el.text;
     }
     if(el.locked){
@@ -400,6 +374,10 @@
       div.tabIndex = 0;
       div.setAttribute('role','button');
       div.setAttribute('aria-label', `${el.role} ${el.text||''}`.trim());
+      div.addEventListener('keydown', event=>{
+        if(event.key === 'Enter' || event.key === ' '){ event.preventDefault(); selectElement(el.id); }
+        if(event.key === 'Escape'){ deselect(); }
+      });
       ['nw','ne','sw','se','n','s','e','w'].forEach(dir=>{
         const h = document.createElement('div');
         h.className = `el-handle ${dir}`;
@@ -420,7 +398,9 @@
     div.style.width = el.w + 'px';
     div.style.height = el.h + 'px';
     div.style.borderRadius = (el.radius||0) + 'px';
+    div.style.clipPath = shapeClip(el.shape);
     div.style.border = borderCss(el);
+    div.style.setProperty('--element-border', (el.border.width || 0) + 'px');
     div.style.boxShadow = shadowCss(el);
     div.style.opacity = el.opacity != null ? el.opacity : 1;
     if(el.bg) div.style.background = el.bg;
@@ -446,7 +426,7 @@
     const el = byId(id);
     if(!el){ resetSettingsPlaceholder(); return; }
     const div = state.domNodes[id];
-    if(div) div.classList.add('selected');
+    if(div){ div.classList.remove('intro-flash'); div.classList.add('selected'); }
     showSettings(el);
     // On the mobile/tablet stacked layout the settings panel starts
     // collapsed so the canvas keeps the space — picking something to edit
@@ -465,6 +445,7 @@
     }
     state.selectedId = null;
     resetSettingsPlaceholder();
+    setElementSettingsCollapsed(true);
   }
 
   // ---------------- Settings panel ----------------
@@ -487,7 +468,8 @@
     document.getElementById('settings-fields').innerHTML =
       levelToolsNoteHtml(lvl) +
       '<p class="settings-placeholder">Select an element on the canvas to edit its properties.</p>';
-    document.getElementById('element-settings-title').textContent = 'Element Settings';
+    document.getElementById('element-settings-title').textContent = 'Design tools';
+    document.getElementById('selection-dimensions').textContent = 'Select something to make it shine';
     document.getElementById('f-reset-icon').classList.add('hidden');
   }
 
@@ -496,15 +478,19 @@
     const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
     const bold = Number(el.fontWeight) >= 700;
     const res = window.WCAG.passesWCAG(el.color, bg, el.fontSize, bold, 'AA');
-    return `<div class="contrast-badge ${res.pass?'pass':'fail'}">
-      ${res.ratio.toFixed(1)}:1 <span>${res.pass?'✓ Passes AA':'✕ Needs '+res.required+':1'}</span>
-    </div>`;
+    return `<div class="contrast-value-label">Contrast Value</div>
+    <div class="contrast-badge ${res.pass?'pass':'fail'}">
+      <span class="contrast-ratio">${res.ratio.toFixed(1)}:1</span>
+      <span class="contrast-check">${res.pass?'✓':'✕'}</span>
+    </div>
+    <div class="contrast-note">${res.pass?'Passes AA':'Needs '+res.required+':1'}</div>`;
   }
 
   function showSettings(el){
     const fields = document.getElementById('settings-fields');
     const isLocked = !!el.locked;
     document.getElementById('element-settings-title').textContent = friendlyElementName(el);
+    document.getElementById('selection-dimensions').textContent = `${Math.round(el.w)} x ${Math.round(el.h)} px`;
 
     if(isLocked){
       fields.innerHTML = `<p class="settings-placeholder">This is a structural background element and can't be edited directly.</p>`;
@@ -553,23 +539,23 @@
 
     if(unlocked('position')){
       html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">X</span><input type="number" id="f-x" value="${Math.round(el.x)}" aria-label="X position"/></label>
-        <label class="mini-field"><span class="mini-label">Y</span><input type="number" id="f-y" value="${Math.round(el.y)}" aria-label="Y position"/></label>
+        <label class="mini-field"><span class="mini-label">X</span><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/></label>
+        <label class="mini-field"><span class="mini-label">Y</span><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/></label>
       </div>`;
     }
     if(unlocked('sizing')){
       html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">W</span><input type="number" id="f-w" value="${Math.round(el.w)}" aria-label="Width"/></label>
-        <label class="mini-field"><span class="mini-label">H</span><input type="number" id="f-h" value="${Math.round(el.h)}" aria-label="Height"/></label>
+        <label class="mini-field"><span class="mini-label">W</span><input type="number" id="f-w" step="8" value="${Math.round(el.w)}" aria-label="Width"/></label>
+        <label class="mini-field"><span class="mini-label">H</span><input type="number" id="f-h" step="8" value="${Math.round(el.h)}" aria-label="Height"/></label>
       </div>`;
       html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">P</span><input type="number" id="f-padding" value="${el.padding}" min="0" max="60" aria-label="Padding"/></label>
-        <label class="mini-field"><span class="mini-label">M</span><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" aria-label="Margin"/></label>
+        <label class="mini-field"><span class="mini-label">P</span><input type="number" id="f-padding" value="${el.padding}" min="0" max="64" step="8" aria-label="Padding"/></label>
+        <label class="mini-field"><span class="mini-label">M</span><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" step="8" aria-label="Margin"/></label>
       </div>`;
     }
     if(unlocked('shape')){
       html += `<div class="field-group"><label>Border Radius (px)</label>
-        <input type="number" id="f-radius" value="${el.radius||0}" min="0" max="200"/>
+        <input type="number" id="f-radius" value="${el.radius||0}" min="0" max="200" step="8"/>
       </div>`;
       html += `<div class="field-group"><label>Border</label>
         <div class="field-row-3">
@@ -639,17 +625,22 @@
       const inp = q('#f-'+k);
       if(!inp) return;
       inp.addEventListener('change', e=>{
-        el[k] = Math.max(k==='w'||k==='h'?10:-9999, Number(e.target.value)||0);
+        el[k] = Math.max(k==='w'||k==='h'?8:-9992, Math.round((Number(e.target.value)||0)/8)*8);
+        inp.value = el[k];
         refreshElementDom(el); pushHistory(); refreshLiveOverlays();
       });
     });
 
-    if(q('#f-padding')) q('#f-padding').addEventListener('input', e=>{ el.padding = Number(e.target.value)||0; refreshElementDom(el); });
-    if(q('#f-padding')) q('#f-padding').addEventListener('change', ()=>pushHistory());
-    if(q('#f-margin')) q('#f-margin').addEventListener('input', e=>{ el.margin = Number(e.target.value)||0; });
-    if(q('#f-margin')) q('#f-margin').addEventListener('change', ()=>pushHistory());
-    if(q('#f-radius')) q('#f-radius').addEventListener('input', e=>{ el.radius = Number(e.target.value)||0; refreshElementDom(el); });
-    if(q('#f-radius')) q('#f-radius').addEventListener('change', ()=>pushHistory());
+    for(const [selector, key] of [['#f-padding','padding'],['#f-margin','margin'],['#f-radius','radius']]){
+      const input = q(selector);
+      if(!input) continue;
+      input.addEventListener('change', e=>{
+        el[key] = Math.max(0, Math.round((Number(e.target.value)||0)/8)*8);
+        input.value = el[key];
+        refreshElementDom(el);
+        pushHistory();
+      });
+    }
 
     if(q('#f-border-w')) q('#f-border-w').addEventListener('input', e=>{ el.border.width = Number(e.target.value)||0; refreshElementDom(el); });
     if(q('#f-border-w')) q('#f-border-w').addEventListener('change', ()=>pushHistory());
@@ -686,6 +677,7 @@
           case 'bottom': el.y = ch-el.h; break;
           case 'centerText': el.align = 'center'; break;
         }
+        if(state.tools.snap){el.x=Math.round(el.x/8)*8;el.y=Math.round(el.y/8)*8;}
         refreshElementDom(el); showSettings(el); pushHistory(); refreshLiveOverlays();
       });
     });
@@ -710,7 +702,19 @@
   // focus it to read the actual explanation, not just "there's a problem here."
   function renderOverlays(){
     clearOverlayNodes();
-    if(!state.guideLayerEl || !state.tools.inspector) return;
+    if(!state.guideLayerEl) return;
+    if(state.tools.showTargets && Array.isArray(state.level.hiddenTargets)){
+      state.level.hiddenTargets.forEach(target=>{
+        const box = document.createElement('div');
+        box.className = 'overlay-node grading-target-box';
+        box.style.left = target.x + 'px';
+        box.style.top = target.y + 'px';
+        box.style.width = target.w + 'px';
+        box.style.height = target.h + 'px';
+        state.guideLayerEl.appendChild(box);
+      });
+    }
+    if(!state.tools.inspector) return;
     const lvl = state.level.levelNumber;
 
     if(CATEGORY_UNLOCK.Contrast <= lvl){
@@ -729,7 +733,7 @@
     }
 
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-    const bad = unlockedFeedback(result.feedback, lvl).filter(f=>f.type==='bad' && f.elId);
+    const bad = unlockedFeedback(result.feedback, lvl, result.activeCategories).filter(f=>f.type==='bad' && f.elId);
     const byElement = new Map();
     bad.forEach(f => { if(!byElement.has(f.elId)) byElement.set(f.elId, []); byElement.get(f.elId).push(f); });
     byElement.forEach((issues, id) => {
@@ -899,12 +903,10 @@
 
     if(d.mode === 'move'){
       let nx = d.startX + dx, ny = d.startY + dy;
-      if(state.tools.snap){
-        const unit = state.tools.gridSize || 8;
-        nx = Math.round(nx/unit)*unit; ny = Math.round(ny/unit)*unit;
-      }
+      nx = Math.round(nx/8)*8; ny = Math.round(ny/8)*8;
       const snapped = applyGuideSnap(el, nx, ny);
-      el.x = snapped.x; el.y = snapped.y;
+      el.x = Math.round(snapped.x/8)*8;
+      el.y = Math.round(snapped.y/8)*8;
       refreshElementDom(el);
       if(state.tools.measure){
         const marginR = Math.round(state.level.canvas.w - (el.x+el.w));
@@ -917,7 +919,7 @@
       // bottom or right — previously only e/s snapped correctly because w/h
       // were rounded *after* x/y had already been derived from the raw value.
       const dir = d.handle;
-      const unit = state.tools.snap ? (state.tools.gridSize || 8) : null;
+      const unit = 8;
       let x = d.startX, y = d.startY, w = d.startW, h = d.startH;
 
       if(dir.includes('e')){
@@ -964,10 +966,12 @@
   // ---------------- Toolbar ----------------
   function updateToolButtonStates(){
     document.getElementById('tool-grid').classList.toggle('active', state.tools.gridVisible);
-    document.getElementById('tool-snap').classList.toggle('active', state.tools.snap);
     document.getElementById('tool-guides').classList.toggle('active', state.tools.guides);
     document.getElementById('tool-inspector').classList.toggle('active', state.tools.inspector);
     document.getElementById('tool-measure').classList.toggle('active', state.tools.measure);
+    const targetBtn = document.getElementById('tool-targets');
+    targetBtn.classList.toggle('active', state.tools.showTargets);
+    targetBtn.setAttribute('aria-pressed', String(state.tools.showTargets));
     updateGridBackground();
   }
 
@@ -1008,7 +1012,7 @@
 
   function showHint(){
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
-    const bad = unlockedFeedback(result.feedback, state.level.levelNumber).find(f=>f.type==='bad');
+    const bad = unlockedFeedback(result.feedback, state.level.levelNumber, result.activeCategories).find(f=>f.type==='bad');
     if(!bad){
       clearHintHighlight();
       setHint('✨ Looking great — no major issues detected. Try Save when ready!');
@@ -1047,13 +1051,12 @@
   let secondaryToolItems = null; // [{el, parent, next}], captured once in original DOM order
 
   function captureSecondaryToolItems(){
-    const ids = ['tool-grid', 'tool-grid-settings', 'tool-snap', 'tool-guides', 'tool-inspector', 'tool-hint', 'tool-show-clickable', 'live-score-chip', 'issues-chip'];
+    const ids = ['tool-grid', 'tool-grid-settings', 'tool-guides', 'tool-inspector', 'tool-hint', 'tool-show-clickable'];
     const items = ids.map(id => {
       const el = document.getElementById(id);
       return { el, parent: el.parentNode, next: el.nextElementSibling };
     });
-    const zoomControl = document.querySelector('.zoom-control');
-    items.push({ el: zoomControl, parent: zoomControl.parentNode, next: zoomControl.nextElementSibling });
+
     return items;
   }
 
@@ -1102,21 +1105,18 @@
       refreshElementDom(el); showSettings(el); pushHistory(); refreshLiveOverlays();
     });
 
-    applyToolbarLayout(MOBILE_TOOLS_MQ.matches);
-    MOBILE_TOOLS_MQ.addEventListener('change', e => applyToolbarLayout(e.matches));
-    document.getElementById('tool-mobile-more').addEventListener('click', showMobileToolsSheet);
     document.getElementById('mobile-tools-overlay').addEventListener('click', e=>{
       if(e.target.id === 'mobile-tools-overlay') hideMobileToolsSheet();
     });
 
     document.getElementById('tool-undo').addEventListener('click', undo);
     document.getElementById('tool-redo').addEventListener('click', redo);
+    document.getElementById('tool-targets').addEventListener('click', ()=>{ state.tools.showTargets=!state.tools.showTargets; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-grid').addEventListener('click', ()=>{ state.tools.gridVisible=!state.tools.gridVisible; updateToolButtonStates(); });
     document.getElementById('tool-grid-settings').addEventListener('click', e=>{
       const panel = document.getElementById('grid-settings-panel');
       const willShow = panel.hidden;
       document.getElementById('typescale-panel').hidden = true;
-      document.getElementById('issues-panel').hidden = true;
       if(willShow){
         syncGridSettingsUI();
         positionGridSettingsPanel(e.currentTarget);
@@ -1135,21 +1135,8 @@
       document.getElementById('grid-opacity-readout').textContent = Math.round(state.tools.gridOpacity*100);
       updateGridBackground();
     });
-    document.getElementById('tool-snap').addEventListener('click', ()=>{ state.tools.snap=!state.tools.snap; updateToolButtonStates(); });
     document.getElementById('tool-guides').addEventListener('click', ()=>{ state.tools.guides=!state.tools.guides; updateToolButtonStates(); });
     document.getElementById('tool-inspector').addEventListener('click', ()=>{ state.tools.inspector=!state.tools.inspector; updateToolButtonStates(); renderOverlays(); });
-    document.getElementById('issues-chip').addEventListener('click', e=>{
-      const panel = document.getElementById('issues-panel');
-      const willShow = panel.hidden;
-      document.getElementById('grid-settings-panel').hidden = true;
-      document.getElementById('typescale-panel').hidden = true;
-      if(willShow){
-        renderIssuesPanel(currentIssues());
-        positionPopoverBelow(panel, e.currentTarget);
-        hideMobileToolsSheet();
-      }
-      panel.hidden = !willShow;
-    });
     document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates(); });
     document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
     document.getElementById('tool-show-clickable').addEventListener('click', ()=>{ playIntroFlash(); hideMobileToolsSheet(); });
@@ -1157,7 +1144,6 @@
       const panel = document.getElementById('typescale-panel');
       const willShow = panel.hidden;
       document.getElementById('grid-settings-panel').hidden = true;
-      document.getElementById('issues-panel').hidden = true;
       if(willShow) buildTypeScalePanel();
       panel.hidden = !willShow;
     });
@@ -1227,25 +1213,6 @@
     canvasWrap.addEventListener('pointerup', endPan);
     canvasWrap.addEventListener('pointercancel', endPan);
     canvasWrap.addEventListener('auxclick', e=>{ if(e.button === 1) e.preventDefault(); });
-
-    document.getElementById('zoom-badge').addEventListener('click', ()=>{
-      const wrap = document.getElementById('editor-canvas-wrap');
-      zoomAnchor = {
-        canvasX: state.level.canvas.w/2, canvasY: state.level.canvas.h/2,
-        screenX: wrap.clientWidth/2, screenY: wrap.clientHeight/2,
-      };
-      state.zoom = 1;
-      runZoomAnimation();
-    });
-
-    // Explicit +/- zoom buttons — precise, discoverable zoom control for
-    // touch users (pinch alone is imprecise) and anyone without a wheel/trackpad.
-    function stepZoom(factor){
-      const wrap = document.getElementById('editor-canvas-wrap');
-      zoomAt(wrap.getBoundingClientRect().left + wrap.clientWidth/2, wrap.getBoundingClientRect().top + wrap.clientHeight/2, factor);
-    }
-    document.getElementById('tool-zoom-in').addEventListener('click', ()=>stepZoom(1.25));
-    document.getElementById('tool-zoom-out').addEventListener('click', ()=>stepZoom(1/1.25));
 
     // ---------------- Touch gestures: one-finger pan on empty canvas,
     // two-finger pinch-to-zoom anchored on the touch midpoint ----------------
@@ -1351,7 +1318,9 @@
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) pushHistory();
     });
 
-    window.addEventListener('resize', ()=>{ if(state.level) applyCanvasTransform(); });
+    new ResizeObserver(()=>{
+      if(state.level){ centerCanvas(); applyCanvasTransform(); }
+    }).observe(canvasWrap);
   }
 
   // Press-and-hold "Compare": overlays the ORIGINAL (unedited) design directly
@@ -1392,6 +1361,8 @@
       d.style.position = 'absolute';
       d.style.left = el.x+'px'; d.style.top = el.y+'px'; d.style.width = el.w+'px'; d.style.height = el.h+'px';
       d.style.borderRadius = (el.radius||0)+'px';
+      d.style.clipPath = shapeClip(el.shape);
+      d.style.whiteSpace = 'pre-line';
       d.style.opacity = el.opacity != null ? el.opacity : 1;
       if(el.border && el.border.width>0) d.style.border = `${el.border.width}px ${el.border.style} ${el.border.color}`;
       if(el.shadow && el.shadow.enabled) d.style.boxShadow = `0px 4px ${el.shadow.blur}px ${el.shadow.color}`;

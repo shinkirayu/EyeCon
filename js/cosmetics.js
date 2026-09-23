@@ -19,7 +19,7 @@
 
   const ITEMS = [
     // ---- Desktop wallpapers ----
-    { id:'wp-mint',     category:'wallpaper', name:'Mint Breeze',      rarity:'common',    emoji:'🌿', css:'linear-gradient(160deg, #bfe9db 0%, #9ed9c8 100%)' },
+    { id:'wp-mint',     category:'wallpaper', name:'Lavender Desk',    rarity:'common',    emoji:'🌿', css:'linear-gradient(160deg, #b6a1d1 0%, #a993ca 100%)' },
     { id:'wp-peach',    category:'wallpaper', name:'Peach Fuzz',       rarity:'common',    emoji:'🍑', css:'linear-gradient(160deg, #ffe3d0 0%, #ffc9a8 100%)' },
     { id:'wp-lavender', category:'wallpaper', name:'Lavender Fields',  rarity:'rare',      emoji:'💜', css:'linear-gradient(160deg, #e3d6f7 0%, #c6aef0 100%)' },
     { id:'wp-sunset',   category:'wallpaper', name:'Sunset Studio',    rarity:'epic',      emoji:'🌅', css:'linear-gradient(160deg, #ffb385 0%, #ff7a90 55%, #a86bd0 100%)', isNew:true },

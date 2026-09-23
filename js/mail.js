@@ -5,9 +5,10 @@
 (function(){
 
   const TIER_LABEL = { novice:'NOVICE', intermediate:'INTERMEDIATE', advanced:'ADVANCED', expert:'EXPERT' };
-  let handlers = { onAccept:()=>{}, onSend:()=>{} };
+  let handlers = { onAccept:()=>{}, onSend:()=>{}, onOpenReply:()=>{} };
   let activeLevel = null;
   let pendingGradeResult = null;
+  let replyMode = false; // true while modal-mail-detail is showing a post-grading client reply, not a fresh job brief
 
   // Typewriter-reveal compose state: the reply is pre-written but shown
   // greyed out; any keypress reveals the next few characters (not just one —
@@ -16,40 +17,27 @@
   let composeState = { fullText:'', revealed:0, attached:false, attachedFileName:'', editedLevel:null, editedElements:null };
   const REVEAL_CHARS_PER_KEY = 3;
 
-  // DEV: every level is unlocked regardless of player level, for testing —
-  // flip to false to restore normal progression-gated unlocking.
-  const DEV_UNLOCK_ALL_LEVELS = true;
-
-  function isUnlocked(level, profile){
-    if(DEV_UNLOCK_ALL_LEVELS) return true;
-    const lvl = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
-    return lvl >= level.unlockLevel || profile.completed.includes(level.id);
-  }
-
   function renderInbox(profile){
-    const list = document.getElementById('mail-list');
-    list.innerHTML = '';
-    const levels = window.EC_LEVELS.filter(l => !profile.completed.includes(l.id));
-    if(levels.length === 0){
-      list.innerHTML = `<div class="empty-state">📭 Inbox zero! You've completed every client project. Check Stats for your final results.</div>`;
+    const list=document.getElementById('mail-list');
+    list.innerHTML='';
+    const levels=window.EC_STORE.commissionInbox(profile);
+    if(!levels.length){
+      list.innerHTML='<div class="empty-state">All caught up! New commissions arrive each day at 00:00 UTC. Your finished work is in Completed.</div>';
       return;
     }
     levels.forEach(level=>{
-      const unlocked = isUnlocked(level, profile);
-      const row = document.createElement('div');
-      row.className = 'mail-item' + (unlocked ? '' : ' locked');
-      row.setAttribute('role','listitem');
-      row.tabIndex = unlocked ? 0 : -1;
-      row.innerHTML = `
-        <div class="avatar-circle">${level.avatarEmoji}</div>
-        <div class="mail-item-name">${level.clientName} <span style="font-weight:600;color:var(--ink-faint)">— Lv.${level.levelNumber} ${level.concept}</span></div>
-        <div class="mail-item-preview">${unlocked ? '"'+level.emailPreview+'"' : '🔒 Reach a higher level to unlock this client'}</div>
-        <span class="tag ${level.tier}">${TIER_LABEL[level.tier]}</span>
-        ${unlocked ? '<span class="unread-dot" aria-hidden="true"></span>' : ''}
-      `;
-      if(unlocked){
-        row.addEventListener('click', ()=>openMailDetail(level));
-        row.addEventListener('keydown', e=>{ if(e.key==='Enter') openMailDetail(level); });
+      const waiting=profile.pendingClientReply?.levelId===level.id;
+      const replied=profile.readyReply?.levelId===level.id;
+      const clickable=!waiting;
+      const row=document.createElement('div');
+      row.className='mail-item'+(replied?' unread':''); row.setAttribute('role','listitem'); row.tabIndex=clickable?0:-1;
+      const preview = waiting ? 'Your design is with the client. Awaiting their reply...' : replied ? `${level.clientName} replied to your design.` : level.emailPreview;
+      const tag = waiting ? 'Sent' : replied ? 'Reply' : 'Commission';
+      row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div><span class="tag">${tag}</span>${replied?'<span class="unread-dot"></span>':''}`;
+      if(clickable){
+        const open = () => replied ? handlers.onOpenReply(level) : openMailDetail(level);
+        row.addEventListener('click', open);
+        row.addEventListener('keydown', e=>{ if(e.key==='Enter') open(); });
       }
       list.appendChild(row);
     });
@@ -70,23 +58,66 @@
       row.innerHTML = `
         <div class="avatar-circle">${level.avatarEmoji}</div>
         <div class="mail-item-name">${level.clientName}</div>
-        <div class="mail-item-preview">Grade ${hist?hist.grade:'—'} · Score ${hist?hist.score:'—'}</div>
-        <span class="tag ${level.tier}">${TIER_LABEL[level.tier]}</span>
+        <div class="mail-item-preview">${hist ? '★'.repeat(hist.stars||0)+'☆'.repeat(5-(hist.stars||0)) : '—'} · Grade ${hist?hist.grade:'—'}</div>
+        <span class="tag ${level.tier}">Completed</span>
       `;
       row.addEventListener('click', ()=>openMailDetail(level, true));
       list.appendChild(row);
     });
   }
 
+  // Turns a grading result into a client-voice reply (reuses the feedback
+  // copy already written for the score-bar report — just quoted as the
+  // client's own complaint/praise instead of a rubric line).
+  function buildClientReplyText(level, result, missionComplete){
+    const stars = result.stars;
+    const starLine = '★'.repeat(stars) + '☆'.repeat(5 - stars) + `  (${stars}/5)`;
+    const relevant = t => result.feedback.filter(f => f.type===t && !f.editorOnly && result.activeCategories.includes(f.category.toLowerCase()));
+    const lines = [`Hi, ${level.clientName} here.`, ''];
+    if(missionComplete) lines.push(starLine, '');
+    if(missionComplete){
+      lines.push(stars >= 5 ? 'This is exactly what I wanted, thank you!' : 'This works well, thanks for getting it there.');
+      relevant('good').slice(0,2).forEach(f => lines.push(`• ${f.title}`));
+      lines.push('', `— ${level.clientName}`);
+    } else {
+      lines.push("A few things still aren't quite right — can you take another pass?");
+      const bad = relevant('bad').slice(0,3);
+      (bad.length ? bad : [{title:"It's close, just needs a bit more polish overall."}]).forEach(f => lines.push(`• ${f.title}`));
+      lines.push('', 'Send me an updated version when you can.');
+    }
+    return lines.join('\n');
+  }
+
+  // Shows the client's reply after grading — approves and pays out (stars
+  // met the threshold) or sends the work back for revision (mission stays
+  // open in the inbox, same modal reused with a different button/behavior).
+  function openClientReply(level, result, missionComplete, onContinue){
+    activeLevel = level;
+    replyMode = true;
+    document.getElementById('mail-detail-title').textContent = level.clientName;
+    document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
+    document.getElementById('mail-detail-body').textContent = buildClientReplyText(level, result, missionComplete);
+    document.getElementById('mail-detail-attachment').innerHTML = '';
+    const btn = document.getElementById('btn-accept-job');
+    btn.style.display = '';
+    btn.textContent = missionComplete ? 'Mark Completed' : 'Back to Editor';
+    btn.onclick = () => { window.EC_MODAL.hide('modal-mail-detail'); btn.onclick = null; replyMode = false; onContinue(); };
+    window.EC_MODAL.show('modal-mail-detail');
+  }
+
   function openMailDetail(level, readOnly){
     activeLevel = level;
+    replyMode = false;
+    document.getElementById('btn-accept-job').onclick = null;
     document.getElementById('mail-detail-title').textContent = level.clientName;
-    document.getElementById('mail-detail-level-tag').textContent = `LEVEL ${level.levelNumber} · ${level.concept}`;
+    document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
     document.getElementById('mail-detail-body').textContent = level.emailBody;
     document.getElementById('mail-detail-attachment').innerHTML =
-      `<div class="attachment-chip" id="attachment-chip">📎 ${level.attachmentName}</div>`;
+      `<div class="attachment-chip" id="attachment-chip"><span>${level.attachmentName}</span></div>`;
     document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, level.elements));
-    document.getElementById('btn-accept-job').style.display = readOnly ? 'none' : '';
+    const acceptBtn = document.getElementById('btn-accept-job');
+    acceptBtn.textContent = 'Accept';
+    acceptBtn.style.display = readOnly ? 'none' : '';
     window.EC_MODAL.show('modal-mail-detail');
   }
 
@@ -129,18 +160,16 @@
   // Re-targeting an already-running reveal (rapid keypresses) just extends
   // it from wherever it currently is, so nothing skips or double-counts.
   let revealTimer = null;
-  function queueReveal(target){
-    target = Math.min(composeState.fullText.length, target);
-    clearInterval(revealTimer);
-    revealTimer = setInterval(()=>{
-      if(composeState.revealed >= target){
-        clearInterval(revealTimer);
-        revealTimer = null;
-        return;
-      }
+  let revealTarget = 0;
+  function queueReveal(count){
+    revealTarget=Math.min(composeState.fullText.length,Math.max(revealTarget,composeState.revealed)+count);
+    if(revealTimer) return;
+    revealTimer=setInterval(()=>{
+      if(composeState.revealed>=revealTarget){clearInterval(revealTimer);revealTimer=null;return;}
       composeState.revealed++;
+      window.EC_SOUND.play('typing');
       renderComposeText();
-    }, 25);
+    },18);
   }
 
   function updateSendEnabled(){
@@ -150,12 +179,10 @@
 
   function openCompose(level, gradeResult){
     clearInterval(revealTimer); revealTimer = null; // stop any leftover cascade from a previous compose
+    revealTarget=0;
     activeLevel = level; pendingGradeResult = gradeResult;
     document.getElementById('compose-to-name').textContent = level.clientName;
-    let template;
-    if(gradeResult.score >= 90) template = level.replyTemplates.great;
-    else if(gradeResult.score >= 70) template = level.replyTemplates.ok;
-    else template = level.replyTemplates.bad;
+    const template = 'I have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.';
 
     composeState = {
       fullText: `Good day, ${level.clientName} team,\n\n${template}\n\nBest regards,\nEyeCon`,
@@ -184,7 +211,7 @@
       composeState.attached = true;
       composeState.attachedFileName = fname;
       const chip = document.getElementById('compose-attachment-chip');
-      chip.textContent = `📎 ${fname}  ✓`;
+      chip.textContent = `${fname}  ✓`;
       chip.classList.remove('hidden');
       chip.onclick = () => openPreview(composeState.editedLevel, composeState.editedElements);
       pop.classList.add('hidden');
@@ -205,6 +232,7 @@
       if(e.target.id === 'modal-preview') window.EC_MODAL.hide('modal-preview');
     });
     document.getElementById('btn-accept-job').addEventListener('click', ()=>{
+      if(replyMode) return; // handled by openClientReply's own onclick instead
       window.EC_MODAL.hide('modal-mail-detail');
       handlers.onAccept(activeLevel);
     });
@@ -233,8 +261,9 @@
       // far past the point of feeling like a fun typing flourish — but
       // stagger them on a fast tick (queueReveal) rather than jumping there
       // instantly, so it still reads as typing and not chunks popping in.
-      queueReveal(composeState.revealed + n * REVEAL_CHARS_PER_KEY);
+      queueReveal(n * REVEAL_CHARS_PER_KEY);
     });
+    document.getElementById('compose-body').addEventListener('click', ()=>queueReveal(REVEAL_CHARS_PER_KEY));
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);
 
     document.getElementById('btn-send-mail').addEventListener('click', ()=>{
@@ -245,7 +274,7 @@
   }
 
   window.EC_MAIL = {
-    renderInbox, renderCompleted, openMailDetail, openCompose,
+    renderInbox, renderCompleted, openMailDetail, openCompose, openClientReply,
     setHandlers: h => handlers = Object.assign(handlers, h),
     initOnce,
   };

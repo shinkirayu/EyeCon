@@ -9,6 +9,9 @@
   function show(id){
     const overlay = typeof id === 'string' ? document.getElementById(id) : id;
     if(!overlay) return;
+    // Attachment previews can open over a compose or client dialog.
+    const visible = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'));
+    overlay.style.zIndex = String(Math.max(2000, ...visible.map(el=>Number(getComputedStyle(el).zIndex)||0)) + 1);
     overlay.classList.remove('closing');
     overlay.classList.remove('hidden');
   }

@@ -28,6 +28,7 @@
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 28px;
+  /* Matches the reference Eyecon build's own font choices. */
   --font-display: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
   --font-body: 'Quicksand', system-ui, sans-serif;
   --font-hand: 'Patrick Hand', cursive;
@@ -161,12 +162,37 @@ button{ font-family: inherit; }
 /* =====================================================
    HOME SCREEN
 ===================================================== */
-#screen-home.active{ display:block; }
+/* The desk illustration's children are all positioned with %/vw units sized
+   for a ~16:9 composition. Letting this box stretch to whatever the viewport
+   shape happens to be (a phone, an ultrawide monitor) throws those
+   percentages off in different ways on every screen — locking the box
+   itself to one aspect ratio, centered with letterbox bars in the matching
+   background color, keeps everything inside it proportioned the same
+   regardless of the surrounding window. */
+#screen-home.active{
+  display:flex; align-items:center; justify-content:center;
+  /* Same gradient as .desk-scene itself, so the letterbox bars that show up
+     on ultrawide screens read as the sky continuing offscreen rather than a
+     flat, mismatched backdrop. */
+  background: linear-gradient(180deg, var(--mint) 0%, var(--mint-deep) 100%);
+}
 .desk-scene{
   position:relative; width:100%; height:100%;
   background: linear-gradient(180deg, var(--mint) 0%, var(--mint-deep) 100%);
   overflow:hidden;
   transform-origin: 50% 50%;
+}
+/* Above phone/tablet widths, contain the scene at a fixed 16:9 instead of
+   stretching it to whatever the window's actual aspect ratio is — an
+   ultrawide monitor otherwise spreads the illustration's %-positioned
+   pieces much further apart than the same layout on a normal desktop.
+   Skipped below 901px: the mobile-specific rules further down were tuned
+   for a full-bleed portrait scene, not a letterboxed one. Works out exactly
+   because the taskbar is hidden on this screen, so .screen-area's box really
+   is the full viewport and these vh/vw figures (16/9 and its inverse) line
+   up with it — a plain `aspect-ratio` can't cap both axes at once like this. */
+@media (min-width:901px){
+  .desk-scene{ width: min(100%, 177.78vh); height: min(100%, 56.25vw); }
 }
 
 /* Equipped wall posters — up to 2, hung in the strip of wall above the
@@ -201,7 +227,7 @@ button{ font-family: inherit; }
 .desk-decor .decor-item{ filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
 .monitor{
   position:absolute; left:50%; top:8%; transform:translateX(-50%);
-  width:56%; max-width:900px; aspect-ratio: 16/10.5;
+  width:56%; aspect-ratio: 16/10.5;
   background: var(--cream);
   border-radius: 36px;
   box-shadow: var(--shadow-lg);
@@ -256,8 +282,8 @@ button{ font-family: inherit; }
      container's width and height separately, and this box's container is
      shorter than it is wide, so setting both via % previously produced a
      visibly non-square "icon." aspect-ratio keeps it a true square at any size. */
-  position:relative; width: clamp(32px, 10%, 52px); aspect-ratio: 1 / 1; background: var(--cream);
-  border-radius:24%; display:flex; align-items:center; justify-content:center; font-size: clamp(17px, 5.6%, 30px);
+  position:relative; width: max(32px, 10%); aspect-ratio: 1 / 1; background: var(--cream);
+  border-radius:24%; display:flex; align-items:center; justify-content:center; font-size: max(17px, 5.6%);
   box-shadow: var(--shadow-sm);
 }
 .mini-badge{
@@ -292,7 +318,7 @@ button{ font-family: inherit; }
    tools sheet already uses. */
 .monitor-app-popup{
   position:absolute; left:50%; top:2%; transform:translateX(-50%);
-  width:min(85%, 860px); height:82%; max-height:660px;
+  width:85%; height:82%;
   background: var(--cream-panel); border: 4px solid var(--cream); border-radius:20px;
   box-shadow: var(--shadow-lg); z-index:10; display:flex; flex-direction:column; overflow:hidden;
   animation: monitorAppPopIn .22s cubic-bezier(.25,.9,.35,1.25);
@@ -406,7 +432,7 @@ button{ font-family: inherit; }
 
 .keyboard{
   position:absolute; left:50%; bottom:6%; transform:translateX(-50%);
-  width:44%; max-width:640px; height:14%; background:#fff; border-radius:14px; box-shadow: var(--shadow-md);
+  width:44%; height:14%; background:#fff; border-radius:14px; box-shadow: var(--shadow-md);
   display:flex; flex-direction:column; justify-content:center; gap:8px; padding: 0 18px;
 }
 .keys-row{ height:18%; background: var(--cream-deep); border-radius:6px; }
@@ -415,33 +441,80 @@ button{ font-family: inherit; }
 /* =====================================================
    DESKTOP
 ===================================================== */
-#screen-desktop.active{ display:flex; }
+#screen-desktop.active{
+  display:flex; align-items:center; justify-content:center;
+  /* Same reasoning as #screen-home.active — matches .desktop-wallpaper's own
+     gradient so the ultrawide letterbox bars blend in as sky, not dead space. */
+  background: linear-gradient(160deg, var(--mint) 0%, var(--mint-deep) 100%);
+}
 .desktop-wallpaper{
-  position:relative; width:100%; height:100%;
+  /* z-index:0 (with position:relative) is what actually matters here — it
+     makes this element its own stacking context, so the sky layers' negative
+     z-index is scoped to painting behind ITS siblings, not some ancestor's
+     background further up the tree (which is what was happening without it —
+     the clouds/hills were rendering, just fully hidden behind this element). */
+  position:relative; z-index:0; width:100%; height:100%; overflow:hidden;
   background: linear-gradient(160deg, var(--mint) 0%, var(--mint-deep) 100%);
   padding: 48px;
 }
+/* Same fixed-ratio containment as .desk-scene above 901px, same reasoning. */
+@media (min-width:901px){
+  .desktop-wallpaper{ width: min(100%, 177.78vh); height: min(100%, 56.25vw); }
+}
+/* Sky scene — drifting clouds + rolling hills, always present underneath the
+   icons regardless of which wallpaper color is equipped (see applyCosmetics
+   in app.js, which only ever touches this element's own background). Pinned
+   behind everything else in this stacking context via negative z-index,
+   rather than relying on DOM order, since none of the icon/watermark/hint
+   siblings are themselves positioned. */
+.sky-clouds{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:-1; }
+.cloud{ position:absolute; background:#fff; border-radius:50%; opacity:.85; }
+.cloud::before, .cloud::after{ content:''; position:absolute; background:#fff; border-radius:50%; }
+.cloud.c1{ top:6%; left:8%; width:120px; height:44px; }
+.cloud.c1::before{ width:70px; height:70px; top:-38px; left:10px; }
+.cloud.c1::after{ width:50px; height:50px; top:-24px; left:60px; }
+.cloud.c2{ top:14%; left:52%; width:160px; height:56px; }
+.cloud.c2::before{ width:90px; height:90px; top:-50px; left:20px; }
+.cloud.c2::after{ width:60px; height:60px; top:-28px; left:90px; }
+.cloud.c3{ top:5%; right:6%; width:90px; height:34px; }
+.cloud.c3::before{ width:54px; height:54px; top:-28px; left:8px; }
+.cloud.c3::after{ width:38px; height:38px; top:-16px; left:44px; }
+.cloud.c4{ top:28%; left:32%; width:70px; height:26px; opacity:.6; }
+.cloud.c4::before{ width:40px; height:40px; top:-20px; left:6px; }
+.cloud.c4::after{ width:28px; height:28px; top:-12px; left:32px; }
+.sky-hills{ position:absolute; left:0; right:0; bottom:0; height:42%; overflow:hidden; pointer-events:none; z-index:-1; }
+.hill{ position:absolute; left:-10%; width:120%; border-radius:50% 50% 0 0 / 100% 100% 0 0; background: var(--success); }
+.hill-back{ bottom:-6%; height:78%; opacity:.5; }
+.hill-front{ bottom:-12%; height:58%; opacity:.85; }
 .desktop-watermark{
   position:absolute; top:24px; right:36px; display:flex; align-items:center; gap:10px;
   color: var(--teal-dark); opacity:.55; font-family: var(--font-display); font-weight:700; font-size:18px;
   background:none; border:none; cursor:pointer; padding:6px 8px; border-radius:10px; transition: opacity .12s ease, background .12s ease;
 }
 .desktop-watermark:hover, .desktop-watermark:focus-visible{ opacity:.85; background: rgba(255,255,255,0.3); }
-.desktop-icons{ display:flex; flex-direction:column; gap:28px; width:110px; }
+.desktop-status-chip{
+  position:absolute; top:68px; right:36px; z-index:1; display:flex; gap:10px;
+  color: var(--teal-dark); font-family: var(--font-display); font-weight:700; font-size:14px;
+  background: rgba(255,255,255,0.55); padding:6px 12px; border-radius:10px;
+}
+.desktop-icons{ display:flex; flex-direction:column; gap:28px; width:110px; z-index:1; }
 .desktop-icon{
   position:relative; background:none; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px;
   padding:14px 8px; border-radius:16px; color: var(--ink); transition: transform .12s ease, background .12s ease;
 }
-.desktop-icon:hover, .desktop-icon:focus-visible{ background: rgba(255,255,255,0.4); transform: translateY(-3px); }
+.desktop-icon:hover, .desktop-icon:focus-visible{ background: rgba(255,255,255,0.25); transform: translateY(-3px); }
+/* Chunky cartoon card: solid white, bold dark outline, real drop shadow —
+   reads clearly against any wallpaper color or the hills/clouds behind it. */
 .desktop-icon-glyph{
   font-size:40px; width:72px; height:72px; display:flex; align-items:center; justify-content:center;
-  background: var(--cream); border-radius:20px; box-shadow: var(--shadow-md);
+  background:#fff; border-radius:20px; border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink);
 }
 .desktop-icon-label{
-  font-family: var(--font-display); font-weight:700; font-size:13px; color: var(--ink);
-  background: rgba(253,243,230,0.82); padding:3px 10px; border-radius:8px; text-shadow:none;
+  font-family: var(--font-display); font-weight:800; font-size:14px; color:#fff;
+  -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.25);
 }
-.desktop-icon-badge{ position:absolute; top:6px; right:14px; }
+.desktop-icon-badge{ position:absolute; top:2px; right:10px; box-shadow: 0 0 0 3px #fff; }
 .desktop-hint{
   position:absolute; bottom:40px; left:50%; transform:translateX(-50%);
   background: var(--cream); padding:12px 22px; border-radius:16px; box-shadow: var(--shadow-sm); font-weight:600; color:var(--ink-soft);
@@ -492,6 +565,7 @@ button{ font-family: inherit; }
   cursor:pointer; background:none; border-left:none; border-right:none; border-top:none; width:100%; text-align:left; font-family:inherit;
 }
 .mail-item:hover{ background: var(--cream-deep); }
+.mail-item.unread{ background: rgba(245,197,68,0.16); }
 .mail-item .avatar-circle{ width:44px;height:44px; }
 .mail-item-name{ font-weight:700; flex:1 1 160px; min-width:0; }
 .mail-item-preview{ color: var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 80px; min-width:0; }
@@ -512,6 +586,7 @@ button{ font-family: inherit; }
   height: calc(64px + env(safe-area-inset-bottom, 0px));
   background: var(--mint-deep); display:flex; align-items:center; flex-shrink:0; gap:14px;
   padding: 0 max(24px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(24px, env(safe-area-inset-left));
+  border-top: 3px solid var(--ink);
 }
 /* Plain icon buttons, not chips — these are navigation, not primary
    actions, so they shouldn't visually compete with the currency/clock
@@ -523,8 +598,22 @@ button{ font-family: inherit; }
 }
 .taskbar-btn:hover, .taskbar-btn:focus-visible{ background: rgba(58,46,57,0.1); color: var(--ink); }
 .taskbar-btn.active{ background: var(--teal); color:#fff; }
+/* The one primary CTA on the bar — a bold outlined pill with its own label,
+   same "chunky cartoon button" language as the desktop icons. */
+.taskbar-btn-primary{
+  width:auto; gap:8px; padding:0 18px; border-radius:24px; background: var(--coral);
+  border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); color:#fff; font-size:17px;
+}
+.taskbar-btn-primary:hover, .taskbar-btn-primary:focus-visible{ background: var(--coral-dark); color:#fff; transform: translateY(-1px); }
+.taskbar-btn-label{
+  font-family: var(--font-display); font-weight:800; font-size:14px; letter-spacing:.02em; text-transform:uppercase;
+}
 .taskbar-spacer{ flex:1; }
-.taskbar-clock{ background: var(--cream); padding:10px 18px; border-radius: 14px; font-weight:700; box-shadow: var(--shadow-sm); }
+.taskbar-clock{
+  background: var(--cream); padding:9px 16px; border-radius: 14px; font-weight:700;
+  border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+  white-space:nowrap; flex-shrink:0;
+}
 
 /* =====================================================
    MODALS (generic)
@@ -557,9 +646,14 @@ button{ font-family: inherit; }
 @keyframes modalPopOut{ from{ opacity:1; transform: scale(1) translateY(0); } to{ opacity:0; transform: scale(.94) translateY(6px); } }
 .reduce-motion .modal-overlay, .reduce-motion .modal-overlay *{ animation: none !important; }
 .modal-card{
-  background: var(--cream-panel); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  position:relative; background: var(--cream-panel); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
   max-width: 640px; width:100%; padding: 30px 34px; max-height: 88vh; overflow-y:auto;
 }
+.mail-detail-close{
+  position:absolute; top:16px; right:16px; z-index:2; background:rgba(58,46,57,0.08); border:none; cursor:pointer;
+  width:34px; height:34px; border-radius:50%; font-size:16px; color: var(--ink); transition: background .12s ease;
+}
+.mail-detail-close:hover, .mail-detail-close:focus-visible{ background: rgba(58,46,57,0.18); }
 .mail-detail-head{ display:flex; align-items:center; gap:16px; margin-bottom:18px; }
 .avatar-circle{ width:60px;height:60px; border-radius:50%; background:#cfe3ea; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
 .mail-detail-level-tag{ font-size:12px; font-weight:700; color: var(--teal-dark); text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
@@ -650,18 +744,6 @@ button{ font-family: inherit; }
 }
 .tool-btn.active{ background: var(--teal); color:#fff; border-color: var(--teal-dark); }
 .tool-btn.btn-save{ background: var(--coral); color:#fff; }
-.live-score-chip{ font-family: var(--font-display); cursor:default; min-width:92px; text-align:center; }
-.live-score-chip.good{ background: var(--success); color:#fff; border-color: var(--success); }
-.live-score-chip.mid{ background: var(--yellow); border-color: var(--yellow-dark); }
-.live-score-chip.bad{ background: var(--danger); color:#fff; border-color: var(--danger); }
-
-/* Issues chip: a quiet "Problems panel" trigger, VS Code style — a count,
-   not a lecture. Green when clear, amber for a couple of things, red once
-   there's a real pile-up, so its color alone is a glance-able signal. */
-.issues-chip{ font-family: var(--font-display); min-width:64px; text-align:center; }
-.issues-chip.good{ background: var(--success); color:#fff; border-color: var(--success); }
-.issues-chip.mid{ background: var(--yellow); border-color: var(--yellow-dark); }
-.issues-chip.bad{ background: var(--danger); color:#fff; border-color: var(--danger); }
 
 /* Grid/Snap/Guides/Hint read as "one toolset" — a single pill-shaped shell
    with its own border/shadow, holding plain borderless buttons inside
@@ -702,6 +784,8 @@ button{ font-family: inherit; }
 .typescale-popover h4{ margin:0 0 8px; font-family:var(--font-display); }
 .grid-settings-popover{ left:24px; right:auto; width:240px; }
 .grid-settings-popover .field-group{ margin-bottom:14px; }
+.grid-snap-toggle{ display:flex; align-items:center; gap:8px; margin:0; font-size:13px; font-weight:600; cursor:pointer; }
+.grid-snap-toggle input{ width:16px; height:16px; margin:0; }
 
 /* Issues popover — the Inspector's "Problems list": same shell as the other
    editor popovers, just wider since each row carries real explanatory text. */
@@ -765,6 +849,26 @@ button{ font-family: inherit; }
 .editor-canvas-wrap.panning *{ cursor:grabbing !important; }
 .editor-canvas{ position:absolute; left:0; top:0; background:#fff; box-shadow: var(--shadow-lg); overflow:hidden; touch-action:none; }
 .guide-layer{ position:absolute; inset:0; pointer-events:none; z-index:999; }
+
+/* Mission control keeps the learning loop visible without making the canvas
+   feel like a dashboard. It presents the one or two skills that count now,
+   then gives the player a direct route to the next unresolved issue. */
+.mission-panel{
+  width:240px; background:var(--cream-panel); border-left:3px solid var(--teal); padding:18px; overflow-y:auto; flex-shrink:0;
+}
+.mission-panel h2{ margin:4px 0 8px; font-family:var(--font-display); font-size:20px; line-height:1.1; }
+.mission-panel p{ margin:0 0 14px; color:var(--ink-soft); font-size:13px; line-height:1.45; }
+.mission-kicker{ color:var(--teal-dark); font-size:11px; font-weight:800; letter-spacing:.1em; }
+.mission-panel ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+.mission-objective{ display:flex; gap:8px; align-items:flex-start; padding:9px 10px; border-radius:10px; background:var(--cream); font-size:13px; font-weight:700; }
+.mission-objective > span:first-child{ width:16px; text-align:center; color:var(--ink-faint); }
+.mission-objective.complete > span:first-child{ color:var(--success); }
+.mission-objective.mastered{ background:#eef7f0; }
+.mission-objective.mastered > span:first-child{ color:var(--yellow-dark); }
+.mission-objective small{ display:block; color:var(--ink-soft); font-size:11px; font-weight:600; margin-top:2px; }
+.mission-focus-btn{ width:100%; margin-top:14px; border:0; border-radius:10px; padding:10px 12px; background:var(--teal); color:#fff; font:700 13px var(--font-body); cursor:pointer; }
+.mission-focus-btn:hover,.mission-focus-btn:focus-visible{ background:var(--teal-dark); }
+.mission-reward{ margin-top:14px; background:var(--yellow); border-radius:10px; padding:10px; text-align:center; font-size:12px; font-weight:800; }
 
 .guide-layer{ --grid-opacity: 0.35; }
 .guide-layer.show-grid{ background-image:
@@ -832,6 +936,11 @@ button{ font-family: inherit; }
 .guide-line.center.v{ width:2px; margin-left:-0.5px; }
 .guide-line.center.h{ height:2px; margin-top:-0.5px; }
 .measure-label{ position:absolute; background:var(--ink); color:#fff; font-size:12px; padding:2px 6px; border-radius:4px; white-space:nowrap; }
+.grading-target-box{
+  position:absolute; pointer-events:none; box-sizing:border-box;
+  border:2px solid #df3f91; background:rgba(255,105,180,.12);
+  border-radius:0; box-shadow:none; z-index:3;
+}
 
 /* Inspector issue badge: a small corner flag rather than a border wrapping
    the whole element — enough to notice, not enough to drown out the design
@@ -1091,7 +1200,11 @@ button{ font-family: inherit; }
    CURRENCY DISPLAYS
 ===================================================== */
 .currency-chip{ background:var(--yellow); color:var(--ink); font-weight:700; padding:8px 16px; border-radius:20px; font-family:var(--font-display); }
-.taskbar-currency{ background: var(--cream); padding:10px 18px; border-radius: 14px; font-weight:700; box-shadow: var(--shadow-sm); font-family:var(--font-display); color: var(--ink); }
+.taskbar-currency{
+  background: var(--cream); padding:9px 16px; border-radius: 14px; font-weight:700; font-family:var(--font-display); color: var(--ink);
+  border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+  white-space:nowrap; flex-shrink:0;
+}
 
 /* =====================================================
    SHOP / WARDROBE / GACHA
@@ -1102,6 +1215,24 @@ button{ font-family: inherit; }
   font-weight:700; font-size:15px; cursor:pointer; color: var(--ink-soft);
 }
 .shop-tab-btn.active{ background: var(--purple); border-color: var(--purple); color:#fff; }
+
+.upgrades-hero{
+  background:linear-gradient(135deg, var(--teal-dark), var(--purple)); color:#fff; border-radius:var(--radius-lg); padding:28px;
+  text-align:center; box-shadow:var(--shadow-md); margin-bottom:20px;
+}
+.upgrades-hero h2{ margin:0 0 8px; font-family:var(--font-display); }
+.upgrades-hero p{ max-width:560px; margin:0 auto 16px; font-size:13px; line-height:1.5; }
+.upgrade-list{ display:flex; flex-direction:column; gap:12px; }
+.upgrade-card{ display:flex; align-items:center; gap:14px; padding:16px; border-radius:14px; background:#fff; box-shadow:var(--shadow-sm); border:2px solid transparent; }
+.upgrade-card.owned{ border-color:var(--success); background:#eef7f0; }
+.upgrade-icon{ width:48px; height:48px; border-radius:14px; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:25px; flex-shrink:0; }
+.upgrade-copy{ flex:1; min-width:0; }
+.upgrade-copy h3{ margin:0 0 4px; font-family:var(--font-display); font-size:17px; }
+.upgrade-copy p{ margin:0; color:var(--ink-soft); font-size:12.5px; line-height:1.4; }
+.upgrade-buy-btn{ border:0; border-radius:10px; background:var(--teal); color:#fff; padding:10px 14px; font:700 13px var(--font-body); cursor:pointer; white-space:nowrap; }
+.upgrade-buy-btn:hover:not(:disabled),.upgrade-buy-btn:focus-visible:not(:disabled){ background:var(--teal-dark); }
+.upgrade-buy-btn:disabled{ background:var(--success); cursor:default; }
+.upgrade-buy-btn.insufficient{ opacity:.5; background:var(--ink-soft); }
 
 /* ---- Cinematic gacha hero banner ---- */
 .gacha-hero{
@@ -1336,6 +1467,10 @@ button{ font-family: inherit; }
   .mail-sidebar{ width:150px; }
   .editor-main{ flex-direction:column; }
   .editor-canvas-wrap{ min-height:160px; }
+  .mission-panel{ width:100%; border-left:none; border-top:3px solid var(--teal); padding:14px 16px; overflow:visible; }
+  .mission-panel h2{ font-size:18px; }
+  .mission-panel ul{ flex-direction:row; flex-wrap:wrap; }
+  .mission-objective{ flex:1 1 180px; }
   .element-settings{
     width:100%; border-left:none; border-top: 3px solid var(--purple); max-height:40vh; transition: max-height .18s ease;
   }
@@ -1344,6 +1479,78 @@ button{ font-family: inherit; }
   .report-wrap{ flex-direction:column; }
   .gacha-hero{ padding:26px 20px; }
   .cosmetic-preview-mockup{ height:180px; }
+}
+
+/* =====================================================
+   COZY NEIGHBORHOOD GAME THEME
+   An original, CSS-drawn title street and a bolder outlined interface give
+   the studio the cheerful, tactile game-board feeling requested for EyeCon.
+===================================================== */
+body{
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'%3E%3Cpath d='M4 2 25 19l-9 2 5 8-5 3-5-9-7 6Z' fill='white' stroke='%23183745' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2, auto;
+}
+button, [role='button'], a, input[type='range'], select, label{
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'%3E%3Cpath d='M11 3c2 0 2 2 2 5V5c0-3 4-3 4 0v3c0-3 4-3 4 0v3c0-2 4-2 4 1v6c0 6-4 10-10 10-4 0-7-2-9-5l-3-5c-2-3 2-5 4-2l2 3V7c0-2 2-4 4-4Z' fill='white' stroke='%23183745' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 11 3, pointer;
+}
+
+/* Title scene: original neighborhood built from simple shapes rather than a
+   copied asset, with the existing Start and Settings interactions preserved. */
+#screen-home .desk-scene{ background:linear-gradient(#a9ddf3 0 65%, #dff4fd 65% 68%, #f3bd83 68% 100%); }
+#screen-home.active{ background:linear-gradient(#a9ddf3 0 65%, #dff4fd 65% 68%, #f3bd83 68% 100%); }
+#screen-home .desk-surface,#screen-home .desk-posters,#screen-home .desk-decor,
+#screen-home .plant,#screen-home .tower,#screen-home .keyboard,#screen-home .mouse{ display:none; }
+.home-street{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.home-street::before{ content:''; position:absolute; inset:auto 0 0; height:35%; background:linear-gradient(135deg,transparent 0 41%,#e28a4e 41.2% 43%,#ffc68d 43.2% 57%,#e28a4e 57.2% 59%,transparent 59.2%), linear-gradient(#ffd49d,#eaa160); opacity:.95; }
+.home-street::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:15%; background:linear-gradient(165deg,#bd6035 0 32%,#d98049 32% 59%,#bd6035 59%); opacity:.62; }
+.street-cloud{ position:absolute; width:190px; height:58px; background:#fffdf7; border-radius:50px; opacity:.9; }
+.street-cloud::before,.street-cloud::after{ content:''; position:absolute; border-radius:50%; background:#fffdf7; }
+.street-cloud::before{ width:92px; height:92px; left:26px; bottom:13px; }.street-cloud::after{ width:68px; height:68px; right:20px; bottom:8px; }
+.cloud-one{ top:10%; left:30%; }.cloud-two{ top:17%; right:10%; transform:scale(.65); }
+.street-building{ position:absolute; bottom:13%; width:24%; height:66%; border:5px solid #254b50; box-shadow:inset 0 0 0 6px rgba(255,243,209,.28); }
+.street-building i{ position:absolute; width:25%; height:16%; background:#9be0f1; border:4px solid #254b50; box-shadow:inset 0 0 0 3px rgba(255,255,255,.35); }
+.building-left{ left:-3%; background:#5db18f; border-bottom:0; }.building-left i:nth-child(1){top:15%;left:16%;}.building-left i:nth-child(2){top:42%;left:57%;}.building-left i:nth-child(3){top:57%;left:14%;}.building-left b{ position:absolute; bottom:0; left:0; width:100%; height:22%; background:repeating-linear-gradient(90deg,#f1775c 0 24px,#ffd08d 24px 47px); border-top:5px solid #254b50; }
+.building-mid{ left:21%; height:77%; width:18%; background:#ffae82; border-bottom:0; }.building-mid i:nth-child(1){top:13%;left:22%;}.building-mid i:nth-child(2){top:40%;right:17%;}.building-mid i:nth-child(3){bottom:13%;left:20%;}
+.building-right{ right:-4%; width:27%; height:78%; background:#ed7d20; border-bottom:0; }.building-right i:nth-child(1){top:11%;left:20%;}.building-right i:nth-child(2){top:11%;right:20%;}.building-right b{ position:absolute; bottom:0; left:33%; width:37%; height:44%; border:5px solid #254b50; border-bottom:0; border-radius:46px 46px 0 0; background:#23775e; }
+.street-tree{ position:absolute; bottom:12%; width:19%; height:58%; }.street-tree i{ position:absolute; bottom:0; left:49%; width:12%; height:58%; background:#884d31; border:4px solid #553329; border-radius:50% 50% 0 0; transform:rotate(-8deg); }.street-tree span{ position:absolute; right:0; top:0; width:78%; height:55%; background:#6e9229; border:5px solid #3e5728; border-radius:51% 43% 48% 44%; box-shadow:-38px 22px 0 -3px #7ea132, 15px 44px 0 -4px #668629; }.tree-left{ left:29%; transform:scale(.78); }.tree-right{ right:5%; }
+.street-lamp{ position:absolute; top:21%; width:9px; height:35%; border-radius:10px; background:#294c4b; border:3px solid #183745; }.street-lamp::before{ content:''; position:absolute; left:-26px; top:0; width:52px; height:17px; border:6px solid #294c4b; border-bottom:0; border-radius:42px 42px 0 0; }.street-lamp::after{ content:''; position:absolute; top:13px; left:-16px; width:35px; height:24px; border:4px solid #183745; border-radius:50% 50% 35% 35%; background:#f7d76f; box-shadow:0 0 20px #fff1a9; }.lamp-left{ left:22%; }.lamp-right{ right:29%; transform:scale(.85); }
+.street-cat{ position:absolute; left:18%; bottom:13%; width:92px; height:66px; border:5px solid #75372c; border-radius:50% 52% 40% 42%; background:#ec4d2d; transform:rotate(-4deg); }.street-cat::before,.street-cat::after{ content:''; position:absolute; top:-24px; border-style:solid; border-width:0 18px 27px; border-color:transparent transparent #ec4d2d; }.street-cat::before{ left:9px; transform:rotate(-25deg); }.street-cat::after{ right:8px; transform:rotate(25deg); }.street-cat i{ position:absolute; right:-45px; top:13px; width:57px; height:46px; border:9px solid #75372c; border-left:0; border-bottom:0; border-radius:0 45px 0 0; }
+.home-game-logo{ position:absolute; z-index:4; top:12%; left:50%; width:min(560px,78vw); transform:translateX(-50%) rotate(-2deg); text-align:center; color:#fffdf4; filter:drop-shadow(0 7px 0 #183745); }
+.home-game-logo .logo-eye{ display:inline-block; width:58px; height:43px; margin-right:7px; vertical-align:15px; background:#fff; border:5px solid #183745; border-radius:50%; box-shadow:29px 0 0 -5px #fff,29px 0 0 -1px #183745; }
+.home-game-logo .logo-eye::before{ content:''; display:block; width:18px; height:18px; margin:9px auto; border-radius:50%; background:#183745; box-shadow:28px 0 0 #183745; }
+.home-game-logo strong{ display:inline-block; font:800 clamp(76px,12vw,150px)/.7 var(--font-display); letter-spacing:-.07em; color:#fffdf4; -webkit-text-stroke:8px #183745; paint-order:stroke fill; text-shadow:0 9px 0 #183745; }
+.home-game-logo strong span{ color:#ff9a9a; }.home-game-logo small{ display:block; margin-top:28px; font:700 clamp(20px,2.7vw,32px) var(--font-display); letter-spacing:.04em; -webkit-text-stroke:2px #183745; paint-order:stroke fill; }
+#screen-home .monitor{ z-index:5; top:61%; width:min(390px,72vw); height:78px; aspect-ratio:auto; background:#fffdf7; border:4px solid #183745; border-radius:3px; box-shadow:0 7px 0 rgba(24,55,69,.35); }
+#screen-home .monitor-screen{ width:calc(100% - 10px); height:calc(100% - 10px); border:0; outline:0; border-radius:0; background:#9cd8eb; }
+#screen-home .mini-desktop{ position:relative; border-radius:0; background:#9cd8eb !important; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#183745; }
+#screen-home .mini-desktop > *{ display:none; }
+#screen-home .mini-desktop::before{ content:'START STUDIO'; font:800 clamp(25px,4vw,37px)/1 var(--font-display); letter-spacing:.02em; -webkit-text-stroke:2px #fffdf7; paint-order:stroke fill; text-shadow:0 3px 0 #183745; }
+#screen-home .mini-desktop::after{ content:'Continue your design journey'; margin-top:4px; font:700 13px var(--font-body); }
+#screen-home .sticky-note{ z-index:5; top:auto; right:50%; bottom:9%; min-width:0; width:min(240px,55vw); padding:10px 14px; transform:translateX(50%); border:3px solid #183745; border-radius:3px; background:#f8df8a; color:#183745; box-shadow:0 5px 0 rgba(24,55,69,.35); font:800 23px var(--font-display); }
+#screen-home .sticky-note .pin,#screen-home .sticky-note .note-arrow{ display:none; }
+#screen-home .sticky-note:hover,#screen-home .sticky-note:focus-visible{ transform:translateX(50%) translateY(-3px); }
+
+/* Shared play-screen language: pale sky panels, dark teal ink and chunky
+   outlined controls. This follows the supplied game's visual hierarchy while
+   retaining EyeCon's existing content and accessibility states. */
+#screen-desktop .desktop-wallpaper{ background:#bfe3f4 !important; }
+#screen-desktop .sky-clouds,#screen-desktop .sky-hills{ display:block; }
+#screen-desktop .sky-hills{ height:48%; }.hill{ background:#a4bb49; opacity:1; }.hill-back{ background:#bcd35b; }.hill-front{ background:#a4bb49; }
+#screen-desktop .desktop-icon-glyph{ border:4px solid #183745; border-radius:13px; box-shadow:0 5px 0 rgba(24,55,69,.3); }
+#screen-desktop .desktop-icon-label{ color:#fffdf7; font-family:var(--font-display); font-weight:800; -webkit-text-stroke:3px #183745; paint-order:stroke fill; text-shadow:0 3px 0 #183745; }
+#screen-desktop .desktop-watermark{ color:#183745; background:#ecfbaf; border:3px solid #183745; border-radius:10px; box-shadow:0 4px 0 rgba(24,55,69,.25); }
+#screen-shell,#screen-stats,#screen-settings,#screen-shop,#screen-report,#screen-editor{ background-color:#eefaff; background-image:radial-gradient(#c8e3ed 1.5px,transparent 1.5px); background-size:22px 22px; }
+.mail-header{ background:rgba(239,250,255,.92); border-bottom:4px solid #183745; }.mail-search,.mail-panel,.modal-card,.confirm-card,.compose-card{ border-color:#183745; box-shadow:0 5px 0 rgba(24,55,69,.2); }
+.side-btn,.mail-panel,.mission-panel,.element-settings,.settings-card,.upgrade-card,.wardrobe-item,.gacha-hero,.upgrades-hero{ border:3px solid #183745; box-shadow:0 5px 0 rgba(24,55,69,.2); }
+.side-btn{ border-radius:12px; }.mail-panel{ border-radius:18px; }.taskbar{ background:#efffa5; border-top:4px solid #183745; box-shadow:inset 0 4px 0 rgba(255,255,255,.6); }
+.taskbar-btn-primary,.taskbar-currency,.taskbar-clock{ border:3px solid #183745; border-radius:9px; box-shadow:0 4px 0 rgba(24,55,69,.25); }
+.btn,.upgrade-buy-btn,.gacha-pull-btn,.settings-footer .btn,.tool-btn.btn-save{ border:3px solid #183745; border-radius:4px; box-shadow:0 5px 0 rgba(24,55,69,.28); font-family:var(--font-display); font-weight:800; }
+.btn:hover,.upgrade-buy-btn:hover,.gacha-pull-btn:hover,.tool-btn.btn-save:hover{ transform:translateY(-2px); box-shadow:0 7px 0 rgba(24,55,69,.28); }
+.editor-topbar{ border-bottom:4px solid #183745; }.editor-main{ background:#d9e5df; }.editor-canvas-wrap{ background:#d9e5df; }.edit-mode-chip{ border:3px solid #183745; border-radius:6px; }.tool-btn{ border:2px solid transparent; }
+
+@media (max-width:640px){
+  .home-game-logo{ top:16%; width:92vw; }.home-game-logo strong{ -webkit-text-stroke-width:5px; }.home-game-logo .logo-eye{ transform:scale(.72); margin-right:-2px; }
+  #screen-home .monitor{ top:61%; width:78vw; height:70px; }#screen-home .sticky-note{ bottom:8%; }
+  .street-building{ bottom:12%; }.building-mid{ display:none; }.street-tree{ transform:scale(.56); }.tree-left{ left:14%; }.tree-right{ right:-4%; }.street-cat{ transform:scale(.65); left:8%; }
 }
 
 /* ---- Phones ---- */
@@ -1401,6 +1608,9 @@ button{ font-family: inherit; }
 
   /* Shop / Gacha / Wardrobe */
   .gacha-hero{ padding:22px 16px; border-radius: var(--radius-md); }
+  .upgrades-hero{ padding:22px 16px; border-radius:var(--radius-md); }
+  .upgrade-card{ align-items:flex-start; flex-wrap:wrap; }
+  .upgrade-buy-btn{ width:100%; }
   .gacha-hero h2{ font-size:21px; }
   .gacha-balance{ font-size:16px; padding:8px 16px; }
   .gacha-pull-buttons{ flex-direction:column; align-items:stretch; }
@@ -1431,6 +1641,8 @@ button{ font-family: inherit; }
   .tool-btn{ padding:8px 11px; font-size:13px; white-space:nowrap; }
   .live-score-chip{ min-width:76px; }
   .editor-canvas-wrap{ padding:14px; }
+  .mission-panel{ padding:12px 14px; }
+  .mission-panel p{ margin-bottom:10px; }
   .element-settings{ padding:14px; max-height:36vh; }
   .typescale-popover{ right:12px; left:12px; width:auto; top:auto; }
   .grid-settings-popover{ left:12px; right:12px; bottom:60px; top:auto; width:auto; z-index:160; }
@@ -1526,4 +1738,469 @@ button{ font-family: inherit; }
   .taskbar-btn{ width:32px; height:32px; min-height:0; font-size:15px; }
   .taskbar-currency{ padding:5px 10px; font-size:12.5px; }
   .taskbar-clock{ display:none; }
+}
+
+/* =====================================================
+   ILLUSTRATED OS ART DIRECTION
+   The title-screen desk remains its own scene. Every playable screen uses
+   the softer, hand-drawn pastel desktop language: cream paper, teal ink,
+   lavender workspace, and rounded controls with tangible shadows.
+===================================================== */
+#screen-desktop .desktop-wallpaper{
+  background:#b5a0d0;
+}
+#screen-desktop .sky-clouds,
+#screen-desktop .sky-hills{ display:none; }
+#screen-desktop .desktop-watermark{
+  top:24px; right:32px; color:#fff8ee; opacity:.92; font-family:var(--font-hand); font-size:24px;
+  text-shadow:0 2px 0 rgba(75,47,83,.18);
+}
+#screen-desktop .desktop-watermark .eyecon-logo.small .eye{
+  width:28px; height:22px; border-color:#fff8ee; background:#fff8ee;
+}
+#screen-desktop .desktop-watermark .eyecon-logo.small .pupil{ width:11px; height:11px; background:#4b3658; }
+#screen-desktop .desktop-icons{ gap:20px; width:120px; }
+#screen-desktop .desktop-icon{ gap:5px; padding:8px; }
+#screen-desktop .desktop-icon-glyph{
+  width:76px; height:76px; border:3px solid #d8f0ec; border-radius:22px; box-shadow:0 5px 0 rgba(74,52,84,.22);
+}
+#screen-desktop .desktop-icon-label{
+  font-family:var(--font-hand); font-size:17px; -webkit-text-stroke:0; color:#fff8ee; text-shadow:0 2px 0 rgba(75,47,83,.26);
+}
+#screen-desktop .desktop-hint{ display:none; }
+
+#screen-shell,
+#screen-stats,
+#screen-settings,
+#screen-shop,
+#screen-report{ background:#fff9f2; }
+.mail-header{
+  min-height:118px; padding:22px 52px 18px; gap:28px; background:#fff9f2;
+}
+.mail-header .app-back-btn{
+  width:48px; height:48px; background:#b7e6df; color:#315c62; border:3px solid #73bcb4; box-shadow:0 4px 0 rgba(54,97,100,.2);
+}
+.mail-logo{ gap:18px; font-family:var(--font-hand); font-size:40px; letter-spacing:.01em; color:#488b8e; }
+.mail-logo .eyecon-logo.small{ gap:0; }
+.mail-logo .eyecon-logo.small .eye{
+  width:62px; height:54px; margin-left:-8px; border:3px solid #c2e8e5; background:#fff; box-shadow:none;
+}
+.mail-logo .eyecon-logo.small .eye:first-child{ margin-left:0; }
+.mail-logo .eyecon-logo.small .pupil{ width:25px; height:25px; background:#30415d; }
+.mail-search{
+  max-width:680px; min-height:66px; border:3px solid #8fcfc9; border-radius:36px; padding:10px 24px;
+  background:#fffdf8; box-shadow:0 6px 0 rgba(99,171,164,.18);
+}
+.mail-search .icon-search{ font-size:25px; filter:saturate(.6); }
+.mail-search input{ font-family:var(--font-hand); font-size:30px; color:#4b3658; }
+.mail-search input::placeholder{ color:#a7aaae; opacity:1; }
+.xp-chip,.currency-chip{
+  border:2px solid #f0c84d; background:#ffe598; border-radius:12px; box-shadow:0 4px 0 rgba(182,129,43,.16);
+  font-family:var(--font-hand); font-size:20px; padding:7px 16px;
+}
+.mail-body{ padding:0 50px 28px; gap:36px; }
+.mail-sidebar{ width:340px; gap:28px; padding-top:24px; }
+.side-btn{
+  min-height:150px; justify-content:flex-start; gap:22px; padding:24px 32px; border-radius:34px; font-family:var(--font-hand);
+  font-size:31px; color:#40213c; box-shadow:0 12px 16px rgba(87,61,63,.16); transition:transform .15s ease, box-shadow .15s ease;
+}
+.side-btn:nth-child(1){ background:#dfcee8; }
+.side-btn:nth-child(1).active{ background:#d5bfe2; color:#40213c; }
+.side-btn:nth-child(2){ background:#ffdb82; }
+.side-btn:hover,.side-btn:focus-visible{ transform:translateY(-4px) rotate(-.4deg); box-shadow:0 16px 20px rgba(87,61,63,.18); }
+.side-icon{ font-size:42px; }
+.badge-count{ width:40px; height:40px; font-size:22px; border:3px solid #fff8ee; box-shadow:0 2px 0 rgba(91,21,42,.2); }
+.mail-panel{ border:4px solid #73bcb4; border-radius:34px; background:#fffdfa; padding:0 34px; box-shadow:none; }
+.mail-item{ min-height:150px; gap:20px; padding:25px 16px; border-bottom:5px solid #e2f4f0; }
+.mail-item:hover{ background:#fff7e8; }
+.mail-item .avatar-circle{ width:72px; height:72px; font-size:34px; border:3px solid #9ed7e2; background:#d9f0f4; }
+.mail-item-name{ font-family:var(--font-hand); font-size:30px; color:#41213c; letter-spacing:.01em; }
+.mail-item-preview{ font-family:var(--font-hand); font-size:24px; color:#9a979b; }
+.tag{ font-family:var(--font-hand); font-size:20px; padding:8px 16px; border-radius:18px; }
+.unread-dot{ width:30px; height:30px; }
+
+.taskbar{
+  height:calc(94px + env(safe-area-inset-bottom, 0px)); padding:0 36px env(safe-area-inset-bottom); gap:16px;
+  background:#b7e6df; border-top:0; box-shadow:inset 0 2px 0 rgba(255,255,255,.6);
+}
+.taskbar-btn{ width:58px; height:58px; border-radius:18px; font-size:29px; color:#417e86; }
+.taskbar-btn:hover,.taskbar-btn:focus-visible{ background:#dff4ef; color:#2f6570; }
+.taskbar-btn-primary{ width:58px; padding:0; gap:0; background:#fff0b6; border:3px solid #80bcb7; box-shadow:0 4px 0 rgba(63,114,114,.2); color:#46757b; }
+.taskbar-btn-primary:hover,.taskbar-btn-primary:focus-visible{ background:#fff6cf; color:#46757b; }
+.taskbar-btn-label{ display:none; }
+.taskbar-currency,.taskbar-clock{ border:0; border-radius:12px; box-shadow:0 4px 0 rgba(182,129,43,.17); background:#ffe598; padding:11px 18px; font-family:var(--font-hand); font-size:27px; color:#342032; }
+
+.modal-overlay{ background:rgba(52,47,46,.58); }
+.modal-card,.confirm-card,.compose-card{
+  border:4px solid #73bcb4; border-radius:32px; background:#fffaf3; box-shadow:0 12px 0 rgba(53,87,87,.18); 
+}
+/* No explicit width here previously — a flex item with none shrinks to fit
+   its content's natural line length, so the card's actual width (and
+   therefore every proportion inside it) depended on how the text happened
+   to reflow at that particular viewport, not on the viewport itself. Fixed
+   at a consistent fraction of the viewport (capped) instead, and the
+   type/avatar/padding below now scale continuously with clamp() rather than
+   jumping between two fixed sizes at a single breakpoint — both together are
+   what made the same modal look cramped, edge-to-edge, or comfortable
+   depending on which width it happened to be viewed at. */
+.mail-detail-card{
+  display:flex; flex-direction:column; width:min(92vw, 1120px);
+  max-height:calc(100vh - 54px); padding: clamp(24px,3.5vw,34px) clamp(22px,6vw,62px); overflow:hidden;
+}
+.mail-detail-head{ gap:24px; margin-bottom:28px; }
+.mail-detail-head .avatar-circle{ width:clamp(64px,9vw,112px); height:clamp(64px,9vw,112px); font-size:clamp(28px,4.5vw,52px); border:4px solid #95d4e0; }
+.mail-detail-head h2{ margin:0; font-family:var(--font-hand); font-size:clamp(28px,4vw,48px); }
+.mail-detail-level-tag{ font-family:var(--font-hand); font-size:19px; color:#54999a; }
+/* Scrollbar hidden (content still scrolls on overflow, just no visible
+   track/arrows cluttering the card) — the fluid width/clamp() sizing above
+   keeps the usual client-reply length fitting without needing to scroll at
+   any normal resolution anyway. */
+.mail-detail-body{
+  flex:1; overflow:auto; padding-right:4px; font-family:var(--font-hand); font-size:clamp(20px,2.4vw,28px); line-height:1.4; color:#40213c;
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.mail-detail-body::-webkit-scrollbar{ display:none; }
+.mail-detail-actions{ flex-shrink:0; margin-top:18px; }
+.attachment-chip{ font-family:var(--font-hand); font-size:22px; color:#529999; background:#e7f7f3; border-radius:12px; }
+.btn{ min-height:58px; border-radius:32px; padding:10px 34px; font-family:var(--font-hand); font-size:28px; box-shadow:0 5px 0 rgba(49,68,69,.22); }
+.btn-accept{ background:#91d8d0; color:#fff; border:3px solid #63aaa5; }
+.btn-yes{ background:#40d973; border:3px solid #25b35b; }
+.btn-no{ background:#e53b42; border:3px solid #bd2b37; }
+.btn-send{ background:#285bd2; border:3px solid #1e46ac; }
+.btn-ghost{ background:#f5df99; color:#422640; border:3px solid #e5c96d; }
+.confirm-card{ min-width:440px; border-radius:32px; }
+.confirm-card p{ font-family:var(--font-hand); font-size:35px; color:#40213c; }
+.compose-card{ max-width:1220px; min-height:680px; padding:70px 66px; }
+.compose-to{ font-family:var(--font-hand); font-size:42px; color:#40213c; }
+.compose-body{ min-height:420px; font-family:var(--font-hand); font-size:31px; line-height:1.48; color:#40213c; }
+.compose-hint{ font-family:var(--font-hand); font-size:19px; }
+.attach-btn{ font-family:var(--font-hand); font-size:21px; background:#e8f7f2; border:2px solid #83c6be; }
+
+#screen-editor{ background:#fffaf3; }
+.editor-topbar{ min-height:100px; padding:18px 32px; background:#fffaf3; gap:18px; }
+.edit-mode-chip{ background:#ffe49a; border:2px solid #efc95e; box-shadow:0 4px 0 rgba(194,150,50,.16); font-family:var(--font-hand); font-size:24px; padding:10px 18px; }
+.tool-btn{ border:0; border-radius:12px; background:#fffdfa; box-shadow:none; font-family:var(--font-hand); font-size:21px; padding:12px 20px; color:#40213c; }
+.tool-btn.active{ background:#b8e7df; color:#315e65; border:2px solid #70bcb4; }
+.tool-btn.btn-save{ background:#fffdfa; color:#40213c; }
+.tool-pill{ background:transparent; border:0; box-shadow:none; }
+.tool-pill .tool-btn{ background:#fffdfa; border:0; box-shadow:none; }
+.tool-pill .tool-btn.active{ background:#b8e7df; }
+.live-score-chip,.issues-chip{ display:none; }
+.editor-main{ background:#e4e1da; padding:0 24px 24px; }
+.editor-canvas-wrap{ background:#e4e1da; padding:24px; }
+.editor-canvas{ box-shadow:none; }
+.editor-hint-pill{ left:30px; top:22px; transform:none; background:#ffe49a; border-radius:0 12px 12px 12px; font-family:var(--font-hand); font-size:22px; max-width:210px; padding:14px 16px; text-align:center; }
+.mission-panel,.element-settings{ background:#fffaf3; border:3px solid #73bcb4; border-radius:26px; margin:24px 0 0; box-shadow:none; }
+.mission-panel{ border-color:#e6c45f; }
+.mission-panel h2,.element-settings h3{ font-family:var(--font-hand); color:#40213c; }
+.mission-objective{ font-family:var(--font-hand); font-size:17px; }
+.mission-focus-btn{ font-family:var(--font-hand); font-size:18px; }
+
+@media (min-width: 901px){
+  .editor-main{ position:relative; padding-left:350px; }
+  .editor-canvas-wrap{ order:3; min-width:0; }
+  .element-settings{ position:absolute; left:24px; top:0; bottom:24px; width:292px; margin:0; border-left:3px solid #73bcb4; overflow:auto; }
+}
+
+@media (max-width: 900px){
+  .mail-header{ min-height:unset; padding:16px; }
+  .mail-logo{ font-size:28px; }
+  .mail-logo .eyecon-logo.small .eye{ width:38px; height:34px; }
+  .mail-logo .eyecon-logo.small .pupil{ width:15px; height:15px; }
+  .mail-search input{ font-size:22px; }
+  .mail-body{ flex-direction:column; padding:0 16px 16px; gap:16px; overflow-y:auto; overflow-x:hidden; }
+  .mail-sidebar{ width:100%; flex-direction:row; gap:12px; padding-top:8px; overflow-x:auto; }
+  .side-btn{ min-height:0; flex-shrink:0; padding:14px 18px; border-radius:20px; font-size:23px; white-space:nowrap; }
+  .side-icon{ font-size:28px; }
+  .mail-panel{ flex:none; overflow-y:visible; padding:0 14px; border-radius:22px; }
+  .mail-item{ min-height:80px; padding:14px 4px; }
+  .mail-item-name{ font-size:22px; }
+  .mail-item .avatar-circle{ width:48px; height:48px; }
+  .taskbar{ height:calc(64px + env(safe-area-inset-bottom, 0px)); padding:0 12px env(safe-area-inset-bottom); }
+  .taskbar-btn{ width:42px; height:42px; font-size:21px; }
+  .taskbar-currency,.taskbar-clock{ padding:7px 10px; font-size:18px; }
+  .compose-card{ min-height:0; padding:34px 26px; }
+  .compose-to{ font-size:29px; }
+  .compose-body{ min-height:300px; font-size:22px; }
+  .confirm-card{ min-width:0; }
+  .editor-topbar{ min-height:0; padding:10px 12px; }
+  .editor-hint-pill{ font-size:17px; max-width:180px; }
+}
+
+/* Final cascade layer for the cozy neighborhood game theme. */
+#screen-desktop .sky-clouds,#screen-desktop .sky-hills{ display:block; }
+#screen-shell,#screen-stats,#screen-settings,#screen-shop,#screen-report,#screen-editor{ background-color:#eefaff; background-image:radial-gradient(#c8e3ed 1.5px,transparent 1.5px); background-size:22px 22px; }
+.mail-header{ background:rgba(239,250,255,.92); border-bottom:4px solid #183745; }
+.mail-search,.mail-panel,.modal-card,.confirm-card,.compose-card{ border-color:#183745; box-shadow:0 5px 0 rgba(24,55,69,.2); }
+.side-btn,.mail-panel,.mission-panel,.element-settings,.settings-card,.upgrade-card,.wardrobe-item,.gacha-hero,.upgrades-hero{ border:3px solid #183745; box-shadow:0 5px 0 rgba(24,55,69,.2); }
+.side-btn{ border-radius:12px; }.mail-panel{ border-radius:18px; }
+.taskbar{ background:#efffa5; border-top:4px solid #183745; box-shadow:inset 0 4px 0 rgba(255,255,255,.6); }
+.taskbar-btn-primary,.taskbar-currency,.taskbar-clock{ border:3px solid #183745; border-radius:9px; box-shadow:0 4px 0 rgba(24,55,69,.25); }
+.btn,.upgrade-buy-btn,.gacha-pull-btn,.settings-footer .btn,.tool-btn.btn-save{ border:3px solid #183745; border-radius:4px; box-shadow:0 5px 0 rgba(24,55,69,.28); font-family:var(--font-display); font-weight:800; }
+.editor-topbar{ border-bottom:4px solid #183745; }.editor-main,.editor-canvas-wrap{ background:#d9e5df; }.edit-mode-chip{ border:3px solid #183745; border-radius:6px; }
+@media (max-width:640px){ #screen-home .sticky-note{ display:block; } }
+
+/* Cosmetics can place an inline wallpaper on the title host; the title scene
+   deliberately keeps its own sky so its illustrated street remains legible. */
+#screen-home .desk-scene{ background:linear-gradient(#a9ddf3 0 65%, #dff4fd 65% 68%, #f3bd83 68% 100%) !important; }
+#screen-home .sticky-note{ font-size:0; }
+#screen-home .sticky-note::after{ content:'SETTINGS'; font:800 23px var(--font-display); color:#183745; }
+
+/* The desktop is the player's cozy workstation after the title screen. */
+#screen-desktop .desktop-wallpaper{
+  padding:0; background:linear-gradient(180deg,#b9e6df 0 66%,#f0c48e 66% 100%) !important;
+}
+#screen-desktop.active{ background:linear-gradient(180deg,#b9e6df 0 66%,#f0c48e 66% 100%); }
+#screen-desktop .sky-clouds,#screen-desktop .sky-hills{ display:none; }
+#screen-desktop .desktop-wallpaper::before{
+  content:''; position:absolute; z-index:0; left:50%; top:var(--monitor-top); width:var(--monitor-width); height:auto; aspect-ratio:1.65; transform:translateX(-50%);
+  border:11px solid #fff7e9; border-radius:34px; background:#fffdf7; box-shadow:0 15px 0 rgba(93,67,57,.16), inset 0 0 0 3px #e6d6be;
+}
+#screen-desktop .desktop-wallpaper::after{
+  content:''; position:absolute; z-index:0; left:50%; top:var(--keyboard-top); width:var(--keyboard-width); height:auto; aspect-ratio:5; transform:translateX(-50%);
+  border:6px solid #fff7e9; border-radius:18px; background:repeating-linear-gradient(90deg,#f7ede0 0 42px,#fffdf7 42px 52px); box-shadow:0 8px 0 rgba(101,70,48,.18);
+}
+.desktop-desk-props{ position:absolute; inset:0; z-index:1; pointer-events:none; }
+.hub-tower{ position:absolute; left:5%; bottom:12%; width:13%; height:55%; border:5px solid #254b50; border-radius:18px 18px 12px 12px; background:#fff8eb; box-shadow:0 8px 0 rgba(84,57,53,.17); }
+.hub-tower i{ position:absolute; left:14%; width:72%; height:19%; border-radius:8px; background:#a9d7e8; }.hub-tower i:first-child{ top:16%; }.hub-tower i:nth-child(2){ top:43%; }.hub-tower b{ position:absolute; left:50%; bottom:11%; width:54px; height:54px; transform:translateX(-50%); border:5px solid #65adc0; border-radius:50%; background:#b7e6ef; }
+.hub-plant{ position:absolute; right:5%; bottom:14%; width:15%; height:42%; }.hub-plant b{ position:absolute; left:16%; right:16%; bottom:0; height:36%; border:5px solid #fff7e9; border-radius:10px 10px 26px 26px; background:#71bfd2; }.hub-plant i{ position:absolute; bottom:28%; width:35%; height:58%; border-radius:50% 50% 50% 9%; background:#6cc45c; border:3px solid #42894e; transform-origin:bottom center; }.hub-plant i:nth-child(1){ left:15%; transform:rotate(-28deg); }.hub-plant i:nth-child(2){ left:39%; height:70%; }.hub-plant i:nth-child(3){ right:13%; transform:rotate(28deg); }
+.hub-keyboard{ position:absolute; z-index:1; left:50%; bottom:9%; width:min(41%,560px); height:14%; transform:translateX(-50%); padding:2.3% 5%; display:flex; flex-direction:column; gap:11%; }.hub-keyboard i{ height:20%; border-radius:4px; background:#fff; opacity:.9; }.hub-mouse{ position:absolute; right:16%; bottom:10%; width:64px; height:88px; border:5px solid #fff7e9; border-radius:45% 45% 54% 54%; background:#fffdf7; box-shadow:0 7px 0 rgba(101,70,48,.16); }
+#screen-desktop .desktop-watermark{ z-index:3; top:4%; right:5%; color:#315c62; background:#ffe596; border:3px solid #e1b846; font-size:20px; }
+#screen-desktop .desktop-icons{ position:absolute; z-index:3; top:26%; left:50%; width:auto; transform:translateX(-50%); flex-direction:row; gap:clamp(20px,5vw,78px); }
+#screen-desktop .desktop-icon{ min-width:88px; }.desktop-icon-glyph{ background:#fffdf7; }.desktop-icon-label{ color:#315c62; -webkit-text-stroke:0; text-shadow:none; font-size:19px; }
+#screen-desktop .desktop-hint{ z-index:3; display:block; bottom:auto; top:56%; background:#ffe596; border:3px solid #e1b846; border-radius:12px; box-shadow:0 4px 0 rgba(133,94,42,.16); font-family:var(--font-hand); font-size:21px; }
+.tutorial-mail-pulse .desktop-icon-glyph{ animation:tutorialMailPulse .9s ease-in-out infinite; }
+@keyframes tutorialMailPulse{ 50%{ transform:translateY(-9px) scale(1.08); box-shadow:0 0 0 8px rgba(255,224,96,.48),0 8px 0 rgba(24,55,69,.28); } }
+
+/* Pixel is a persistent first-day guide, not a dismissible tooltip. */
+.onboarding-card{ max-width:760px; padding:32px 40px; display:flex; align-items:center; gap:30px; border:5px solid #183745; border-radius:26px; background:#fffaf0; }
+.guide-character{ position:relative; flex:0 0 160px; width:160px; height:180px; border:5px solid #183745; border-radius:48% 48% 42% 42%; background:#ffc783; box-shadow:inset 0 -23px 0 #ef8e69,0 7px 0 rgba(24,55,69,.23); }
+.guide-hair{ position:absolute; inset:12px 16px auto; height:55px; border-radius:60% 35% 42% 35%; background:#f06f87; transform:rotate(-6deg); }.guide-eye{ position:absolute; top:78px; width:24px; height:29px; border:3px solid #183745; border-radius:50%; background:#fff; }.guide-eye::after{ content:''; position:absolute; width:11px; height:13px; left:6px; top:7px; border-radius:50%; background:#183745; }.guide-eye.one{ left:36px; }.guide-eye.two{ right:36px; }.guide-smile{ position:absolute; left:58px; top:123px; width:38px; height:18px; border:3px solid #183745; border-top:0; border-radius:0 0 30px 30px; }
+.guide-dialogue{ min-width:0; }.guide-name{ color:#2d7f87; font:800 16px var(--font-display); letter-spacing:.06em; }.guide-dialogue h2{ margin:5px 0 10px; color:#183745; font:800 42px/1 var(--font-display); }.guide-dialogue p{ margin:0 0 22px; color:#3b5e63; font:600 21px/1.35 var(--font-body); }.onboarding-card .btn{ min-width:200px; background:#9adbed; color:#183745; }
+@media (max-width:640px){
+  #screen-desktop .desktop-wallpaper::before{ width:78%; height:48%; top:14%; }.hub-tower{ transform:scale(.64); transform-origin:left bottom; }.hub-plant{ transform:scale(.62); transform-origin:right bottom; }.hub-mouse{ display:none; }
+  #screen-desktop .desktop-icons{ top:27%; gap:10px; }.desktop-icon-glyph{ width:55px !important; height:55px !important; }.desktop-icon-label{ font-size:14px !important; }.desktop-icon{ min-width:58px; }
+  #screen-desktop .desktop-hint{ top:55%; font-size:16px; width:76%; text-align:center; }.onboarding-card{ padding:24px; flex-direction:column; gap:14px; text-align:center; }.guide-character{ transform:scale(.75); height:136px; margin:-19px; }.guide-dialogue h2{ font-size:32px; }.guide-dialogue p{ font-size:18px; }
+}
+
+/* One contained workstation composition. The viewport header stays outside
+   this illustration so its controls never collide with the monitor. */
+#screen-desktop .desktop-wallpaper{
+  container-type:size; width:100%; height:100%; display:flex;
+  align-items:center; justify-content:center; padding:100px 12px 24px;
+}
+#screen-desktop .desktop-wallpaper::before,
+#screen-desktop .desktop-wallpaper::after{ content:none; }
+.workstation{
+  position:relative; container-type:size; flex:none;
+  width:min(96cqw, calc((100cqh - 124px) * 1.5), 1400px);
+  aspect-ratio:1.5;
+}
+.workstation::before{
+  content:''; position:absolute; left:50%; top:4%; transform:translateX(-50%);
+  width:74%; aspect-ratio:1.65; border:clamp(5px,.8cqw,11px) solid #fff7e9;
+  border-radius:clamp(18px,2.5cqw,34px); background:#fffdf7;
+  box-shadow:0 10px 0 #315c6226,inset 0 0 0 2px #e6d6be;
+}
+.workstation::after{
+  content:''; position:absolute; left:50%; top:75%; transform:translateX(-50%);
+  width:50%; aspect-ratio:5; border:clamp(4px,.5cqw,7px) solid #fff7e9;
+  border-radius:clamp(8px,1.2cqw,18px);
+  background:repeating-linear-gradient(90deg,#f7ede0 0 6%,#fffdf7 6% 8%);
+  box-shadow:0 6px 0 #65463026;
+}
+#screen-desktop .hub-keyboard{
+  top:77%; bottom:auto; width:46%; height:10%; padding:1% 3%; gap:15%;
+}
+#screen-desktop .desktop-icons{
+  top:37%; width:70%; transform:translate(-50%,-50%);
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0;
+}
+#screen-desktop .desktop-icon{ min-width:44px; min-height:44px; padding:8px 2px; gap:8px; }
+#screen-desktop .desktop-icon-glyph{
+  width:clamp(44px,6.5cqw,88px) !important; height:clamp(44px,6.5cqw,88px) !important;
+  font-size:clamp(26px,3.6cqw,46px); border-color:#82b5ae;
+  border-radius:clamp(12px,1.6cqw,22px);
+}
+#screen-desktop .desktop-icon-label{
+  color:#254b50; -webkit-text-stroke:0; text-shadow:none;
+  font-family:var(--font-body); font-size:clamp(12px,1.6cqw,20px) !important; font-weight:700;
+}
+#screen-desktop .desktop-icon-badge{ top:0; right:12%; }
+#screen-desktop .desktop-hint{
+  display:block; top:94%; bottom:auto; width:max-content; max-width:92%;
+  font-size:clamp(13px,1.5cqw,19px); line-height:1.4; text-align:center; padding:8px 12px;
+}
+#screen-desktop .hub-tower{ left:0; bottom:8%; width:10%; height:auto; aspect-ratio:.4; transform:none; border-width:clamp(2px,.4cqw,5px); }
+#screen-desktop .hub-tower b{ width:42%; height:auto; aspect-ratio:1; border-width:clamp(2px,.4cqw,5px); }
+#screen-desktop .hub-plant{ right:0; bottom:8%; width:11%; height:auto; aspect-ratio:.7; transform:none; }
+#screen-desktop .hub-plant b{ border-width:clamp(2px,.4cqw,5px); }
+#screen-desktop .hub-mouse{ right:13%; bottom:7%; width:4%; height:auto; aspect-ratio:.73; border-width:clamp(2px,.4cqw,5px); }
+#screen-desktop .desktop-watermark{
+  top:max(16px,env(safe-area-inset-top)); left: max(16px,env(safe-area-inset-left)); right:auto;
+  min-height:44px; opacity:1; font-size:18px;
+}
+#screen-desktop .desktop-status-chip{
+  top:max(20px,env(safe-area-inset-top)); right:max(16px,env(safe-area-inset-right));
+  min-height:36px; align-items:center; gap:12px; color:#254b50; background:#fffdf7;
+}
+@media(max-width:640px){
+  .workstation{ width:96cqw; }
+  .workstation::before{ width:94%; }
+  #screen-desktop .desktop-icons{ width:90%; }
+  #screen-desktop .desktop-watermark{ font-size:15px; gap:6px; }
+  #screen-desktop .desktop-watermark .eyecon-logo{ display:none; }
+  #screen-desktop .desktop-status-chip{ font-size:12px; padding:6px 8px; gap:8px; }
+  #screen-desktop .hub-tower,#screen-desktop .hub-plant,#screen-desktop .hub-mouse{ display:none; }
+  .workstation::after{ top:94%; width:64%; }
+  #screen-desktop .hub-keyboard{ top:96%; width:60%; }
+  #screen-desktop .desktop-icons{ top:46%; }
+  #screen-desktop .desktop-hint{ top:117%; }
+}
+@media(max-height:540px) and (min-width:641px){
+  #screen-desktop .desktop-wallpaper{ padding-top:64px; }
+  .workstation{ width:min(72cqw, calc((100cqh - 100px) * 1.5)); }
+  #screen-desktop .desktop-hint{ display:none; }
+  #screen-desktop .desktop-watermark .eyecon-logo{ display:none; }
+}
+@media(pointer:coarse){ .app-back-btn,.taskbar-btn,.tool-btn{ min-width:44px; min-height:44px; } input,select,textarea{ font-size:16px; } }
+.daily-store-hero{ padding:clamp(24px,4vw,48px); border:2px solid #81b5ad; border-radius:24px; background:linear-gradient(120deg,#d5eee8,#fff0ce); color:#254b50; }
+.store-eyebrow{ font-size:12px; font-weight:800; letter-spacing:.12em; }
+.daily-store-hero h2{ font:800 clamp(26px,4vw,42px)/1.15 var(--font-display); margin:12px 0; }
+.daily-store-hero p{ font-size:17px; margin:0 0 20px; }
+.daily-store-hero>span:last-child{ font-size:13px; }
+.store-section-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:24px 0 16px; }
+.store-section-head h3,.store-section-head h2{ margin:0; }
+.daily-store-grid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
+.daily-item{ min-width:0; display:flex; flex-direction:column; padding:14px; border:2px solid #d4ddd6; border-radius:18px; background:#fffdf7; }
+.daily-item .wardrobe-item-preview{ width:100%; height:110px; border-radius:12px; flex:none; }
+.daily-item h4{ font-size:17px; margin:16px 0 4px; }
+.daily-item p{ font-size:12px; color:#49646a; margin:0 0 14px; }
+.daily-item strong{ margin-top:auto; margin-bottom:12px; }
+.daily-item .btn{ font-size:13px; min-height:44px; padding:8px; border-radius:10px; }
+.store-preview{ border:0; background:none; color:#315c62; text-decoration:underline; min-height:44px; cursor:pointer; }
+.store-cart-list{ display:grid; gap:14px; }
+.store-cart-row{ display:flex; align-items:center; gap:18px; padding:16px; background:#fffdf7; border:2px solid #d4ddd6; border-radius:18px; }
+.store-cart-row .wardrobe-item-preview{ width:80px; height:80px; flex:none; border-radius:12px; }
+.store-cart-row>div:nth-child(2){ flex:1; min-width:0; }.store-cart-row h3{ margin:0 0 6px; font-size:18px; }.store-cart-row p{ font-size:13px; margin:0; }
+.store-checkout{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; }
+.store-empty{ padding:40px 20px; text-align:center; background:#fffdf7; border-radius:18px; }
+.store-history{ border-top:1px solid #c4d8d1; padding:20px 0; }.store-history summary{ cursor:pointer; min-height:44px; font-weight:700; }
+.store-delivery{ text-align:center; width:min(94vw,560px); padding:48px 24px; }
+#delivery-truck{ font-size:86px; }.shipping{ animation:deliveryDrive .7s ease-in-out infinite alternate; }
+@keyframes deliveryDrive{ from{transform:translateX(-35px)} to{transform:translateX(35px)} }
+@media(prefers-reduced-motion:reduce){ .shipping{animation:none;} }
+.reduce-motion .shipping{animation:none;}
+@media(max-width:1000px){.daily-store-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:640px){.daily-store-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.daily-item{padding:10px;}.store-cart-row{flex-wrap:wrap;gap:12px;}.store-cart-row .wardrobe-item-preview{width:60px;height:60px;}.store-cart-row>div:nth-child(2){flex-basis:60%;}.store-checkout{align-items:stretch;flex-direction:column;}.shop-tabs{overflow-x:auto;}.shop-tab-btn{flex-shrink:0;}.store-section-head .btn{font-size:13px;}}
+
+/* The artwork owns the workspace. Tools float without changing its fit scale. */
+#screen-editor .editor-main{ padding:0; min-height:0; flex-direction:row; }
+#screen-editor .editor-canvas-wrap{ padding:0; min-height:0; min-width:0; width:100%; }
+#screen-editor .editor-topbar{ min-height:60px; padding:6px 12px; gap:8px; flex-wrap:nowrap; overflow-x:auto; }
+#screen-editor .tool-btn{ min-width:40px; min-height:44px; padding:6px 10px; font-size:18px; }
+#screen-editor .edit-mode-chip{ font-size:16px; padding:6px 10px; }
+#screen-editor .element-settings{
+  position:absolute; z-index:30; left:auto; right:12px; top:12px; bottom:auto;
+  width:min(292px,calc(100% - 24px)); max-height:calc(100% - 24px);
+  margin:0; padding:12px; overflow:auto; border-radius:16px;
+  box-shadow:0 6px 24px #254b5026;
+}
+#screen-editor .element-settings.collapsed{ width:auto; max-width:240px; max-height:60px; padding:6px 10px; overflow:hidden; }
+#screen-editor .element-settings.collapsed #settings-fields,
+#screen-editor .element-settings.collapsed #f-reset-icon{ display:none; }
+#screen-editor .element-settings.collapsed h3{ display:block; font-size:14px; margin:0; }
+#screen-editor .settings-collapse-btn{ display:flex; align-items:center; justify-content:center; width:44px; height:44px; }
+#screen-editor .editor-hint-pill{ top:12px; left:12px; max-width:min(260px,55%); font-size:14px; padding:8px 10px; }
+@media(max-width:900px){
+  #screen-editor .element-settings{ top:auto; bottom:8px; right:8px; width:calc(100% - 16px); max-height:34%; }
+  #screen-editor .element-settings.collapsed{ width:auto; max-height:58px; }
+}
+@media(max-width:640px){
+  #screen-editor .edit-mode-chip{ display:none; }
+  #screen-editor .editor-topbar{ gap:6px; justify-content:space-between; }
+}
+
+/* Selection is a precise bounding box, independent of artwork radius/zoom. */
+#editor-canvas .el.selected{ outline:none; }
+#editor-canvas .el.selected::after{
+  content:''; position:absolute; inset:calc(-1 * var(--element-border,0px));
+  border:calc(1.5 * var(--selection-unit,1px)) solid #9368dc;
+  border-radius:0; pointer-events:none; z-index:1;
+}
+#editor-canvas .el-handle{
+  --handle-size:calc(10 * var(--selection-unit,1px));
+  width:var(--handle-size); height:var(--handle-size);
+  border:calc(2 * var(--selection-unit,1px)) solid #9368dc;
+  border-radius:50%; z-index:2; background:#fff;
+}
+#editor-canvas .el-handle.nw,#editor-canvas .el-handle.ne,#editor-canvas .el-handle.n{ top:calc(-1 * var(--element-border,0px) - var(--handle-size)/2); }
+#editor-canvas .el-handle.sw,#editor-canvas .el-handle.se,#editor-canvas .el-handle.s{ bottom:calc(-1 * var(--element-border,0px) - var(--handle-size)/2); }
+#editor-canvas .el-handle.nw,#editor-canvas .el-handle.sw,#editor-canvas .el-handle.w{ left:calc(-1 * var(--element-border,0px) - var(--handle-size)/2); }
+#editor-canvas .el-handle.ne,#editor-canvas .el-handle.se,#editor-canvas .el-handle.e{ right:calc(-1 * var(--element-border,0px) - var(--handle-size)/2); }
+#editor-canvas .el-handle.n,#editor-canvas .el-handle.s{ left:calc(50% - var(--handle-size)/2); }
+#editor-canvas .el-handle.e,#editor-canvas .el-handle.w{ top:calc(50% - var(--handle-size)/2); }
+@media(pointer:coarse){ #editor-canvas .el-handle::before{ inset:calc(-17 * var(--selection-unit,1px)); } }
+#screen-editor .editor-canvas-wrap{ background-color:#e8eee9; background-image:radial-gradient(#bbc9bf 1px,transparent 1px); background-size:20px 20px; }
+#screen-editor .editor-canvas{ box-shadow:0 8px 32px #254b501a,0 0 0 1px #254b5020; }
+#screen-editor .editor-topbar{ background:#fffdf7; border-bottom:1px solid #cfdbd4; box-shadow:0 3px 12px #254b500d; }
+#screen-editor .tool-pill{ border:1px solid #dedbe8; border-radius:14px; padding:2px; background:#f4f1fa; gap:2px; }
+#screen-editor .tool-btn{ font-family:var(--font-body); color:#374b48; border-radius:10px; }
+#screen-editor .tool-btn:hover{ background:#e9e1f7; }
+#screen-editor .tool-btn.active{ background:#e3d5fa; border-color:#9368dc; color:#56378c; }
+#screen-editor .tool-btn.btn-save{ background:#7852b8; color:white; border:0; box-shadow:0 3px 0 #573b88; font-size:14px; padding:8px 16px; }
+#screen-editor .element-settings{ border:1px solid #c8d8d0; background:#fffdf7; }
+#screen-editor .element-settings h3{ font:700 16px var(--font-body); color:#304c45; margin:0 0 3px; }
+.selection-heading{ min-width:0; }.selection-heading small{ display:block; font-size:11px; color:#587169; }
+#screen-editor .element-settings-head{ position:sticky; top:-12px; background:#fffdf7; z-index:2; padding:4px 0 8px; }
+#screen-editor .element-settings.collapsed .element-settings-head{ position:static; padding:0; }
+#screen-editor .element-settings.collapsed .selection-heading small{ display:none; }
+#screen-editor .field-group{ border-bottom:1px solid #edf0eb; padding-bottom:12px; }
+#screen-editor .field-group label{ color:#374f47; }
+#screen-editor .element-settings input,#screen-editor .element-settings select{ border-radius:8px; }
+@media(max-width:640px){ #screen-editor .editor-tools-center.tool-pill{ border:0; padding:0; background:none; } #screen-editor .tool-btn.btn-save{ padding:8px 12px; font-size:13px; } }
+
+/* Compact desktop dock keeps the artwork in charge. */
+#global-taskbar{ height:calc(72px + env(safe-area-inset-bottom,0px)); min-height:0; flex-shrink:0; padding:8px 18px calc(8px + env(safe-area-inset-bottom,0px)); gap:14px; border-top-width:2px; }
+#global-taskbar .taskbar-btn{ width:56px; height:56px; min-width:56px; min-height:56px; font-size:28px; border-width:2px; box-shadow:none; }
+#global-taskbar .taskbar-clock{ padding:6px 12px; font-size:16px; border-width:2px; box-shadow:none; }
+
+/* =====================================================
+   Piko — tutorial guide character
+===================================================== */
+/* The "dim" is this one box's shadow, not a full-screen overlay — its own
+   rect (sized/positioned in JS to match the target) stays fully transparent,
+   so whatever's underneath is genuinely on top, not fought over with z-index. */
+.piko-hole{
+  position:fixed; z-index:150; border-radius:14px; pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(34,29,38,0.62);
+  transition:left .3s cubic-bezier(.4,0,.2,1), top .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1), height .3s cubic-bezier(.4,0,.2,1), opacity .2s ease;
+}
+.piko-hole.hidden{ opacity:0; box-shadow:0 0 0 9999px rgba(34,29,38,0); }
+.piko-cursor{
+  position:fixed; z-index:153; width:36px; height:36px; font-size:30px; line-height:1; pointer-events:none;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.35)); animation:pikoTap 1.4s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes pikoTap{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(6px,-8px); } }
+.piko-bubble{
+  position:fixed; z-index:154; right:clamp(12px,3vw,48px); bottom:100px; left:auto;
+  display:flex; align-items:flex-end; gap:14px; max-width:min(92vw,480px);
+}
+.piko-bubble.piko-top{ top:clamp(12px,3vw,48px); bottom:auto; }
+.piko-bubble.hidden{ display:none; }
+.piko-panel{
+  position:relative; background:var(--cream-panel); border:4px solid var(--teal); border-radius:22px;
+  box-shadow:0 10px 0 rgba(58,46,57,.16); padding:20px 22px 18px; cursor:pointer; min-width:220px;
+}
+.piko-name{ margin:0 0 8px; font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.1em; color:var(--teal-dark); }
+.piko-line{ margin:0; font-family:var(--font-body); font-weight:700; font-size:20px; line-height:1.5; color:var(--ink); }
+.piko-caret{ display:inline-block; margin-left:2px; animation:pikoBlink 750ms step-end infinite; }
+.piko-caret.idle{ opacity:0; animation:none; }
+@keyframes pikoBlink{ 50%{ opacity:0; } }
+.piko-img{ width:clamp(100px,15vw,160px); height:auto; flex-shrink:0; filter:drop-shadow(0 6px 6px rgba(0,0,0,.2)); }
+@media(max-width:640px){
+  .piko-bubble{ left:12px; right:12px; bottom:80px; flex-direction:column-reverse; align-items:center; gap:6px; }
+  .piko-bubble.piko-top{ top:12px; }
+  .piko-panel{ width:100%; }
+  .piko-img{ width:96px; }
 }

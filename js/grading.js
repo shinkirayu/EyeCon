@@ -6,6 +6,26 @@
 
   const INTERACTIVE_ROLES = ['button','nav'];
   const TYPE_ROLES = ['heading','subheading','body','small','label','button','nav'];
+  // A mission is graded only on skills introduced by that point in the
+  // course. This avoids the old hidden-penalty feeling where an alignment
+  // lesson could lose marks for contrast or typography not yet taught.
+  const FOCUS_BY_LEVEL = {
+    1:['alignment'],
+    2:['alignment','spacing'],
+    3:['hierarchy'],
+    4:['contrast'],
+    5:['accessibility'],
+    6:['usability'],
+    7:['consistency','alignment','spacing','hierarchy','contrast','accessibility','usability'],
+    8:['consistency','alignment','spacing','hierarchy','contrast','accessibility','usability'],
+  };
+  const CATEGORY_LABELS = { placement:'Placement', contrast:'Contrast', alignment:'Alignment', hierarchy:'Hierarchy', spacing:'Spacing', consistency:'Consistency', accessibility:'Accessibility', usability:'Usability' };
+
+  function activeRubricCategories(level){
+    const categories = (level.rubric.focusCategories || FOCUS_BY_LEVEL[level.levelNumber] || Object.keys(level.rubric.weights)).slice();
+    if(Array.isArray(level.hiddenTargets) && level.hiddenTargets.length && !categories.includes('placement')) categories.unshift('placement');
+    return categories;
+  }
 
   function roleSpec(level, role){
     const override = (level.rubric.roles && level.rubric.roles[role]) || {};
@@ -70,6 +90,44 @@
     const feedback = [];
     const scores = {};
 
+    // ---------- 0. HIDDEN TARGET PLACEMENT ----------
+    // Match by element id, then grade continuously by the distance between
+    // the submitted element and its invisible destination box. Exact is 100;
+    // small misses lose only a few points; large misses decay toward zero.
+    (function(){
+      const targets = Array.isArray(level.hiddenTargets) ? level.hiddenTargets : [];
+      if(!targets.length) return;
+      const byElementId = new Map(editable.map(el=>[el.id,el]));
+      const falloff = level.rubric.placementFalloff || Math.max(96,Math.min(canvasW,canvasH)*0.18);
+      let total = 0, matched = 0;
+      targets.forEach(target=>{
+        const el = byElementId.get(target.id);
+        if(!el) return;
+        matched++;
+        const dx = el.x-target.x, dy = el.y-target.y;
+        const centerDistance = Math.hypot(dx,dy);
+        const sizeDistance = Math.hypot(el.w-target.w,el.h-target.h);
+        const error = centerDistance + sizeDistance*0.25;
+        const fraction = clamp01(1-error/falloff);
+        total += fraction;
+        if(error < 0.5){
+          feedback.push({type:'good',category:'Placement',elId:el.id,editorOnly:true,
+            title:`"${el.text || el.role}" is in its correct position`,detail:'It matches the hidden target box.',suggest:''});
+        }else{
+          feedback.push({type:'bad',category:'Placement',elId:el.id,editorOnly:true,
+            title:`"${el.text || el.role}" is ${Math.round(centerDistance)}px from its target`,
+            detail:`Placement earns ${Math.round(fraction*100)}% credit; points decrease gradually with distance.`,
+            suggest:'Move it closer to its intended position. Small misses still receive partial credit.'});
+        }
+      });
+      scores.placement = matched ? Math.round(total/matched*100) : 0;
+      if(scores.placement >= 90){
+        feedback.push({type:'good',category:'Placement',title:'Elements closely match their intended positions.',detail:`Placement score: ${scores.placement}/100.`,suggest:''});
+      }else{
+        feedback.push({type:'bad',category:'Placement',title:'Some elements are away from their hidden target boxes.',detail:`Placement score: ${scores.placement}/100.`,suggest:'Move each element toward its intended location; closer placement earns progressively more points.'});
+      }
+    })();
+
     // ---------- 1. CONTRAST ----------
     (function(){
       const textEls = editable.filter(el => el.text && el.color);
@@ -98,13 +156,15 @@
     // ---------- 2. ALIGNMENT / GRID ----------
     (function(){
       const cols = level.rubric.gridColumns, gutter = level.rubric.gridGutter;
+      const unit = level.rubric.gridUnit;
       const { xs } = gridColumnPositions(canvasW, cols, gutter);
-      const tol = 8;
+      const tol = unit ? 0.5 : 8;
       const candidates = editable.filter(el => el.type !== 'background');
       if(candidates.length === 0){ scores.alignment = 100; return; }
       let hits = 0;
       candidates.forEach(el => {
-        const d = nearestDist(el.x, xs);
+        const distance=n=>Math.abs(n-Math.round(n/unit)*unit);
+        const d = unit ? Math.max(distance(el.x),distance(el.y)) : nearestDist(el.x, xs);
         if(d <= tol) hits++;
         else{
           // Per-element note, tagged editorOnly so it drives the live
@@ -113,7 +173,7 @@
           // the summary version below instead.
           feedback.push({ type:'bad', category:'Alignment', elId: el.id, editorOnly:true,
             title: `"${el.text || el.role}" isn't aligned to the grid`,
-            detail: `Its left edge sits ${Math.round(d)}px from the nearest column line.`,
+            detail: `Its left edge sits ${Math.round(d)}px from the nearest grid line.`,
             suggest: 'Turn on Snap and drag it so the left edge locks onto a grid line.' });
         }
       });
@@ -121,11 +181,11 @@
       scores.alignment = Math.round(frac*100);
       if(frac >= 0.8){
         feedback.push({ type:'good', category:'Alignment', title:'Elements line up cleanly to the grid.',
-          detail:`${hits}/${candidates.length} elements snap within ${tol}px of a column line.`, suggest:'' });
+          detail:`${hits}/${candidates.length} elements snap within ${tol}px of a grid line.`, suggest:'' });
       } else {
         feedback.push({ type:'bad', category:'Alignment', title:'Several elements are off-grid.',
-          detail:`Only ${hits}/${candidates.length} elements align to the ${cols}-column grid.`,
-          suggest:'Enable the Grid tool and drag elements so their left edge snaps to a column line.' });
+          detail:`Only ${hits}/${candidates.length} elements align to the ${unit ? unit+"px" : cols+"-column"} grid.`,
+          suggest:'Enable the Grid tool and drag elements so their edges snap to the grid.' });
       }
       // out-of-bounds check feeds into usability, but also worth an alignment note
       const oob = candidates.filter(el => el.x < 0 || el.y < 0 || el.x+el.w > canvasW || el.y+el.h > canvasH);
@@ -353,11 +413,16 @@
 
     // ---------- OVERALL ----------
     const weights = level.rubric.weights;
+    const activeCategories = activeRubricCategories(level);
     let weightedTotal = 0, weightSum = 0;
-    Object.keys(weights).forEach(k => {
+    activeCategories.forEach(k => {
       const s = scores[k] != null ? scores[k] : 100;
-      weightedTotal += s * weights[k];
-      weightSum += weights[k];
+      // Existing level weights still express the relative importance where a
+      // mission teaches two skills; an unweighted custom objective is fair
+      // by default rather than silently excluded.
+      const weight = k === 'placement' ? (level.rubric.placementWeight || 35) : (weights[k] || 1);
+      weightedTotal += s * weight;
+      weightSum += weight;
     });
     const score = Math.round(weightedTotal/weightSum);
 
@@ -374,9 +439,41 @@
     feedback.sort((a,b)=> order[a.type]-order[b.type]);
 
     const xpAwarded = window.EC_STORE.xpAwardForGrade(grade);
+    const stars = scoreToStars(score);
 
-    return { score, grade, categoryScores: scores, feedback, xpAwarded };
+    const objectives = activeCategories.map(category => {
+      const value = scores[category] == null ? 100 : scores[category];
+      return {
+        id: category,
+        label: `Improve ${CATEGORY_LABELS[category] || category}`,
+        value,
+        target: 70,
+        mastered: value >= 90,
+        complete: value >= 70,
+      };
+    });
+    const completedObjectives = objectives.filter(o=>o.complete).length;
+    const masteredObjectives = objectives.filter(o=>o.mastered).length;
+    const mission = {
+      objectives,
+      completedObjectives,
+      masteredObjectives,
+      complete: completedObjectives === objectives.length,
+      mastery: masteredObjectives === objectives.length,
+    };
+
+    return { score, grade, categoryScores: scores, activeCategories, feedback, xpAwarded, mission, stars };
   }
 
-  window.EC_GRADING = { gradeSubmission, effectiveBg };
+  // Client-facing star rating (1-5), separate from the letter grade — this is
+  // what drives the revision loop and reward scaling.
+  function scoreToStars(score){
+    if(score >= 96) return 5;
+    if(score >= 85) return 4;
+    if(score >= 70) return 3;
+    if(score >= 50) return 2;
+    return 1;
+  }
+
+  window.EC_GRADING = { gradeSubmission, effectiveBg, activeRubricCategories, scoreToStars };
 })();

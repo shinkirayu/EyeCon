@@ -1,0 +1,757 @@
+﻿/* Reference art direction: cream paper, mint chrome and handwritten lettering.
+   Desktop uses the supplied 1920x1080 composition; small screens reflow controls. */
+:root{ --font-hand:'Just Another Hand','Patrick Hand',cursive; --ink:#3b172e; --teal:#91d7cd; --teal-dark:#528f91; --cream:#fcf7ef; }
+#screen-home{ background:#b8e4d8; }
+#screen-home .desk-scene{
+  container-type:size; flex:none; width:min(100vw,177.7778dvh); height:min(100dvh,56.25vw);
+  background: url('../assets/sprites/home-scene.svg') center/100% 100% no-repeat !important;
+}
+#screen-home .home-street,#screen-home .home-game-logo,#screen-home .desk-surface,
+#screen-home .tower,#screen-home .plant,#screen-home .keyboard,#screen-home .mouse,#screen-home .desk-posters,#screen-home .desk-decor{ display:none!important; }
+.reference-brand{ position:absolute; top:43.2%; left:41.4%; width:18%; color:#e34c70; font:800 5.1cqw/1 var(--font-display); letter-spacing:.02em; }
+#screen-home .monitor,#screen-home .monitor-screen{ display:contents; }
+#screen-home #mini-desktop{
+  position:absolute; z-index:8; left:45.9%; top:66.6%; width:7.8%; height:11.8%;
+  min-width:0; min-height:0; padding:0; background:#f18586!important;
+  border:0; border-radius:8% 4% 8% 3%; box-shadow:0 .5cqw 0 #65acc480; transform:rotate(1deg);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+#screen-home #mini-desktop>*{ display:none; }
+#screen-home #mini-desktop::before{ content:'start'; font:800 3.1cqw var(--font-display); color:white; }
+#screen-home #mini-desktop::after{ content:none; }
+#screen-home #mini-desktop:hover{ transform:rotate(-2deg) translateY(-2px); }
+#screen-home .sticky-note{
+  display:block!important; position:absolute; left:auto; right:3.5%; top:11%; bottom:auto;
+  width:14%; height:21%; background:transparent; border:0; box-shadow:none; transform:rotate(3deg); padding:0;
+}
+#screen-home .sticky-note>*{ display:none; }
+#screen-home .sticky-note::after{ content:'road\a to\a radiant'; white-space:pre; text-align:center; display:block; font:800 3.3cqw/.93 var(--font-display); color:#d83b4e; }
+#screen-desktop .desktop-wallpaper{ background:url('../assets/wallpapers/wallpaper-1.png') center/cover no-repeat!important; display:block; padding:0; container-type:size; }
+#screen-desktop .desktop-wallpaper::after{ content:none; }
+#screen-desktop .desktop-wallpaper::before,#screen-desktop .sky-clouds,#screen-desktop .sky-hills,#screen-desktop .desktop-desk-props,#screen-desktop .desktop-hint,#screen-desktop .desktop-status-chip,#screen-desktop .desktop-watermark{ display:none; }
+#screen-desktop .workstation{ position:absolute; inset:0; width:100%; height:100%; aspect-ratio:auto; container-type:size; z-index:2; pointer-events:none; }
+#screen-desktop .workstation::before,#screen-desktop .workstation::after{ content:none; }
+#screen-desktop .desktop-icons{ top:4%; left:2%; width:8%; display:flex; flex-direction:column; gap:16px; transform:none; pointer-events:auto; }
+#screen-desktop .desktop-icon{ padding:0; width:100%; }
+#screen-desktop .desktop-icon-glyph{ width:clamp(64px,7cqw,138px)!important; height:clamp(58px,6cqw,118px)!important; background:#fcf7ef; border:4px solid #c8e6da; border-radius:22%; box-shadow:none; font-size:0; }
+#screen-desktop #glyph-mail::after{ content:'\2709'; font:400 clamp(44px,6cqw,110px)/1 Arial; color:#8ec3c5; }
+/* Use one illustrated SVG family for every app shortcut. Keeping the same
+   canvas, outline and pastel palette prevents platform emoji from changing
+   the apparent size or style of individual icons. */
+#screen-desktop #glyph-stats,
+#screen-desktop #glyph-shop,
+#screen-desktop #glyph-settings{
+  font-size:0!important;
+  display:block;
+  width:100%;
+  height:100%;
+  background-position:center;
+  background-size:contain;
+  background-repeat:no-repeat;
+}
+#screen-desktop #glyph-stats{ background-image:url('../assets/icons/stats-icon.svg'); }
+#screen-desktop #glyph-shop{ background-image:url('../assets/icons/shop-icon.svg'); }
+#screen-desktop #glyph-settings{ background-image:url('../assets/icons/settings-icon.svg'); }
+#screen-desktop .desktop-icon-label{ display:none; }
+#screen-desktop .desktop-icon:not(#icon-mail){ position:fixed; bottom:9px; width:42px; min-width:42px; min-height:42px; }
+#screen-desktop #icon-stats{ left:126px; }#screen-desktop #icon-shop{ left:178px; }#screen-desktop #icon-settings{ left:230px; }
+#screen-desktop .desktop-icon:not(#icon-mail) .desktop-icon-glyph{ width:40px!important; height:40px!important; border:0; background:transparent; font-size:24px; }
+#screen-desktop .desktop-icon-badge{ top:-10px; right:-12px; background:#df0036; border:0; box-shadow:none; font:700 clamp(22px,2.4cqw,42px) var(--font-display); min-width:30px; padding:2px 10px; }
+#global-taskbar{ background:#b6e1da; border:0; box-shadow:none; height:calc(60px + env(safe-area-inset-bottom,0px)); }
+#global-taskbar .taskbar-btn{ border:0; background:transparent; box-shadow:none; font-size:28px; }
+#global-taskbar #taskbar-profile{ order:-2; }#global-taskbar #taskbar-home{ order:-1; }
+#global-taskbar .taskbar-clock{ background:#f8df8d; border:0; border-radius:9px 9px 18px 9px; font:700 28px/1.3 var(--font-display); padding:9px 18px; color:#311c26; white-space:nowrap; flex-shrink:0; }
+#screen-shell,#screen-stats,#screen-shop,#screen-settings{ background:#fcf7ef; }
+.mail-header{ min-height:clamp(96px,10.6vw,204px); padding:24px 3.4%; border:0; background:#fcf7ef; gap:30px; }
+.mail-header .app-back-btn{ width:44px; height:44px; min-width:44px; border:0; background:transparent; box-shadow:none; }
+#screen-shell .mail-header .app-back-btn{ position:absolute; left:8px; top:10px; font-size:20px; }
+.mail-logo{ color:#528f91; font:700 clamp(30px,3.5vw,66px) var(--font-display); }
+.mail-logo .eyecon-logo{ transform:none; }.mail-logo .eye{ border:2px solid #c4dedb!important; background:#fffefb!important; }.mail-logo .pupil{ background:#233247!important; }
+.mail-search{ max-width:1060px; height:clamp(58px,5vw,98px); margin-left:2%; border:3px solid #a5d6cc; box-shadow:6px 7px 0 #d2d8d1; background:#fcf7ef; border-radius:60px; }
+.mail-search input{ font:400 clamp(24px,2.5vw,46px) var(--font-body); }.mail-search .icon-search{ font-size:30px; }
+#screen-shell .mail-header-right{ display:none; }
+.mail-body{ padding:0 5.2% 3%; gap:2%; overflow:hidden; }
+.mail-sidebar{ width:20%; padding-top:2%; gap:38px; flex-shrink:0; }
+.side-btn{ position:relative; min-height:clamp(90px,9vw,174px); border:0; border-radius:34px; padding:20px; background:#f9da85; box-shadow:8px 12px 8px #bd9b7133; color:#3b172e; font:700 clamp(28px,2.4vw,46px) var(--font-display); text-transform:uppercase; }
+.side-btn.active{ background:#ddcfe3; color:#3b172e; }.side-icon{ font-size:clamp(40px,4.6vw,84px); }.side-btn .badge-count{ position:absolute; top:16%; left:30%; background:#df0036; color:white; }
+.side-icon-inbox,.side-icon-completed{ display:inline-block; width:1em; height:1em; background-position:center; background-size:contain; background-repeat:no-repeat; }
+.side-icon-inbox{ background-image:url('../assets/icons/inbox-icon.svg'); }
+.side-icon-completed{ background-image:url('../assets/icons/completed-icon.svg'); }
+.mail-panel{ border:3px solid #77b9af; border-radius:36px; padding:0; background:#f4f0eb; box-shadow:none; flex:1; min-width:0; overflow:hidden; display:flex; flex-direction:column; }
+.mail-panel .mail-list{ padding:0; }
+/* Compact single-line row: name, then its preview quoted right after it on
+   the same line (truncated with an ellipsis), a small status pill, then the
+   unread dot — not the old tall stacked card. */
+.mail-item{ min-height:0; height:auto; border:2px solid #e6ddc8; border-radius:20px; background:#fcf8f3; gap:16px; padding:16px 26px; margin-bottom:12px; align-items:center; }
+.mail-item-name{ font:700 15px var(--font-display); color:#3b172e; text-transform:uppercase; flex:0 1 auto; white-space:nowrap; }
+.mail-item-preview{
+  font:400 14px var(--font-body); color:#a4a0a2; text-transform:none; flex:1 1 80px; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.mail-item-preview::before{ content:'"'; }
+.mail-item-preview::after{ content:'"'; }
+.mail-item .tag{ font-size:12px; padding:5px 12px; border-radius:14px; flex-shrink:0; }
+.mail-item .unread-dot{ width:10px; height:10px; flex-shrink:0; }
+.mail-item .avatar-circle,.mail-detail-head .avatar-circle{ background:#effafa; border:3px solid #9dccd9; color:#9dccd9; }
+.mail-item .avatar-circle{ width:clamp(52px,4.8vw,92px); height:clamp(52px,4.8vw,92px); font-size:0; flex-shrink:0; }
+.mail-item .avatar-circle::after{ content:'\2659'; font:400 clamp(40px,4vw,78px)/1 Arial; }
+.tag{ background:#91ee94!important; color:white; border:0; font:700 24px var(--font-display); padding:8px 15px; }
+.modal-overlay{ background:#0006; backdrop-filter:none; padding:24px; }
+.mail-detail-card{ width:min(1224px,92vw); max-width:1224px; padding:60px 66px; border:3px solid #78bdb2; border-radius:36px; background:#fcf7ef; box-shadow:none; }
+.mail-detail-head h2{ font:700 clamp(34px,3.2vw,60px) var(--font-display); text-transform:uppercase; }
+.mail-detail-level-tag{ display:none; }
+.mail-detail-body{ white-space:pre-line; font:400 clamp(25px,2.35vw,44px)/1.22 var(--font-body); color:#3b172e; }
+.mail-detail-actions .btn,.confirm-card .btn{ font:700 clamp(26px,2.5vw,46px) var(--font-display); text-transform:uppercase; border-radius:26px; border:3px solid #77b9af; }
+.btn-accept{ background:#94d9cf; color:white; box-shadow:4px 7px 8px #bca68640; }
+.attachment-chip{
+  display:inline-flex; align-items:center; gap:10px; background:transparent; border:0; border-radius:0;
+  padding:6px 0; color:#2e8c7e; font:700 22px var(--font-display); text-transform:uppercase;
+  box-shadow:none; cursor:pointer;
+}
+.attachment-chip::before{
+  content:'PNG'; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  width:28px; height:32px; border-radius:5px 5px 5px 0; background:#77b9af; color:#fff;
+  font:800 9px var(--font-display); letter-spacing:.02em;
+}
+.confirm-card{ border:3px solid #77b9af; border-radius:36px; background:#fcf7ef; box-shadow:none; }.confirm-card p{ font:700 40px var(--font-display); text-transform:uppercase; }
+/* Compose ("typing email") card kept visually IDENTICAL to the incoming
+   client mail-detail card — same border/size/type — instead of a distinct
+   look, so sending a reply and reading one feel like the same email thread,
+   not two different UI systems. No dashed box, no purple focus ring. */
+.compose-card{ width:min(1224px,92vw); max-width:1224px; padding:60px 66px; border:3px solid #78bdb2; border-radius:36px; background:#fcf7ef; box-shadow:none; }
+.compose-to{ font:700 clamp(34px,3.2vw,60px) var(--font-display); color:#3b172e; text-transform:uppercase; margin-bottom:18px; }
+.compose-body{ min-height:180px; max-height:none; padding:0; border:0; background:transparent; color:#3b172e; font:400 clamp(25px,2.35vw,44px)/1.22 var(--font-body); text-transform:uppercase; }
+.compose-body:focus-visible{ outline:none; box-shadow:none; }
+.compose-hint{ margin:14px 0 0; color:#528f91; font:400 20px var(--font-body); text-transform:uppercase; }
+.compose-attach-row .attach-btn{ display:flex; align-items:center; gap:10px; padding:10px 16px; border:0; border-radius:17px; background:transparent; color:#70b7b1; font:700 28px var(--font-display); text-transform:uppercase; }
+#modal-compose .btn-send{ display:inline-flex; min-width:0; min-height:0; align-items:center; justify-content:center; gap:10px; margin-top:28px; padding:14px 34px; border:0; border-radius:26px; background:#215bcc; box-shadow:none; color:#fffdf8; font:700 clamp(26px,2.5vw,46px) var(--font-display); text-transform:uppercase; }
+#modal-compose .btn-send:disabled{ opacity:.5; }
+@media(max-width:900px){
+  .compose-card{ padding:28px 24px; } .compose-body{ font-size:28px; } .compose-to{ font-size:36px; }
+}
+
+#screen-editor{ background:#fcf7ef; }
+#screen-editor .editor-topbar{ background:#fcf7ef; border:0; box-shadow:none; min-height:64px; }
+/* Matches the reference build's toolButton/saveControl 1:1: Baloo 2 (the
+   same --font-display already loaded here), not the handwritten font used
+   elsewhere in this theme — the editor toolbar reads as UI chrome, not a
+   note, in that reference. */
+#screen-editor .tool-btn{ display:inline-flex; min-height:58px; align-items:center; gap:7px; padding:0 17px; background:#fffaf4; color:#402238; font:21px/1 var(--font-display); border:0; box-shadow:none; border-radius:11px; }
+#screen-editor .tool-btn.active{ background:#77beb4; color:#fffdf8; }
+#screen-editor .tool-btn.btn-save{ background:#fffaf4; color:#402238; font:22px/1 var(--font-display); border:0; box-shadow:none; }
+#screen-editor .tool-pill{ border:0; background:transparent; gap:10px; }
+#screen-editor .editor-main{ background:#fcf7ef; }
+#screen-editor .editor-canvas-wrap{ background:#e4e1da; background-image:none; border-radius:28px 28px 0 0; }
+#screen-editor .editor-canvas{ box-shadow:none; }
+#screen-editor .edit-mode-chip{ color:#785275; background:#f9df91; font:700 25px var(--font-display); border:0; box-shadow:none; }
+#screen-editor .editor-hint-pill{ background:#f9df91; color:#4b3c36; font:400 22px/1.2 var(--font-body); text-transform:uppercase; border-radius:3px; }
+#screen-editor .element-settings{ border:3px solid #78bdb2; border-radius:30px; background:#fcf7ef; box-shadow:none; }
+#screen-editor .element-settings-head{ background:#fcf7ef; }
+#screen-editor .element-settings h3{ font:700 28px var(--font-display); text-transform:uppercase; }
+#screen-editor .element-settings input,#screen-editor .element-settings select{ border:2px solid #e4d8ca; border-radius:12px; background:#fcf7ef; font-family:var(--font-body); font-size:23px; }
+#screen-editor .field-group label{ font:700 15px var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin-bottom:8px; }
+#screen-editor .mini-field{ border:2px solid #e4d8ca; border-radius:12px; background:#fcf7ef; }
+#screen-editor .mini-field .mini-label{ background:#e7f3f0; color:#528f91; font-family:var(--font-display); }
+#screen-editor .color-row{ background:#fcf7ef; border:2px solid #e4d8ca; border-radius:12px; padding:10px 14px; gap:12px; }
+#screen-editor .color-row input[type=color]{ width:34px; height:34px; border-radius:8px; }
+#screen-editor .color-row .hex{ font-family:var(--font-display); font-weight:700; font-size:16px; color:#3b172e; }
+#screen-editor .contrast-value-label{ font:700 15px var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin:14px 0 8px; }
+#screen-editor .contrast-badge{
+  background:#fcf7ef; border:2px solid #e4d8ca; border-radius:14px; padding:12px 16px; justify-content:space-between;
+}
+#screen-editor .contrast-badge .contrast-ratio{ font:800 24px var(--font-display); }
+#screen-editor .contrast-badge.pass .contrast-ratio{ color:#2fa66a; }
+#screen-editor .contrast-badge.fail .contrast-ratio{ color:#d9414f; }
+#screen-editor .contrast-badge .contrast-check{
+  display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
+  font-size:15px; font-weight:800; color:#fff;
+}
+#screen-editor .contrast-badge.pass .contrast-check{ background:#2fa66a; }
+#screen-editor .contrast-badge.fail .contrast-check{ background:#d9414f; }
+#screen-editor .contrast-note{ font-family:var(--font-body); font-size:13px; color:#8a8398; margin-top:6px; }
+@media(min-width:1200px){
+  /* Side tools match the reference while remaining an overlay: selection
+     never changes the canvas fit or zoom. */
+  #screen-editor .element-settings{ left:12px; right:auto; top:112px; width:280px; }
+  #screen-editor .element-settings.collapsed{ top:12px; width:auto; }
+}
+@media(max-width:900px){
+  .mail-header{ padding:16px; min-height:96px; gap:16px; }.mail-logo{font-size:30px;}.mail-search{margin:0;}.mail-search input{font-size:24px;}
+  .mail-body{flex-direction:column;padding:0 16px 16px;gap:18px;overflow-y:auto;}.mail-sidebar{width:100%;flex-direction:row;gap:14px;padding:0;}.side-btn{min-height:66px;border-radius:20px;font-size:28px;padding:12px 22px;}.side-icon{font-size:30px;}.side-btn .badge-count{position:static;}.mail-panel{flex:none;min-height:50vh;padding:0 14px;}.mail-item{min-height:100px;}.mail-item-name{font-size:28px;}.mail-item-preview{font-size:24px;}.tag{font-size:20px;}
+  .mail-detail-card{padding:28px 24px;}.mail-detail-body{font-size:28px;}.mail-detail-head h2{font-size:36px;}
+  #screen-desktop .desktop-wallpaper::after{left:15%;width:78%;top:18%;height:72%;}
+}
+@media(max-width:640px){
+  #screen-home .desk-scene{width:100vw;height:56.25vw;overflow:visible;}
+  #screen-home #mini-desktop{min-width:72px;min-height:48px;left:calc(50% - 36px);top:67%;}#screen-home #mini-desktop::before{font-size:26px;}
+  #screen-home .sticky-note{min-width:44px;min-height:44px;}
+  .mail-logo .eyecon-logo{display:none;}.mail-logo{font-size:26px;}.mail-search{min-width:0;height:50px;padding:8px 12px;}.mail-search input{font-size:21px;}.mail-search .icon-search{font-size:18px;}
+  #screen-editor .tool-btn{font-size:20px;}.mail-detail-actions .btn,.confirm-card .btn{font-size:28px;}
+  #screen-desktop .desktop-icons{width:64px;left:20px;top:24px;}
+  #screen-desktop .desktop-icon-badge{right:-5px;}
+  #screen-desktop .desktop-icon:not(#icon-mail){bottom:8px;width:36px;}
+  #screen-desktop #icon-stats{left:118px;}#screen-desktop #icon-shop{left:158px;}#screen-desktop #icon-settings{left:198px;}
+  #global-taskbar .taskbar-clock{font-size:24px;padding:8px 12px;}
+}
+#screen-home #mini-desktop::before{ text-shadow:none; -webkit-text-stroke:0; }
+#screen-editor .element-settings.collapsed{ z-index:120; }
+@media(min-width:1200px){#screen-editor .element-settings.collapsed{top:112px;}}
+#screen-desktop .desktop-icon:not(#icon-mail){width:44px;min-width:44px;height:44px;}
+@media(max-width:640px){
+ #screen-desktop #icon-stats{left:116px;}#screen-desktop #icon-shop{left:162px;}#screen-desktop #icon-settings{left:208px;}
+ #screen-desktop .desktop-icon:not(#icon-mail){width:44px;min-width:44px;}
+}
+.mail-item .avatar-circle::after{content:'';width:100%;height:100%;background:url('../assets/icons/profile.svg') center/contain no-repeat;}
+.mail-logo .eye{width:60px!important;height:84px!important;border-radius:50%!important;}
+.mail-logo .pupil{width:36px!important;height:44px!important;position:relative;}
+.mail-logo .pupil::after{content:'';position:absolute;right:5px;top:5px;width:11px;height:12px;border-radius:50%;background:#edfaff;}
+#screen-editor .editor-hint-pill{z-index:50;}
+@media(min-width:1200px){
+  #screen-editor{--tools-rail:21.5vw;}
+  #screen-editor .editor-main{padding-left:var(--tools-rail);}
+  #screen-editor .editor-canvas-wrap{width:auto;}
+  #screen-editor .editor-topbar{padding-left:calc(var(--tools-rail) + 24px);min-height:74px;}
+  #screen-editor .zone-identity{position:absolute;left:26px;top:20px;z-index:3;}
+  #screen-editor .editor-tools-left{position:fixed;left:calc(var(--tools-rail) + 30px);top:22px;}
+  #screen-editor .tool-pill{margin-left:160px;}
+  #screen-editor .editor-hint-pill{left:26px;top:0;max-width:calc(var(--tools-rail) - 52px);width:240px;padding:16px;font-size:28px;}
+  #screen-editor .element-settings,#screen-editor .element-settings.collapsed{left:24px;top:150px;max-width:calc(var(--tools-rail) - 48px);width:calc(var(--tools-rail) - 48px);}
+  #screen-editor .element-settings{max-height:calc(100% - 170px);}
+  #global-taskbar{height:clamp(60px,5.5vw,106px);padding:10px 30px;gap:18px;}
+  #global-taskbar .taskbar-btn{width:64px;height:64px;font-size:40px;}
+  #global-taskbar .taskbar-clock{font-size:48px;padding:16px 26px;}
+  #screen-desktop .desktop-icon:not(#icon-mail){bottom:24px;}
+  #screen-desktop #icon-stats{left:210px;}#screen-desktop #icon-shop{left:270px;}#screen-desktop #icon-settings{left:330px;}
+}
+#global-taskbar #taskbar-profile{font-size:0;background:url('../assets/icons/profile.svg') center/contain no-repeat;}
+#global-taskbar #taskbar-home{font-size:0;background:url('../assets/icons/home-icon.svg') center/contain no-repeat;}
+#global-taskbar #taskbar-home .taskbar-btn-label{display:none;}
+/* Shop and Fullscreen were left as bare emoji in a plain button while
+   Home/Profile got real drawn icons — same background-image treatment here
+   so the whole taskbar reads as one consistent icon set. */
+#global-taskbar #taskbar-shop{font-size:0;background:url('../assets/icons/shop-icon.svg') center/contain no-repeat;}
+#global-taskbar #taskbar-fullscreen{font-size:0;background:url('../assets/icons/fullscreen-icon.svg') center/contain no-repeat;}
+.taskbar-quick-popup{
+  position:fixed; left:18px; bottom:76px; z-index:1900;
+  width:min(390px,calc(100vw - 24px)); max-height:min(560px,calc(100vh - 100px));
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fcf7ef; border:3px solid #659da8; border-radius:18px;
+  box-shadow:0 10px 28px rgba(37,75,80,.28);
+  animation:taskbarPopupIn .16s ease-out;
+}
+.taskbar-quick-popup.hidden{display:none;}
+@keyframes taskbarPopupIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.taskbar-quick-popup-head{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#b6e1da;border-bottom:2px solid #91c5d8;}
+.taskbar-quick-popup-head img{width:32px;height:32px;}
+.taskbar-quick-popup-head strong{flex:1;font-family:var(--font-display);color:#254b50;}
+.taskbar-quick-popup-head button{width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#254b50;cursor:pointer;font-size:16px;}
+.taskbar-quick-popup-head button:hover,.taskbar-quick-popup-head button:focus-visible{background:rgba(37,75,80,.1);}
+.taskbar-quick-popup-body{min-height:0;overflow:auto;}
+.taskbar-quick-popup-body .app-content-wrap{padding:14px;overflow:visible;}
+.taskbar-quick-popup-body .content-panel{padding:0;}
+.taskbar-quick-popup-body .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+@media(max-width:520px){.taskbar-quick-popup{left:12px;width:calc(100vw - 24px);}.taskbar-quick-popup-body .stat-grid{grid-template-columns:1fr 1fr;}}
+/* Keep status information secondary to navigation, including on the large
+   desktop breakpoint where the earlier responsive rule made it oversized. */
+#global-taskbar .taskbar-clock{
+  font-size:clamp(24px,2.4vw,34px);
+  line-height:1.2;
+  min-height:54px;
+  min-width:150px;
+  padding:10px 18px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  flex-direction:column;
+  gap:1px;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  color:#111;
+  font-family:Arial,sans-serif;
+  font-weight:800;
+}
+#global-taskbar .taskbar-clock span{display:block;}
+.taskbar-quick-popup.profile-layout{width:min(280px,calc(100vw - 24px));height:min(580px,calc(100vh - 100px));background:#f4f1f2;border:2px solid #111;border-radius:4px;}
+.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head{position:absolute;right:4px;top:4px;z-index:2;padding:0;background:transparent;border:0;}
+.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head img,.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head strong{display:none;}
+.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head button{font-size:14px;color:#222;}
+.profile-quick-card{padding:20px 32px;display:flex;flex-direction:column;align-items:center;color:#111;font-family:Arial,sans-serif;}
+.profile-quick-avatar{width:82px;height:82px;margin-bottom:6px;}
+.profile-quick-card h2{margin:0 0 4px;font:800 21px/1.2 Arial,sans-serif;}
+.profile-quick-stars{display:flex;font-size:30px;line-height:1;margin-bottom:10px;letter-spacing:-2px;}
+.profile-quick-stars .filled{color:#f5c544;}
+.profile-quick-strip,.profile-quick-action{width:100%;min-height:24px;margin-bottom:4px;border:0;border-radius:6px;background:#dedede;display:flex;align-items:center;justify-content:center;font:14px Arial,sans-serif;color:#111;}
+.profile-badge-grid{width:100%;padding:10px 12px;margin-bottom:10px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;background:#dedede;border-radius:6px;}
+.profile-badge-dot{aspect-ratio:1;border-radius:50%;background:#bdbdbd;}
+.profile-badge-dot.unlocked{background:#77b9af;box-shadow:inset 0 0 0 2px #fff;}
+.profile-quick-action{justify-content:flex-start;padding:0 10px;cursor:pointer;font-size:12px;}
+.profile-quick-action:hover,.profile-quick-action:focus-visible{background:#cfcfcf;}
+/* These app shortcuts were being positioned over the taskbar and duplicating
+   its controls. Mail remains on the desktop; Shop lives in the taskbar. */
+#screen-desktop #icon-stats,
+#screen-desktop #icon-shop,
+#screen-desktop #icon-settings{display:none;}
+/* Floating editor panels remain below modal dialogs on every breakpoint. */
+#screen-editor .element-settings.collapsed{z-index:60;}
+.modal-overlay{z-index:2000;}
+/* Canvas controls float over the workspace, without consuming a separate row. */
+#screen-editor .editor-topbar{position:absolute;left:12px;right:12px;top:12px;z-index:70;min-height:44px;padding:0;background:transparent;border:0;box-shadow:none;gap:8px;pointer-events:none;overflow:visible;}
+#screen-editor .editor-topbar button,#screen-editor .editor-topbar .tool-pill{pointer-events:auto;}
+#screen-editor .zone-identity,#screen-editor .editor-tools-left{position:static;flex-wrap:nowrap;}
+#screen-editor .editor-topbar .edit-mode-chip{display:none;}
+#screen-editor .tool-pill{margin-left:auto;margin-right:auto;}
+#screen-editor .editor-tools-right{flex-wrap:nowrap;}
+#screen-editor .editor-hint-pill{top:72px;}
+@media(min-width:1200px){
+ #screen-editor .editor-topbar{left:calc(var(--tools-rail) + 16px);right:16px;top:16px;}
+ #screen-editor .editor-hint-pill{top:20px;}
+}
+#screen-desktop .desktop-icons{width:max-content;left:clamp(20px,2vw,40px);top:clamp(24px,3vh,40px);}
+#screen-desktop #icon-mail{position:relative;width:clamp(80px,10cqw,150px);min-width:0;min-height:0;display:block;overflow:visible;}
+#screen-desktop #icon-mail #glyph-mail{display:block;width:100%!important;height:auto!important;aspect-ratio:150/132;background:url('../assets/icons/desktop-mail.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;font-size:0;}
+#screen-desktop #icon-mail #glyph-mail::after{content:none;}
+#screen-desktop #icon-mail .desktop-icon-badge{position:absolute;z-index:2;left:auto;right:-8px;top:0;transform:none;width:clamp(30px,2.7vw,40px);height:clamp(30px,2.7vw,40px);min-width:30px;padding:0;border:3px solid #fcf7ef;border-radius:50%;background:#c90037;color:#fff;font:700 clamp(20px,1.8vw,28px)/1 var(--font-display);display:flex;align-items:center;justify-content:center;margin:0;box-shadow:none;}
+/* Bounce the whole mail target so Piko's tracking vignette follows it. */
+#screen-desktop #icon-mail.tutorial-mail-pulse{animation:tutorialMailBounce .9s ease-in-out infinite;}
+#screen-desktop #icon-mail.tutorial-mail-pulse .desktop-icon-glyph{animation:none;}
+@keyframes tutorialMailBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.reduce-motion #screen-desktop #icon-mail.tutorial-mail-pulse{animation:none;}
+.mail-sidebar .side-btn{display:flex;align-items:center;justify-content:flex-start;gap:clamp(10px,1vw,20px);padding:16px;min-width:0;}
+.mail-sidebar .side-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-size:clamp(32px,3.5vw,64px);}
+.mail-sidebar .folder-label{min-width:0;white-space:nowrap;font-size:clamp(24px,2.1vw,40px);line-height:1.1;}
+.mail-sidebar .side-btn .badge-count{position:absolute;left:auto;right:0;top:0;transform:translate(40%,-40%);width:28px;height:28px;min-width:28px;margin:0;padding:0;font:700 22px/1 var(--font-display);border:2px solid #fcf7ef;box-shadow:none;}
+@media(max-width:900px){
+ .mail-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+ .mail-sidebar .side-btn{width:100%;padding:12px;gap:12px;justify-content:center;}
+ .mail-sidebar .side-icon{font-size:30px;}
+ .mail-sidebar .folder-label{font-size:clamp(22px,4.5vw,28px);}
+ .mail-sidebar .side-btn .badge-count{width:24px;height:24px;min-width:24px;font-size:20px;}
+}
+@media(max-width:640px){
+ #screen-editor .editor-topbar{left:8px;right:8px;gap:4px;}
+ #screen-editor .editor-tools-left,#screen-editor .editor-tools-right{gap:4px;}
+ #screen-editor .tool-pill:empty{display:none;}
+}
+#screen-editor .element-settings{z-index:60;}
+@media(min-width:1200px){#screen-editor .editor-hint-pill{max-height:110px;overflow:auto;}}
+@media(min-width:901px) and (max-width:1199px){#screen-editor .element-settings{top:76px;}}
+/* Mail uses edge-to-edge rows and a bounded folder rail at every size. */
+#screen-shell .mail-panel{padding:0;overflow-x:hidden;overflow-y:auto;isolation:isolate;}
+#screen-shell .mail-list{width:100%;min-width:0;}
+#screen-shell .mail-item{padding:16px 30px;gap:16px;min-height:0;height:auto;width:100%;box-sizing:border-box;}
+#screen-shell .mail-item .avatar-circle{width:44px;height:44px;}
+#screen-shell .mail-item-name{font-size:15px;}
+#screen-shell .mail-item-preview{font-size:14px;}
+/* Sidebar-to-panel proportions matched to the Figma wireframe (node 441:122):
+   two equal-height folder cards filling the same total height as the panel
+   beside them, at a ~19% width share of the row — not a fixed px column. */
+#screen-shell .mail-sidebar{width:19%;gap:5%;padding:0;overflow:visible;align-self:stretch;}
+#screen-shell .mail-sidebar .side-btn{width:100%;flex:1; height:auto;min-height:0;padding:26px 24px;gap:14px;border-radius:26px;flex-direction:row;justify-content:center;align-items:center;box-shadow:0 7px 10px #bd9b7126;transform:none;}
+#screen-shell .mail-sidebar .side-icon{width:44px;height:44px;font-size:40px;}
+#screen-shell .mail-sidebar .folder-label{font-size:20px;line-height:1.1;}
+#screen-shell .side-btn:hover,#screen-shell .side-btn:focus-visible{box-shadow:0 9px 14px #bd9b713d;}
+@media(max-width:900px){
+ #screen-shell .mail-sidebar{width:100%;gap:12px;align-self:stretch;flex-shrink:0;flex-direction:row;}
+ #screen-shell .mail-sidebar .side-btn{flex:1; height:auto;min-height:0;padding:18px 12px;gap:10px;justify-content:center;border-radius:22px;}
+ #screen-shell .mail-sidebar .side-icon{width:32px;height:32px;font-size:30px;}
+ #screen-shell .mail-sidebar .folder-label{font-size:16px;}
+ #screen-shell .mail-item{padding:14px 22px;min-height:0;gap:12px;}
+ #screen-shell .mail-item-name{font-size:14px;}
+}
+@media(max-width:480px){
+ #screen-shell .mail-body{padding:0 12px 16px;gap:20px;}
+ #screen-shell .mail-sidebar{gap:10px;}
+ #screen-shell .mail-sidebar .side-btn{padding:12px 10px;gap:10px;}
+ #screen-shell .mail-sidebar .side-icon{width:30px;height:30px;font-size:28px;}
+ #screen-shell .mail-sidebar .folder-label{font-size:24px;}
+ #screen-shell .mail-item{padding:16px 14px;gap:12px;}
+ #screen-shell .mail-item .avatar-circle{width:46px;height:46px;}
+ #screen-shell .mail-item-name{font-size:25px;}
+ #screen-shell .mail-item .tag{font-size:18px;padding:7px 10px;}
+}
+
+/* Email screen — responsive translation of the supplied 1920×1080 Figma
+   wireframe. Geometry follows the export; existing EyeCon artwork, colors,
+   content, and behavior remain intact. The app area is 955px tall in the
+   source because the final 125px belongs to the global taskbar. */
+@media(min-width:901px){
+  #screen-shell.active{
+    position:relative;
+    display:block;
+    overflow:hidden;
+    background:#f4f4f0;
+  }
+  #screen-shell .mail-header{
+    position:absolute;
+    inset:0 0 auto 0;
+    height:21.26%;
+    min-height:0;
+    padding:0;
+    display:block;
+    background:#f4f4f0;
+  }
+  #screen-shell .mail-header .app-back-btn{
+    left:auto;
+    right:24px;
+    top:18px;
+    width:52px;
+    height:52px;
+    font-size:0;
+    background:transparent url('../assets/icons/close-icon.svg') center/contain no-repeat;
+    border:0;
+    border-radius:50%;
+    box-shadow:none;
+    z-index:4;
+  }
+  #screen-shell .mail-logo{
+    position:absolute;
+    left:2.71%;
+    top:52px;
+    height:98px;
+    display:flex;
+    align-items:center;
+  }
+  #screen-shell .mail-search{
+    position:absolute;
+    left:26.09%;
+    top:52px;
+    width:54.95%;
+    max-width:none;
+    height:98px;
+    margin:0;
+  }
+  #screen-shell .mail-body{
+    position:absolute;
+    left:2.71%;
+    right:5.26%;
+    top:21.26%;
+    bottom:3.66%;
+    padding:0;
+    gap:2.04%;
+    display:grid;
+    grid-template-columns:minmax(0,19.13%) minmax(0,1fr);
+    overflow:hidden;
+  }
+  #screen-shell .mail-sidebar{
+    width:100%;
+    min-width:0;
+    height:100%;
+    padding-top:36px;
+    gap:43px;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+  }
+  #screen-shell .mail-sidebar .side-btn{
+    flex:0 0 172px;
+    width:100%;
+    height:172px;
+    min-height:172px;
+    padding:28px 30px;
+    justify-content:center;
+    gap:18px;
+    border-radius:35px;
+    min-width:0;
+    overflow:hidden;
+  }
+  #screen-shell .mail-sidebar .side-icon{
+    width:clamp(34px,2.7vw,52px);
+    height:clamp(34px,2.7vw,52px);
+  }
+  #screen-shell .mail-sidebar .folder-label{
+    font-size:clamp(14px,1.75vw,34px);
+  }
+  #screen-shell .mail-panel{
+    width:100%;
+    height:100%;
+    min-height:0;
+    border-radius:35px;
+  }
+  #screen-shell .mail-list{
+    height:100%;
+    min-height:0;
+    overflow-y:auto;
+    padding-top:0;
+  }
+  #screen-shell .mail-item{
+    min-height:clamp(118px,13vh,166px);
+    padding:26px clamp(26px,2.4vw,46px);
+    margin-left:0;
+    margin-right:0;
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+  }
+  #screen-shell .mail-item:first-child{
+    min-height:24%;
+    border-radius:32px 32px 0 0;
+    margin-top:0;
+  }
+  #screen-shell .mail-item .avatar-circle{
+    width:clamp(68px,5vw,96px);
+    height:clamp(68px,5vw,96px);
+  }
+  #screen-shell .mail-item-name{
+    font-size:clamp(21px,1.65vw,32px);
+  }
+  #screen-shell .mail-item-preview{
+    font-size:clamp(19px,1.5vw,29px);
+  }
+  #screen-shell .mail-item .tag{
+    font-size:clamp(16px,1.25vw,24px);
+    padding:9px 18px;
+  }
+  #screen-shell .mail-item .unread-dot{
+    width:clamp(16px,1.5vw,28px);
+    height:clamp(16px,1.5vw,28px);
+  }
+  body:has(#screen-shell.active) #global-taskbar{
+    height:calc(125px + env(safe-area-inset-bottom,0px));
+    padding:22px 31px calc(22px + env(safe-area-inset-bottom,0px));
+    gap:27px;
+  }
+  body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
+    width:81px;
+    height:81px;
+  }
+}
+@media(max-width:900px){
+  #screen-shell .mail-header .app-back-btn{
+    left:auto;
+    right:14px;
+    top:12px;
+    width:44px;
+    height:44px;
+    font-size:0;
+    background:transparent url('../assets/icons/close-icon.svg') center/contain no-repeat;
+    border:0;
+    border-radius:50%;
+    box-shadow:none;
+    z-index:4;
+  }
+}
+
+/* 8 px layout scale for game chrome. Responsive containers can fill the
+   viewport; their internal controls, spacing, and corners use grid steps. */
+:root{
+  --space-1:8px;
+  --space-2:16px;
+  --space-3:24px;
+  --space-4:32px;
+  --space-5:40px;
+  --space-6:48px;
+  --radius-lg:32px;
+}
+.btn,.tool-btn,.side-btn,.mail-item,.settings-card,.upgrade-card,.wardrobe-item,
+.taskbar-btn,.taskbar-clock,.taskbar-currency,.modal-card,.mail-detail-card,
+.compose-card,.confirm-card,.mail-panel,.element-settings,.mission-panel,
+.piko-panel,.taskbar-quick-popup{border-radius:var(--space-2);}
+.btn,.tool-btn{min-height:var(--space-6);padding:var(--space-1) var(--space-2);}
+.modal-card,.mail-detail-card,.compose-card,.confirm-card{padding:var(--space-4);}
+.mail-item{gap:var(--space-2);padding:var(--space-2) var(--space-3);margin-bottom:var(--space-2);}
+.mail-body{gap:var(--space-3);padding:0 var(--space-3) var(--space-2);}
+.mail-sidebar{gap:var(--space-2);padding-top:var(--space-2);}
+.editor-topbar{gap:var(--space-2);padding:var(--space-2) var(--space-3);}
+.editor-main,.editor-canvas-wrap{padding:var(--space-3);}
+.element-settings,.mission-panel,.app-content-wrap{padding:var(--space-3);}
+.taskbar-quick-popup-head,.taskbar-quick-popup-body{padding:var(--space-2);}
+#screen-desktop #icon-mail{width:clamp(80px,10cqw,152px);}
+#screen-desktop #icon-mail .desktop-icon-badge{width:40px;height:40px;min-width:40px;right:-8px;}
+@media(min-width:901px){
+  #screen-shell .mail-header{height:round(nearest,21.26%,8px);}
+  #screen-shell .mail-logo{top:48px;height:96px;left:round(nearest,2.71%,8px);}
+  #screen-shell .mail-search{top:48px;height:96px;left:round(nearest,26.09%,8px);width:round(nearest,54.95%,8px);}
+  #screen-shell .mail-body{top:round(nearest,21.26%,8px);left:round(nearest,2.71%,8px);right:round(nearest,5.26%,8px);bottom:32px;gap:var(--space-2);padding:0;}
+  #screen-shell .mail-sidebar{padding-top:var(--space-4);gap:var(--space-5);}
+  #screen-shell .mail-sidebar .side-btn{flex-basis:176px;height:176px;min-height:176px;padding:var(--space-3);gap:var(--space-2);border-radius:var(--space-4);}
+  #screen-shell .mail-panel{border-radius:var(--space-4);}
+  #screen-shell .mail-item{min-height:round(nearest,clamp(120px,13vh,168px),8px);padding:var(--space-3) var(--space-4);}
+  #screen-shell .mail-item:first-child{border-radius:var(--space-4) var(--space-4) 0 0;}
+  body:has(#screen-shell.active) #global-taskbar{height:calc(128px + env(safe-area-inset-bottom,0px));padding:var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom,0px));gap:var(--space-3);}
+  body:has(#screen-shell.active) #global-taskbar .taskbar-btn{width:80px;height:80px;}
+}
+
+/* Desktop and Mail use the same 8 px measurements as the editor canvas. */
+#global-taskbar,
+body:has(#screen-shell.active) #global-taskbar{
+  height:calc(96px + env(safe-area-inset-bottom,0px));
+  padding:16px 24px calc(16px + env(safe-area-inset-bottom,0px));
+  gap:16px;
+}
+#global-taskbar .taskbar-btn,
+body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
+  width:64px;height:64px;min-width:64px;min-height:64px;padding:0;
+}
+#global-taskbar .taskbar-clock{
+  width:192px;height:88px;min-width:192px;min-height:88px;
+  padding:8px 16px;gap:8px;line-height:32px;font-size:32px;
+}
+#global-taskbar .taskbar-clock span{display:block;width:100%;height:32px;}
+#screen-desktop .desktop-icons{left:40px;top:32px;gap:16px;width:104px;}
+#screen-desktop #icon-mail{width:104px;}
+#screen-desktop #icon-mail .desktop-icon-badge{top:0;right:-8px;}
+#screen-stats .mail-header,#screen-settings .mail-header,#screen-shop .mail-header{
+  min-height:round(nearest,clamp(96px,10.6vw,208px),8px);
+  padding:24px 32px;gap:24px;
+}
+#screen-stats .app-content-wrap,#screen-settings .app-content-wrap,#screen-shop .app-content-wrap{padding:24px 32px;}
+#screen-stats .settings-card,#screen-settings .settings-card,#screen-shop .settings-card,
+#screen-shop .upgrade-card,#screen-shop .wardrobe-item{padding:24px;gap:16px;border-radius:16px;}
+#screen-desktop .desktop-icon#icon-maker{position:relative;bottom:auto;display:block;width:104px;min-width:0;min-height:0;padding:0;}
+#screen-desktop #icon-maker #glyph-maker{display:block;width:100%!important;height:auto!important;aspect-ratio:152/136;background:url('../assets/icons/maker-icon.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;font-size:0;}
+#screen-desktop #icon-maker .desktop-icon-label{display:block;color:#254b50;font:700 16px/1 var(--font-body);text-align:center;}
+
+/* Level Maker: the canvas is measured in real 8 px units, then scaled only
+   for display. Exports retain the original canvas coordinates. */
+#screen-maker.active{display:flex;flex-direction:column;background:#e4e1da;min-height:0;}
+.maker-header{display:flex;align-items:center;gap:8px;padding:16px 24px;background:#fcf7ef;flex-wrap:wrap;flex-shrink:0;}
+.maker-header h1{margin:0 16px 0 0;font:700 32px/1 var(--font-display);color:#3b172e;}
+.maker-header .app-back-btn{position:static;width:48px;height:48px;flex:0 0 48px;}
+.maker-header input,.maker-header select,.maker-header .btn,.maker-import{height:48px;border:2px solid #77b9af;border-radius:8px;background:#fff;padding:8px 16px;font:600 16px var(--font-body);color:#3b172e;}
+.maker-header #maker-title{width:192px;}
+.maker-header .btn,.maker-import{cursor:pointer;white-space:nowrap;}
+.maker-custom-size{display:flex;align-items:center;gap:8px;}
+.maker-custom-size[hidden]{display:none;}
+.maker-custom-size label{display:flex;align-items:center;gap:8px;font:700 14px var(--font-body);}
+.maker-custom-size input{width:96px;}
+.maker-workspace{display:grid;grid-template-columns:224px minmax(0,1fr) 272px;gap:16px;padding:16px;min-height:0;flex:1;}
+.maker-palette,.maker-properties{background:#fcf7ef;border:2px solid #77b9af;border-radius:16px;padding:16px;overflow:auto;min-width:0;}
+.maker-palette h2,.maker-properties h2{margin:0 0 16px;font:700 24px var(--font-display);}
+.maker-palette>button,.maker-upload,.maker-layers button,.maker-props-actions button{display:block;width:100%;min-height:40px;margin-bottom:8px;padding:8px;border:0;border-radius:8px;background:#d8f0ec;color:#3b172e;text-align:left;font:700 16px var(--font-body);cursor:pointer;}
+.maker-upload{background:#ffdc8b;}
+.maker-list-head{margin:24px 0 8px;font-weight:700;}
+.maker-layers button{background:#fff;border:1px solid #b5d9d3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.maker-layers button.active{background:#91d8d0;}
+.maker-layers button[data-layer-id]{cursor:grab;touch-action:none;}
+.maker-layers button.dragging{opacity:.45;}
+.maker-layers button.drop-target{outline:2px solid #df3f91;}
+.maker-layers button .maker-layer-grip{display:inline-block;margin-right:8px;color:#528f91;}
+.maker-peek{touch-action:none;}
+.maker-peek:active,.maker-peek[aria-pressed="true"]{background:#91d8d0;}
+.maker-target{position:absolute;box-sizing:border-box;border:2px solid #df3f91;background:#df3f9129;cursor:grab;z-index:10000;}
+.maker-canvas.peek-targets .maker-element{visibility:hidden;}
+.maker-canvas.peek-targets .maker-target{pointer-events:none;}
+.maker-stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d6d5d0;border-radius:16px;}
+.maker-canvas{position:absolute;left:50%;top:50%;transform-origin:center;box-shadow:0 16px 32px #3b172e33;background-image:linear-gradient(#77b9af22 1px,transparent 1px),linear-gradient(90deg,#77b9af22 1px,transparent 1px);background-size:8px 8px;touch-action:none;}
+.maker-element{position:absolute;display:flex;align-items:center;justify-content:center;white-space:pre-wrap;text-align:center;overflow:hidden;cursor:grab;user-select:none;box-sizing:border-box;}
+.maker-element:active{cursor:grabbing;}
+.maker-element.selected{outline:2px solid #df3f91;outline-offset:0;}
+.maker-element img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+.maker-properties label{display:flex;flex-direction:column;gap:8px;font:700 14px var(--font-body);}
+.maker-props-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.maker-props-grid input,.maker-properties>div>label input{width:100%;min-width:0;height:40px;border:2px solid #b5d9d3;border-radius:8px;padding:8px;background:white;}
+.maker-props-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px;}
+.maker-props-actions button{margin:0;text-align:center;}
+@media(max-width:900px){.maker-workspace{grid-template-columns:160px minmax(0,1fr);}.maker-properties{grid-column:1/-1;max-height:240px;}.maker-header{padding:8px 16px;}}
+@media(max-width:600px){.maker-workspace{display:flex;flex-direction:column;overflow:auto;}.maker-palette{display:flex;flex-wrap:wrap;gap:8px;flex:none;}.maker-palette h2,.maker-list-head,.maker-layers{display:none;}.maker-palette>button,.maker-upload{width:auto;margin:0;}.maker-stage{flex:none;height:55vh;}.maker-properties{flex:none;max-height:none;}}
+@media(max-width:600px){.maker-list-head,.maker-layers{display:block;flex-basis:100%;}.maker-layers{max-height:144px;overflow:auto;}}
+@media(max-width:900px){
+  #global-taskbar,
+  body:has(#screen-shell.active) #global-taskbar{height:calc(80px + env(safe-area-inset-bottom,0px));padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px));gap:8px;}
+  #global-taskbar .taskbar-btn,
+  body:has(#screen-shell.active) #global-taskbar .taskbar-btn{width:48px;height:48px;min-width:48px;min-height:48px;}
+  #global-taskbar .taskbar-clock{width:144px;height:64px;min-width:144px;min-height:64px;font-size:24px;line-height:24px;gap:0;padding:8px;}
+  #global-taskbar .taskbar-clock span{height:24px;}
+  #screen-desktop .desktop-icons{left:16px;top:24px;width:64px;}
+  #screen-desktop #icon-mail{width:64px;}
+  #screen-desktop .desktop-icon#icon-maker{width:64px;}
+  #screen-desktop #icon-mail .desktop-icon-badge{width:32px;height:32px;min-width:32px;}
+}
+@media(min-width:901px){
+  #screen-shell .mail-header{height:208px;}
+  #screen-shell .mail-logo{left:48px;top:48px;height:96px;}
+  #screen-shell .mail-logo .eye{width:56px!important;height:80px!important;}
+  #screen-shell .mail-logo .pupil{width:32px!important;height:40px!important;}
+  #screen-shell .mail-search{left:496px;top:48px;width:min(1056px,calc(100% - 600px));height:96px;padding:16px 24px;border-radius:48px;}
+  #screen-shell .mail-header .app-back-btn{right:24px;top:16px;width:48px;height:48px;}
+  #screen-shell .mail-body{left:48px;right:104px;top:208px;bottom:56px;gap:16px;grid-template-columns:336px minmax(0,1fr);}
+  #screen-shell .mail-sidebar{padding-top:32px;gap:40px;}
+  #screen-shell .mail-sidebar .side-btn{width:336px;height:176px;min-height:176px;flex-basis:176px;padding:24px;gap:16px;border-radius:32px;}
+  #screen-shell .mail-sidebar .side-icon{width:48px;height:48px;}
+  #screen-shell .mail-sidebar .side-btn .badge-count{width:32px;height:32px;min-width:32px;}
+  #screen-shell .mail-panel{border-radius:32px;}
+  #screen-shell .mail-item{min-height:168px;padding:24px 32px;gap:16px;}
+  #screen-shell .mail-item:first-child{min-height:168px;border-radius:32px 32px 0 0;}
+  #screen-shell .mail-item .avatar-circle{width:96px;height:96px;}
+  #screen-shell .mail-item .tag{padding:8px 16px;border-radius:16px;}
+}
+
+/* Creator Canvas: paper surfaces, mint controls, and clear selection handles. */
+#screen-maker.active{background:#dce8e2;}
+.maker-header{border-bottom:3px solid #77b9af;box-shadow:0 4px 0 #5f9f9826;z-index:2;}
+.maker-header h1{color:#488b8e;}
+.maker-header .btn,.maker-import{background:#b6e1da;box-shadow:0 4px 0 #5f9f9840;}
+.maker-header .btn:hover,.maker-import:hover{background:#9bd8ce;}
+.maker-palette,.maker-properties{border:3px solid #77b9af;border-radius:24px;box-shadow:0 8px 0 #5f9f9826;}
+.maker-palette>button{border:2px solid #a5d6cc;background:#fffdf8;box-shadow:0 3px 0 #5f9f9826;text-align:center;}
+.maker-palette>button:hover,.maker-palette>button:focus-visible{background:#d8f0ec;transform:translateY(-2px);}
+.maker-palette .maker-peek{background:#d8f0ec;}
+.maker-palette .maker-peek[aria-pressed="true"]{background:#91d8d0;}
+.maker-list-head{padding-bottom:8px;border-bottom:2px solid #c8e6da;color:#488b8e;font:700 18px var(--font-display);}
+.maker-layers button{border:2px solid #c8e6da;border-radius:12px;padding:8px 12px;}
+.maker-layers button:hover,.maker-layers button:focus-visible{background:#eef9f6;}
+.maker-layers button.active{border-color:#488b8e;background:#b6e1da;}
+.maker-stage{border:3px solid #77b9af;border-radius:24px;background-color:#d7e5e0;background-image:radial-gradient(#a4c8c0 1px,transparent 1px);background-size:16px 16px;box-shadow:inset 0 0 0 8px #ffffff80;}
+.maker-canvas{box-shadow:0 16px 32px #315e6540,0 0 0 2px #b5d9d3;}
+.maker-element.selected{outline:2px solid #418a93;outline-offset:0;}
+.maker-selection-box{position:absolute;box-sizing:border-box;border:2px solid #418a93;z-index:20000;pointer-events:auto;cursor:grab;background:transparent;touch-action:none;}
+.maker-resize-handle{position:absolute;display:block;width:16px;height:16px;border:3px solid #418a93;border-radius:4px;background:#fffdf8;box-shadow:0 2px 4px #18374540;pointer-events:auto;touch-action:none;transform:scale(var(--maker-handle-zoom,1));}
+.maker-resize-handle.nw{left:-8px;top:-8px;cursor:nwse-resize;}
+.maker-resize-handle.ne{right:-8px;top:-8px;cursor:nesw-resize;}
+.maker-resize-handle.sw{left:-8px;bottom:-8px;cursor:nesw-resize;}
+.maker-resize-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize;}
+.maker-resize-handle.n{left:calc(50% - 8px);top:-8px;cursor:ns-resize;}
+.maker-resize-handle.s{left:calc(50% - 8px);bottom:-8px;cursor:ns-resize;}
+.maker-resize-handle.e{right:-8px;top:calc(50% - 8px);cursor:ew-resize;}
+.maker-resize-handle.w{left:-8px;top:calc(50% - 8px);cursor:ew-resize;}
+.maker-stage-toolbar{position:absolute;z-index:30;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px;border:2px solid #77b9af;border-radius:16px;background:#fcf7ef;box-shadow:0 6px 16px #315e6533;white-space:nowrap;}
+.maker-stage-toolbar button{min-width:40px;height:40px;border:0;border-radius:8px;background:#d8f0ec;color:#315e65;font:800 24px/1 var(--font-display);cursor:pointer;}
+.maker-stage-toolbar button:hover:not(:disabled){background:#b6e1da;}
+.maker-stage-toolbar button:disabled{opacity:.4;cursor:default;}
+.maker-stage-toolbar #maker-zoom-fit{font-size:16px;padding:0 8px;}
+.maker-stage-toolbar output{min-width:56px;text-align:center;font:700 16px var(--font-body);color:#315e65;}
+.maker-toolbar-divider{width:2px;height:24px;background:#c8e6da;margin:0 4px;}
+.maker-stage-hint{position:absolute;z-index:10;left:16px;bottom:16px;max-width:calc(100% - 32px);padding:8px 12px;border-radius:8px;background:#fcf7efeb;color:#315e65;font:700 12px/1.3 var(--font-body);pointer-events:none;}
+.maker-properties-head{position:sticky;top:-16px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 0 16px;background:#fcf7ef;}
+.maker-properties-head h2{margin:0;}
+#maker-quick-delete{width:40px;height:40px;flex:none;border:0;border-radius:8px;background:#e53b42;color:white;font:800 32px/1 var(--font-display);cursor:pointer;box-shadow:0 4px 0 #9c2228;}
+#maker-quick-delete:hover:not(:disabled){background:#c92e36;}
+#maker-quick-delete:disabled{opacity:.35;cursor:default;box-shadow:none;}
+.maker-props-grid input:focus-visible,.maker-header input:focus-visible,.maker-header select:focus-visible{outline:3px solid #488b8e;outline-offset:2px;}
+@media(max-width:900px){.maker-stage-toolbar{top:8px;padding:4px;gap:4px;}.maker-stage-toolbar button{min-width:36px;height:36px;font-size:22px;}}
+@media(max-width:600px){.maker-header{max-height:224px;overflow:auto;}.maker-palette{max-height:176px;overflow:auto;}.maker-stage{height:56vh;touch-action:none;}.maker-properties{max-height:none;}.maker-stage-toolbar{max-width:calc(100% - 16px);}.maker-stage-hint{font-size:10px;}}
+
+/* Creator actions live in the layer list and one compact export menu. */
+.maker-export{position:relative;z-index:50;}
+.maker-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;}
+.maker-export-options{position:absolute;top:calc(100% + 8px);right:0;min-width:176px;padding:8px;border:2px solid #77b9af;border-radius:12px;background:#fcf7ef;box-shadow:0 8px 16px #315e6533;}
+.maker-export-options[hidden]{display:none;}
+.maker-export-options button{display:block;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:8px;background:transparent;color:#3b172e;text-align:left;font:700 16px var(--font-body);cursor:pointer;}
+.maker-export-options button:hover,.maker-export-options button:focus-visible{background:#d8f0ec;}
+.maker-layer-row{display:flex;align-items:center;gap:8px;min-height:40px;margin-bottom:8px;padding:4px;border:2px solid #c8e6da;border-radius:12px;background:#fff;cursor:grab;touch-action:none;}
+.maker-layer-row:hover,.maker-layer-row:focus-within{background:#eef9f6;}
+.maker-layer-row.active{border-color:#488b8e;background:#b6e1da;}
+.maker-layer-row.dragging{opacity:.45;}
+.maker-layer-row.drop-target{outline:2px solid #df3f91;}
+.maker-layers .maker-layer-select{flex:1;min-width:0;width:auto;min-height:32px;margin:0;padding:4px 8px;border:0;border-radius:8px;background:transparent;box-shadow:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;cursor:inherit;}
+.maker-layers .maker-layer-delete{flex:none;width:32px;height:32px;min-height:32px;margin:0;padding:0;border:0;background:transparent;color:#e53b42;font:800 26px/1 var(--font-display);text-align:center;cursor:pointer;box-shadow:none;}
+.maker-layers .maker-layer-delete:hover,.maker-layers .maker-layer-delete:focus-visible{background:transparent;color:#c92e36;}
+
+/* Temporarily keep the guide and its replay control out of the game. */
+.piko-hole,.piko-cursor,.piko-bubble,.settings-item:has(#set-replay-piko){display:none!important;}
+
+/* Day and time use the same cream, mint, and display type as the app cards. */
+#global-taskbar .taskbar-clock{
+  width:192px;height:88px;min-width:192px;min-height:88px;
+  padding:8px 16px;gap:8px;border:2px solid #77b9af;border-radius:16px;
+  background:#fcf7ef;box-shadow:0 4px 0 #5f9f9840;color:#3b172e;
+  font:700 28px/32px var(--font-display);text-align:center;
+}
+#global-taskbar .taskbar-clock span{width:100%;height:32px;line-height:32px;}
+@media(max-width:900px){
+  #global-taskbar .taskbar-clock{width:144px;height:64px;min-width:144px;min-height:64px;padding:8px;gap:0;font-size:22px;line-height:24px;border-radius:8px;}
+  #global-taskbar .taskbar-clock span{height:24px;line-height:24px;}
+}

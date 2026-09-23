@@ -4,12 +4,11 @@
 ===================================================== */
 (function(){
   const KEY = 'eyecon_profile_v1';
-  const GACHA_COST = 50;
-  const GACHA_COST_X10 = 450; // 10% cheaper than 10 singles
-  // Hard-pity safety nets: guarantees a floor on how unlucky a streak can
-  // get, on top of the base weighted odds (epic=12%, legendary=3%).
-  const PITY_EPIC_AT = 10;       // an Epic-or-better is guaranteed by the 10th pull without one
-  const PITY_LEGENDARY_AT = 40;  // a Legendary is guaranteed by the 40th pull without one
+  const UPGRADES = [
+    { id:'grid-buddy', icon:'🧲', name:'Grid Buddy', price:110, description:'Starts every mission with the grid and snap switched on.' },
+    { id:'guide-radar', icon:'📐', name:'Guide Radar', price:150, description:'Starts missions with alignment guides and the issue scanner on.' },
+    { id:'studio-notes', icon:'🗒️', name:'Studio Notes', price:90, description:'Shows exact mission targets beside your canvas.' },
+  ];
 
   const BADGES = [
     { id:'first_job',    emoji:'🎓', name:'First Day',        cond:p => p.history.length >= 1 },
@@ -46,8 +45,12 @@
       history: [],         // {levelId, name, date, score, grade, scores:{...}}
       unlockedBadges: [],
       inventory: startingItems.slice(),          // owned cosmetic item ids
+      upgrades: [],                              // permanent, non-random editing assists
+      daily: { date:'', streak:0 },
+      onboarding: { seen:false },                 // first-day guide / intro email
       equipped: Object.assign({ decor: [], poster: [] }, window.EC_COSMETICS.CATEGORY_DEFAULT),
-      pity: { sinceEpic: 0, sinceLegendary: 0 },
+      shopCart: { date:'', ids:[] },
+      purchases: [],
       settings: defaultSettings(),
     };
   }
@@ -63,6 +66,8 @@
       timedMode:false,
       soundEnabled:true,
       soundVolume:0.6,
+      musicEnabled:true,
+      musicVolume:0.28,
       particles:'full',    // off|reduced|full
     };
   }
@@ -78,6 +83,9 @@
         equipped: Object.assign({}, base.equipped, parsed.equipped||{}),
         pity: Object.assign({}, base.pity, parsed.pity||{}),
         inventory: Array.isArray(parsed.inventory) ? parsed.inventory : base.inventory,
+        upgrades: Array.isArray(parsed.upgrades) ? parsed.upgrades : base.upgrades,
+        daily: Object.assign({}, base.daily, parsed.daily||{}),
+        onboarding: Object.assign({}, base.onboarding, parsed.onboarding||{}),
       });
       return merged;
     }catch(e){
@@ -100,29 +108,63 @@
 
   function computeLevelReward(level, result, elapsedMs){
     const levelNumber = level.levelNumber || 1;
-    const base = 20 + levelNumber * 15; // 35 (Lv1) .. 140 (Lv8)
-    const scoreMult = Math.max(0.15, result.score / 100);
-    const gradeBonus = GRADE_BONUS[result.grade] || 0.6;
-    const elapsedSec = Math.max(1, Math.round((elapsedMs || 0) / 1000));
-    const par = 60 + levelNumber * 30; // generous "good pace" benchmark, scales with difficulty
-    let timeMult;
-    if(elapsedSec <= par) timeMult = 1.25;
-    else if(elapsedSec <= par * 2) timeMult = 1.0;
-    else timeMult = 0.85;
-    const reward = Math.max(10, Math.round(base * scoreMult * gradeBonus * timeMult));
-    return { reward, breakdown: { base, scoreMult, gradeBonus, timeMult, elapsedSec, par } };
+    const objectives = (result.mission && result.mission.objectives) || [];
+    const complete = objectives.filter(o=>o.complete).length;
+    const mastered = objectives.filter(o=>o.mastered).length;
+    const base = 20 + levelNumber * 10;
+    const objectiveBonus = complete * 12;
+    const masteryBonus = mastered * 10;
+    const gradeBonus = Math.round(12 * ((GRADE_BONUS[result.grade] || 0.6) - 0.6));
+    const reward = Math.max(10, base + objectiveBonus + masteryBonus + gradeBonus);
+    return { reward, breakdown: { base, objectiveBonus, masteryBonus, gradeBonus, elapsedMs } };
   }
 
+  function localDayKey(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,'0');
+    const d = String(date.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function previousDayKey(date){
+    const prior = new Date(date);
+    prior.setDate(prior.getDate()-1);
+    return localDayKey(prior);
+  }
+
+  function claimDailyMissionBonus(profile){
+    const today = localDayKey(new Date());
+    const daily = profile.daily || (profile.daily = { date:'', streak:0 });
+    if(daily.date === today) return { bonus:0, streak:daily.streak, claimed:false };
+    daily.streak = daily.date === previousDayKey(new Date()) ? daily.streak + 1 : 1;
+    daily.date = today;
+    return { bonus:20 + Math.min(daily.streak, 7) * 5, streak:daily.streak, claimed:true };
+  }
+
+  // Below this star rating the client sends the work back instead of
+  // accepting it — the mission stays open in the inbox for a resubmit.
+  const REVISION_STAR_THRESHOLD = 3;
+
   function recordSubmission(profile, level, result, elapsedMs){
+    const stars = result.stars || window.EC_GRADING.scoreToStars(result.score);
     const entry = {
       levelId: level.id, name: level.clientName, date: new Date().toISOString(),
-      score: result.score, grade: result.grade, scores: result.categoryScores
+      score: result.score, grade: result.grade, scores: result.categoryScores, stars
     };
     profile.history.unshift(entry);
-    if(!profile.completed.includes(level.id)) profile.completed.push(level.id);
-    profile.totalXp += result.xpAwarded;
+    const missionComplete = stars >= REVISION_STAR_THRESHOLD && (!result.mission || result.mission.complete);
+    const needsRevision = !missionComplete;
+    const firstClear = missionComplete && !profile.completed.includes(level.id);
+    if(firstClear) profile.completed.push(level.id);
+    if(missionComplete) profile.totalXp += result.xpAwarded;
 
-    const { reward, breakdown } = computeLevelReward(level, result, elapsedMs);
+    const { reward: baseReward, breakdown } = computeLevelReward(level, result, elapsedMs);
+    const firstClearBonus = firstClear ? 25 : 0;
+    // Ratings above the revision threshold pay extra, scaling with how many
+    // stars you cleared it by — good work should pay noticeably more.
+    const starBonus = missionComplete ? Math.max(0, stars - REVISION_STAR_THRESHOLD) * 15 : 0;
+    const daily = missionComplete ? claimDailyMissionBonus(profile) : { bonus:0, streak:(profile.daily||{}).streak||0, claimed:false };
+    const reward = missionComplete ? baseReward + firstClearBonus + starBonus + daily.bonus : 0;
     profile.currency += reward;
 
     const before = new Set(profile.unlockedBadges);
@@ -130,84 +172,74 @@
     const newBadges = profile.unlockedBadges.filter(id => !before.has(id));
 
     save(profile);
-    return { newBadges, currencyEarned: reward, rewardBreakdown: breakdown };
+    return { newBadges, currencyEarned: reward, stars, needsRevision, missionComplete,
+      rewardBreakdown: Object.assign(breakdown, { firstClearBonus, starBonus, dailyBonus:daily.bonus }), daily };
   }
 
   function xpAwardForGrade(grade){
     return { 'S+':160, 'S':130, 'A':100, 'B':70, 'C':45, 'Needs Improvement':20 }[grade] || 20;
   }
 
-  // ---------------- Gacha ----------------
-  function rollRarity(){
-    const weights = window.EC_COSMETICS.RARITY_WEIGHTS;
-    const total = Object.values(weights).reduce((s,w)=>s+w, 0);
-    let roll = Math.random() * total;
-    for(const key of Object.keys(weights)){
-      if(roll < weights[key]) return key;
-      roll -= weights[key];
+  // A personal inbox: one new commission per UTC day; unfinished jobs stay.
+  function commissionInbox(profile, date = new Date()){
+    const day=Math.floor(date.getTime()/86400000);
+    if(!profile.commissions){
+      const known=window.EC_LEVELS.filter(l=>profile.completed.includes(l.id) || profile.history.some(h=>h.levelId===l.id));
+      const initial=Math.min(window.EC_LEVELS.length, Math.max(1,...known.map(l=>l.levelNumber+1)));
+      profile.commissions={startDay:day,initial}; save(profile);
     }
-    return 'common';
+    const count=Math.min(window.EC_LEVELS.length,profile.commissions.initial+Math.max(0,day-profile.commissions.startDay));
+    // Only one open commission shows at a time — the next one doesn't pop up
+    // until the current one is completed, even if the day-based drip has
+    // already unlocked several.
+    const open=window.EC_LEVELS.slice(0,count).filter(l=>!profile.completed.includes(l.id));
+    return open.slice(0,1);
   }
 
-  // Pity-aware roll: applies the base weighted roll, then overrides it with
-  // a forced floor once a dry streak hits the pity threshold. Mutates
-  // profile.pity counters in place; caller is responsible for saving.
-  function rollRarityWithPity(profile){
-    const pity = profile.pity || (profile.pity = { sinceEpic:0, sinceLegendary:0 });
-    let rarity = rollRarity();
-    let pityTriggered = false;
-    if(pity.sinceLegendary >= PITY_LEGENDARY_AT - 1){
-      rarity = 'legendary'; pityTriggered = true;
-    } else if(pity.sinceEpic >= PITY_EPIC_AT - 1 && rarity !== 'legendary'){
-      rarity = 'epic'; pityTriggered = true;
+  // One deterministic selection per UTC day, independent of device or reload.
+  const ITEM_PRICES = { common:35, rare:75, epic:140, legendary:240 };
+  function dailyShop(date = new Date()){
+    const key = date.toISOString().slice(0,10);
+    const day = Math.floor(Date.parse(key+'T00:00:00Z')/86400000);
+    const defaults = Object.values(window.EC_COSMETICS.CATEGORY_DEFAULT);
+    const C=window.EC_COSMETICS;
+    const groups=C.CATEGORY_ORDER.map(category=>C.ITEMS.filter(i=>i.category===category && !defaults.includes(i.id)));
+    const catalog=[];
+    for(let round=0;round<Math.max(...groups.map(g=>g.length));round++){
+      groups.forEach(group=>{ if(group[round]) catalog.push(group[round]); });
     }
-    if(rarity === 'legendary'){ pity.sinceLegendary = 0; pity.sinceEpic = 0; }
-    else if(rarity === 'epic'){ pity.sinceEpic = 0; pity.sinceLegendary++; }
-    else { pity.sinceEpic++; pity.sinceLegendary++; }
-    return { rarity, pityTriggered };
+    const items = Array.from({length:Math.min(5,catalog.length)}, (_,i)=>catalog[(day*5+i)%catalog.length]);
+    return { date:key, items, refreshAt:(day+1)*86400000 };
   }
-
-  function getPityInfo(profile){
-    const pity = profile.pity || { sinceEpic:0, sinceLegendary:0 };
-    return {
-      sinceEpic: pity.sinceEpic, epicPityAt: PITY_EPIC_AT,
-      sinceLegendary: pity.sinceLegendary, legendaryPityAt: PITY_LEGENDARY_AT,
-    };
+  function itemPrice(item){ return ITEM_PRICES[item.rarity]; }
+  function getCart(profile, date = new Date()){
+    const shop = dailyShop(date);
+    const cart = profile.shopCart;
+    const ids = cart && cart.date === shop.date && Array.isArray(cart.ids) ? cart.ids : [];
+    profile.shopCart = { date:shop.date, ids:[...new Set(ids)].filter(id=>shop.items.some(i=>i.id===id) && !profile.inventory.includes(id)) };
+    return profile.shopCart;
   }
-
-  function rollOne(profile){
-    const { rarity, pityTriggered } = rollRarityWithPity(profile);
-    const pool = window.EC_COSMETICS.ITEMS.filter(i=>i.rarity===rarity);
-    const item = pool[Math.floor(Math.random()*pool.length)];
-    const owned = profile.inventory.includes(item.id);
-    let refund = 0;
-    if(owned){
-      refund = window.EC_COSMETICS.DUPLICATE_REFUND[rarity] || 0;
-      profile.currency += refund;
-    } else {
-      profile.inventory.push(item.id);
-    }
-    return { item, rarity, owned, refund, pityTriggered };
+  function toggleCart(profile, id){
+    const cart = getCart(profile);
+    if(!dailyShop().items.some(i=>i.id===id) || profile.inventory.includes(id)) return false;
+    cart.ids = cart.ids.includes(id) ? cart.ids.filter(v=>v!==id) : [...cart.ids,id];
+    save(profile); return true;
   }
-
-  // Spends currency and grants one cosmetic item (or a currency refund if
-  // the roll duplicates something already owned). Returns null if the
-  // player can't afford it; caller is expected to check cost beforehand too.
-  function pullGacha(profile){
-    if(profile.currency < GACHA_COST) return null;
-    profile.currency -= GACHA_COST;
-    const result = rollOne(profile);
+  function checkout(profile, expectedDate){
+    const shop = dailyShop();
+    if(expectedDate !== shop.date){ getCart(profile); save(profile); return {error:'The daily selection refreshed. Choose from the new daily specials.'}; }
+    const cart = getCart(profile);
+    if(!cart.ids.length) return {error:'Your cart is empty.'};
+    const items = cart.ids.map(id=>window.EC_COSMETICS.getItem(id));
+    const total = items.reduce((sum,item)=>sum+itemPrice(item),0);
+    if(profile.currency < total) return {error:'Not enough Sparks. Complete a client project to earn more.'};
+    profile.currency -= total;
+    profile.inventory.push(...items.map(i=>i.id));
+    const order = { date:new Date().toISOString(), ids:items.map(i=>i.id), total };
+    profile.purchases = [...(Array.isArray(profile.purchases) ? profile.purchases : []),order];
+    profile.shopCart = {date:shop.date,ids:[]};
     save(profile);
-    return result;
-  }
-
-  function pullGachaX10(profile){
-    if(profile.currency < GACHA_COST_X10) return null;
-    profile.currency -= GACHA_COST_X10;
-    const results = [];
-    for(let i=0;i<10;i++) results.push(rollOne(profile));
-    save(profile);
-    return results;
+    return {items,total};
   }
 
   // Categories where several items can be worn at once, each with its own
@@ -231,9 +263,22 @@
     return true;
   }
 
+  function hasUpgrade(profile, id){
+    return (profile.upgrades || []).includes(id);
+  }
+
+  function buyUpgrade(profile, id){
+    const upgrade = UPGRADES.find(u=>u.id===id);
+    if(!upgrade || hasUpgrade(profile, id) || profile.currency < upgrade.price) return null;
+    profile.currency -= upgrade.price;
+    profile.upgrades.push(id);
+    save(profile);
+    return upgrade;
+  }
+
   window.EC_STORE = {
     load, save, defaultProfile, defaultSettings, levelFromTotalXp, xpForLevel, recordSubmission, xpAwardForGrade, BADGES,
-    computeLevelReward, pullGacha, pullGachaX10, equipItem, getPityInfo, MULTI_SLOT_CATEGORIES,
-    GACHA_COST, GACHA_COST_X10, PITY_EPIC_AT, PITY_LEGENDARY_AT,
+    computeLevelReward, commissionInbox, dailyShop, itemPrice, getCart, toggleCart, checkout, equipItem, hasUpgrade, buyUpgrade, UPGRADES, MULTI_SLOT_CATEGORIES,
+    REVISION_STAR_THRESHOLD,
   };
 })();

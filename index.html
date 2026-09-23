@@ -20,8 +20,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="EyeCon" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fjalla+One&family=Quicksand:wght@500;600;700&family=Patrick+Hand&family=Just+Another+Hand&family=Modak&family=Nunito:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/reference.css" />
 </head>
 <body>
 
@@ -34,6 +35,17 @@
   <!-- ============ HOME / LOGIN SCREEN ============ -->
   <section id="screen-home" class="screen active" aria-label="Home">
     <div class="desk-scene" id="desk-scene">
+      <div class="reference-brand" aria-hidden="true">eyecon</div>
+      <div class="home-street" aria-hidden="true">
+        <div class="street-cloud cloud-one"></div><div class="street-cloud cloud-two"></div>
+        <div class="street-building building-left"><i></i><i></i><i></i><b></b></div>
+        <div class="street-building building-mid"><i></i><i></i><i></i></div>
+        <div class="street-building building-right"><i></i><i></i><b></b></div>
+        <div class="street-tree tree-left"><span></span><i></i></div><div class="street-tree tree-right"><span></span><i></i></div>
+        <div class="street-lamp lamp-left"></div><div class="street-lamp lamp-right"></div>
+        <div class="street-cat"><i></i></div>
+      </div>
+      <div class="home-game-logo" aria-hidden="true"><span class="logo-eye"></span><strong>Eye<span>Con</span></strong><small>Make every screen shine</small></div>
       <div class="desk-surface" aria-hidden="true"></div>
       <div class="desk-posters" id="desk-posters" aria-hidden="true"></div>
       <div class="desk-decor" id="desk-decor" aria-hidden="true"></div>
@@ -88,7 +100,6 @@
               <span class="mini-taskbar-icon">🏠</span>
               <span class="mini-taskbar-icon">🛍️</span>
               <span class="mini-taskbar-spacer"></span>
-              <span class="mini-taskbar-currency" id="mini-taskbar-currency">✨ 0</span>
               <span class="mini-taskbar-clock" id="mini-taskbar-clock">8:00 AM</span>
             </div>
           </div>
@@ -117,15 +128,40 @@
   <!-- ============ DESKTOP ============ -->
   <section id="screen-desktop" class="screen" aria-label="Desktop">
     <div class="desktop-wallpaper" id="desktop-wallpaper">
+      <div class="sky-clouds" aria-hidden="true">
+        <span class="cloud c1"></span>
+        <span class="cloud c2"></span>
+        <span class="cloud c3"></span>
+        <span class="cloud c4"></span>
+      </div>
+      <div class="sky-hills" aria-hidden="true">
+        <div class="hill hill-back"></div>
+        <div class="hill hill-front"></div>
+      </div>
       <button class="desktop-watermark" id="desktop-watermark-btn" title="Back to title screen" aria-label="Back to title screen">
         <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
         <span>EyeCon OS</span>
       </button>
+      <div class="desktop-status-chip" aria-hidden="true">
+        <span id="desktop-currency">✨ 0</span>
+        <span id="desktop-clock">8:00 AM</span>
+      </div>
+      <div class="workstation" id="workstation">
+      <div class="desktop-desk-props" aria-hidden="true">
+        <div class="hub-tower"><i></i><i></i><b></b></div>
+        <div class="hub-plant"><i></i><i></i><i></i><b></b></div>
+        <div class="hub-keyboard"><i></i><i></i><i></i></div>
+        <div class="hub-mouse"></div>
+      </div>
       <div class="desktop-icons">
         <button class="desktop-icon" id="icon-mail" aria-label="Open Mail app">
           <span class="desktop-icon-glyph" id="glyph-mail">📬</span>
           <span class="desktop-icon-label">Mail</span>
           <span class="badge-count desktop-icon-badge" id="desktop-inbox-badge">0</span>
+        </button>
+        <button class="desktop-icon" id="icon-maker" aria-label="Open Level Maker app">
+          <span class="desktop-icon-glyph" id="glyph-maker" aria-hidden="true"></span>
+          <span class="desktop-icon-label">Level Maker</span>
         </button>
         <button class="desktop-icon" id="icon-stats" aria-label="Open Stats app">
           <span class="desktop-icon-glyph" id="glyph-stats">📊</span>
@@ -142,13 +178,14 @@
       </div>
       <div class="desktop-decor" id="desktop-decor" aria-hidden="true"></div>
       <div class="desktop-hint">Welcome back, Junior Designer. Open <b>Mail</b> to see your assignments.</div>
+      </div>
     </div>
   </section>
 
   <!-- ============ MAIL APP ============ -->
   <section id="screen-shell" class="screen" aria-label="Eye Mail">
     <header class="mail-header">
-      <button class="app-back-btn" id="mail-back-btn" aria-label="Back to desktop">←</button>
+      <button class="app-back-btn" id="mail-back-btn" aria-label="Close Eye Mail" title="Close Eye Mail">←</button>
       <div class="mail-logo">
         <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
         <span>Eye Mail</span>
@@ -165,11 +202,10 @@
     <div class="mail-body">
       <nav class="mail-sidebar" aria-label="Mail folders">
         <button class="side-btn active" data-folder="inbox">
-          <span class="side-icon">✉️</span> Inbox
-          <span class="badge-count" id="inbox-count">0</span>
+          <span class="side-icon side-icon-inbox"><span class="badge-count" id="inbox-count">0</span></span><span class="folder-label">Inbox</span>
         </button>
         <button class="side-btn" data-folder="completed">
-          <span class="side-icon">📝</span> Completed
+          <span class="side-icon side-icon-completed"></span><span class="folder-label">Completed</span>
         </button>
       </nav>
 
@@ -215,48 +251,6 @@
 
   <!-- ============ EDITOR SCREEN ============ -->
   <section id="screen-editor" class="screen" aria-label="Design Editor">
-    <div class="editor-topbar">
-      <!-- Left zone: identity + history -->
-      <div class="editor-topbar-zone zone-identity">
-        <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
-        <div class="editor-tools-left">
-          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo">↺</button>
-          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo">↻</button>
-        </div>
-      </div>
-
-      <button class="tool-btn mobile-more-btn" id="tool-mobile-more" title="More tools" aria-label="More tools" aria-haspopup="true">⋯</button>
-
-      <!-- Center zone: view aids, grouped into one pill so they read as
-           "one toolset" rather than four separate decisions -->
-      <div class="editor-tools-center tool-pill">
-        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid">▦</button>
-        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings">⚙</button>
-        <span class="tool-pill-divider" aria-hidden="true"></span>
-        <button class="tool-btn toggle-btn" id="tool-snap" title="Toggle snap-to-grid" aria-label="Toggle snap to grid">🧲</button>
-        <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides">📐</button>
-        <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector">🩺</button>
-        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Hold to measure distances" aria-label="Measure distances">📏</button>
-        <span class="tool-pill-divider" aria-hidden="true"></span>
-        <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint">💡</button>
-        <button class="tool-btn" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements">👀</button>
-        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide">🔠</button>
-      </div>
-
-      <!-- Right zone: output actions -->
-      <div class="editor-topbar-zone zone-output editor-tools-right">
-        <div class="tool-btn live-score-chip" id="live-score-chip" title="Live score estimate — updates as you edit">Score: --</div>
-        <button class="tool-btn issues-chip" id="issues-chip" title="Open issues — click to review">✓ 0</button>
-        <div class="zoom-control">
-          <button class="tool-btn zoom-step-btn" id="tool-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
-          <button class="tool-btn" id="zoom-badge" title="Scroll or pinch on the canvas to zoom — tap to reset to 100%">🔍 100%</button>
-          <button class="tool-btn zoom-step-btn" id="tool-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
-        </div>
-        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original">👁</button>
-        <button class="tool-btn btn-save" id="tool-save" title="Save & submit" aria-label="Save and submit">💾</button>
-      </div>
-    </div>
-
     <div class="typescale-popover" id="typescale-panel" hidden></div>
     <div class="typescale-popover grid-settings-popover" id="grid-settings-panel" hidden>
       <h4>Grid Settings</h4>
@@ -269,8 +263,8 @@
         <label>Grid Opacity (<span id="grid-opacity-readout">35</span>%)</label>
         <input type="range" id="grid-opacity-slider" min="0" max="1" step="0.05" value="0.35"/>
       </div>
+      <div class="field-hint">Canvas elements align to the 8px grid.</div>
     </div>
-    <div class="typescale-popover issues-panel" id="issues-panel" hidden></div>
 
     <!-- Secondary tools live here permanently on mobile/short-landscape (see
          editor.js applyToolbarLayout) — an on-demand bottom sheet so the
@@ -284,17 +278,52 @@
     </div>
 
     <div class="editor-main">
-      <div class="editor-canvas-wrap" id="editor-canvas-wrap">
+    <div class="editor-topbar">
+      <!-- Left zone: identity + history -->
+      <div class="editor-topbar-zone zone-identity">
+        <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
+        <div class="editor-tools-left">
+          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo">↺ <span class="btn-label">Undo</span></button>
+          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo">↻ <span class="btn-label">Redo</span></button>
+          <button class="tool-btn toggle-btn" id="tool-targets" title="Show hidden grading boxes" aria-label="Show hidden grading boxes" aria-pressed="false">▱ <span class="btn-label">Targets</span></button>
+        </div>
+      </div>
+
+      <!-- Center zone: view aids, grouped into one pill so they read as
+           "one toolset" rather than four separate decisions -->
+      <div class="editor-tools-center tool-pill">
+        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid">▦</button>
+        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings">⚙</button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides">📐</button>
+        <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector">🩺</button>
+        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Hold to measure distances" aria-label="Measure distances">📏</button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint">💡</button>
+        <button class="tool-btn" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements">👀</button>
+        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide">🔠</button>
+      </div>
+
+      <!-- Right zone: output actions -->
+      <div class="editor-topbar-zone zone-output editor-tools-right">
+        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original">👁</button>
+        <button class="tool-btn btn-save" id="tool-save" title="Save & submit" aria-label="Save and submit">&#128190; Save</button>
+      </div>
+    </div>
+
+
         <div class="editor-hint-pill" id="editor-hint-banner">
           <span id="editor-hint-text">Click on any element to edit.</span>
           <button class="hint-pill-dismiss" id="hint-pill-dismiss" title="Dismiss" aria-label="Dismiss hint">✕</button>
         </div>
+
+      <div class="editor-canvas-wrap" id="editor-canvas-wrap">
         <div class="editor-canvas" id="editor-canvas"></div>
       </div>
 
       <aside class="element-settings collapsed" id="element-settings">
         <div class="element-settings-head">
-          <h3 id="element-settings-title">Element Settings</h3>
+          <div class="selection-heading"><h3 id="element-settings-title">Design tools</h3><small id="selection-dimensions">Select something to make it shine</small></div>
           <div class="element-settings-head-actions">
             <button class="icon-btn hidden" id="f-reset-icon" title="Reset this element" aria-label="Reset this element">↺</button>
             <button class="settings-collapse-btn" id="toggle-element-settings" aria-expanded="false" aria-controls="settings-fields" aria-label="Show or hide element settings">▸</button>
@@ -305,26 +334,72 @@
     </div>
   </section>
 
-  <!-- ============ FEEDBACK / REPORT SCREEN ============ -->
-  <section id="screen-report" class="screen" aria-label="Design Report">
-    <div class="report-wrap">
-      <div class="report-grade-col">
-        <div class="grade-stamp" id="grade-stamp">
-          <span id="grade-letter">A</span>
-        </div>
-        <div class="xp-gain" id="xp-gain">+0 XP</div>
-        <button class="btn tool-btn" id="btn-toggle-compare">Before / After</button>
-        <div class="compare-thumbs" id="compare-thumbs"></div>
+  <!-- ============ LEVEL MAKER ============ -->
+  <section id="screen-maker" class="screen" aria-label="Level Maker">
+    <header class="maker-header">
+      <button class="app-back-btn" id="maker-back-btn" aria-label="Close Level Maker">←</button>
+      <h1>Level Maker</h1>
+      <input id="maker-title" aria-label="Project name" value="My design" maxlength="80" />
+      <select id="maker-preset" aria-label="Canvas preset">
+        <option value="website">Website · 960 × 640</option>
+        <option value="poster">Poster · 512 × 720</option>
+        <option value="slide">Presentation · 1280 × 720</option>
+        <option value="square">Square post · 1080 × 1080</option>
+        <option value="story">Story · 1080 × 1920</option>
+        <option value="mobile">Mobile screen · 384 × 832</option>
+        <option value="banner">Banner · 1200 × 400</option>
+        <option value="custom">Custom size</option>
+      </select>
+      <div class="maker-custom-size" id="maker-custom-size" hidden>
+        <label>Width <input id="maker-width" type="number" min="64" max="4096" step="8" value="960" /></label>
+        <span>×</span>
+        <label>Height <input id="maker-height" type="number" min="64" max="4096" step="8" value="640" /></label>
       </div>
-      <div class="report-main-col">
-        <h2>Design Review — <span id="report-client-name"></span></h2>
-        <div class="score-bars" id="score-bars"></div>
-        <div class="feedback-list" id="feedback-list"></div>
-        <div class="report-actions">
-          <button class="btn btn-ghost" id="btn-report-details">Show Explanations</button>
-          <button class="btn btn-accept" id="btn-report-continue">Continue</button>
+      <div class="maker-header-actions">
+        <div class="maker-export" id="maker-export">
+          <button class="btn" id="maker-export-toggle" type="button" aria-expanded="false" aria-controls="maker-export-options">Export ▾</button>
+          <div class="maker-export-options" id="maker-export-options" hidden>
+            <button type="button" data-maker-export="json">Level JSON</button>
+            <button type="button" data-maker-export="html">HTML website</button>
+            <button type="button" data-maker-export="png">PNG image</button>
+          </div>
         </div>
+        <label class="maker-import">Import level<input id="maker-import-json" type="file" accept="application/json,.json" hidden /></label>
       </div>
+    </header>
+    <div class="maker-workspace">
+      <aside class="maker-palette" aria-label="Add elements">
+        <h2>Add elements</h2>
+        <button data-maker-add="text">Text</button>
+        <button data-maker-add="heading">Heading</button>
+        <button data-maker-add="button">Button</button>
+        <button data-maker-add="shape">Shape</button>
+        <button data-maker-add="image">Upload image</button>
+        <input id="maker-image-upload" type="file" accept="image/*" hidden />
+        <button id="maker-add-target">Add target for selected element</button>
+        <button id="maker-peek-targets" class="maker-peek" aria-label="Hold to view targets only" aria-pressed="false" title="Hold to view targets only">👁 View targets</button>
+        <div class="maker-list-head">Layers</div>
+        <div id="maker-layers" class="maker-layers"></div>
+        <div class="maker-list-head">Targets</div>
+        <div id="maker-targets-list" class="maker-layers"></div>
+      </aside>
+      <div class="maker-stage" id="maker-stage">
+        <div class="maker-stage-toolbar" aria-label="Canvas controls">
+          <button id="maker-undo" type="button" aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
+          <button id="maker-redo" type="button" aria-label="Redo" title="Redo (Ctrl+Y)">↷</button>
+          <span class="maker-toolbar-divider" aria-hidden="true"></span>
+          <button id="maker-zoom-out" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+          <output id="maker-zoom-label" aria-live="polite">100%</output>
+          <button id="maker-zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+          <button id="maker-zoom-fit" type="button" aria-label="Fit canvas" title="Fit canvas">Fit</button>
+        </div>
+        <div id="maker-canvas" class="maker-canvas" aria-label="Design canvas"></div>
+        <div class="maker-stage-hint">Scroll to zoom · Drag to move · Edge handles resize · Corner handles scale · Shift for free resize</div>
+      </div>
+      <aside class="maker-properties" aria-label="Element properties">
+        <div class="maker-properties-head"><h2>Properties</h2></div>
+        <div id="maker-properties-fields">Select an element to edit it.</div>
+      </aside>
     </div>
   </section>
 
@@ -342,18 +417,28 @@
   </div>
 
   <footer class="taskbar desktop-hidden" id="global-taskbar">
-    <button class="taskbar-btn" id="taskbar-profile" title="Profile & Stats" aria-label="Profile and stats">👤</button>
-    <button class="taskbar-btn" id="taskbar-home" title="Desktop" aria-label="Go to desktop">🏠</button>
+    <button class="taskbar-btn taskbar-btn-primary" id="taskbar-home" title="Desktop" aria-label="Go to desktop">🏠 <span class="taskbar-btn-label">Home</span></button>
+    <button class="taskbar-btn" id="taskbar-profile" title="Profile" aria-label="Open profile summary" aria-expanded="false">👤</button>
     <button class="taskbar-btn" id="taskbar-shop" title="Shop" aria-label="Open shop">🛍️</button>
     <button class="taskbar-btn" id="taskbar-fullscreen" title="Enter fullscreen" aria-label="Toggle fullscreen">⛶</button>
     <div class="taskbar-spacer"></div>
-    <div class="taskbar-currency" id="taskbar-currency" title="Sparks — spend at the Shop">✨ 0</div>
     <div class="taskbar-clock" id="taskbar-clock">8:00 AM</div>
   </footer>
+
+  <aside class="taskbar-quick-popup hidden" id="taskbar-stats-popup" role="dialog" aria-modal="false" aria-labelledby="taskbar-stats-popup-title">
+    <header class="taskbar-quick-popup-head">
+      <img id="taskbar-stats-popup-icon" src="assets/icons/profile.svg" alt="" />
+      <strong id="taskbar-stats-popup-title">Profile</strong>
+      <button id="taskbar-stats-popup-close" aria-label="Close profile summary">✕</button>
+    </header>
+    <div class="taskbar-quick-popup-body" id="taskbar-stats-popup-body"></div>
+  </aside>
+
 
   <!-- ============ MAIL DETAIL MODAL ============ -->
   <div id="modal-mail-detail" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mail-detail-title">
     <div class="modal-card mail-detail-card">
+      <button class="mail-detail-close" id="btn-close-mail" aria-label="Close">✕</button>
       <div class="mail-detail-head">
         <div class="avatar-circle">👤</div>
         <div>
@@ -364,7 +449,6 @@
       <div class="mail-detail-body" id="mail-detail-body"></div>
       <div class="mail-detail-attachment" id="mail-detail-attachment"></div>
       <div class="mail-detail-actions">
-        <button class="btn btn-ghost" id="btn-close-mail">Close</button>
         <button class="btn btn-accept" id="btn-accept-job">Accept</button>
       </div>
     </div>
@@ -392,7 +476,7 @@
   <!-- ============ COMPOSE REPLY SCREEN ============ -->
   <div id="modal-compose" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Compose reply">
     <div class="compose-card">
-      <div class="compose-to">TO: <span id="compose-to-name"></span></div>
+      <div class="compose-to"><span id="compose-direction-label">TO:</span> <span id="compose-to-name"></span></div>
       <div id="compose-body" class="compose-body" contenteditable="true" tabindex="0" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Reply message — tap or press any key to type it out"><span class="revealed"></span><span class="type-cursor" aria-hidden="true"></span><span class="ghost"></span></div>
       <div class="compose-hint" id="compose-hint">Press any key to type your reply…</div>
       <div class="compose-attach-row">
@@ -407,13 +491,8 @@
   <!-- LEVEL UP TOAST -->
   <div id="toast-levelup" class="toast hidden"></div>
 
-  <!-- ============ GACHA REVEAL MODAL ============ -->
-  <div id="modal-gacha-reveal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Gacha reveal">
-    <div class="gacha-reveal-card" id="gacha-reveal-card">
-      <div class="gacha-charge-fx" id="gacha-charge-fx"><span>✦</span><span>✦</span><span>✦</span></div>
-      <div id="gacha-reveal-content"></div>
-      <button class="btn btn-accept hidden" id="btn-gacha-continue">Nice!</button>
-    </div>
+  <div id="modal-delivery" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Store delivery">
+    <div class="modal-card store-delivery"><div id="delivery-truck" aria-hidden="true">&#128666;</div><h2 id="delivery-message" role="status">Shipping...</h2><button class="btn btn-accept" id="delivery-continue">Open wardrobe</button></div>
   </div>
 
   <!-- ============ COSMETIC PREVIEW MODAL (mock desktop) ============ -->
@@ -444,6 +523,8 @@
 <script src="js/grading.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/mail.js"></script>
+<script src="js/piko.js"></script>
+<script src="js/maker.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,20 @@
+{
+  "name": "eyecon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A game-like UI/UX design and accessibility learning studio.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "node scripts/build-static.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "check:syntax": "node scripts/check-syntax.mjs",
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test": "npm run check:syntax && npm run test:unit",
+    "quality": "npm run build && npm run test && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "vite": "^7.1.7"
+  }
+}
