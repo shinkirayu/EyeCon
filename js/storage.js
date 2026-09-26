@@ -99,26 +99,6 @@
     catch(e){ console.warn('EyeCon: could not persist save data.', e); }
   }
 
-  // ---------------- Level-completion currency reward ----------------
-  // Scales with: level difficulty (levelNumber), performance/accuracy
-  // (grading score), mastery (grade bonus — rewards aiming for S+, not just
-  // passing), and completion time (rewards a brisk, confident pass without
-  // punishing careful work too harshly).
-  const GRADE_BONUS = { 'S+':1.5, 'S':1.3, 'A':1.15, 'B':1.0, 'C':0.85, 'Needs Improvement':0.6 };
-
-  function computeLevelReward(level, result, elapsedMs){
-    const levelNumber = level.levelNumber || 1;
-    const objectives = (result.mission && result.mission.objectives) || [];
-    const complete = objectives.filter(o=>o.complete).length;
-    const mastered = objectives.filter(o=>o.mastered).length;
-    const base = 20 + levelNumber * 10;
-    const objectiveBonus = complete * 12;
-    const masteryBonus = mastered * 10;
-    const gradeBonus = Math.round(12 * ((GRADE_BONUS[result.grade] || 0.6) - 0.6));
-    const reward = Math.max(10, base + objectiveBonus + masteryBonus + gradeBonus);
-    return { reward, breakdown: { base, objectiveBonus, masteryBonus, gradeBonus, elapsedMs } };
-  }
-
   function localDayKey(date){
     const y = date.getFullYear();
     const m = String(date.getMonth()+1).padStart(2,'0');
@@ -144,27 +124,54 @@
   // Below this star rating the client sends the work back instead of
   // accepting it — the mission stays open in the inbox for a resubmit.
   const REVISION_STAR_THRESHOLD = 3;
+  const GOOD_STARS = 4;
+  function completedFeedback(profile){
+    return (profile.history || []).filter(entry=>entry.missionComplete === true || (entry.missionComplete == null && profile.completed.includes(entry.levelId)));
+  }
+  // Best approved rating per page, so redoing a page can raise it but never
+  // counts twice.
+  function bestStars(profile){
+    const best = {};
+    completedFeedback(profile).forEach(e=>{ best[e.levelId] = Math.max(best[e.levelId] || 0, e.stars || 0); });
+    return best;
+  }
+  function goodFeedbackCount(profile){
+    return Object.values(bestStars(profile)).filter(stars=>stars >= GOOD_STARS).length;
+  }
+  function projectOf(level){ return (window.EC_PROJECTS || []).find(p=>p.id===level.project) || { needsGood:0, pay:40 }; }
+  function projectUnlocked(profile, project){ return goodFeedbackCount(profile) >= project.needsGood; }
+  // 3 tasks a day; a trusted studio (6+ good reviews) gets a 4th.
+  const FOURTH_TASK_AT = 6;
+  function dailyTaskLimit(profile){ return goodFeedbackCount(profile) >= FOURTH_TASK_AT ? 4 : 3; }
+  // Redoing an already-approved page (to earn a better review) pays half.
+  function commissionPay(profile, level){
+    const pay = projectOf(level).pay;
+    const base = profile.completed.includes(level.id) ? Math.round(pay/2) : pay;
+    return { base, perBonusStar: Math.round(base/4) };
+  }
+  function commissionPrize(profile, level){ return commissionPay(profile, level).base; }
 
   function recordSubmission(profile, level, result, elapsedMs){
     const stars = result.stars || window.EC_GRADING.scoreToStars(result.score);
+    const missionComplete = stars >= REVISION_STAR_THRESHOLD && (!result.mission || result.mission.complete);
+    const pay = commissionPay(profile, level);
+    const templates = level.replyTemplates || {};
     const entry = {
-      levelId: level.id, name: level.clientName, date: new Date().toISOString(),
-      score: result.score, grade: result.grade, scores: result.categoryScores, stars
+      levelId: level.id, name: level.clientName, page: level.pageLabel, date: new Date().toISOString(),
+      score: result.score, grade: result.grade, scores: result.categoryScores, stars, missionComplete,
+      quote: missionComplete ? (stars >= 5 ? templates.great : templates.ok) : templates.bad,
     };
     profile.history.unshift(entry);
-    const missionComplete = stars >= REVISION_STAR_THRESHOLD && (!result.mission || result.mission.complete);
     const needsRevision = !missionComplete;
     const firstClear = missionComplete && !profile.completed.includes(level.id);
     if(firstClear) profile.completed.push(level.id);
     if(missionComplete) profile.totalXp += result.xpAwarded;
 
-    const { reward: baseReward, breakdown } = computeLevelReward(level, result, elapsedMs);
-    const firstClearBonus = firstClear ? 25 : 0;
-    // Ratings above the revision threshold pay extra, scaling with how many
-    // stars you cleared it by — good work should pay noticeably more.
-    const starBonus = missionComplete ? Math.max(0, stars - REVISION_STAR_THRESHOLD) * 15 : 0;
+    // Exactly what the email promised: the base pay, plus a bonus per extra
+    // star, plus the once-a-day streak bonus.
+    const starBonus = missionComplete ? Math.max(0, stars - REVISION_STAR_THRESHOLD) * pay.perBonusStar : 0;
     const daily = missionComplete ? claimDailyMissionBonus(profile) : { bonus:0, streak:(profile.daily||{}).streak||0, claimed:false };
-    const reward = missionComplete ? baseReward + firstClearBonus + starBonus + daily.bonus : 0;
+    const reward = missionComplete ? pay.base + starBonus + daily.bonus : 0;
     profile.currency += reward;
 
     const before = new Set(profile.unlockedBadges);
@@ -173,27 +180,54 @@
 
     save(profile);
     return { newBadges, currencyEarned: reward, stars, needsRevision, missionComplete,
-      rewardBreakdown: Object.assign(breakdown, { firstClearBonus, starBonus, dailyBonus:daily.bonus }), daily };
+      rewardBreakdown: { base: missionComplete ? pay.base : 0, starBonus, dailyBonus:daily.bonus, elapsedMs }, daily };
   }
 
   function xpAwardForGrade(grade){
     return { 'S+':160, 'S':130, 'A':100, 'B':70, 'C':45, 'Needs Improvement':20 }[grade] || 20;
   }
 
-  // A personal inbox: one new commission per UTC day; unfinished jobs stay.
+  // Emails come from a mix of clients in the order pages are listed. A page
+  // is open once its client has written in (enough 4★+ reviews) and that
+  // client's previous page is done; the inbox shows the first two, so there
+  // are one or two emails at a time. A day holds 3–4 approved tasks. If no
+  // new work is left while a client is still out of reach, earlier pages
+  // rated below 4★ come back as polish requests to raise those reviews.
+  const OPEN_EMAILS = 2;
+  function dayKey(date){ return date.toISOString().slice(0,10); }
+  function tasksDoneToday(profile, date = new Date()){
+    const today = dayKey(date);
+    return new Set(completedFeedback(profile).filter(e=>e.date?.slice(0,10)===today).map(e=>e.levelId)).size;
+  }
+  function nextLockedProject(profile){
+    return (window.EC_PROJECTS || []).find(p=>!projectUnlocked(profile, p));
+  }
   function commissionInbox(profile, date = new Date()){
-    const day=Math.floor(date.getTime()/86400000);
-    if(!profile.commissions){
-      const known=window.EC_LEVELS.filter(l=>profile.completed.includes(l.id) || profile.history.some(h=>h.levelId===l.id));
-      const initial=Math.min(window.EC_LEVELS.length, Math.max(1,...known.map(l=>l.levelNumber+1)));
-      profile.commissions={startDay:day,initial}; save(profile);
+    const remaining = Math.max(0, dailyTaskLimit(profile) - tasksDoneToday(profile, date));
+    const levels = window.EC_LEVELS;
+    const done = id => profile.completed.includes(id);
+    let tasks = levels.filter(level => {
+      if(done(level.id) || !projectUnlocked(profile, projectOf(level))) return false;
+      const earlier = levels.filter(l => l.project === level.project);
+      return earlier.slice(0, earlier.indexOf(level)).every(l => done(l.id));
+    }).slice(0, OPEN_EMAILS);
+    if(!tasks.length && nextLockedProject(profile)){
+      const best = bestStars(profile);
+      tasks = levels.filter(l => done(l.id) && (best[l.id] || 0) < GOOD_STARS);
     }
-    const count=Math.min(window.EC_LEVELS.length,profile.commissions.initial+Math.max(0,day-profile.commissions.startDay));
-    // Only one open commission shows at a time — the next one doesn't pop up
-    // until the current one is completed, even if the day-based drip has
-    // already unlocked several.
-    const open=window.EC_LEVELS.slice(0,count).filter(l=>!profile.completed.includes(l.id));
-    return open.slice(0,1);
+    return tasks.slice(0, remaining);
+  }
+  function isPolishTask(profile, level){ return profile.completed.includes(level.id); }
+
+  // What the player needs for the next client, for the inbox and profile.
+  function progression(profile, date = new Date()){
+    const good = goodFeedbackCount(profile);
+    const next = nextLockedProject(profile);
+    return {
+      good, doneToday: tasksDoneToday(profile, date), dailyLimit: dailyTaskLimit(profile),
+      nextProject: next || null, goodNeeded: next ? Math.max(0, next.needsGood - good) : 0,
+      fourthTaskIn: good >= FOURTH_TASK_AT ? 0 : FOURTH_TASK_AT - good,
+    };
   }
 
   // One deterministic selection per UTC day, independent of device or reload.
@@ -232,7 +266,7 @@
     if(!cart.ids.length) return {error:'Your cart is empty.'};
     const items = cart.ids.map(id=>window.EC_COSMETICS.getItem(id));
     const total = items.reduce((sum,item)=>sum+itemPrice(item),0);
-    if(profile.currency < total) return {error:'Not enough Sparks. Complete a client project to earn more.'};
+    if(profile.currency < total) return {error:'Not enough coins. Complete a client project to earn more.'};
     profile.currency -= total;
     profile.inventory.push(...items.map(i=>i.id));
     const order = { date:new Date().toISOString(), ids:items.map(i=>i.id), total };
@@ -278,7 +312,7 @@
 
   window.EC_STORE = {
     load, save, defaultProfile, defaultSettings, levelFromTotalXp, xpForLevel, recordSubmission, xpAwardForGrade, BADGES,
-    computeLevelReward, commissionInbox, dailyShop, itemPrice, getCart, toggleCart, checkout, equipItem, hasUpgrade, buyUpgrade, UPGRADES, MULTI_SLOT_CATEGORIES,
+    commissionInbox, commissionPrize, commissionPay, completedFeedback, goodFeedbackCount, bestStars, dailyTaskLimit, progression, isPolishTask, projectUnlocked, GOOD_STARS, dailyShop, itemPrice, getCart, toggleCart, checkout, equipItem, hasUpgrade, buyUpgrade, UPGRADES, MULTI_SLOT_CATEGORIES,
     REVISION_STAR_THRESHOLD,
   };
 })();

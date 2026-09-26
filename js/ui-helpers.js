@@ -34,3 +34,6 @@
 
   window.EC_MODAL = { show, hide };
 })();
+
+// The game's currency: a purple ¢ followed by the amount.
+window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class="money-icon" aria-hidden="true">¢</span>${n}</span>`;

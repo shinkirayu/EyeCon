@@ -14,17 +14,12 @@
   // been taught so far — by Level 7 ("combines every prior concept") every
   // field is available, matching the level design in levels.js.
   const SETTINGS_UNLOCK = {
-    position:   1, // Position (X,Y) + move/align actions — Level 1: Basic Alignment
+    position:   1, // Position (X,Y) — Level 1: Basic Alignment
     sizing:     2, // Width/Height + Padding/Margin        — Level 2: Consistent Spacing
     typography: 3, // Font, size, weight, text alignment   — Level 3: Typography Hierarchy
     color:      4, // Text & background color              — Level 4: Color Contrast (WCAG)
     shape:      5, // Border radius + border                — Level 5: Accessibility Improvements
     effects:    6, // Shadow + opacity                       — Level 6: Responsive Layout
-  };
-  const UNLOCK_ORDER = ['position','sizing','typography','color','shape','effects'];
-  const UNLOCK_LABELS = {
-    position:'Position & Alignment', sizing:'Sizing & Spacing', typography:'Typography',
-    color:'Color', shape:'Shape & Border', effects:'Effects',
   };
 
   // ---------------- Inspector: which grading categories are "fair game" yet ----------------
@@ -41,14 +36,6 @@
       (CATEGORY_UNLOCK[f.category] || 1) <= lvl &&
       (!activeCategories || activeCategories.includes(f.category.toLowerCase()))
     );
-  }
-
-  function levelToolsNoteHtml(lvl){
-    const unlockedSoFar = UNLOCK_ORDER.filter(k => lvl >= SETTINGS_UNLOCK[k]).map(k => UNLOCK_LABELS[k]);
-    const nextKey = UNLOCK_ORDER.find(k => lvl < SETTINGS_UNLOCK[k]);
-    let html = `<div class="level-tools-note"><b>🎓 Level ${lvl} tools:</b> ${unlockedSoFar.join(' · ')}</div>`;
-    if(nextKey) html += `<div class="level-tools-next">🔒 ${UNLOCK_LABELS[nextKey]} unlocks at Level ${SETTINGS_UNLOCK[nextKey]}</div>`;
-    return html;
   }
 
   // ---------------- Friendly element name (settings panel title) ----------------
@@ -110,7 +97,34 @@
   // arriving as a real email instead of an instant verdict, showing a
   // running score while editing undercut that (see showHint(), which still
   // gives an on-demand nudge without giving away the number).
-  function updateLiveScore(){}
+  // Live client checklist in the brief: ticks goals off as they're met and
+  // explains why the fix works, so players learn while they edit.
+  const TIER_NAMES = { novice:'Novice', intermediate:'Intermediate', advanced:'Advanced', expert:'Expert' };
+  function updateLiveScore(){
+    const list = document.getElementById('editor-mail-points');
+    if(!list || !state.level) return;
+    if(!state.level.goals){
+      list.replaceChildren(...(state.level.concepts || []).map(c => Object.assign(document.createElement('li'), {textContent:c})));
+      return;
+    }
+    const results = window.EC_GRADING.checkGoals(state.level, state.elements);
+    // Only the next unfinished goal shows its tip, so the list stays short;
+    // finished goals keep their "why" on hover (and in the client's reply).
+    const next = results.find(r => !r.met && !r.goal.bonus) || results.find(r => !r.met);
+    list.replaceChildren(...results.map(({goal, met}) => {
+      const li = document.createElement('li');
+      li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '');
+      const mark = Object.assign(document.createElement('span'), {className:'editor-goal-mark', textContent: met ? '✓' : goal.bonus ? '★' : '○'});
+      mark.setAttribute('aria-hidden', 'true');
+      const text = document.createElement('span');
+      text.textContent = (goal.bonus ? 'Bonus: ' : '') + goal.label;
+      if(next && next.goal === goal) text.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
+      if(met) li.title = goal.why;
+      li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
+      li.append(mark, text);
+      return li;
+    }));
+  }
 
   // ---------------- History ----------------
   function pushHistory(){
@@ -156,7 +170,7 @@
     const hasUpgrade = id => window.EC_STORE && window.EC_STORE.hasUpgrade(profile, id);
     state.tools.gridVisible = hasUpgrade('grid-buddy'); state.tools.snap = true;
     state.tools.guides = hasUpgrade('guide-radar');
-    state.tools.inspector = hasUpgrade('guide-radar'); state.tools.measure = false; state.tools.showTargets = false;
+    state.tools.inspector = false; state.tools.measure = false; state.tools.showTargets = false;
     state.tools.gridSize = 8;
     state.tools.gridOpacity = 0.35;
     state.zoom = 1;
@@ -167,20 +181,21 @@
     if(hintHighlightTimeout){ clearTimeout(hintHighlightTimeout); hintHighlightTimeout = null; }
     pushHistory();
     buildCanvas();
-    playIntroFlash();
     updateToolButtonStates();
     updateLiveScore();
     syncGridSettingsUI();
     resetSettingsPlaceholder();
+    document.getElementById('editor-mail-sender').textContent = level.clientName;
+    document.getElementById('editor-mail-stage').textContent = `${TIER_NAMES[level.tier] || 'Client'} · ${level.pageLabel || 'Website page'}`;
+    document.getElementById('editor-mail-avatar').textContent = level.avatarEmoji || '✉';
+    updateLiveScore();
     // Point straight at the first thing to fix instead of a generic
     // "click anything" — this is what used to require noticing the mission
     // panel and clicking "Focus next objective" yourself.
-    showHint();
     const chipLabel = document.querySelector('.edit-mode-chip .btn-label');
     if(chipLabel) chipLabel.textContent = level.clientName;
     document.getElementById('typescale-panel').hidden = true;
     document.getElementById('grid-settings-panel').hidden = true;
-    setElementSettingsCollapsed(true);
   }
 
   // Scale that fits the whole canvas inside the visible viewport ("100%" baseline).
@@ -214,6 +229,12 @@
   function updateZoomBadge(){
     const badge = document.getElementById('zoom-badge');
     if(badge) badge.textContent = `🔍 ${Math.round(state.zoom*100)}%`;
+    const label = document.getElementById('editor-zoom-label');
+    if(label) label.textContent = `${Math.round(state.zoom*100)}%`;
+    const out = document.getElementById('editor-zoom-out');
+    const zoomIn = document.getElementById('editor-zoom-in');
+    if(out) out.disabled = state.zoom <= ZOOM_MIN;
+    if(zoomIn) zoomIn.disabled = state.zoom >= ZOOM_MAX;
   }
 
   // Centers the canvas in the wrap at the current displayZoom.
@@ -294,6 +315,34 @@
     applyCanvasTransform();
     updateGridBackground();
     renderOverlays();
+    renderEditorLayers();
+  }
+
+  function renderEditorLayers(){
+    const list=document.getElementById('editor-layers-list');
+    list.replaceChildren();
+    [...state.elements].sort((a,b)=>(b.z||0)-(a.z||0)).forEach(el=>{
+      const row=document.createElement('div');
+      row.className='editor-layer-row'+(el.id===state.selectedId?' active':'')+(el.locked?' locked':'');
+      row.dataset.layerId=el.id;
+      const button=document.createElement('button');button.type='button';
+      button.className='editor-layer-select';button.disabled=!!el.locked;
+      // Canva-style: a live mini copy of the element so you can see what you're picking.
+      const thumb=document.createElement('span');thumb.className='editor-layer-thumb';
+      const src=state.canvasEl&&state.canvasEl.querySelector(`.el[data-id="${el.id}"]`);
+      if(src&&el.w&&el.h){
+        const copy=src.cloneNode(true);copy.removeAttribute('tabindex');copy.removeAttribute('role');copy.classList.remove('selected');
+        const k=Math.min(200/el.w,44/el.h,1);
+        Object.assign(copy.style,{position:'absolute',left:`${(200-el.w*k)/2}px`,top:`${(44-el.h*k)/2}px`,transform:`scale(${k})`,transformOrigin:'0 0',pointerEvents:'none'});
+        thumb.appendChild(copy);
+      }
+      const label=document.createElement('span');label.className='editor-layer-name';label.textContent=friendlyElementName(el);
+      button.append(thumb,label);button.setAttribute('aria-label',friendlyElementName(el));
+      if(!el.locked)button.addEventListener('click',()=>selectElement(el.id));
+      const status=document.createElement('span');status.className='editor-layer-status';
+      status.textContent=el.locked?'🔒':'◈';status.title=el.locked?'Locked structural layer':'Editable layer';
+      row.append(button,status);list.appendChild(row);
+    });
   }
 
   function rebuildAll(){
@@ -417,12 +466,14 @@
 
   // ---------------- Selection ----------------
   function selectElement(id){
+    if(byId(id)?.locked)return;
     if(state.selectedId){
       const prev = state.domNodes[state.selectedId];
       if(prev) prev.classList.remove('selected');
     }
     clearHintHighlight();
     state.selectedId = id;
+    renderEditorLayers();
     const el = byId(id);
     if(!el){ resetSettingsPlaceholder(); return; }
     const div = state.domNodes[id];
@@ -432,7 +483,6 @@
     // collapsed so the canvas keeps the space — picking something to edit
     // is the one moment it should open itself; the button next to its
     // heading still lets you close it again to get the canvas back.
-    setElementSettingsCollapsed(false);
     // "Click on any element to edit" has done its job the moment you do
     // exactly that — no reason for it to keep sitting over the canvas.
     document.getElementById('editor-hint-banner').classList.add('hidden');
@@ -444,29 +494,19 @@
       if(prev) prev.classList.remove('selected');
     }
     state.selectedId = null;
+    renderEditorLayers();
     resetSettingsPlaceholder();
-    setElementSettingsCollapsed(true);
   }
 
   // ---------------- Settings panel ----------------
   // Collapse toggle only actually changes anything at the mobile/tablet
   // breakpoints (see .element-settings.collapsed in style.css) — on the
   // desktop side-by-side layout the panel always has room and this is a no-op.
-  function setElementSettingsCollapsed(collapsed){
-    const panel = document.getElementById('element-settings');
-    const btn = document.getElementById('toggle-element-settings');
-    if(!panel || !btn) return;
-    panel.classList.toggle('collapsed', collapsed);
-    btn.setAttribute('aria-expanded', String(!collapsed));
-    btn.textContent = collapsed ? '▸' : '▾';
-  }
 
   // Always visible (right-hand dock) — shows a placeholder until something
   // is selected, rather than collapsing away.
   function resetSettingsPlaceholder(){
-    const lvl = (state.level && state.level.levelNumber) || 1;
     document.getElementById('settings-fields').innerHTML =
-      levelToolsNoteHtml(lvl) +
       '<p class="settings-placeholder">Select an element on the canvas to edit its properties.</p>';
     document.getElementById('element-settings-title').textContent = 'Design tools';
     document.getElementById('selection-dimensions').textContent = 'Select something to make it shine';
@@ -502,56 +542,48 @@
     const lvl = state.level.levelNumber || 1;
     const unlocked = key => lvl >= SETTINGS_UNLOCK[key];
 
-    let html = levelToolsNoteHtml(lvl);
+    let html = '';
     const introHtmlLen = html.length;
 
     if(el.text && unlocked('typography')){
-      html += `<div class="field-group"><label>Text Font</label>
-        <select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select>
-      </div>`;
-      html += `<div class="field-group"><label>Font Size (px)</label>
-        <input type="number" id="f-size" value="${el.fontSize}" min="8" max="80"/>
-      </div>`;
-      html += `<div class="field-group"><label>Font Weight</label>
-        <select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select>
-      </div>`;
-      html += `<div class="field-group"><label>Text Alignment</label>
-        <select id="f-align">
-          <option value="left" ${el.align==='left'?'selected':''}>Left</option>
-          <option value="center" ${el.align==='center'?'selected':''}>Center</option>
-          <option value="right" ${el.align==='right'?'selected':''}>Right</option>
-        </select>
-      </div>`;
+      html += `<details class="editor-setting-card" open><summary>Typography</summary>`;
+      html += `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
+        <label class="editor-unit-row"><span>Size</span><span class="editor-unit-input"><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><span>px</span></span></label>
+        <label class="editor-unit-row"><span>Weight</span><span class="editor-unit-input"><select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select></span></label>`;
+      html += `</details>`;
+    }
+    if(el.text){
+      html += `<details class="editor-setting-card editor-text-alignment" open><summary>Text alignment</summary>
+        <div class="editor-align-options" role="group" aria-label="Text alignment">
+          ${['left','center','right'].map(a=>`<button type="button" data-text-align="${a}" aria-pressed="${el.align===a}">${a[0].toUpperCase()+a.slice(1)}</button>`).join('')}
+        </div></details>`;
+    }
+    if((el.text||el.bg) && unlocked('color')) html += `<details class="editor-setting-card" open><summary>Color</summary>`;
+    if(el.bg && unlocked('color')){
+      html += `<div class="editor-color-field"><span>Background</span><div class="color-row"><input type="color" id="f-bg" value="${el.bg}" aria-label="Background color"/><span class="hex">${el.bg}</span></div></div>`;
     }
     if(el.text && unlocked('color')){
-      html += `<div class="field-group"><label>Text Color</label>
-        <div class="color-row"><input type="color" id="f-color" value="${el.color}"/><span class="hex">${el.color}</span></div>
-        <div id="f-contrast">${contrastBadgeHtml(el)}</div>
-      </div>`;
+      html += `<div class="editor-color-field"><span>Text</span><div class="color-row"><input type="color" id="f-color" value="${el.color}" aria-label="Text color"/><span class="hex">${el.color}</span></div></div><div id="f-contrast">${contrastBadgeHtml(el)}</div>`;
     }
-    if(el.bg && unlocked('color')){
-      html += `<div class="field-group"><label>Background Color</label>
-        <div class="color-row"><input type="color" id="f-bg" value="${el.bg}"/><span class="hex">${el.bg}</span></div>
-      </div>`;
-    }
+    if((el.text||el.bg) && unlocked('color')) html += `</details>`;
 
     if(html.length > introHtmlLen) html += `<hr class="section-divider"/>`;
 
     if(unlocked('position')){
-      html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">X</span><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/></label>
-        <label class="mini-field"><span class="mini-label">Y</span><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/></label>
-      </div>`;
+      html += `<details class="editor-setting-card" open><summary>Position</summary>
+        <label class="editor-unit-row"><span>X</span><span class="editor-unit-input"><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/><span>px</span></span></label>
+        <label class="editor-unit-row"><span>Y</span><span class="editor-unit-input"><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/><span>px</span></span></label>
+      </details>`;
     }
     if(unlocked('sizing')){
-      html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">W</span><input type="number" id="f-w" step="8" value="${Math.round(el.w)}" aria-label="Width"/></label>
-        <label class="mini-field"><span class="mini-label">H</span><input type="number" id="f-h" step="8" value="${Math.round(el.h)}" aria-label="Height"/></label>
-      </div>`;
-      html += `<div class="mini-row">
-        <label class="mini-field"><span class="mini-label">P</span><input type="number" id="f-padding" value="${el.padding}" min="0" max="64" step="8" aria-label="Padding"/></label>
-        <label class="mini-field"><span class="mini-label">M</span><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" step="8" aria-label="Margin"/></label>
-      </div>`;
+      html += `<details class="editor-setting-card" open><summary>Size</summary>
+        <label class="editor-unit-row"><span>Width</span><span class="editor-unit-input"><input type="number" id="f-w" step="8" value="${Math.round(el.w)}" aria-label="Width"/><span>px</span></span></label>
+        <label class="editor-unit-row"><span>Height</span><span class="editor-unit-input"><input type="number" id="f-h" step="8" value="${Math.round(el.h)}" aria-label="Height"/><span>px</span></span></label>
+      </details>`;
+      html += `<details class="editor-setting-card" open><summary>Spacing</summary>
+        <label class="editor-unit-row"><span>Margin</span><span class="editor-unit-input"><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" step="8" aria-label="Margin"/><span>px</span></span></label>
+        <label class="editor-unit-row"><span>Padding</span><span class="editor-unit-input"><input type="number" id="f-padding" value="${el.padding}" min="0" max="64" step="8" aria-label="Padding"/><span>px</span></span></label>
+      </details>`;
     }
     if(unlocked('shape')){
       html += `<div class="field-group"><label>Border Radius (px)</label>
@@ -583,22 +615,6 @@
       </div>`;
     }
 
-    if(unlocked('position')){
-      const alignButtons = [
-        `<button data-align="left" title="Align Left">⭰ Left</button>`,
-        `<button data-align="right" title="Align Right">Right ⭲</button>`,
-        `<button data-align="top" title="Align Top">⭱ Top</button>`,
-        `<button data-align="bottom" title="Align Bottom">Bottom ⭳</button>`,
-        `<button data-align="centerH" title="Center Horizontally">↔ Center H</button>`,
-        `<button data-align="centerV" title="Center Vertically">↕ Center V</button>`,
-      ];
-      if(el.text && unlocked('typography')) alignButtons.push(`<button data-align="centerText" title="Center Text">🅲 Center Text</button>`);
-      html += `<hr class="section-divider"/>
-        <div class="field-group"><label>Alignment Controls</label>
-          <div class="align-actions">${alignButtons.join('')}</div>
-        </div>`;
-    }
-
     fields.innerHTML = html;
     const q = sel => fields.querySelector(sel);
 
@@ -608,16 +624,21 @@
     if(q('#f-weight')) q('#f-weight').addEventListener('change', e=>{
       el.fontWeight = e.target.value; refreshElementDom(el); refreshContrastBadge(el); pushHistory(); refreshLiveOverlays();
     });
-    if(q('#f-align')) q('#f-align').addEventListener('change', e=>{ el.align = e.target.value; refreshElementDom(el); pushHistory(); refreshLiveOverlays(); });
+    fields.querySelectorAll('[data-text-align]').forEach(button=>button.addEventListener('click',()=>{
+      el.align=button.dataset.textAlign;
+      refreshElementDom(el);
+      fields.querySelectorAll('[data-text-align]').forEach(option=>option.setAttribute('aria-pressed',String(option===button)));
+      pushHistory(); refreshLiveOverlays();
+    }));
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
       el.color = e.target.value; refreshElementDom(el);
-      fields.querySelector('.color-row .hex').textContent = el.color;
+      q('#f-color').closest('.color-row').querySelector('.hex').textContent = el.color;
       refreshContrastBadge(el);
     });
     if(q('#f-color')) q('#f-color').addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); });
     if(q('#f-bg')) q('#f-bg').addEventListener('input', e=>{
       el.bg = e.target.value; refreshElementDom(el);
-      fields.querySelectorAll('.color-row .hex')[el.text?1:0].textContent = el.bg;
+      q('#f-bg').closest('.color-row').querySelector('.hex').textContent = el.bg;
     });
     if(q('#f-bg')) q('#f-bg').addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); showSettings(el); });
 
@@ -664,23 +685,6 @@
       refreshElementDom(el);
     });
     if(q('#f-opacity')) q('#f-opacity').addEventListener('change', ()=>pushHistory());
-
-    fields.querySelectorAll('[data-align]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const cw = state.level.canvas.w, ch = state.level.canvas.h;
-        switch(btn.dataset.align){
-          case 'left': el.x = 0; break;
-          case 'centerH': el.x = (cw-el.w)/2; break;
-          case 'right': el.x = cw-el.w; break;
-          case 'top': el.y = 0; break;
-          case 'centerV': el.y = (ch-el.h)/2; break;
-          case 'bottom': el.y = ch-el.h; break;
-          case 'centerText': el.align = 'center'; break;
-        }
-        if(state.tools.snap){el.x=Math.round(el.x/8)*8;el.y=Math.round(el.y/8)*8;}
-        refreshElementDom(el); showSettings(el); pushHistory(); refreshLiveOverlays();
-      });
-    });
 
   }
 
@@ -1086,9 +1090,6 @@
   }
 
   function initToolbarOnce(){
-    document.getElementById('toggle-element-settings').addEventListener('click', ()=>{
-      setElementSettingsCollapsed(!document.getElementById('element-settings').classList.contains('collapsed'));
-    });
 
     document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
       document.getElementById('editor-hint-banner').classList.add('hidden');
@@ -1111,6 +1112,12 @@
 
     document.getElementById('tool-undo').addEventListener('click', undo);
     document.getElementById('tool-redo').addEventListener('click', redo);
+    const zoomFromCenter = factor=>{
+      const rect=document.getElementById('editor-canvas-wrap').getBoundingClientRect();
+      zoomAt(rect.left+rect.width/2,rect.top+rect.height/2,factor);
+    };
+    document.getElementById('editor-zoom-out').addEventListener('click',()=>zoomFromCenter(0.8));
+    document.getElementById('editor-zoom-in').addEventListener('click',()=>zoomFromCenter(1.25));
     document.getElementById('tool-targets').addEventListener('click', ()=>{ state.tools.showTargets=!state.tools.showTargets; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-grid').addEventListener('click', ()=>{ state.tools.gridVisible=!state.tools.gridVisible; updateToolButtonStates(); });
     document.getElementById('tool-grid-settings').addEventListener('click', e=>{

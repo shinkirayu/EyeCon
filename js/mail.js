@@ -20,20 +20,36 @@
   function renderInbox(profile){
     const list=document.getElementById('mail-list');
     list.innerHTML='';
-    const levels=window.EC_STORE.commissionInbox(profile);
+    const S=window.EC_STORE;
+    const levels=S.commissionInbox(profile);
+    // Replies stay visible even once the page counts as done or the day is full.
+    [profile.pendingClientReply, profile.readyReply].forEach(r=>{
+      const level = r && window.EC_LEVELS.find(l=>l.id===r.levelId);
+      if(level && !levels.includes(level)) levels.unshift(level);
+    });
     if(!levels.length){
-      list.innerHTML='<div class="empty-state">All caught up! New commissions arrive each day at 00:00 UTC. Your finished work is in Completed.</div>';
+      const prog=S.progression(profile);
+      list.innerHTML = prog.doneToday >= prog.dailyLimit
+        ? `<div class="empty-state">That's all for today, you finished ${prog.doneToday} tasks! New emails arrive tomorrow.</div>`
+        : '<div class="empty-state">All caught up! Your finished work is in Completed.</div>';
       return;
     }
     levels.forEach(level=>{
       const waiting=profile.pendingClientReply?.levelId===level.id;
       const replied=profile.readyReply?.levelId===level.id;
+      const polish=!waiting && !replied && S.isPolishTask(profile,level);
       const clickable=!waiting;
       const row=document.createElement('div');
       row.className='mail-item'+(replied?' unread':''); row.setAttribute('role','listitem'); row.tabIndex=clickable?0:-1;
-      const preview = waiting ? 'Your design is with the client. Awaiting their reply...' : replied ? `${level.clientName} replied to your design.` : level.emailPreview;
-      const tag = waiting ? 'Sent' : replied ? 'Reply' : 'Commission';
-      row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div><span class="tag">${tag}</span>${replied?'<span class="unread-dot"></span>':''}`;
+      const preview = waiting ? 'Your design is with the client. Awaiting their reply...'
+        : replied ? `${level.clientName} replied to your design.`
+        : polish ? `Could you polish our ${level.pageLabel.toLowerCase()} for an even better result?`
+        : level.emailPreview;
+      const tag = waiting ? '<span class="tag">Sent</span>' : replied ? '<span class="tag">Reply</span>'
+        : `<span class="tag tier-${level.tier}">${polish ? 'Polish' : TIER_LABEL[level.tier]}</span>`;
+      const pay=S.commissionPay(profile,level);
+      const prize=waiting || replied ? '' : `<span class="mail-prize" title="Paid on approval, plus ${pay.perBonusStar} for each bonus star">${window.EC_MONEY(pay.base)} <small>+${pay.perBonusStar}/★</small></span>`;
+      row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div>${prize}${tag}${replied?'<span class="unread-dot"></span>':''}`;
       if(clickable){
         const open = () => replied ? handlers.onOpenReply(level) : openMailDetail(level);
         row.addEventListener('click', open);
@@ -52,38 +68,39 @@
       return;
     }
     levels.forEach(level=>{
-      const hist = profile.history.find(h=>h.levelId===level.id);
+      const stars = window.EC_STORE.bestStars(profile)[level.id] || 0;
+      const hist = profile.history.find(h=>h.levelId===level.id && h.stars===stars) || profile.history.find(h=>h.levelId===level.id);
       const row = document.createElement('div');
       row.className = 'mail-item completed';
       row.innerHTML = `
         <div class="avatar-circle">${level.avatarEmoji}</div>
         <div class="mail-item-name">${level.clientName}</div>
-        <div class="mail-item-preview">${hist ? '★'.repeat(hist.stars||0)+'☆'.repeat(5-(hist.stars||0)) : '—'} · Grade ${hist?hist.grade:'—'}</div>
-        <span class="tag ${level.tier}">Completed</span>
+        <div class="mail-item-preview">${'★'.repeat(stars)+'☆'.repeat(5-stars)} · ${level.pageLabel}${hist && hist.quote ? ` · “${hist.quote}”` : ''}</div>
+        <span class="tag tier-${level.tier}">${TIER_LABEL[level.tier]}</span>
       `;
       row.addEventListener('click', ()=>openMailDetail(level, true));
       list.appendChild(row);
     });
   }
 
-  // Turns a grading result into a client-voice reply (reuses the feedback
-  // copy already written for the score-bar report — just quoted as the
-  // client's own complaint/praise instead of a rubric line).
+  // Client-voice reply: a short, personal note when approved; if the work
+  // is sent back, the client lists what's still missing.
   function buildClientReplyText(level, result, missionComplete){
     const stars = result.stars;
     const starLine = '★'.repeat(stars) + '☆'.repeat(5 - stars) + `  (${stars}/5)`;
-    const relevant = t => result.feedback.filter(f => f.type===t && !f.editorOnly && result.activeCategories.includes(f.category.toLowerCase()));
+    const goals = result.feedback.filter(f => f.category === 'Goals');
+    const relevant = t => goals.length ? goals.filter(f => f.type===t)
+      : result.feedback.filter(f => f.type===t && !f.editorOnly && result.activeCategories.includes(f.category.toLowerCase()));
+    const templates = level.replyTemplates || {};
     const lines = [`Hi, ${level.clientName} here.`, ''];
-    if(missionComplete) lines.push(starLine, '');
     if(missionComplete){
-      lines.push(stars >= 5 ? 'This is exactly what I wanted, thank you!' : 'This works well, thanks for getting it there.');
-      relevant('good').slice(0,2).forEach(f => lines.push(`• ${f.title}`));
+      lines.push(starLine, '', stars >= 5 ? (templates.great || 'This is exactly what I wanted, thank you!') : (templates.ok || 'This works well, thank you.'));
       lines.push('', `— ${level.clientName}`);
     } else {
-      lines.push("A few things still aren't quite right — can you take another pass?");
-      const bad = relevant('bad').slice(0,3);
-      (bad.length ? bad : [{title:"It's close, just needs a bit more polish overall."}]).forEach(f => lines.push(`• ${f.title}`));
-      lines.push('', 'Send me an updated version when you can.');
+      lines.push(templates.bad || "A few things still aren't quite right.", 'Could you take another look? We would still love it if you could:', '');
+      const bad = relevant('bad').filter(f => !f.bonus);
+      (bad.length ? bad : [{title:'Give it a little more polish.'}]).forEach(f => lines.push(`• ${f.title}`));
+      lines.push('', 'Send us an updated version when you can. Thanks!', '', `— ${level.clientName}`);
     }
     return lines.join('\n');
   }
@@ -98,6 +115,7 @@
     document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
     document.getElementById('mail-detail-body').textContent = buildClientReplyText(level, result, missionComplete);
     document.getElementById('mail-detail-attachment').innerHTML = '';
+    document.getElementById('mail-detail-reward').innerHTML = '';
     const btn = document.getElementById('btn-accept-job');
     btn.style.display = '';
     btn.textContent = missionComplete ? 'Mark Completed' : 'Back to Editor';
@@ -111,9 +129,17 @@
     document.getElementById('btn-accept-job').onclick = null;
     document.getElementById('mail-detail-title').textContent = level.clientName;
     document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
-    document.getElementById('mail-detail-body').textContent = level.emailBody;
+    const profile = window.EC_STORE.load();
+    const pay = window.EC_STORE.commissionPay(profile, level);
+    const polish = !readOnly && window.EC_STORE.isPolishTask(profile, level);
+    document.getElementById('mail-detail-body').textContent = polish
+      ? `Hi! We loved your work on our ${level.pageLabel.toLowerCase()}. If you have time, could you give it one more polish? We'd happily raise our review.\n\n— ${level.clientName}`
+      : level.emailBody;
+    document.getElementById('mail-detail-reward').innerHTML =
+      `<span>${readOnly ? 'Paid' : 'Reward'}</span><b>${window.EC_MONEY(pay.base)}</b><small>+${pay.perBonusStar} per bonus ★</small>`;
     document.getElementById('mail-detail-attachment').innerHTML =
-      `<div class="attachment-chip" id="attachment-chip"><span>${level.attachmentName}</span></div>`;
+      `<button type="button" class="attachment-card" id="attachment-chip" aria-label="Preview ${level.attachmentName}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${level.attachmentName}</span></button>`;
+    window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
     document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, level.elements));
     const acceptBtn = document.getElementById('btn-accept-job');
     acceptBtn.textContent = 'Accept';
@@ -205,13 +231,17 @@
     const pop = document.getElementById('attach-popover');
     if(!pop.classList.contains('hidden')){ pop.classList.add('hidden'); return; }
     const fname = (composeState.editedLevel.attachmentName || 'design.png').replace(/(\.\w+)$/, '_edited$1');
-    pop.innerHTML = `<button class="attach-option" id="attach-option-edited" type="button">📄 ${fname}<span class="attach-option-sub">Your edited version — click to attach</span></button>`;
+    const card = `<span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${fname}</span>`;
+    pop.innerHTML = `<button class="attachment-card" id="attach-option-edited" type="button" aria-label="Attach ${fname}">${card}</button>`;
+    const drawThumb = root => window.EC_EDITOR.renderStatic(root.querySelector('.attachment-thumb'), composeState.editedLevel, composeState.editedElements, { maxSize:280 });
+    drawThumb(pop);
     pop.classList.remove('hidden');
     document.getElementById('attach-option-edited').addEventListener('click', ()=>{
       composeState.attached = true;
       composeState.attachedFileName = fname;
       const chip = document.getElementById('compose-attachment-chip');
-      chip.textContent = `${fname}  ✓`;
+      chip.innerHTML = `<span class="attachment-card attached">${card}</span>`;
+      drawThumb(chip);
       chip.classList.remove('hidden');
       chip.onclick = () => openPreview(composeState.editedLevel, composeState.editedElements);
       pop.classList.add('hidden');

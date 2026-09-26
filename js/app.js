@@ -220,7 +220,7 @@
       badge.style.display = unread > 0 ? '' : 'none';
     }
     const currency = document.getElementById('mini-taskbar-currency');
-    if(currency) currency.textContent = `✨ ${profile.currency}`;
+    if(currency) currency.innerHTML = window.EC_MONEY(profile.currency);
     const clock = document.getElementById('mini-taskbar-clock');
     const realClock = document.getElementById('taskbar-clock');
     if(clock && realClock) clock.textContent = realClock.dataset.time || realClock.textContent;
@@ -388,9 +388,9 @@
     if(tabId === 'general'){
       html += `<p class="settings-tab-desc">Your EyeCon Studio profile — Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}, ${profile.completed.length}/${window.EC_LEVELS.length} projects completed, ${profile.inventory.length} cosmetics collected.</p>`;
       html += `<div class="settings-card settings-testing-card"><div class="settings-item">
-        <div class="settings-item-text"><div class="settings-item-label">🧪 Testing: Add Sparks</div>
-        <div class="settings-item-desc">Grants a big batch of Sparks so you can browse the store freely. Temporary testing aid.</div></div>
-        <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-add-sparks">+99,999 ✨</button></div>
+        <div class="settings-item-text"><div class="settings-item-label">🧪 Testing: Add coins</div>
+        <div class="settings-item-desc">Grants a big batch of coins so you can browse the store freely. Temporary testing aid.</div></div>
+        <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-add-sparks">+¢99,999</button></div>
       </div>
       <div class="settings-item">
         <div class="settings-item-text"><div class="settings-item-label">🐾 Replay Piko's Tutorial</div>
@@ -399,7 +399,7 @@
       </div></div>`;
       html += `<div class="settings-card settings-danger-card"><div class="settings-item">
         <div class="settings-item-text"><div class="settings-item-label">Reset All Progress</div>
-        <div class="settings-item-desc">Erases XP, Sparks, inventory and completed levels. This cannot be undone.</div></div>
+        <div class="settings-item-desc">Erases XP, coins, inventory and completed levels. This cannot be undone.</div></div>
         <div class="settings-item-control"><button class="btn btn-no btn-sm" id="set-reset-progress">Reset</button></div>
       </div></div>`;
       return html;
@@ -559,13 +559,13 @@
   }
 
   function updateCurrencyDisplays(){
-    const text = `✨ ${profile.currency}`;
+    const text = window.EC_MONEY(profile.currency);
     const taskbar = document.getElementById('taskbar-currency');
-    if(taskbar) taskbar.textContent = text;
+    if(taskbar) taskbar.innerHTML = text;
     const shopChip = document.getElementById('shop-currency-chip');
-    if(shopChip) shopChip.textContent = text;
+    if(shopChip) shopChip.innerHTML = text;
     const desktopChip = document.getElementById('desktop-currency');
-    if(desktopChip) desktopChip.textContent = text;
+    if(desktopChip) desktopChip.innerHTML = text;
     updateMiniDesktop();
   }
 
@@ -590,7 +590,7 @@
         <div class="stat-card"><div class="num">${avg}</div><div class="lbl">Avg. Score</div></div>
         <div class="stat-card"><div class="num">${best?best.grade:'—'}</div><div class="lbl">Best Grade</div></div>
         <div class="stat-card"><div class="num">${profile.totalXp}</div><div class="lbl">Total XP</div></div>
-        <div class="stat-card"><div class="num">✨ ${profile.currency}</div><div class="lbl">Sparks</div></div>
+        <div class="stat-card"><div class="num">${window.EC_MONEY(profile.currency)}</div><div class="lbl">Coins</div></div>
         <div class="stat-card"><div class="num">${profile.inventory.length}/${window.EC_COSMETICS.ITEMS.length}</div><div class="lbl">Items Owned</div></div>
         <div class="stat-card"><div class="num">🔥 ${(profile.daily||{}).streak||0}</div><div class="lbl">Daily Streak</div></div>
       </div>
@@ -796,7 +796,7 @@
       <div class="store-section-head"><h3>Daily Specials</h3><button class="btn" data-tab="cart">&#128722; Cart (${cart.ids.length})</button></div>
       <div class="daily-store-grid">${shop.items.map(item=>{
         const owned=profile.inventory.includes(item.id), added=cart.ids.includes(item.id);
-        return `<article class="daily-item">${itemPreviewHtml(item)}<h4>${item.name}</h4><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]}</p><strong>${S.itemPrice(item)} Sparks</strong><button class="btn" data-cart-id="${item.id}" ${owned?'disabled':''}>${owned?'Owned':added?'Remove from cart':'Add to cart'}</button><button class="store-preview" data-preview-id="${item.id}">Preview</button></article>`;
+        return `<article class="daily-item">${itemPreviewHtml(item)}<h4>${item.name}</h4><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]}</p><strong>${window.EC_MONEY(S.itemPrice(item))}</strong><button class="btn" data-cart-id="${item.id}" ${owned?'disabled':''}>${owned?'Owned':added?'Remove from cart':'Add to cart'}</button><button class="store-preview" data-preview-id="${item.id}">Preview</button></article>`;
       }).join('')}</div>`;
   }
   function renderCartHtml(){
@@ -804,9 +804,9 @@
     const items=cart.ids.map(id=>C.getItem(id));
     const total=items.reduce((sum,item)=>sum+S.itemPrice(item),0);
     return `<div class="store-section-head"><h2>Your cart</h2><button class="btn" data-tab="featured">Continue shopping</button></div>
-      <div class="store-cart-list">${items.length ? items.map(item=>`<article class="store-cart-row">${itemPreviewHtml(item)}<div><h3>${item.name}</h3><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]} &middot; 1x</p></div><strong>${S.itemPrice(item)} Sparks</strong><button class="btn" data-cart-id="${item.id}" aria-label="Remove ${item.name}">Remove</button></article>`).join('') : '<p class="store-empty">Your cart is empty. Find something you love in Daily Specials.</p>'}</div>
-      <div class="store-checkout"><span>Total <b>${total} Sparks</b> &middot; Balance ${profile.currency} Sparks</span><button class="btn btn-accept" id="store-checkout" data-date="${cart.date}" ${!items.length || total>profile.currency?'disabled':''}>Checkout</button></div>${total>profile.currency?'<p>Not enough Sparks. Complete a client project to earn more.</p>':''}
-      <details class="store-history"><summary>Purchase history</summary>${(profile.purchases||[]).slice().reverse().map(order=>`<p>${order.date.slice(0,10)} &middot; ${order.ids.map(id=>C.getItem(id)?.name || 'Cosmetic').join(', ')} &middot; ${order.total} Sparks</p>`).join('') || '<p>No purchases yet.</p>'}</details>`;
+      <div class="store-cart-list">${items.length ? items.map(item=>`<article class="store-cart-row">${itemPreviewHtml(item)}<div><h3>${item.name}</h3><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]} &middot; 1x</p></div><strong>${window.EC_MONEY(S.itemPrice(item))}</strong><button class="btn" data-cart-id="${item.id}" aria-label="Remove ${item.name}">Remove</button></article>`).join('') : '<p class="store-empty">Your cart is empty. Find something you love in Daily Specials.</p>'}</div>
+      <div class="store-checkout"><span>Total <b>${window.EC_MONEY(total)}</b> &middot; Balance ${window.EC_MONEY(profile.currency)}</span><button class="btn btn-accept" id="store-checkout" data-date="${cart.date}" ${!items.length || total>profile.currency?'disabled':''}>Checkout</button></div>${total>profile.currency?'<p>Not enough coins. Complete a client project to earn more.</p>':''}
+      <details class="store-history"><summary>Purchase history</summary>${(profile.purchases||[]).slice().reverse().map(order=>`<p>${order.date.slice(0,10)} &middot; ${order.ids.map(id=>C.getItem(id)?.name || 'Cosmetic').join(', ')} &middot; ${window.EC_MONEY(order.total)}</p>`).join('') || '<p>No purchases yet.</p>'}</details>`;
   }
   function checkoutCart(date){
     const result=window.EC_STORE.checkout(profile,date);
@@ -861,10 +861,10 @@
       return `<article class="upgrade-card ${owned?'owned':''}">
         <div class="upgrade-icon">${upgrade.icon}</div>
         <div class="upgrade-copy"><h3>${upgrade.name}</h3><p>${upgrade.description}</p></div>
-        <button class="upgrade-buy-btn ${affordable || owned ? '' : 'insufficient'}" data-upgrade-id="${upgrade.id}" ${owned?'disabled':''}>${owned ? 'Installed' : `${upgrade.price} ✨ Buy`}</button>
+        <button class="upgrade-buy-btn ${affordable || owned ? '' : 'insufficient'}" data-upgrade-id="${upgrade.id}" ${owned?'disabled':''}>${owned ? 'Installed' : `${window.EC_MONEY(upgrade.price)} Buy`}</button>
       </article>`;
     }).join('');
-    return `<section class="upgrades-hero"><h2>🛠️ Studio Upgrades</h2><p>Spend Sparks on guaranteed, permanent editing assists. They make the workspace friendlier but never change your grade.</p><div class="gacha-balance">✨ ${profile.currency} Sparks</div></section><div class="upgrade-list">${cards}</div>`;
+    return `<section class="upgrades-hero"><h2>🛠️ Studio Upgrades</h2><p>Spend coins on guaranteed, permanent editing assists. They make the workspace friendlier but never change your grade.</p><div class="gacha-balance">${window.EC_MONEY(profile.currency)}</div></section><div class="upgrade-list">${cards}</div>`;
   }
 
   function renderShopPanel(){
@@ -1046,46 +1046,40 @@
     showToast('Reply sent! Your client is reviewing the attached design.',2800);
     scheduleClientReply();
   }
-  // Fires when the "client is reviewing" delay elapses: grades the work and
-  // banks the rewards in the background, but doesn't force the reply open —
-  // it just lands as a normal, clickable reply in the inbox, same as any
-  // other piece of mail, until the player opens it themselves.
+  // Fires when the "client is reviewing" delay elapses: the client's reply
+  // lands in the inbox with its verdict. Nothing is paid yet; rewards are
+  // banked when the player reads the reply and marks the task complete.
   function deliverClientReply(){
     if(!pendingSubmission) return;
     const { level, result, elapsedMs, elements } = pendingSubmission;
     pendingSubmission = null;
     window.EC_SOUND.play('newMail');
-    const { newBadges, currencyEarned, daily, needsRevision, missionComplete } = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs);
-    profile.readyReply = { levelId: level.id, result, missionComplete, needsRevision, elements, newBadges, currencyEarned, daily };
+    const missionComplete = result.stars >= window.EC_STORE.REVISION_STAR_THRESHOLD && (!result.mission || result.mission.complete);
+    profile.readyReply = { levelId: level.id, result, elapsedMs, missionComplete, elements };
     save();
     refreshHeader();
     openMailApp();
     showToast(`📧 New reply from ${level.clientName}`, 3200);
   }
 
-  // Player opens the reply themselves from the inbox — this is where the
-  // grade/reward toast and the actual reply UI show up, not at delivery time.
+  // Player opens the reply from the inbox. "Mark Completed" banks the
+  // rewards and celebrates; "Back to Editor" records the review and reopens
+  // the page. Closing the email leaves the reply waiting in the inbox.
   function openReadyReply(level){
     const ready = profile.readyReply;
     if(!ready || ready.levelId !== level.id) return;
-    delete profile.readyReply;
-    save();
-    const { result, missionComplete, needsRevision, elements, newBadges, currencyEarned, daily } = ready;
-    const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
-    const newLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
-    if(needsRevision){
-      showToast(`📧 ${level.clientName} sent this back for another pass.`, 3500);
-    } else {
-      let toastHtml = `🎉 ${result.grade} grade (${result.stars}★) — +${result.xpAwarded} XP · +${currencyEarned} ✨ Sparks!`;
-      if(result.mission.mastery) toastHtml += '<br/>★ Mission mastery bonus earned!';
-      if(newLevel > prevLevel) toastHtml += `<br/>⭐ Level up! You are now Level ${newLevel}.`;
-      if(newBadges.length) toastHtml += `<br/>🏅 New badge: ${newBadges.map(id=>window.EC_STORE.BADGES.find(b=>b.id===id).name).join(', ')}`;
-      if(daily.claimed) toastHtml += `<br/>🔥 Daily mission streak ${daily.streak} — +${daily.bonus} Sparks!`;
-      showToast(toastHtml, 4500);
-    }
+    const { result, elapsedMs, missionComplete, elements } = ready;
     window.EC_MAIL.openClientReply(level, result, missionComplete, ()=>{
+      delete profile.readyReply;
+      const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
+      const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
+      save();
+      refreshHeader();
       renderCurrentFolder();
-      if(!needsRevision) return;
+      if(outcome.missionComplete){
+        showRewardPopup(level, result, outcome, window.EC_STORE.levelFromTotalXp(profile.totalXp).level > prevLevel);
+        return;
+      }
       showLoadingTransition((finishFade)=>{
         showScreen('screen-editor', ()=>{
           window.EC_EDITOR.open(level, elements);
@@ -1095,6 +1089,48 @@
         });
       });
     });
+  }
+
+  // Celebration card after marking a task complete: stars, coins, XP, streak
+  // and badges, with a confetti burst unless particles/motion are off.
+  function showRewardPopup(level, result, outcome, leveledUp){
+    const { currencyEarned, daily, newBadges, rewardBreakdown } = outcome;
+    const stars = '★'.repeat(outcome.stars) + '☆'.repeat(5 - outcome.stars);
+    const lines = [
+      `<li><span>Client payment</span><b>${window.EC_MONEY(rewardBreakdown.base)}</b></li>`,
+      rewardBreakdown.starBonus ? `<li><span>Bonus stars</span><b>+${window.EC_MONEY(rewardBreakdown.starBonus)}</b></li>` : '',
+      daily.claimed ? `<li><span>🔥 Daily streak ${daily.streak}</span><b>+${window.EC_MONEY(daily.bonus)}</b></li>` : '',
+      `<li><span>Experience</span><b>+${result.xpAwarded} XP</b></li>`,
+    ].join('');
+    const extras = [
+      leveledUp ? `⭐ Level up! You are now Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}.` : '',
+      newBadges.length ? `🏅 New badge: ${newBadges.map(id=>window.EC_STORE.BADGES.find(b=>b.id===id).name).join(', ')}` : '',
+    ].filter(Boolean).map(t=>`<p>${t}</p>`).join('');
+    const card = document.getElementById('reward-card-body');
+    card.innerHTML = `<div class="reward-stars" aria-label="${outcome.stars} out of 5 stars">${stars}</div>
+      <h2 id="reward-title">Task complete!</h2>
+      <p class="reward-sub">${level.clientName} · ${level.pageLabel}</p>
+      <div class="reward-total">+${window.EC_MONEY(currencyEarned)}</div>
+      <ul class="reward-lines">${lines}</ul>${extras}`;
+    const fx = document.getElementById('reward-confetti');
+    fx.replaceChildren();
+    const particles = profile.settings.particles;
+    if(particles !== 'off' && !profile.settings.reduceMotion){
+      const colors = ['#9a6ae6','#6ccf8e','#f2a541','#e0728a','#5fb8d6','#f0c64a'];
+      const count = particles === 'reduced' ? 24 : 60;
+      for(let i=0;i<count;i++){
+        const bit = document.createElement('span');
+        bit.style.setProperty('--x', `${(Math.random()*2-1)*260}px`);
+        bit.style.setProperty('--y', `${-120-Math.random()*260}px`);
+        bit.style.setProperty('--r', `${Math.random()*720-360}deg`);
+        bit.style.background = colors[i % colors.length];
+        bit.style.animationDelay = `${Math.random()*0.15}s`;
+        fx.appendChild(bit);
+      }
+    }
+    window.EC_SOUND.play('revealLegendary');
+    window.EC_MODAL.show('modal-reward');
+    document.getElementById('btn-reward-collect').focus();
   }
 
   // ---------------- Timed mode ----------------
@@ -1208,18 +1244,29 @@
   // current screen and lend the existing live stats panel to a small window
   // anchored immediately above whichever taskbar button opened it.
   let taskbarStatsBorrowed = null;
+  // Reputation progress and the newest client quote for the profile card.
+  function profileProgressMarkup(){
+    const prog = window.EC_STORE.progression(profile);
+    const next = prog.nextProject
+      ? `Next client: <b>${prog.nextProject.name}</b> after ${prog.goodNeeded} more ★★★★ review${prog.goodNeeded===1?'':'s'}`
+      : 'Every client is open to you!';
+    const latest = window.EC_STORE.completedFeedback(profile).find(entry=>entry.quote);
+    const quote = latest ? `<blockquote class="profile-quote">“${latest.quote}”<cite>${latest.name}</cite></blockquote>` : '';
+    return `<div class="profile-progress"><div>⭐ Great reviews: <b>${prog.good}</b> · Today: <b>${prog.doneToday}/${prog.dailyLimit}</b> tasks</div><div>${next}</div></div>${quote}`;
+  }
   function profileQuickPanelMarkup(){
-    const average = profile.history.length ? profile.history.reduce((sum,item)=>sum + item.score,0)/profile.history.length : 0;
-    const filledStars = Math.max(0,Math.min(5,Math.round(average/20)));
+    const feedback = window.EC_STORE.completedFeedback(profile);
+    const average = feedback.length ? feedback.reduce((sum,item)=>sum+(item.stars || 0),0)/feedback.length : 0;
+    const filledStars = Math.max(0,Math.min(5,Math.round(average)));
     const stars = Array.from({length:5},(_,i)=>`<span class="${i<filledStars?'filled':''}">${i<filledStars?'★':'☆'}</span>`).join('');
     const unlocked = new Set(profile.unlockedBadges || []);
     const badges = Array.from({length:12},(_,i)=>`<span class="profile-badge-dot ${window.EC_STORE.BADGES[i] && unlocked.has(window.EC_STORE.BADGES[i].id)?'unlocked':''}"></span>`).join('');
     return `<section class="profile-quick-card">
       <img class="profile-quick-avatar" src="assets/icons/profile.svg" alt="" />
       <h2>Hi, User!</h2>
-      <div class="profile-quick-stars" aria-label="${filledStars} out of 5 stars">${stars}</div>
-      <div class="profile-quick-strip">Junior Designer</div>
-      <div class="profile-quick-strip">EyeCoins: $${Number(profile.currency || 0).toFixed(2)}</div>
+      <div class="profile-rating-row"><div class="profile-quick-stars" aria-label="${filledStars} out of 5 stars">${stars}</div><span class="profile-feedback-count" aria-label="${feedback.length} feedback">(${feedback.length})</span></div>
+      ${profileProgressMarkup()}
+      <div class="profile-quick-strip">Coins: ${window.EC_MONEY(profile.currency || 0)}</div>
       <div class="profile-quick-strip">Badges</div>
       <div class="profile-badge-grid">${badges}</div>
       <button class="profile-quick-action" id="profile-quick-settings">⚙ Settings</button>
@@ -1364,6 +1411,7 @@
     });
 
     window.EC_MAIL.initOnce();
+    document.getElementById('btn-reward-collect').addEventListener('click', ()=>window.EC_MODAL.hide('modal-reward'));
     window.EC_EDITOR.initToolbarOnce();
 
     window.EC_MAIL.setHandlers({
@@ -1394,6 +1442,7 @@
       const level = window.EC_EDITOR.getLevel();
       const elapsedMs = levelStartTime ? (Date.now() - levelStartTime) : 0;
       pendingSubmission = { level, result, elapsedMs };
+      openMailApp(); // the reply is written in the mail app, not over the canvas
       window.EC_MAIL.openCompose(level, result);
     });
 

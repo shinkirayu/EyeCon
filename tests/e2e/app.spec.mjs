@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test';
 
 async function beginFirstDay(page) {
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /ready/i }).click();
-  await page.getByRole('button', { name: 'Open Eye Mail' }).click();
+  const ready=page.getByRole('button', { name: /ready/i });
+  if(await ready.isVisible()) await ready.click();
+  await page.getByRole('button', { name: 'Open Mail app' }).click();
 }
 
 test('opens the studio desktop from the home monitor', async ({ page }) => {
@@ -27,7 +28,7 @@ test('level maker creates and exports an 8px-aligned design', async ({ page }) =
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   await page.getByRole('button', { name: 'Open Level Maker app' }).click();
   await expect(page.getByRole('region', { name: 'Level Maker' })).toBeVisible();
-  await page.locator('[data-maker-add="heading"]').click();
+  await page.locator('[data-maker-add="text"]').click();
   await page.locator('[data-maker-field="x"]').fill('19');
   await page.locator('[data-maker-field="x"]').blur();
   await expect(page.locator('[data-maker-field="x"]')).toHaveValue('16');
@@ -164,6 +165,54 @@ test('level maker keeps element dragging separate from canvas panning', async ({
   expect(await page.locator('#maker-canvas').evaluate(el=>el.style.transform)).toBe(canvasTransform);
 });
 
+test('level maker edits text, locks layers, and preserves size at canvas edges', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: 'Open Level Maker app' }).click();
+  await page.locator('[data-maker-add="text"]').click();
+  const text=page.locator('#maker-canvas .maker-element.selected');
+  await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+  await page.locator('.maker-selection-box').dblclick();
+  await expect(text).toHaveAttribute('contenteditable','true');
+  await text.fill('Canvas copy');
+  await page.locator('#maker-title').click();
+  await expect(text).toHaveText('Canvas copy');
+  await page.getByRole('button', { name: 'Lock layer' }).click();
+  await expect(page.getByRole('button', { name: 'Unlock layer' })).toBeVisible();
+  await expect(page.locator('.maker-selection-box')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Unlock layer' }).click();
+  await page.locator('#maker-shape').selectOption('circle');
+  await page.locator('[data-maker-add="shape"]').click();
+  const shape=page.locator('#maker-canvas .maker-element.selected');
+  await expect(shape).toHaveCSS('border-radius','50%');
+  const width=await shape.evaluate(el=>parseInt(el.style.width,10));
+  await page.locator('[data-maker-field="x"]').fill('900');
+  await page.locator('[data-maker-field="x"]').blur();
+  await expect(shape).toHaveCSS('width',`${width}px`);
+  await expect(page.locator('[data-maker-field="x"]')).toHaveValue(String(960-width));
+  const box=await shape.boundingBox();
+  const centerX=box.x+box.width/2,centerY=box.y+box.height/2;
+  await page.mouse.move(centerX,centerY);
+  await page.mouse.down();
+  await page.mouse.move(centerX+240,centerY,{steps:6});
+  await page.mouse.up();
+  await expect(shape).toHaveCSS('width',`${width}px`);
+  await expect(page.locator('[data-maker-field="x"]')).toHaveValue(String(960-width));
+});
+
+test('desktop UI fits the native 1920 by 1080 layout and compacts below it', async ({ page }) => {
+  await page.setViewportSize({width:1920,height:1080});
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  const root=await page.locator('#app-root').boundingBox();
+  expect(root.width).toBe(1920);
+  expect(root.height).toBe(1080);
+  await page.setViewportSize({width:1280,height:720});
+  await page.getByRole('button', { name: 'Open Level Maker app' }).click();
+  await expect(page.locator('.maker-palette')).toHaveCSS('width','192px');
+  await expect(page.locator('#global-taskbar')).toHaveCSS('height','80px');
+});
+
 test('the shop is available from the desktop', async ({ page }) => {
   await page.goto('/');
   await beginFirstDay(page);
@@ -188,6 +237,7 @@ test('the studio upgrades tab sells a guaranteed upgrade', async ({ page }) => {
 test('the canvas fills its workspace without a mission strip or resizing for settings', async ({ page }) => {
   await page.goto('/');
   await beginFirstDay(page);
+  await expect(page.locator('#mail-list .mail-prize').first()).toContainText('¢');
   await page.getByRole('listitem').first().click();
   await page.getByRole('button', { name: 'Accept' }).click();
 
@@ -204,11 +254,10 @@ test('the canvas fills its workspace without a mission strip or resizing for set
     const before=await readGeometry();
     expect(before.workspace).toBeGreaterThan(.7);
     expect(before.fill).toBeGreaterThan(.9);
-    await page.getByRole('button',{name:'Show or hide element settings'}).click();
+    await expect(page.locator('#element-settings')).toBeVisible();
     const after=await readGeometry();
     expect(after.width).toBeCloseTo(before.width,0);
     expect(after.height).toBeCloseTo(before.height,0);
-    await page.getByRole('button',{name:'Show or hide element settings'}).click();
   }
 
 });
@@ -242,10 +291,51 @@ test('submission restores typing and attaching a reply before recording rewards'
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
   await expect(page.locator('#mail-list')).toContainText('Awaiting their reply');
   await expect(page.getByRole('dialog', { name: 'Compose reply' })).toBeHidden();
-  await expect.poll(() => page.evaluate(() => EC_STORE.load().history.length)).toBe(1);
-  await expect(page.locator('#mail-detail-body')).not.toContainText('/5');
+  // The reply arrives with a verdict, but nothing is recorded until the player acts on it.
+  await expect.poll(() => page.evaluate(() => !!EC_STORE.load().readyReply)).toBe(true);
+  expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
+  await page.locator('#mail-list .mail-item.unread').click();
+  await expect(page.locator('#mail-detail-body')).toContainText('Could you take another look');
+  await page.getByRole('button', { name: 'Back to Editor' }).click();
+  expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(1);
   expect(await page.evaluate(()=>EC_STORE.load().totalXp)).toBe(0);
-  await expect(page.locator('#taskbar-currency')).toHaveCount(0);
+  await expect(page.locator('#modal-reward')).toBeHidden();
+});
+
+test('marking an approved task complete pays out with a celebration', async ({ page }) => {
+  await page.goto('/');
+  await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button', { name: 'Accept' }).click();
+  const set = async (id, field, value) => {
+    await page.locator(`#editor-layers-panel [data-layer-id="${id}"] .editor-layer-select`).click();
+    const input = page.locator('#f-' + field);
+    await input.fill(String(value));
+    await input.dispatchEvent('change');
+  };
+  await set('sub', 'x', 64); await set('cta', 'x', 64);
+  await set('navlink2', 'y', 24); await set('navlink3', 'y', 24);
+  await expect(page.locator('.editor-goal.met')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Save and submit' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.locator('#compose-body').focus();
+  await page.keyboard.insertText('Typing my reply to the client. '.repeat(20));
+  await page.getByRole('button', { name: 'Attach file' }).click();
+  await page.locator('#attach-option-edited').click();
+  const before = await page.evaluate(() => EC_STORE.load().currency);
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.locator('#mail-list .mail-item.unread').click({ timeout:10000 });
+  await expect(page.locator('#mail-detail-body')).not.toContainText('What worked');
+  expect(await page.evaluate(() => EC_STORE.load().currency)).toBe(before);
+  await page.getByRole('button', { name: 'Mark Completed' }).click();
+  const reward = page.getByRole('dialog', { name: 'Task complete!' });
+  await expect(reward).toBeVisible();
+  await expect(reward).toContainText('Client payment');
+  const after = await page.evaluate(() => EC_STORE.load().currency);
+  expect(after).toBeGreaterThanOrEqual(before + 40);
+  await page.getByRole('button', { name: 'Collect' }).click();
+  await expect(reward).toBeHidden();
+  await expect(page.locator('#mail-list')).toContainText('Thanks for the homepage');
 });
 
 test('reference desktop keeps app shortcuts reachable across screen sizes',async({page})=>{
@@ -284,7 +374,7 @@ test('audio works for keyboard activation and respects separate music and effect
   await page.evaluate(() => { EC_SOUND.setMusicEnabled(true); });
   await expect.poll(() => page.evaluate(() => window.audioStarts)).toBeGreaterThan(0);
   await page.evaluate(() => { EC_SOUND.setMusicEnabled(false); EC_SOUND.setEnabled(true); window.audioStarts = 0; EC_SOUND.play('menuOpen'); });
-  expect(await page.evaluate(() => window.audioStarts)).toBe(4);
+  expect(await page.evaluate(() => window.audioStarts)).toBe(6);
 });
 
 test('daily store checks out chosen items and delivers them to the wardrobe', async ({page})=>{
@@ -330,4 +420,153 @@ test('selection handles match the artwork bounds and retain their size when zoom
   expect(second.handle).toBeCloseTo(first.handle,0);
   for(const edge of ['left','top','right','bottom'])expect(second[edge]).toBeLessThan(1);
   await expect(page.locator('#selection-dimensions')).toContainText('px');
+});
+
+test('editor settings cards and pastel toolbar icons remain usable',async({page})=>{
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  await page.locator('#editor-canvas .el').filter({hasText:/^Order Now$/}).click();
+  await expect(page.locator('#settings-fields .editor-setting-card summary').first()).toBeVisible();
+  await expect(page.locator('#tool-grid .game-tool-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#grid');
+  expect(await page.locator('#tool-grid .game-tool-icon use').evaluate(el=>el.getBBox().width)).toBeGreaterThan(0);
+  await expect(page.locator('#taskbar-home .game-taskbar-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#home');
+  const card=page.locator('#settings-fields .editor-setting-card').first();
+  await card.locator('summary').click();
+  await expect(card).not.toHaveAttribute('open','');
+  await card.locator('summary').click();
+  await expect(card).toHaveAttribute('open','');
+});
+
+test('design tools stay open and use the app typography',async({page})=>{
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  const inspector=page.locator('#element-settings');
+  await expect(inspector).toBeVisible();
+  await expect(page.locator('#settings-fields')).toBeVisible();
+  await expect(page.locator('#toggle-element-settings')).toHaveCount(0);
+  expect(await inspector.locator('h3').evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
+  await page.locator('#editor-layers-panel .editor-layer-select').filter({hasText:/Order Now/}).click();
+  await expect(inspector).toBeVisible();
+  expect(await inspector.locator('.editor-setting-card summary').first().evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
+  await expect(inspector.getByText('Alignment Controls')).toHaveCount(0);
+  await expect(inspector.locator('[data-align]')).toHaveCount(0);
+  const mail=page.locator('.editor-rail-card');
+  await expect(mail).toBeVisible();
+  await expect(page.locator('#editor-mail-sender')).toHaveText('Brewbird Coffee Co.');
+  await expect(page.locator('#editor-mail-stage')).toContainText('Homepage');
+  await expect(page.locator('#editor-mail-points')).toContainText('Line up the headline');
+  const mailBox=await mail.boundingBox();
+  const settingsBox=await inspector.boundingBox();
+  const layersBox=await page.locator('#editor-layers-panel').boundingBox();
+  expect(mailBox.y+mailBox.height).toBeLessThanOrEqual(settingsBox.y);
+  expect(settingsBox.y+settingsBox.height).toBeLessThanOrEqual(layersBox.y+1);
+  expect(layersBox.height).toBeGreaterThanOrEqual(120);
+});
+
+test('the first day starts with one email showing difficulty and reward',async({page})=>{
+  await page.goto('/');
+  await beginFirstDay(page);
+  const rows=page.locator('#mail-list [role="listitem"]');
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first().locator('.tag')).toHaveText('NOVICE');
+  await expect(rows.first()).not.toContainText('Step');
+  await rows.first().click();
+  await expect(page.locator('#mail-detail-reward')).toContainText('40');
+  await expect(page.locator('#mail-detail-body')).not.toContainText(/tour/i);
+});
+
+test('text alignment moves the text, ticks the client goal and is saved with the design',async({page})=>{
+  // Start with Brewbird's homepage approved, so the menu page is the open email.
+  await page.addInitScript(()=>{
+    if(localStorage.getItem('eyecon_profile_v1')) return;
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
+      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+  });
+  await page.goto('/');
+  await beginFirstDay(page);
+  await page.getByRole('listitem').filter({hasText:'Brewbird Coffee Co.'}).click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  await expect(page.locator('#editor-mail-stage')).toContainText('Menu page');
+  const priceGoal=page.locator('.editor-goal').filter({hasText:'Right-align all four prices'});
+  await expect(priceGoal).not.toHaveClass(/met/);
+  const controls=page.locator('.editor-align-options');
+  for(const id of ['p1','p2','p3','p4']){
+    await page.locator(`#editor-layers-panel [data-layer-id="${id}"] .editor-layer-select`).click();
+    await controls.getByRole('button',{name:'Right'}).click();
+    await expect(controls.getByRole('button',{name:'Right'})).toHaveAttribute('aria-pressed','true');
+    const style=await page.locator(`#editor-canvas .el[data-id="${id}"]`).evaluate(el=>[getComputedStyle(el).textAlign,getComputedStyle(el).justifyContent]);
+    expect(style).toEqual(['right','flex-end']);
+  }
+  await expect(priceGoal).toHaveClass(/met/);
+  // Center and left work too, on the title.
+  await page.locator('#editor-layers-panel [data-layer-id="title"] .editor-layer-select').click();
+  for(const [name,expected] of [['Left','left'],['Center','center']]){
+    await controls.getByRole('button',{name}).click();
+    expect(await page.locator('#editor-canvas .el[data-id="title"]').evaluate(el=>getComputedStyle(el).textAlign)).toBe(expected);
+  }
+  const saved=await page.evaluate(()=>window.EC_EDITOR.getElements().filter(el=>/^p\d$/.test(el.id)).map(el=>el.align));
+  expect(saved).toEqual(['right','right','right','right']);
+});
+
+test('profile popup matches the app card style',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open EyeCon'}).click();
+  await page.locator('#taskbar-profile').click();
+  const popup=page.locator('#taskbar-stats-popup.profile-layout');
+  await expect(popup).toBeVisible();
+  await expect(popup.locator('.taskbar-quick-popup-head strong')).toHaveText('Profile');
+  await expect(popup.locator('.profile-feedback-count')).toHaveText('(0)');
+  await expect(popup.getByText(/tasks per day/)).toHaveCount(0);
+  const style=await popup.evaluate(el=>({radius:getComputedStyle(el).borderRadius,font:getComputedStyle(el.querySelector('h2')).fontFamily}));
+  expect(style.radius).toBe('16px');
+  expect(style.font).toContain('Baloo');
+});
+
+test('editing canvas uses one toolbar for history and zoom',async({page})=>{
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  const bar=page.locator('#screen-editor .editor-topbar');
+  await expect(bar.locator('#tool-undo')).toBeVisible();
+  await expect(bar.locator('#tool-redo')).toBeVisible();
+  await expect(bar.locator('#editor-zoom-label')).toHaveText('100%');
+  await bar.locator('#editor-zoom-in').click();
+  await expect(bar.locator('#editor-zoom-label')).toHaveText('125%');
+  await bar.locator('#editor-zoom-out').click();
+  await expect(bar.locator('#editor-zoom-label')).toHaveText('100%');
+  await expect(bar.locator('#editor-zoom-fit')).toHaveCount(0);
+});
+
+test('editor layers select editable elements while structural layers stay locked',async({page})=>{
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  const bar=page.locator('#screen-editor .editor-topbar');
+  const save=page.locator('#tool-save');
+  await expect(save).toBeVisible();
+  expect(await bar.locator('#tool-save').count()).toBe(0);
+  await expect(page.locator('#tool-preview')).toBeHidden();
+  await expect(page.locator('#tool-show-clickable')).toBeHidden();
+  await expect(page.locator('#tool-hint')).toBeHidden();
+  await expect(page.locator('#tool-inspector')).toBeHidden();
+  await expect(page.locator('#editor-hint-banner')).toBeHidden();
+  const panel=page.locator('#editor-layers-panel');
+  await expect(panel).toBeVisible();
+  expect(await page.locator('#tool-layers').count()).toBe(0);
+  const panelBox=await panel.boundingBox();
+  const stageBox=await page.locator('#editor-canvas-wrap').boundingBox();
+  expect(panelBox.x).toBeLessThan(stageBox.x+stageBox.width/2);
+  if(page.viewportSize().width>900){
+    const settingsBox=await page.locator('#element-settings').boundingBox();
+    expect(panelBox.y).toBeGreaterThanOrEqual(settingsBox.y+settingsBox.height);
+  }
+  await expect(panel.locator('.editor-layer-select:disabled').first()).toBeVisible();
+  const editable=panel.locator('.editor-layer-row:not(.locked)').first();
+  const id=await editable.getAttribute('data-layer-id');
+  await editable.locator('button').click();
+  await expect(page.locator(`#editor-canvas .el[data-id="${id}"]`)).toHaveClass(/selected/);
+  await save.click();
+  await expect(page.getByRole('alertdialog',{name:'Save and submit'})).toBeVisible();
 });

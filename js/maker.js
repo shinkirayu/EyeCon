@@ -30,10 +30,10 @@
   const persist = () => { try{localStorage.setItem(KEY,JSON.stringify(state));}catch(_){/* Large images can exceed storage; export still works. */} };
   const nextId = () => 'element-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
   function normalize(el){
-    el.x = Math.max(0,Math.min(snap(Number(el.x)||0),state.canvas.w-8));
-    el.y = Math.max(0,Math.min(snap(Number(el.y)||0),state.canvas.h-8));
-    el.w = Math.max(8,Math.min(snap(Number(el.w)||8),state.canvas.w-el.x));
-    el.h = Math.max(8,Math.min(snap(Number(el.h)||8),state.canvas.h-el.y));
+    el.w = Math.max(8,Math.min(snap(Number(el.w)||8),state.canvas.w));
+    el.h = Math.max(8,Math.min(snap(Number(el.h)||8),state.canvas.h));
+    el.x = Math.max(0,Math.min(snap(Number(el.x)||0),state.canvas.w-el.w));
+    el.y = Math.max(0,Math.min(snap(Number(el.y)||0),state.canvas.h-el.h));
     el.radius = Math.max(0,snap(Number(el.radius)||0));
     el.fontSize = Math.max(8,snap(Number(el.fontSize)||16));
   }
@@ -83,9 +83,9 @@
     canvas.classList.toggle('peek-targets',peeking);
     state.elements.forEach(el=>{
       const node=document.createElement('div');
-      node.className='maker-element'+(el.id===state.selected?' selected':'');
+      node.className='maker-element'+(el.id===state.selected?' selected':'')+(el.locked?' locked':'');
       node.dataset.id=el.id;
-      node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.radius||0}px;background:${el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;`;
+      node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.type==='text'?'transparent':el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
       if(el.type==='image' && el.src){
         const img=document.createElement('img'); img.src=el.src; img.alt=el.text||''; node.appendChild(img);
       } else node.textContent=el.text||'';
@@ -99,7 +99,7 @@
       canvas.appendChild(node);
     });
     const item=selectedTarget()||selected();
-    if(item&&!peeking){
+    if(item&&!peeking&&!item.locked){
       const box=document.createElement('div');
       box.className='maker-selection-box';
       box.style.cssText=`left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${item.h}px;`;
@@ -123,7 +123,11 @@
       button.innerHTML='<span class="maker-layer-grip" aria-hidden="true">☰</span>';
       button.appendChild(document.createTextNode((el.type==='image'?'▧ ':el.type==='rect'?'▢ ':'T ')+(el.text||el.type)));
       button.addEventListener('click',e=>{if(e.detail===0)select(el.id);});row.appendChild(button);
-      if(el.id===state.selected){
+      const lock=document.createElement('button');lock.type='button';lock.className='maker-layer-lock';
+      lock.setAttribute('aria-label',el.locked?'Unlock layer':'Lock layer');lock.title=el.locked?'Unlock layer':'Lock layer';lock.textContent=el.locked?'🔒':'🔓';
+      lock.addEventListener('pointerdown',e=>e.stopPropagation());
+      lock.addEventListener('click',e=>{e.stopPropagation();el.locked=!el.locked;render();record();});row.appendChild(lock);
+      if(el.id===state.selected&&!el.locked){
         const remove=document.createElement('button');remove.type='button';remove.className='maker-layer-delete';
         remove.setAttribute('aria-label','Delete selected layer');remove.title='Delete selected layer';remove.textContent='×';
         remove.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -165,11 +169,11 @@
     host.innerHTML=`<div class="maker-props-grid">
       ${field('X','x','number',el.x)}${field('Y','y','number',el.y)}
       ${field('Width','w','number',el.w)}${field('Height','h','number',el.h)}
-      ${el.type==='rect'||el.type==='image'?'':field('Text','text','text',el.text||'')}
-      ${field('Fill','bg','color',el.bg||'#ffffff')}
+      ${el.type==='rect'||el.type==='image'||el.type==='text'?'':field('Text','text','text',el.text||'')}
+      ${el.type==='text'?'':field('Fill','bg','color',el.bg||'#ffffff')}
       ${el.type==='rect'||el.type==='image'?'':field('Text color','color','color',el.color||'#3b172e')}
       ${el.type==='rect'||el.type==='image'?'':field('Text size','fontSize','number',el.fontSize||16)}
-      ${field('Corner radius','radius','number',el.radius||0)}
+      ${el.type==='rect'&&el.shape!=='circle'&&el.shape!=='triangle'?field('Corner radius','radius','number',el.radius||0):''}
     </div><div class="maker-props-actions">
       <button data-maker-action="back">Send back</button>
       <button data-maker-action="front">Bring front</button>
@@ -186,15 +190,16 @@
   function select(id){state.selected=id;state.selectedTarget=null;renderCanvas();renderLayers();renderProperties();updateToolbar();}
   function selectTarget(id){state.selectedTarget=id;state.selected=null;renderCanvas();renderLayers();renderProperties();updateToolbar();}
   function add(type,src){
-    const offsets={text:[240,64],heading:[320,80],button:[160,56],shape:[160,128],image:[240,160]};
+    const offsets={text:[240,64],button:[160,56],shape:[128,128],image:[240,160]};
     const [w,h]=offsets[type];
     const el={id:nextId(),type:type==='shape'?'rect':type,role:type==='shape'?'card':type==='image'?'decorative':type,
       x:32,y:32,w,h,text:{text:'New text',heading:'Heading',button:'Button'}[type]||'',
-      bg:{shape:'#bfe9db',button:'#91d8d0'}[type]||'#ffffff',color:'#3b172e',fontSize:type==='heading'?40:24,
-      radius:0,z:state.elements.length+1,src:src||''};
+      bg:{shape:'#bfe9db',button:'#91d8d0'}[type]||'transparent',color:'#3b172e',fontSize:24,
+      radius:0,shape:type==='shape'?$('maker-shape').value:undefined,z:state.elements.length+1,src:src||''};
     normalize(el);state.elements.push(el);state.selected=el.id;state.selectedTarget=null;render();record();
   }
   function deleteSelection(){
+    if(selected()?.locked)return;
     if(state.selectedTarget){state.targets=state.targets.filter(t=>t.id!==state.selectedTarget);state.selectedTarget=null;}
     else if(state.selected){
       state.elements=state.elements.filter(el=>el.id!==state.selected);
@@ -217,7 +222,7 @@
   }
   function exportHtml(){
     const nodes=state.elements.map(el=>{
-      const style=`position:absolute;box-sizing:border-box;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.radius||0}px;background:${el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:pre-wrap;text-align:center;`;
+      const style=`position:absolute;box-sizing:border-box;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.type==='text'?'transparent':el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:pre-wrap;text-align:center;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
       const body=el.type==='image'&&el.src?`<img src="${safe(el.src)}" alt="${safe(el.text||'')}" style="width:100%;height:100%;object-fit:cover">`:safe(el.text||'');
       return `<div style="${style}">${body}</div>`;
     }).join('\n');
@@ -227,8 +232,12 @@
     const canvas=document.createElement('canvas');canvas.width=state.canvas.w;canvas.height=state.canvas.h;
     const ctx=canvas.getContext('2d');ctx.fillStyle=state.canvas.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
     for(const el of [...state.elements].sort((a,b)=>(a.z||0)-(b.z||0))){
-      ctx.save();ctx.beginPath();ctx.roundRect(el.x,el.y,el.w,el.h,el.radius||0);ctx.clip();
-      ctx.fillStyle=el.bg||'transparent';ctx.fillRect(el.x,el.y,el.w,el.h);
+      ctx.save();ctx.beginPath();
+      if(el.shape==='circle')ctx.ellipse(el.x+el.w/2,el.y+el.h/2,el.w/2,el.h/2,0,0,Math.PI*2);
+      else if(el.shape==='triangle'){ctx.moveTo(el.x+el.w/2,el.y);ctx.lineTo(el.x+el.w,el.y+el.h);ctx.lineTo(el.x,el.y+el.h);ctx.closePath();}
+      else ctx.roundRect(el.x,el.y,el.w,el.h,el.radius||0);
+      ctx.clip();
+      ctx.fillStyle=el.type==='text'?'transparent':el.bg||'transparent';ctx.fillRect(el.x,el.y,el.w,el.h);
       if(el.type==='image' && el.src){
         try{const img=new Image();img.src=el.src;await img.decode();ctx.drawImage(img,el.x,el.y,el.w,el.h);}catch(_){}
       }else if(el.text){
@@ -379,6 +388,7 @@
         normalizeTarget(target);render();record();return;
       }
       const el=selected();if(!el)return;
+      if(el.locked){renderProperties();return;}
       el[key]=['x','y','w','h','fontSize','radius'].includes(key)?Number(e.target.value):e.target.value;
       normalize(el);render();record();
     });
@@ -388,6 +398,7 @@
         deleteSelection();return;
       }
       if(!el)return;
+      if(el.locked)return;
       if(action==='delete'){deleteSelection();return;}
       if(action==='duplicate'){
         const copy={...el,id:nextId(),x:el.x+16,y:el.y+16,z:state.elements.length+1};normalize(copy);state.elements.push(copy);state.selected=copy.id;
@@ -400,17 +411,18 @@
     });
     $('maker-canvas').addEventListener('pointerdown',e=>{
       if(peeking||e.button!==0)return;
+      if(e.target.closest('[contenteditable="true"]'))return;
       const handle=e.target.closest('[data-resize]');
       if(handle){
         e.preventDefault();e.stopPropagation();
-        const item=selectedTarget()||selected();if(!item)return;
+        const item=selectedTarget()||selected();if(!item||item.locked)return;
         drag={mode:'resize',kind:selectedTarget()?'target':'element',id:item.id,dir:handle.dataset.resize,
           x:item.x,y:item.y,w:item.w,h:item.h,clientX:e.clientX,clientY:e.clientY,before:snapshot()};
         $('maker-canvas').setPointerCapture(e.pointerId);return;
       }
       if(e.target.closest('.maker-selection-box')){
         e.preventDefault();e.stopPropagation();
-        const item=selectedTarget()||selected();if(!item)return;
+        const item=selectedTarget()||selected();if(!item||item.locked)return;
         drag={mode:'move',kind:selectedTarget()?'target':'element',id:item.id,x:item.x,y:item.y,
           clientX:e.clientX,clientY:e.clientY,before:snapshot()};
         $('maker-canvas').setPointerCapture(e.pointerId);return;
@@ -425,9 +437,29 @@
       const node=e.target.closest('.maker-element');
       if(!node){select(null);return;}
       e.preventDefault();e.stopPropagation();
-      select(node.dataset.id);
+      if(state.selected!==node.dataset.id)select(node.dataset.id);
       const el=selected();drag={mode:'move',kind:'element',id:el.id,x:el.x,y:el.y,clientX:e.clientX,clientY:e.clientY,before:snapshot()};
+      if(el.locked){drag=null;return;}
       $('maker-canvas').setPointerCapture(e.pointerId);
+    });
+    $('maker-canvas').addEventListener('dblclick',e=>{
+      const node=e.target.closest('.maker-element');
+      const selectedNode=state.selected&&[...$('maker-canvas').querySelectorAll('.maker-element')].find(item=>item.dataset.id===state.selected);
+      const rect=selectedNode?.getBoundingClientRect();
+      const onSelected=rect&&e.clientX>=rect.left&&e.clientX<=rect.right&&e.clientY>=rect.top&&e.clientY<=rect.bottom;
+      const id=node?.dataset.id||(onSelected?state.selected:null);
+      if(!id)return;
+      const el=state.elements.find(item=>item.id===id);
+      if(!el||el.type!=='text'||el.locked)return;
+      const editable=$('maker-canvas').querySelector(`.maker-element[data-id="${el.id}"]`);
+      $('maker-canvas').querySelector('.maker-selection-box')?.remove();
+      editable.contentEditable='true';editable.focus();
+      const range=document.createRange();range.selectNodeContents(editable);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+    });
+    $('maker-canvas').addEventListener('focusout',e=>{
+      const node=e.target.closest('.maker-element[contenteditable="true"]');if(!node)return;
+      const el=state.elements.find(item=>item.id===node.dataset.id);if(!el)return;
+      el.text=node.innerText;node.contentEditable='false';render();record();
     });
     $('maker-canvas').addEventListener('pointermove',e=>{
       if(!drag)return;

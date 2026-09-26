@@ -2,12 +2,13 @@
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
-async function setup(){
+async function setupWindow(){
   const context={window:{},localStorage:{getItem:()=>null,setItem:()=>{}},console};
   vm.createContext(context);
   for(const file of ['cosmetics','levels','storage']) vm.runInContext(await readFile(`js/${file}.js`,'utf8'),context);
-  return context.window.EC_STORE;
+  return context.window;
 }
+async function setup(){ return (await setupWindow()).EC_STORE; }
 test('daily specials are stable, unique and rotate across UTC midnight',async()=>{
   const s=await setup(), date=new Date('2026-09-15T23:59:59Z');
   const first=s.dailyShop(date), same=s.dailyShop(new Date('2026-09-15T00:00:00Z'));
@@ -32,14 +33,61 @@ test('insufficient funds and stale carts cannot charge or grant items',async()=>
   p.shopCart.date='2000-01-01';assert.equal(s.getCart(p).ids.length,0);
 });
 
-test('commissions arrive daily without completion locks and keep unfinished requests',async()=>{
+const approve=(s,p,level,stars,date)=>{
+  p.completed.includes(level.id)||p.completed.push(level.id);
+  p.history.unshift({levelId:level.id,date,stars,missionComplete:true});
+};
+
+test('you start with one email and each approval brings the next page',async()=>{
+  const s=await setup(),p=s.defaultProfile(),day='2026-09-15T12:00:00Z',now=new Date(day);
+  const first=s.commissionInbox(p,now);
+  assert.equal(first.map(l=>l.id).join(),'coffee-shop');
+  approve(s,p,first[0],3,day);
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'brewbird-menu');
+});
+
+test('a good review brings a different client, and the day holds three tasks',async()=>{
+  const s=await setup(),p=s.defaultProfile(),now=new Date('2026-09-15T12:00:00Z');
+  approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-14T12:00:00Z');
+  // A 4★ review: Thread & Co. writes in, and Brewbird comes back with its menu page.
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'thread-landing,brewbird-menu');
+  for(let i=0;i<3;i++) approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-15T12:00:00Z');
+  assert.equal(s.dailyTaskLimit(p),3);
+  assert.equal(s.commissionInbox(p,now).length,0);
+  assert.equal(s.progression(p,now).doneToday,3);
+  assert.ok(s.commissionInbox(p,new Date('2026-09-16T09:00:00Z')).length>0);
+  assert.equal(s.progression(p,now).fourthTaskIn,2);
+});
+
+test('a redo can raise a rating but a page only counts once',async()=>{
+  const s=await setup(),p=s.defaultProfile(),day='2026-09-15T12:00:00Z';
+  const level=s.commissionInbox(p,new Date(day))[0];
+  approve(s,p,level,3,day); approve(s,p,level,5,day); approve(s,p,level,5,day);
+  assert.equal(s.goodFeedbackCount(p),1);
+  assert.equal(s.bestStars(p)[level.id],5);
+});
+
+test('when the next client is out of reach, low-rated pages come back to polish',async()=>{
+  const w=await setupWindow(),s=w.EC_STORE,p=s.defaultProfile(),day='2026-09-15T12:00:00Z';
+  w.EC_LEVELS.filter(l=>l.project==='brewbird').forEach(l=>approve(s,p,l,3,'2026-09-14T12:00:00Z'));
+  const inbox=s.commissionInbox(p,new Date(day));
+  assert.equal(inbox.length,3);
+  assert.ok(inbox.every(l=>s.isPolishTask(p,l)));
+  assert.equal(s.progression(p).nextProject.id,'thread');
+  assert.equal(s.progression(p).goodNeeded,1);
+});
+
+test('approval pays exactly the advertised prize plus bonus stars and adds feedback',async()=>{
   const s=await setup(),p=s.defaultProfile();
-  const first=s.commissionInbox(p,new Date('2026-09-15T12:00:00Z'));
-  assert.equal(first.length,1);
-  assert.equal(s.commissionInbox(p,new Date('2026-09-15T23:00:00Z')).length,1);
-  const second=s.commissionInbox(p,new Date('2026-09-16T00:00:00Z'));
-  assert.equal(second.length,2);
-  assert.equal(second[0].id,first[0].id);
-  p.completed.push(first[0].id);
-  assert.equal(s.commissionInbox(p,new Date('2026-09-16T12:00:00Z')).length,1);
+  const level=s.commissionInbox(p)[0];
+  const {base,perBonusStar}=s.commissionPay(p,level);
+  const before=p.currency;
+  const result={stars:5,score:100,grade:'S+',xpAwarded:100,categoryScores:{},mission:{complete:true,objectives:[]}};
+  const out=s.recordSubmission(p,level,result,0);
+  assert.equal(out.currencyEarned,base+2*perBonusStar+out.daily.bonus);
+  assert.equal(p.currency,before+out.currencyEarned);
+  assert.equal(s.completedFeedback(p).length,1);
+  assert.equal(s.goodFeedbackCount(p),1);
+  assert.ok(p.history[0].quote);
+  assert.ok(s.commissionPrize(p,level)<base, 'a redo pays less than the first time');
 });

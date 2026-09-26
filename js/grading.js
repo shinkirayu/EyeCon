@@ -22,6 +22,7 @@
   const CATEGORY_LABELS = { placement:'Placement', contrast:'Contrast', alignment:'Alignment', hierarchy:'Hierarchy', spacing:'Spacing', consistency:'Consistency', accessibility:'Accessibility', usability:'Usability' };
 
   function activeRubricCategories(level){
+    if(level.goals && level.goals.length) return ['goals'];
     const categories = (level.rubric.focusCategories || FOCUS_BY_LEVEL[level.levelNumber] || Object.keys(level.rubric.weights)).slice();
     if(Array.isArray(level.hiddenTargets) && level.hiddenTargets.length && !categories.includes('placement')) categories.unshift('placement');
     return categories;
@@ -81,6 +82,64 @@
     let best = Infinity;
     arr.forEach(v => { const d = Math.abs(value-v); if(d<best) best = d; });
     return best;
+  }
+
+  // ---------------- Client goals ----------------
+  // Each tour page lists plain-language goals (see levels.js). Required goals
+  // decide approval; each bonus goal met adds a star. Checks are relative
+  // ("these share a left edge") so there's no single pixel-perfect answer.
+  const GOAL_TOOL = { align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
+    evenGapsY:'position', evenGapsX:'position', safeMargin:'position', minW:'sizing', minH:'sizing',
+    minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color' };
+  function goalKind(check){ return Object.keys(check).find(k => GOAL_TOOL[k]); }
+  function goalIds(check){
+    const kind = goalKind(check), v = check[kind];
+    return Array.isArray(v) ? v : (check.ids || []);
+  }
+  function checkGoal(goal, elements, level){
+    const check = goal.check, kind = goalKind(check);
+    const byId = new Map(elements.map(el => [el.id, el]));
+    const els = goalIds(check).map(id => byId.get(id)).filter(Boolean);
+    if(!els.length) return false;
+    const same = f => els.every(el => Math.abs(f(el) - f(els[0])) <= 1);
+    const evenGaps = (pos, size) => {
+      const sorted = els.slice().sort((a,b) => a[pos]-b[pos]);
+      const gaps = sorted.slice(1).map((el,i) => el[pos] - (sorted[i][pos] + sorted[i][size]));
+      return gaps.every(g => g >= 8 && Math.abs(g - gaps[0]) <= 1);
+    };
+    switch(kind){
+      case 'align': return els.every(el => el.align === check.align);
+      case 'sameX': return same(el => el.x);
+      case 'sameY': return same(el => el.y);
+      case 'sameRight': return same(el => el.x + el.w);
+      case 'sameCenterX': return same(el => el.x + el.w/2);
+      case 'evenGapsY': return evenGaps('y','h');
+      case 'evenGapsX': return evenGaps('x','w');
+      case 'safeMargin': return els.every(el => el.x >= check.safeMargin && el.y >= check.safeMargin &&
+        el.x + el.w <= level.canvas.w - check.safeMargin && el.y + el.h <= level.canvas.h - check.safeMargin);
+      case 'minW': return els.every(el => el.w >= check.minW);
+      case 'minH': return els.every(el => el.h >= check.minH);
+      case 'minFont': return els.every(el => el.fontSize >= check.minFont);
+      case 'maxFont': return els.every(el => el.fontSize <= check.maxFont);
+      case 'bigger': return els.length === 2 && els[0].fontSize > els[1].fontSize;
+      case 'contrast': return els.every(el => {
+        const bold = Number(el.fontWeight) >= 700 || el.fontWeight === 'bold';
+        return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass;
+      });
+    }
+    return false;
+  }
+  function checkGoals(level, elements){
+    return (level.goals || []).map(goal => ({ goal, met: checkGoal(goal, elements, level) }));
+  }
+  // Required goals carry the approval (80 pts); each bonus goal is worth a star.
+  function goalScore(results){
+    const req = results.filter(r => !r.goal.bonus), bonus = results.filter(r => r.goal.bonus);
+    const reqMet = req.filter(r => r.met).length, bonusMet = bonus.filter(r => r.met).length;
+    const allReq = reqMet === req.length;
+    const stars = allReq ? Math.min(5, 3 + bonusMet) : (reqMet ? 2 : 1);
+    const score = Math.round((req.length ? reqMet/req.length : 1) * 80 + (allReq ? bonusMet * 10 : 0));
+    return { score:Math.min(100, score), stars, allReq, reqMet, bonusMet };
   }
 
   function gradeSubmission(level, elements){
@@ -411,6 +470,19 @@
       scores.usability = Math.round(usability*100);
     })();
 
+    // ---------- CLIENT GOALS ----------
+    const goalResults = checkGoals(level, elements);
+    const goalSummary = goalResults.length ? goalScore(goalResults) : null;
+    if(goalSummary){
+      scores.goals = goalSummary.score;
+      goalResults.forEach(({goal, met}) => feedback.push({
+        type: met ? 'good' : 'bad', category:'Goals', elId: goalIds(goal.check)[0], bonus: !!goal.bonus,
+        title: met ? (goal.done || goal.label) : goal.label,
+        detail: met ? (goal.why || '') : (goal.tip || goal.why || ''),
+        suggest: met ? '' : (goal.tip || ''),
+      }));
+    }
+
     // ---------- OVERALL ----------
     const weights = level.rubric.weights;
     const activeCategories = activeRubricCategories(level);
@@ -420,7 +492,7 @@
       // Existing level weights still express the relative importance where a
       // mission teaches two skills; an unweighted custom objective is fair
       // by default rather than silently excluded.
-      const weight = k === 'placement' ? (level.rubric.placementWeight || 35) : (weights[k] || 1);
+      const weight = k === 'placement' ? (level.rubric.placementWeight || 35) : k === 'goals' ? 1 : (weights[k] || 1);
       weightedTotal += s * weight;
       weightSum += weight;
     });
@@ -439,9 +511,12 @@
     feedback.sort((a,b)=> order[a.type]-order[b.type]);
 
     const xpAwarded = window.EC_STORE.xpAwardForGrade(grade);
-    const stars = scoreToStars(score);
+    const stars = goalSummary ? goalSummary.stars : scoreToStars(score);
 
-    const objectives = activeCategories.map(category => {
+    const objectives = goalSummary ? goalResults.map(({goal, met}, i) => ({
+      id:'goal'+i, label:goal.label, bonus:!!goal.bonus, value:met ? 100 : 0, target:100,
+      complete: met || !!goal.bonus, mastered: met,
+    })) : activeCategories.map(category => {
       const value = scores[category] == null ? 100 : scores[category];
       return {
         id: category,
@@ -475,5 +550,5 @@
     return 1;
   }
 
-  window.EC_GRADING = { gradeSubmission, effectiveBg, activeRubricCategories, scoreToStars };
+  window.EC_GRADING = { gradeSubmission, effectiveBg, activeRubricCategories, scoreToStars, checkGoals, goalScore, GOAL_TOOL, goalKind, goalIds };
 })();
