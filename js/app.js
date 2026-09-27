@@ -1244,15 +1244,11 @@
   // current screen and lend the existing live stats panel to a small window
   // anchored immediately above whichever taskbar button opened it.
   let taskbarStatsBorrowed = null;
-  // Reputation progress and the newest client quote for the profile card.
-  function profileProgressMarkup(){
-    const prog = window.EC_STORE.progression(profile);
-    const next = prog.nextProject
-      ? `Next client: <b>${prog.nextProject.name}</b> after ${prog.goodNeeded} more ★★★★ review${prog.goodNeeded===1?'':'s'}`
-      : 'Every client is open to you!';
+  // The newest client quote for the profile card.
+  function profileQuoteMarkup(){
     const latest = window.EC_STORE.completedFeedback(profile).find(entry=>entry.quote);
     const quote = latest ? `<blockquote class="profile-quote">“${latest.quote}”<cite>${latest.name}</cite></blockquote>` : '';
-    return `<div class="profile-progress"><div>⭐ Great reviews: <b>${prog.good}</b> · Today: <b>${prog.doneToday}/${prog.dailyLimit}</b> tasks</div><div>${next}</div></div>${quote}`;
+    return quote;
   }
   function profileQuickPanelMarkup(){
     const feedback = window.EC_STORE.completedFeedback(profile);
@@ -1265,7 +1261,7 @@
       <img class="profile-quick-avatar" src="assets/icons/profile.svg" alt="" />
       <h2>Hi, User!</h2>
       <div class="profile-rating-row"><div class="profile-quick-stars" aria-label="${filledStars} out of 5 stars">${stars}</div><span class="profile-feedback-count" aria-label="${feedback.length} feedback">(${feedback.length})</span></div>
-      ${profileProgressMarkup()}
+      ${profileQuoteMarkup()}
       <div class="profile-quick-strip">Coins: ${window.EC_MONEY(profile.currency || 0)}</div>
       <div class="profile-quick-strip">Badges</div>
       <div class="profile-badge-grid">${badges}</div>

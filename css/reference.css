@@ -1023,18 +1023,10 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-goal.met .editor-goal-mark{background:#6ccf8e;border-color:#6ccf8e;color:#fff;}
 #screen-editor .editor-goal.met > span:last-child{color:#2f6b45;}
 #screen-editor .editor-goal.met small{color:#3d7a54;}
-/* Profile: reputation progress + latest client quote. */
-.profile-progress{display:flex;flex-direction:column;gap:.25rem;margin:.5rem 0;padding:.5rem .75rem;border-radius:.75rem;background:#fff6dc;color:#3b172e;font:600 .875rem/1.35 var(--font-body);text-align:left;}
+/* Profile: latest client quote. */
 .profile-quote{margin:0 0 .5rem;padding:.5rem .75rem;border-left:.25rem solid #9a6ae6;background:#f6f0ff;border-radius:.5rem;color:#3b172e;font:italic 500 .875rem/1.4 var(--font-body);text-align:left;}
 .profile-quote cite{display:block;margin-top:.25rem;color:#756685;font:700 .75rem var(--font-body);font-style:normal;}
-/* Reward, top-right of an opened email. */
 .mail-detail-card .mail-detail-head{padding-right:3.5rem;}
-.mail-detail-reward{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-transform:none;font-family:var(--font-body);color:#3b172e;}
-.mail-detail-reward:empty{display:none;}
-.mail-detail-reward > span{font:700 .875rem var(--font-body);color:#756685;text-transform:uppercase;letter-spacing:.05em;}
-.mail-detail-reward b{font:800 2.5rem/1 var(--font-display);}
-.mail-detail-reward small{font:600 .875rem var(--font-body);color:#756685;}
-.mail-detail-card .mail-detail-reward b{font:800 2.5rem/1 var(--font-display);color:#3b172e;}
 /* Keep the brief from crowding out Design tools: it scrolls past ~40% height. */
 #screen-editor .editor-rail-card{min-height:0;max-height:42%;flex:0 1 auto;justify-content:flex-start;}
 #screen-editor .editor-side-rail .element-settings{min-height:10rem;}
@@ -1056,10 +1048,15 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 @keyframes reward-confetti{0%{opacity:1;transform:translate(0,0) rotate(0);}70%{opacity:1;}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 20rem)) rotate(var(--r));}}
 @keyframes reward-pop{from{transform:scale(.7);opacity:0;}to{transform:scale(1);opacity:1;}}
 @media (prefers-reduced-motion:reduce){.reward-card{animation:none;}.reward-confetti{display:none;}}
-/* Reward sticker in an opened email: bright, tilted, like a prize tag. */
-#mail-detail-reward{position:relative;align-items:center;gap:.375rem;padding:.875rem 1.5rem 1rem;border:.1875rem solid #b99af0;border-radius:1.375rem;background:linear-gradient(145deg,#f4ecff 0%,#fff3d1 100%);box-shadow:0 .375rem 0 #b99af055,0 .75rem 1.5rem #9a6ae626;transform:rotate(2deg);}
-#mail-detail-reward::before{content:'✦';position:absolute;top:-.875rem;right:-.625rem;color:#f0b400;font-size:1.625rem;text-shadow:0 2px 0 #fff;}
-#mail-detail-reward > span{padding:.1875rem .75rem;border-radius:62.4375rem;background:#9a6ae6;color:#fff;font:800 .75rem var(--font-body);letter-spacing:.08em;}
-#mail-detail-reward b{font:800 3rem/1 var(--font-display);color:#5b2fa8;}
-#mail-detail-reward b .money-icon{color:#9a6ae6;}
-#mail-detail-reward small{padding:.25rem .625rem;border-radius:62.4375rem;background:#ffe08a;color:#6b4a10;font:700 .8125rem var(--font-body);}
+/* Day/time: plain text, lines close together, fullscreen icon to its right. */
+#global-taskbar .taskbar-clock{width:auto;height:auto;min-width:0;min-height:0;padding:0 .5rem;gap:0;border:0;border-radius:0;background:none;box-shadow:none;font:700 1.75rem/1.1 var(--font-display);}
+#global-taskbar .taskbar-clock span{height:auto;line-height:1.1;}
+#global-taskbar #taskbar-fullscreen{margin-left:.5rem;}
+@media(max-width:900px){#global-taskbar .taskbar-clock{width:auto;height:auto;min-width:0;min-height:0;padding:0 .25rem;font-size:1.25rem;line-height:1.1;background:none;border:0;}#global-taskbar .taskbar-clock span{height:auto;line-height:1.1;}}
+#screen-shell .mail-sidebar .side-icon{width:4.5rem;height:4.5rem;font-size:4.5rem;}
+@media(max-width:900px){#screen-shell .mail-sidebar .side-icon{width:2.75rem;height:2.75rem;font-size:2.75rem;}}
+
+/* Reward line under the client's name in an opened email; folder icons. */
+.mail-detail-card .mail-detail-reward{margin:.5rem 0 0;color:#756685;font:600 1.125rem var(--font-body);text-transform:none;}
+.mail-detail-card .mail-detail-reward:empty{display:none;}
+.mail-detail-card .mail-detail-reward b{color:#5b2fa8;font:800 1.5rem var(--font-display);}

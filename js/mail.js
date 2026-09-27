@@ -136,7 +136,7 @@
       ? `Hi! We loved your work on our ${level.pageLabel.toLowerCase()}. If you have time, could you give it one more polish? We'd happily raise our review.\n\n— ${level.clientName}`
       : level.emailBody;
     document.getElementById('mail-detail-reward').innerHTML =
-      `<span>${readOnly ? 'Paid' : 'Reward'}</span><b>${window.EC_MONEY(pay.base)}</b><small>+${pay.perBonusStar} per bonus ★</small>`;
+      `${readOnly ? 'Paid' : 'Reward'}: <b>${window.EC_MONEY(pay.base)}</b> · +${pay.perBonusStar} per bonus ★`;
     document.getElementById('mail-detail-attachment').innerHTML =
       `<button type="button" class="attachment-card" id="attachment-chip" aria-label="Preview ${level.attachmentName}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${level.attachmentName}</span></button>`;
     window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
