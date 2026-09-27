@@ -56,8 +56,8 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
     const landscape = window.matchMedia('(orientation: landscape)').matches;
     const short = Math.min(sw, sh), long = Math.max(sw, sh);
     const content = landscape && short < 600
-      ? `width=${Math.max(1280, Math.round(LANDSCAPE_LAYOUT_H * long / short))}, viewport-fit=cover`
-      : 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+      ? `width=${Math.max(1280, Math.round(LANDSCAPE_LAYOUT_H * long / short))}, user-scalable=no, viewport-fit=cover`
+      : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
     if(meta.content !== content) meta.content = content;
   }
   function fit(){
@@ -70,3 +70,11 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
 })();
+
+// No pinch-zoom on phones: the game handles its own sizing. iOS ignores
+// user-scalable=no, so cancel its pinch gesture directly. The design canvases
+// keep their own two-finger zoom.
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => {
+  if(e.touches.length > 1 && !e.target.closest('#editor-canvas-wrap, .maker-stage')) e.preventDefault();
+}, { passive:false });
