@@ -51,6 +51,7 @@
       equipped: Object.assign({ decor: [], poster: [] }, window.EC_COSMETICS.CATEGORY_DEFAULT),
       shopCart: { date:'', ids:[] },
       purchases: [],
+      designs: {},                               // levelId -> last approved design (for the Browser app)
       settings: defaultSettings(),
     };
   }

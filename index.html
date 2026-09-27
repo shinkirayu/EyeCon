@@ -163,6 +163,10 @@
           <span class="desktop-icon-glyph" id="glyph-maker" aria-hidden="true"></span>
           <span class="desktop-icon-label">Level Maker</span>
         </button>
+        <button class="desktop-icon" id="icon-browser" aria-label="Open Browser app">
+          <span class="desktop-icon-glyph" id="glyph-browser" aria-hidden="true"></span>
+          <span class="desktop-icon-label">Browser</span>
+        </button>
         <button class="desktop-icon" id="icon-stats" aria-label="Open Stats app">
           <span class="desktop-icon-glyph" id="glyph-stats">📊</span>
           <span class="desktop-icon-label">Stats</span>
@@ -249,6 +253,17 @@
     </div>
   </section>
 
+  <!-- ============ BROWSER ============ -->
+  <section id="screen-browser" class="screen" aria-label="Browser">
+    <header class="browser-chrome">
+      <button class="app-back-btn" id="browser-back-btn" aria-label="Back to desktop">←</button>
+      <button class="browser-home-btn" id="browser-home-btn" aria-label="Browser home page">⌂</button>
+      <div class="browser-address" id="browser-address" aria-live="polite"></div>
+    </header>
+    <nav class="browser-tabs" id="browser-tabs" aria-label="Site pages"></nav>
+    <div class="browser-view" id="browser-view"></div>
+  </section>
+
   <!-- ============ EDITOR SCREEN ============ -->
   <section id="screen-editor" class="screen" aria-label="Design Editor">
     <div class="typescale-popover" id="typescale-panel" hidden></div>
@@ -326,14 +341,16 @@
       <div class="editor-canvas-wrap" id="editor-canvas-wrap">
         <div class="editor-canvas" id="editor-canvas"></div>
       </div>
+      <div class="editor-mode-note editor-mode-corner" aria-hidden="true"><span class="editor-mode-tab">📌 Edit mode</span><p>Click on any element to edit.</p></div>
       <div class="editor-side-rail">
-      <div class="editor-mode-note" aria-hidden="true"><span class="editor-mode-tab">📌 Edit mode</span><p>Click on any element to edit.</p></div>
       <div class="editor-rail-card">
       <aside class="editor-mail-brief" id="editor-mail-brief" aria-label="Client brief">
         <div class="editor-mail-brief-head"><div class="avatar-circle" id="editor-mail-avatar" aria-hidden="true"></div><div><small id="editor-mail-stage">Client brief</small><h3 id="editor-mail-sender"></h3></div></div>
         <ul class="editor-mail-points" id="editor-mail-points"></ul>
       </aside>
       </div>
+      </div>
+      <div class="editor-side-rail editor-right-rail">
       <aside class="element-settings" id="element-settings">
         <div class="element-settings-head">
           <div class="selection-heading"><h3 id="element-settings-title">Design tools</h3><small id="selection-dimensions">Select something to make it shine</small></div>
@@ -455,7 +472,7 @@
   <!-- ============ MAIL DETAIL MODAL ============ -->
   <div id="modal-mail-detail" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mail-detail-title">
     <div class="modal-card mail-detail-card">
-      <button class="mail-detail-close" id="btn-close-mail" aria-label="Close">✕</button>
+      <button class="mail-detail-close" id="btn-close-mail" aria-label="Close email"></button>
       <div class="mail-detail-head">
         <div class="avatar-circle"><img src="assets/icons/profile.svg" alt="" /></div>
         <div>

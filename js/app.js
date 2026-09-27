@@ -751,9 +751,101 @@
 
   // ---------------- Daily Store / Wardrobe ----------------
   function openShopApp(){
+    returnShopPanel();
     showScreen('screen-shop');
     updateCurrencyDisplays();
     renderShopPanel();
+  }
+
+  // ---------------- Browser app ----------------
+  // A pretend web browser: a bookmarks home page, the EyeCon Store (the Shop
+  // panel, borrowed into the browser window) and a website for every client
+  // you've worked with, showing your approved redesigns page by page.
+  const slug = text => text.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
+  let browserPage = { kind:'home' };
+  function workedProjects(){
+    return (window.EC_PROJECTS || []).filter(p => window.EC_LEVELS.some(l => l.project===p.id && profile.completed.includes(l.id)));
+  }
+  function returnShopPanel(){
+    const panel = document.getElementById('shop-panel');
+    const home = document.querySelector('#screen-shop .app-content-wrap');
+    if(panel && home && panel.parentNode !== home) home.appendChild(panel);
+  }
+  function openBrowserApp(page){
+    browserPage = page || { kind:'home' };
+    showScreen('screen-browser', renderBrowser);
+  }
+  function renderBrowser(){
+    const view = document.getElementById('browser-view');
+    const tabs = document.getElementById('browser-tabs');
+    const address = document.getElementById('browser-address');
+    returnShopPanel();
+    tabs.replaceChildren();
+    view.replaceChildren();
+    if(browserPage.kind === 'store'){
+      address.textContent = 'https://www.eyecon.store';
+      const panel = document.getElementById('shop-panel');
+      view.appendChild(panel);
+      updateCurrencyDisplays();
+      renderShopPanel();
+      return;
+    }
+    if(browserPage.kind === 'site'){
+      const project = window.EC_PROJECTS.find(p => p.id === browserPage.project);
+      const pages = window.EC_LEVELS.filter(l => l.project === project.id);
+      const level = pages[browserPage.page] || pages[0];
+      address.textContent = `https://www.${slug(project.name)}.com/${level.pageIndex ? slug(level.pageLabel) : ''}`;
+      pages.forEach((p, i) => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'browser-tab' + (p === level ? ' active' : '');
+        tab.textContent = p.pageLabel;
+        tab.setAttribute('aria-pressed', String(p === level));
+        tab.addEventListener('click', () => { browserPage = { kind:'site', project:project.id, page:i }; renderBrowser(); });
+        tabs.appendChild(tab);
+      });
+      const design = (profile.designs || {})[level.id];
+      if(!design){
+        const note = document.createElement('p');
+        note.className = 'browser-note';
+        note.textContent = profile.completed.includes(level.id)
+          ? 'You finished this page before designs were saved, so this is the original version.'
+          : "This page hasn't been redesigned yet. This is how it looks today.";
+        view.appendChild(note);
+      }
+      const frame = document.createElement('div');
+      frame.className = 'browser-page';
+      view.appendChild(frame);
+      const box = view.getBoundingClientRect();
+      window.EC_EDITOR.renderStatic(frame, level, design || level.elements, { fitW: Math.max(200, box.width - 48), fitH: Math.max(160, box.height - (design ? 48 : 96)) });
+      return;
+    }
+    address.textContent = 'eyecon://home';
+    const heading = document.createElement('h2');
+    heading.className = 'browser-home-title';
+    heading.textContent = 'Bookmarks';
+    view.appendChild(heading);
+    const grid = document.createElement('div');
+    grid.className = 'browser-bookmarks';
+    const card = (icon, name, url, page) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'browser-bookmark';
+      b.innerHTML = `<span class="browser-bookmark-icon" aria-hidden="true">${icon}</span><b></b><small></small>`;
+      b.querySelector('b').textContent = name;
+      b.querySelector('small').textContent = url;
+      b.addEventListener('click', () => { browserPage = page; renderBrowser(); });
+      grid.appendChild(b);
+    };
+    card('🛍️', 'EyeCon Store', 'eyecon.store', { kind:'store' });
+    workedProjects().forEach(p => card(p.avatarEmoji, p.name, `${slug(p.name)}.com`, { kind:'site', project:p.id, page:0 }));
+    view.appendChild(grid);
+    if(!workedProjects().length){
+      const tip = document.createElement('p');
+      tip.className = 'browser-note';
+      tip.textContent = "Finish a client's page and their website will appear here.";
+      view.appendChild(tip);
+    }
   }
 
   const SKIN_CATEGORIES = ['deskSkin','keyboardSkin','mouseSkin','towerSkin','monitorSkin'];
@@ -1073,6 +1165,7 @@
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
       const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
+      if(outcome.missionComplete) profile.designs = Object.assign({}, profile.designs, { [level.id]: elements });
       save();
       refreshHeader();
       renderCurrentFolder();
@@ -1244,6 +1337,102 @@
   // current screen and lend the existing live stats panel to a small window
   // anchored immediately above whichever taskbar button opened it.
   let taskbarStatsBorrowed = null;
+  // Settings list inside the profile card (opened with its Settings button):
+  // sliders for sound, music and size, an on/off switch for reduced motion,
+  // and ◀ ▶ arrows to pick a colorblind mode. 50% is the default for the
+  // sliders and matches the original volume and look.
+  const SCALE_FOR = { 25:0.8, 50:1, 75:1.2, 100:1.4 };
+  const CVD_STEPS = ['none','protanopia','deuteranopia','tritanopia'];
+  const CVD_NAMES = { none:'Off', protanopia:'Red-blind', deuteranopia:'Green-blind', tritanopia:'Blue-blind' };
+  function quickLevel(key){
+    const v = profile.settings[key + 'Level'];
+    return v == null ? 50 : v;
+  }
+  // Editor look options (see editor.js): stored per browser, not in the profile.
+  const EDITOR_LAYOUTS = ['double','single','compact'];
+  const EDITOR_LAYOUT_NAMES = { double:'2 bars', single:'1 bar', compact:'1 bar, no top bar' };
+  const EDITOR_THEMES = ['blue','classic'];
+  const EDITOR_THEME_NAMES = { blue:'Blue', classic:'Classic' };
+  function setQuickSetting(key, value){
+    const s = profile.settings;
+    if(key === 'motion') s.reduceMotion = !!value;
+    else if(key === 'cvd') s.cvd = value;
+    else{
+      s[key + 'Level'] = value;
+      if(key === 'sfx'){ s.soundEnabled = value > 0; s.soundVolume = value/100 * 1.2; }
+      if(key === 'music'){ s.musicEnabled = value > 0; s.musicVolume = value/100 * 0.56; }
+      if(key === 'scale'){ s.uiScale = SCALE_FOR[value]; }
+    }
+    save();
+    applySettings();
+  }
+  function quickSettingsList(){
+    const slider = (key, name, min, step) => `<li class="profile-setting">
+        <label for="qs-${key}">${name}</label>
+        <div class="profile-control"><input type="range" id="qs-${key}" data-setting="${key}" min="${min}" max="100" step="${step}" value="${quickLevel(key)}"/></div>
+        <output for="qs-${key}">${quickLevel(key)}%</output>
+      </li>`;
+    const motion = !!profile.settings.reduceMotion;
+    const cvd = profile.settings.cvd || 'none';
+    const picker = (key, label, value) => `<li class="profile-setting">
+        <span id="qs-${key}-label">${label}</span>
+        <div class="profile-control profile-picker" role="group" aria-labelledby="qs-${key}-label">
+          <button type="button" data-pick="${key}" data-step="-1" aria-label="Previous ${label.toLowerCase()}">◀</button>
+          <output aria-live="polite">${value}</output>
+          <button type="button" data-pick="${key}" data-step="1" aria-label="Next ${label.toLowerCase()}">▶</button>
+        </div>
+      </li>`;
+    const look = window.EC_EDITOR.readVariant();
+    return `<ul class="profile-settings-list">
+      ${slider('sfx','Sound',0,5)}
+      ${slider('music','Music',0,5)}
+      ${slider('scale','Size',25,25)}
+      <li class="profile-setting">
+        <span id="qs-motion-label">Reduce motion</span>
+        <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${motion}" aria-labelledby="qs-motion-label" data-setting="motion"><span></span></button></div>
+      </li>
+      <li class="profile-setting">
+        <span id="qs-cvd-label">Colorblind</span>
+        <div class="profile-control profile-picker" role="group" aria-labelledby="qs-cvd-label">
+          <button type="button" data-cvd-step="-1" aria-label="Previous colorblind mode">◀</button>
+          <output aria-live="polite">${CVD_NAMES[cvd]}</output>
+          <button type="button" data-cvd-step="1" aria-label="Next colorblind mode">▶</button>
+        </div>
+      </li>
+      ${picker('layout','Editor layout',EDITOR_LAYOUT_NAMES[look.layout])}
+      ${picker('theme','Editor theme',EDITOR_THEME_NAMES[look.theme])}
+    </ul>`;
+  }
+  function bindQuickSettings(root){
+    root.querySelectorAll('input[type=range][data-setting]').forEach(input=>{
+      const out = input.closest('.profile-setting').querySelector('output');
+      input.addEventListener('input', ()=>{ out.textContent = input.value + '%'; if(input.dataset.setting !== 'scale') setQuickSetting(input.dataset.setting, Number(input.value)); });
+      // Size re-lays out the whole UI, so apply it once the slider is let go.
+      input.addEventListener('change', ()=>setQuickSetting(input.dataset.setting, Number(input.value)));
+    });
+    const sw = root.querySelector('[data-setting="motion"]');
+    sw.addEventListener('click', ()=>{
+      const on = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', String(on));
+      setQuickSetting('motion', on);
+    });
+    root.querySelectorAll('[data-pick]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const key = btn.dataset.pick;
+      const list = key === 'layout' ? EDITOR_LAYOUTS : EDITOR_THEMES;
+      const names = key === 'layout' ? EDITOR_LAYOUT_NAMES : EDITOR_THEME_NAMES;
+      const i = list.indexOf(window.EC_EDITOR.readVariant()[key]);
+      const next = list[(i + Number(btn.dataset.step) + list.length) % list.length];
+      window.EC_EDITOR.setVariant(key, next);
+      btn.closest('.profile-picker').querySelector('output').textContent = names[next];
+    }));
+    root.querySelectorAll('[data-cvd-step]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const i = CVD_STEPS.indexOf(profile.settings.cvd || 'none');
+      const next = CVD_STEPS[(i + Number(btn.dataset.cvdStep) + CVD_STEPS.length) % CVD_STEPS.length];
+      setQuickSetting('cvd', next);
+      btn.closest('.profile-picker').querySelector('output').textContent = CVD_NAMES[next];
+    }));
+  }
+
   // The newest client quote for the profile card.
   function profileQuoteMarkup(){
     const latest = window.EC_STORE.completedFeedback(profile).find(entry=>entry.quote);
@@ -1265,7 +1454,8 @@
       <div class="profile-quick-strip">Coins: ${window.EC_MONEY(profile.currency || 0)}</div>
       <div class="profile-quick-strip">Badges</div>
       <div class="profile-badge-grid">${badges}</div>
-      <button class="profile-quick-action" id="profile-quick-settings">⚙ Settings</button>
+      <button class="profile-quick-action" id="profile-quick-settings" aria-expanded="false" aria-controls="profile-settings-panel">⚙ Settings</button>
+      <div class="profile-settings-panel" id="profile-settings-panel" hidden>${quickSettingsList()}</div>
       <button class="profile-quick-action" id="profile-quick-signout">⇥ Sign out</button>
     </section>`;
   }
@@ -1289,7 +1479,15 @@
         taskbarStatsBorrowed = null;
       }
       body.innerHTML = profileQuickPanelMarkup();
-      document.getElementById('profile-quick-settings').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); openSettingsApp(); });
+      const settingsBtn = document.getElementById('profile-quick-settings');
+      const settingsPanel = document.getElementById('profile-settings-panel');
+      bindQuickSettings(settingsPanel);
+      settingsBtn.addEventListener('click', ()=>{
+        const open = settingsPanel.hidden;
+        settingsPanel.hidden = !open;
+        settingsBtn.setAttribute('aria-expanded', String(open));
+        if(open) settingsPanel.scrollIntoView({block:'nearest'});
+      });
       document.getElementById('profile-quick-signout').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); showScreen('screen-home'); });
     }
     document.getElementById('taskbar-stats-popup-title').textContent = isStats ? 'Studio Stats' : 'Profile';
@@ -1363,6 +1561,9 @@
       window.EC_PIKO.hideBubble();window.EC_PIKO.clearTarget();
       showScreen('screen-maker', ()=>window.EC_MAKER.open());
     });
+    document.getElementById('icon-browser').addEventListener('click', ()=>openBrowserApp());
+    document.getElementById('browser-back-btn').addEventListener('click', ()=>{ returnShopPanel(); showScreen('screen-desktop'); });
+    document.getElementById('browser-home-btn').addEventListener('click', ()=>{ browserPage = { kind:'home' }; renderBrowser(); });
     document.getElementById('icon-stats').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'stats'));
     document.getElementById('icon-shop').addEventListener('click', openShopApp);
     document.getElementById('icon-settings').addEventListener('click', openSettingsApp);

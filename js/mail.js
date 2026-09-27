@@ -255,6 +255,10 @@
     document.getElementById('btn-close-mail').addEventListener('click', ()=>{
       window.EC_MODAL.hide('modal-mail-detail');
     });
+    // Clicking the dimmed area around an email closes it, like the attachment preview.
+    document.getElementById('modal-mail-detail').addEventListener('click', e=>{
+      if(e.target.id === 'modal-mail-detail') window.EC_MODAL.hide('modal-mail-detail');
+    });
     document.getElementById('btn-close-preview').addEventListener('click', ()=>{
       window.EC_MODAL.hide('modal-preview');
     });

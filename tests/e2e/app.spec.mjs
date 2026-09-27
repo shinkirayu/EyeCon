@@ -257,7 +257,8 @@ test('the canvas fills its workspace without a mission strip or resizing for set
       return {width:c.width,height:c.height,fill:Math.max(c.width/w.width,c.height/w.height),workspace:w.width/innerWidth};
     });
     const before=await readGeometry();
-    expect(before.workspace).toBeGreaterThan(.7);
+    // Two sidebars (brief left, tools right) share the width with the canvas.
+    expect(before.workspace).toBeGreaterThan(.5);
     expect(before.fill).toBeGreaterThan(.9);
     await expect(page.locator('#element-settings')).toBeVisible();
     const after=await readGeometry();
@@ -437,8 +438,7 @@ test('editor settings cards and pastel toolbar icons remain usable',async({page}
   expect(await page.locator('#tool-grid .game-tool-icon use').evaluate(el=>el.getBBox().width)).toBeGreaterThan(0);
   await expect(page.locator('#taskbar-home .game-taskbar-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#home');
   const card=page.locator('#settings-fields .editor-setting-card').first();
-  await card.locator('summary').click();
-  await expect(card).not.toHaveAttribute('open','');
+  // Sections always stay open; clicking a heading does not collapse it.
   await card.locator('summary').click();
   await expect(card).toHaveAttribute('open','');
 });
@@ -465,7 +465,8 @@ test('design tools stay open and use the app typography',async({page})=>{
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
   const layersBox=await page.locator('#editor-layers-panel').boundingBox();
-  expect(mailBox.y+mailBox.height).toBeLessThanOrEqual(settingsBox.y);
+  // Brief on the left; Design tools above Layers in the right-hand column.
+  expect(mailBox.x+mailBox.width).toBeLessThanOrEqual(settingsBox.x);
   expect(settingsBox.y+settingsBox.height).toBeLessThanOrEqual(layersBox.y+1);
   const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
   expect(layersBox.height).toBeGreaterThanOrEqual(7.5*rem-1);
@@ -564,7 +565,8 @@ test('editor layers select editable elements while structural layers stay locked
   expect(await page.locator('#tool-layers').count()).toBe(0);
   const panelBox=await panel.boundingBox();
   const stageBox=await page.locator('#editor-canvas-wrap').boundingBox();
-  expect(panelBox.x).toBeLessThan(stageBox.x+stageBox.width/2);
+  // Layers live in the right-hand column, next to the canvas.
+  expect(panelBox.x).toBeGreaterThan(stageBox.x+stageBox.width/2);
   if(page.viewportSize().width>900){
     const settingsBox=await page.locator('#element-settings').boundingBox();
     expect(panelBox.y).toBeGreaterThanOrEqual(settingsBox.y+settingsBox.height);
@@ -576,4 +578,36 @@ test('editor layers select editable elements while structural layers stay locked
   await expect(page.locator(`#editor-canvas .el[data-id="${id}"]`)).toHaveClass(/selected/);
   await save.click();
   await expect(page.getByRole('alertdialog',{name:'Save and submit'})).toBeVisible();
+});
+
+test('profile settings list and the browser shows the store and client sites',async({page})=>{
+  await page.addInitScript(()=>{
+    if(localStorage.getItem('eyecon_profile_v1')) return;
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
+      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open EyeCon'}).click();
+  await page.locator('#taskbar-profile').click();
+  await expect(page.locator('#profile-settings-panel')).toBeHidden();
+  await page.getByRole('button',{name:'⚙ Settings'}).click();
+  await page.getByLabel('Sound').fill('25');
+  await page.getByLabel('Music').fill('0');
+  await page.getByRole('switch',{name:'Reduce motion'}).click();
+  await page.getByRole('button',{name:'Next colorblind mode'}).click();
+  await page.getByRole('button',{name:'Next colorblind mode'}).click();
+  const saved=await page.evaluate(()=>EC_STORE.load().settings);
+  expect([saved.sfxLevel,saved.musicEnabled,saved.reduceMotion,saved.cvd]).toEqual([25,false,true,'deuteranopia']);
+  await page.getByRole('button',{name:'Previous colorblind mode'}).click();
+  await expect(page.locator('[aria-labelledby="qs-cvd-label"] output')).toHaveText('Red-blind');
+  await page.locator('#taskbar-stats-popup-close').click();
+  await page.getByRole('button',{name:'Open Browser app'}).click();
+  await page.locator('.browser-bookmark').filter({hasText:'Brewbird'}).click();
+  await expect(page.locator('#browser-address')).toContainText('brewbird');
+  await expect(page.locator('.browser-tab')).toHaveCount(3);
+  await page.locator('#browser-home-btn').click();
+  await page.locator('.browser-bookmark').filter({hasText:'Store'}).click();
+  await expect(page.locator('#browser-view #shop-panel')).toBeVisible();
+  await page.locator('#browser-back-btn').click();
+  await expect(page.locator('#screen-shop #shop-panel')).toHaveCount(1);
 });

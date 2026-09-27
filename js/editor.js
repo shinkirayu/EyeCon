@@ -223,7 +223,22 @@
     canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${scale})`;
     canvas.style.transformOrigin = '0 0';
     canvas.style.setProperty('--selection-unit', (1 / scale) + 'px');
+    syncBackdropDots(scale);
     updateZoomBadge();
+  }
+
+  // Dot backdrop locked to the design's 8-point grid: dots sit on every
+  // 8 canvas px (or a multiple of 8 when zoomed far out, so they never get
+  // denser than ~8 screen px) and move/scale with the canvas when panning or
+  // zooming, so they work as snap guides even with the grid tool off.
+  function syncBackdropDots(scale){
+    const wrap = document.getElementById('editor-canvas-wrap');
+    if(!wrap) return;
+    let step = 8 * scale;
+    while(step < 8) step *= 2;
+    wrap.style.setProperty('--dot-step', step + 'px');
+    wrap.style.setProperty('--dot-x', state.panX + 'px');
+    wrap.style.setProperty('--dot-y', state.panY + 'px');
   }
 
   function updateZoomBadge(){
@@ -342,7 +357,8 @@
       button.append(thumb,label);button.setAttribute('aria-label',friendlyElementName(el));
       if(!el.locked)button.addEventListener('click',()=>selectElement(el.id));
       const status=document.createElement('span');status.className='editor-layer-status';
-      status.textContent=el.locked?'🔒':'◈';status.title=el.locked?'Locked structural layer':'Editable layer';
+      status.title=el.locked?'Locked structural layer':'Editable layer';
+      if(el.locked) status.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>';
       row.append(button,status);list.appendChild(row);
     });
   }
@@ -625,6 +641,11 @@
     if(q('#f-size')) q('#f-size').addEventListener('change', ()=>pushHistory());
     if(q('#f-weight')) q('#f-weight').addEventListener('change', e=>{
       el.fontWeight = e.target.value; refreshElementDom(el); refreshContrastBadge(el); pushHistory(); refreshLiveOverlays();
+    });
+    // Sections always stay open: their headings are titles, not collapse toggles.
+    fields.querySelectorAll('.editor-setting-card > summary').forEach(summary=>{
+      summary.tabIndex=-1;
+      summary.addEventListener('click',e=>e.preventDefault());
     });
     fields.querySelectorAll('[data-text-align]').forEach(button=>button.addEventListener('click',()=>{
       el.align=button.dataset.textAlign;
@@ -1091,7 +1112,38 @@
     setTimeout(()=>{ overlay.classList.add('hidden'); overlay.classList.remove('closing'); }, 220);
   }
 
+  // ---------------- Editor look (layout + theme) ----------------
+  // Layouts and color themes to compare, remembered per browser and picked
+  // from the profile's Settings list:
+  //   single  – one left column (brief, Design tools, Layers) + top bar
+  //   double  – brief on the left, Design tools + Layers on the right + top bar
+  //   compact – one left column, no top bar (the original look)
+  const VARIANT_KEY = 'eyecon_editor_variant';
+  const VARIANT_DEFAULT = { layout:'double', theme:'blue' };
+  function readVariant(){
+    try{ return Object.assign({}, VARIANT_DEFAULT, JSON.parse(localStorage.getItem(VARIANT_KEY) || '{}')); }
+    catch(e){ return Object.assign({}, VARIANT_DEFAULT); }
+  }
+  function applyVariant(v){
+    const screen = document.getElementById('screen-editor');
+    screen.dataset.layout = v.layout;
+    screen.dataset.edTheme = v.theme;
+    const left = screen.querySelector('.editor-side-rail:not(.editor-right-rail)');
+    const right = screen.querySelector('.editor-right-rail');
+    const target = v.layout === 'double' ? right : left;
+    ['element-settings','editor-layers-panel'].forEach(id => target.appendChild(document.getElementById(id)));
+    // The canvas area changes size, so re-center the design in it.
+    if(state.level) requestAnimationFrame(()=>{ centerCanvas(); applyCanvasTransform(); });
+  }
+  function setVariant(key, value){
+    const v = readVariant();
+    v[key] = value;
+    try{ localStorage.setItem(VARIANT_KEY, JSON.stringify(v)); }catch(e){}
+    applyVariant(v);
+  }
+
   function initToolbarOnce(){
+    applyVariant(readVariant());
 
     document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
       document.getElementById('editor-hint-banner').classList.add('hidden');
@@ -1390,7 +1442,9 @@
   function renderStatic(container, level, elements, opts){
     opts = opts || {};
     const maxSize = opts.maxSize || 260;
-    const scale = Math.min(maxSize/level.canvas.w, maxSize/level.canvas.h);
+    // fitW/fitH fit a rectangle (e.g. a browser window) instead of a square.
+    const scale = opts.fitW ? Math.min(opts.fitW/level.canvas.w, opts.fitH/level.canvas.h)
+      : Math.min(maxSize/level.canvas.w, maxSize/level.canvas.h);
     container.innerHTML = '';
     const outer = document.createElement('div');
     outer.style.width = (level.canvas.w*scale)+'px';
@@ -1408,6 +1462,7 @@
   }
 
   window.EC_EDITOR = {
+    readVariant, setVariant,
     open, undo, redo,
     setOnSubmit: fn => state.onSubmit = fn,
     getElements: () => state.elements,
