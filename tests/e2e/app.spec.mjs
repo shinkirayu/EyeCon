@@ -200,17 +200,22 @@ test('level maker edits text, locks layers, and preserves size at canvas edges',
   await expect(page.locator('[data-maker-field="x"]')).toHaveValue(String(960-width));
 });
 
-test('desktop UI fits the native 1920 by 1080 layout and compacts below it', async ({ page }) => {
+test('desktop UI fits the native 1920 by 1080 layout and scales down proportionally below it', async ({ page }) => {
   await page.setViewportSize({width:1920,height:1080});
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   const root=await page.locator('#app-root').boundingBox();
   expect(root.width).toBe(1920);
   expect(root.height).toBe(1080);
-  await page.setViewportSize({width:1280,height:720});
   await page.getByRole('button', { name: 'Open Level Maker app' }).click();
-  await expect(page.locator('.maker-palette')).toHaveCSS('width','192px');
-  await expect(page.locator('#global-taskbar')).toHaveCSS('height','80px');
+  const size=async()=>({palette:(await page.locator('.maker-palette').boundingBox()).width, taskbar:(await page.locator('#global-taskbar').boundingBox()).height});
+  await expect(page.locator('.maker-palette')).toBeVisible();
+  const big=await size();
+  // A 1080p laptop at 150% Windows scaling gives the browser 1280×720: same layout, two-thirds size.
+  await page.setViewportSize({width:1280,height:720});
+  const small=await size();
+  expect(small.palette/big.palette).toBeCloseTo(2/3,1);
+  expect(small.taskbar/big.taskbar).toBeCloseTo(2/3,1);
 });
 
 test('the shop is available from the desktop', async ({ page }) => {
@@ -462,7 +467,8 @@ test('design tools stay open and use the app typography',async({page})=>{
   const layersBox=await page.locator('#editor-layers-panel').boundingBox();
   expect(mailBox.y+mailBox.height).toBeLessThanOrEqual(settingsBox.y);
   expect(settingsBox.y+settingsBox.height).toBeLessThanOrEqual(layersBox.y+1);
-  expect(layersBox.height).toBeGreaterThanOrEqual(120);
+  const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
+  expect(layersBox.height).toBeGreaterThanOrEqual(7.5*rem-1);
 });
 
 test('the first day starts with one email showing difficulty and reward',async({page})=>{
@@ -520,7 +526,8 @@ test('profile popup matches the app card style',async({page})=>{
   await expect(popup.locator('.profile-feedback-count')).toHaveText('(0)');
   await expect(popup.getByText(/tasks per day/)).toHaveCount(0);
   const style=await popup.evaluate(el=>({radius:getComputedStyle(el).borderRadius,font:getComputedStyle(el.querySelector('h2')).fontFamily}));
-  expect(style.radius).toBe('16px');
+  const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
+  expect(parseFloat(style.radius)).toBeCloseTo(rem,0);
   expect(style.font).toContain('Baloo');
 });
 

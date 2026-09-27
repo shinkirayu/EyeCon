@@ -332,8 +332,10 @@
       const src=state.canvasEl&&state.canvasEl.querySelector(`.el[data-id="${el.id}"]`);
       if(src&&el.w&&el.h){
         const copy=src.cloneNode(true);copy.removeAttribute('tabindex');copy.removeAttribute('role');copy.classList.remove('selected');
-        const k=Math.min(200/el.w,44/el.h,1);
-        Object.assign(copy.style,{position:'absolute',left:`${(200-el.w*k)/2}px`,top:`${(44-el.h*k)/2}px`,transform:`scale(${k})`,transformOrigin:'0 0',pointerEvents:'none'});
+        // The thumb box is 12.5rem × 2.75rem, so measure it in px at the current UI scale.
+        const u=parseFloat(getComputedStyle(document.documentElement).fontSize)/16, TW=200*u, TH=44*u;
+        const k=Math.min(TW/el.w,TH/el.h,u);
+        Object.assign(copy.style,{position:'absolute',left:`${(TW-el.w*k)/2}px`,top:`${(TH-el.h*k)/2}px`,transform:`scale(${k})`,transformOrigin:'0 0',pointerEvents:'none'});
         thumb.appendChild(copy);
       }
       const label=document.createElement('span');label.className='editor-layer-name';label.textContent=friendlyElementName(el);

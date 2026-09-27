@@ -37,3 +37,18 @@
 
 // The game's currency: a purple ¢ followed by the amount.
 window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class="money-icon" aria-hidden="true">¢</span>${n}</span>`;
+
+// Scale the whole interface to the window. The UI is designed at 1920×1080
+// CSS px; smaller windows (e.g. a 1080p laptop at 125–150% Windows scaling,
+// which the browser sees as 1536×864 or 1280×720) shrink proportionally.
+// Bigger windows stay at 1, and phones keep their own layout.
+(function(){
+  const DESIGN_W = 1920, DESIGN_H = 1080, MIN_FIT = 0.6;
+  function fit(){
+    const w = window.innerWidth, h = window.innerHeight;
+    const f = w <= 900 ? 1 : Math.max(MIN_FIT, Math.min(1, w / DESIGN_W, h / DESIGN_H));
+    document.documentElement.style.setProperty('--fit', f.toFixed(3));
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
