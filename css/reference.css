@@ -1270,3 +1270,27 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
   #screen-editor[data-layout="compact"] .editor-topbar{top:1rem;}
   #screen-editor[data-layout="compact"] .tool-btn.btn-save.editor-save-corner{top:1rem;right:1rem;}
 }
+/* The three desktop apps are always the same size (the phone layout made them differ). */
+#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:6.5rem;min-width:0;}
+@media(max-width:900px){#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4rem;}}
+/* White app labels keep a soft shadow so they stay readable over white clouds. */
+#screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label{text-shadow:0 1px 2px #1d3b4f99,0 0 6px #1d3b4f66;}
+/* Phones: keep the desktop mail layout — Inbox and Completed in a left column. */
+@media(max-width:900px){
+  #screen-shell .mail-body{flex-direction:row;align-items:stretch;gap:.75rem;}
+  #screen-shell .mail-sidebar{display:flex;flex-direction:column;width:26%;max-width:9rem;flex:0 0 auto;gap:.75rem;}
+  #screen-shell .mail-sidebar .side-btn{flex:0 0 auto;flex-direction:column;gap:.375rem;padding:.75rem .375rem;min-height:5.5rem;}
+  #screen-shell .mail-sidebar .folder-label{font-size:.875rem;}
+  #screen-shell .mail-sidebar .side-icon{width:2.25rem;height:2.25rem;font-size:2.25rem;}
+  #screen-shell .mail-panel{flex:1;min-width:0;min-height:0;}
+}
+/* Phones: each email row stacks name/tag, preview and reward beside the avatar. */
+@media(max-width:900px){
+  #screen-shell .mail-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"av name tag" "av prev prev" "av prize prize";align-items:center;gap:.25rem .75rem;min-height:0;padding:.875rem .75rem;}
+  #screen-shell .mail-item .avatar-circle{grid-area:av;align-self:start;}
+  #screen-shell .mail-item .mail-item-name{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;}
+  #screen-shell .mail-item .mail-item-preview{grid-area:prev;min-width:0;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;}
+  #screen-shell .mail-item .mail-prize{grid-area:prize;justify-self:start;}
+  #screen-shell .mail-item .tag{grid-area:tag;font-size:.75rem;padding:.25rem .625rem;}
+  #screen-shell .mail-search{margin-right:3.5rem;}
+}
