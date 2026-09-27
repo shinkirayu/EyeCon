@@ -44,11 +44,29 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
 // Bigger windows stay at 1, and phones keep their own layout.
 (function(){
   const DESIGN_W = 1920, DESIGN_H = 1080, MIN_FIT = 0.6;
+  // Phones held sideways (~844×390) are too short for the portrait phone
+  // layout. Ask the browser to lay the page out at a desktop width instead
+  // (it then shrinks the page to fit the screen), so they get the desktop
+  // layout at a size that fits. Portrait phones keep the phone layout.
+  const LANDSCAPE_LAYOUT_H = 760;
+  function fitPhoneViewport(){
+    const meta = document.querySelector('meta[name="viewport"]');
+    if(!meta || !window.matchMedia('(pointer:coarse)').matches) return;
+    const sw = screen.width, sh = screen.height;
+    const landscape = window.matchMedia('(orientation: landscape)').matches;
+    const short = Math.min(sw, sh), long = Math.max(sw, sh);
+    const content = landscape && short < 600
+      ? `width=${Math.max(1280, Math.round(LANDSCAPE_LAYOUT_H * long / short))}, viewport-fit=cover`
+      : 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+    if(meta.content !== content) meta.content = content;
+  }
   function fit(){
+    fitPhoneViewport();
     const w = window.innerWidth, h = window.innerHeight;
     const f = w <= 900 ? 1 : Math.max(MIN_FIT, Math.min(1, w / DESIGN_W, h / DESIGN_H));
     document.documentElement.style.setProperty('--fit', f.toFixed(3));
   }
   fit();
   window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
 })();

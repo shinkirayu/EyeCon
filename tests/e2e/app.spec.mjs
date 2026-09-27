@@ -465,8 +465,8 @@ test('design tools stay open and use the app typography',async({page})=>{
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
   const layersBox=await page.locator('#editor-layers-panel').boundingBox();
-  // Brief on the left; Design tools above Layers in the right-hand column.
-  expect(mailBox.x+mailBox.width).toBeLessThanOrEqual(settingsBox.x);
+  // Desktop: brief on the left, Design tools above Layers on the right (phones stack them).
+  if(page.viewportSize().width>900) expect(mailBox.x+mailBox.width).toBeLessThanOrEqual(settingsBox.x);
   expect(settingsBox.y+settingsBox.height).toBeLessThanOrEqual(layersBox.y+1);
   const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
   expect(layersBox.height).toBeGreaterThanOrEqual(7.5*rem-1);
@@ -565,8 +565,8 @@ test('editor layers select editable elements while structural layers stay locked
   expect(await page.locator('#tool-layers').count()).toBe(0);
   const panelBox=await panel.boundingBox();
   const stageBox=await page.locator('#editor-canvas-wrap').boundingBox();
-  // Layers live in the right-hand column, next to the canvas.
-  expect(panelBox.x).toBeGreaterThan(stageBox.x+stageBox.width/2);
+  // On desktop, Layers live in the right-hand column (phones stack the panels).
+  if(page.viewportSize().width>900) expect(panelBox.x).toBeGreaterThan(stageBox.x+stageBox.width/2);
   if(page.viewportSize().width>900){
     const settingsBox=await page.locator('#element-settings').boundingBox();
     expect(panelBox.y).toBeGreaterThanOrEqual(settingsBox.y+settingsBox.height);

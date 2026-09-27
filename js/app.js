@@ -1296,7 +1296,13 @@
   }
   function initFullscreenToggle(){
     const btn = document.getElementById('taskbar-fullscreen');
-    if(!requestFn()){ btn.style.display = 'none'; return; }
+    if(!requestFn()){
+      // iPhone Safari can't make a web page fullscreen; adding it to the Home
+      // Screen opens it without browser bars, so the button explains that.
+      if(navigator.standalone){ btn.style.display = 'none'; return; }
+      btn.addEventListener('click', ()=>showToast('📱 For fullscreen on iPhone: tap the Share button, then “Add to Home Screen”, and open EyeCon from there.', 6000));
+      return;
+    }
     btn.addEventListener('click', toggleFullscreen);
     ['fullscreenchange','webkitfullscreenchange','MSFullscreenChange'].forEach(evt=>{
       document.addEventListener(evt, updateFullscreenBtn);
