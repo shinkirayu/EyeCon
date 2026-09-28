@@ -97,6 +97,11 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
     document.documentElement.style.setProperty('--fit', f.toFixed(3));
   }
   fit();
+  // Reveal the game (hidden by the inline script in index.html) once
+  // everything has loaded and the size has had a moment to settle.
+  function reveal(){ document.documentElement.classList.remove('booting'); }
+  window.addEventListener('load', () => { fit(); setTimeout(() => { fit(); requestAnimationFrame(reveal); }, 250); });
+  setTimeout(reveal, 4000); // never stay hidden if 'load' is slow
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
   // Safari's address bar showing/hiding changes the visible area without a resize.

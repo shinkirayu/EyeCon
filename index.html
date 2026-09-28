@@ -3,6 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<script>
+/* Runs before anything is drawn: a phone held sideways gets the desktop-width
+   layout from the very first paint (same formula as fitPhoneViewport in
+   js/ui-helpers.js), and the game stays hidden until its size has settled. */
+(function(){
+  document.documentElement.classList.add('booting');
+  var s = Math.min(screen.width, screen.height), l = Math.max(screen.width, screen.height);
+  if(matchMedia('(pointer:coarse)').matches && matchMedia('(orientation: landscape)').matches && s < 600){
+    document.querySelector('meta[name="viewport"]').content = 'width=' + Math.max(1280, Math.round(760 * l / s)) + ', user-scalable=no, viewport-fit=cover';
+  }
+})();
+</script>
 <meta name="theme-color" content="#bfe9db" />
 <title>EyeCon — UI/UX Design Studio</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><ellipse cx=%2230%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><ellipse cx=%2270%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/><circle cx=%2268%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/></svg>">

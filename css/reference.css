@@ -1298,3 +1298,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 html{touch-action:manipulation;}
 /* Dialogs shrink to fit short screens (see fitCard in ui-helpers.js) instead of scrolling. */
 .mail-detail-card,.compose-card,.confirm-card,.reward-card{max-height:none;overflow:visible;}
+/* Hidden until the layout has settled on load (see index.html / ui-helpers.js). */
+html.booting body{visibility:hidden;}
+/* iOS Safari enlarges text on its own in landscape; keep sizes exactly as designed. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
