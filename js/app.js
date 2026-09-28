@@ -1583,7 +1583,17 @@
     // A way back to the title screen from the real desktop — matters most in
     // fullscreen, where there's no browser chrome to fall back on.
     document.getElementById('desktop-watermark-btn').addEventListener('click', ()=>showScreen('screen-home'));
-    document.getElementById('taskbar-profile').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'profile'));
+    // The profile button toggles its pop-up; clicking anywhere else closes it.
+    document.getElementById('taskbar-profile').addEventListener('click', e=>{
+      const popup = document.getElementById('taskbar-stats-popup');
+      if(!popup.classList.contains('hidden') && popup.classList.contains('profile-layout')) closeTaskbarStatsPopup();
+      else openTaskbarStatsPopup(e.currentTarget,'profile');
+    });
+    document.addEventListener('pointerdown', e=>{
+      const popup = document.getElementById('taskbar-stats-popup');
+      if(popup.classList.contains('hidden') || popup.contains(e.target) || e.target.closest('#taskbar-profile, #icon-stats')) return;
+      closeTaskbarStatsPopup();
+    });
     document.getElementById('taskbar-stats-popup-close').addEventListener('click', closeTaskbarStatsPopup);
     document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeTaskbarStatsPopup(); });
     document.getElementById('taskbar-shop').addEventListener('click', openShopApp);
