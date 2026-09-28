@@ -6,6 +6,18 @@
 
   const CARD_SELECTOR = '.modal-card, .mail-detail-card, .confirm-card, .compose-card, .preview-frame, .gacha-reveal-card';
 
+  // Shrink a dialog to fit the screen instead of making it scroll (short
+  // phone screens), so its buttons are always visible.
+  function fitCard(card){
+    if(!card) return;
+    card.style.zoom = '';
+    const ratio = Math.min(1, (window.innerHeight - 24) / card.offsetHeight, (window.innerWidth - 24) / card.offsetWidth);
+    if(ratio < 1) card.style.zoom = ratio.toFixed(3);
+  }
+  function fitOpenCards(){
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(o => fitCard(o.querySelector(CARD_SELECTOR)));
+  }
+
   function show(id){
     const overlay = typeof id === 'string' ? document.getElementById(id) : id;
     if(!overlay) return;
@@ -14,6 +26,7 @@
     overlay.style.zIndex = String(Math.max(2000, ...visible.map(el=>Number(getComputedStyle(el).zIndex)||0)) + 1);
     overlay.classList.remove('closing');
     overlay.classList.remove('hidden');
+    fitCard(overlay.querySelector(CARD_SELECTOR));
   }
 
   function hide(id){
@@ -32,7 +45,8 @@
     setTimeout(finish, 260);
   }
 
-  window.EC_MODAL = { show, hide };
+  window.addEventListener('resize', () => requestAnimationFrame(fitOpenCards));
+  window.EC_MODAL = { show, hide, fitOpenCards };
 })();
 
 // The game's currency: a purple ¢ followed by the amount.
@@ -64,6 +78,15 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
       // so measure again once it has settled (otherwise the UI stays at 100%
       // until the phone is rotated).
       [60, 300, 800].forEach(ms => setTimeout(fit, ms));
+      // iOS doesn't send a resize for this change, and some layouts stay at
+      // the old size until the screen changes. Once it has settled, force a
+      // full re-layout and tell listeners the size changed.
+      setTimeout(() => {
+        document.body.style.display = 'none';
+        void document.body.offsetHeight;
+        document.body.style.display = '';
+        window.dispatchEvent(new Event('resize'));
+      }, 900);
     }
   }
   function fit(){
