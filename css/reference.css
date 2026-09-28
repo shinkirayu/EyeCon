@@ -1296,3 +1296,5 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 }
 /* No double-tap zoom on phones. */
 html{touch-action:manipulation;}
+/* Opened emails and the reply always fit the screen; the content scrolls so Accept/Send stay reachable. */
+.mail-detail-card,.compose-card{max-height:calc(100dvh - 2rem);overflow:auto;}

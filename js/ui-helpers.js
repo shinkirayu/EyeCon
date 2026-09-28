@@ -58,17 +58,26 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
     const content = landscape && short < 600
       ? `width=${Math.max(1280, Math.round(LANDSCAPE_LAYOUT_H * long / short))}, user-scalable=no, viewport-fit=cover`
       : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
-    if(meta.content !== content) meta.content = content;
+    if(meta.content !== content){
+      meta.content = content;
+      // iOS reports the new window size a moment after the viewport changes,
+      // so measure again once it has settled (otherwise the UI stays at 100%
+      // until the phone is rotated).
+      [60, 300, 800].forEach(ms => setTimeout(fit, ms));
+    }
   }
   function fit(){
     fitPhoneViewport();
-    const w = window.innerWidth, h = window.innerHeight;
+    // Use the visible height (Safari's toolbars can cover part of the window).
+    const w = window.innerWidth, h = Math.min(window.innerHeight, window.visualViewport ? window.visualViewport.height : Infinity);
     const f = w <= 900 ? 1 : Math.max(MIN_FIT, Math.min(1, w / DESIGN_W, h / DESIGN_H));
     document.documentElement.style.setProperty('--fit', f.toFixed(3));
   }
   fit();
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
+  // Safari's address bar showing/hiding changes the visible area without a resize.
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 })();
 
 // No pinch-zoom on phones: the game handles its own sizing. iOS ignores
