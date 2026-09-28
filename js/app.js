@@ -1372,6 +1372,7 @@
     }
     save();
     applySettings();
+    requestAnimationFrame(positionStatsPopup);
   }
   function quickSettingsList(){
     const slider = (key, name, min, step) => `<li class="profile-setting">
@@ -1500,12 +1501,25 @@
     document.getElementById('taskbar-stats-popup-title').textContent = isStats ? 'Studio Stats' : 'Profile';
     document.getElementById('taskbar-stats-popup-icon').src = isStats ? 'assets/icons/stats-icon.svg' : 'assets/icons/profile.svg';
     popup.classList.remove('hidden');
-    const bar = document.getElementById('global-taskbar').getBoundingClientRect();
-    const button = anchor.getBoundingClientRect();
-    popup.style.left = Math.max(12, Math.min(button.left, innerWidth - popup.offsetWidth - 12)) + 'px';
-    popup.style.bottom = Math.max(8, innerHeight - bar.top + 8) + 'px';
+    statsPopupAnchor = anchor;
+    positionStatsPopup();
     document.getElementById('taskbar-profile').setAttribute('aria-expanded', String(!isStats));
   }
+  // Keep the pop-up (and its title bar with ✕) inside the part of the screen
+  // you can actually see, at every Size setting — Safari's bars can cover
+  // part of the window on phones.
+  let statsPopupAnchor = null;
+  function positionStatsPopup(){
+    const popup = document.getElementById('taskbar-stats-popup');
+    if(!popup || popup.classList.contains('hidden') || !statsPopupAnchor) return;
+    const bar = document.getElementById('global-taskbar').getBoundingClientRect();
+    const button = statsPopupAnchor.getBoundingClientRect();
+    const visibleTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+    popup.style.left = Math.max(12, Math.min(button.left, innerWidth - popup.offsetWidth - 12)) + 'px';
+    popup.style.bottom = Math.max(8, innerHeight - bar.top + 8) + 'px';
+    popup.style.maxHeight = Math.max(160, bar.top - 16 - visibleTop) + 'px';
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(positionStatsPopup));
   function closeTaskbarStatsPopup(){
     const popup = document.getElementById('taskbar-stats-popup');
     if(!popup || popup.classList.contains('hidden')) return;

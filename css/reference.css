@@ -1305,3 +1305,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 /* Desktop app pictures get explicit, identical sizes (no sizing from the button, which iOS resolved differently). */
 #screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:5.5rem!important;height:4.875rem!important;aspect-ratio:auto;margin:0 auto;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;}
 @media(max-width:900px){#screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:3.5rem!important;height:3.125rem!important;}}
+/* Phones: dialogs fit the visible screen height and scroll inside. */
+@media(pointer:coarse){
+  .mail-detail-card,.compose-card,.reward-card{max-height:calc(var(--visible-h,100dvh) - 1.5rem);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+}

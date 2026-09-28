@@ -11,6 +11,8 @@
   function fitCard(card){
     if(!card) return;
     card.style.zoom = '';
+    // Phones scroll the dialog instead (see the pointer:coarse rule in reference.css).
+    if(window.matchMedia('(pointer:coarse)').matches) return;
     const ratio = Math.min(1, (window.innerHeight - 24) / card.offsetHeight, (window.innerWidth - 24) / card.offsetWidth);
     if(ratio < 1) card.style.zoom = ratio.toFixed(3);
   }
@@ -113,6 +115,7 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
       size = w <= 900 ? base * ui : Math.min(base * ui, most);
     }
     root.style.setProperty('--fit', (size / ui).toFixed(4));
+    root.style.setProperty('--visible-h', h + 'px');
   }
   window.EC_FIT = fit;
   fit();
