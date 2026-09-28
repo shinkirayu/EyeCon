@@ -1134,9 +1134,12 @@
   }
   function finishMissionSubmission(){
     if(!pendingSubmission) return;
+    if(!window.EC_STORE.beginWorkSubmission(profile)){
+      showToast('Your workday is complete or a client reply is still waiting.',2800);return;
+    }
     const {level,result,elapsedMs}=pendingSubmission;
     profile.pendingClientReply={levelId:level.id,result,elapsedMs,elements:window.EC_EDITOR.getElements(),dueAt:Date.now()+3000};
-    pendingSubmission=null; save(); openMailApp();
+    pendingSubmission=null; save(); updateClock(); openMailApp();
     showToast('Reply sent! Your client is reviewing the attached design.',2800);
     scheduleClientReply();
   }
@@ -1167,6 +1170,7 @@
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
       const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
+      profile.revisionDrafts=Object.assign({},profile.revisionDrafts,{[level.id]:elements});
       if(outcome.missionComplete) profile.designs = Object.assign({}, profile.designs, { [level.id]: elements });
       save();
       refreshHeader();
@@ -1175,6 +1179,7 @@
         showRewardPopup(level, result, outcome, window.EC_STORE.levelFromTotalXp(profile.totalXp).level > prevLevel);
         return;
       }
+      if(window.EC_STORE.workday(profile).submissions>=3){showDaySummary();return;}
       showLoadingTransition((finishFade)=>{
         showScreen('screen-editor', ()=>{
           window.EC_EDITOR.open(level, elements);
@@ -1187,6 +1192,30 @@
   }
 
   // Celebration card after marking a task complete: stars, coins, XP, streak
+  function showDaySummary(){
+    const day=window.EC_STORE.workday(profile);
+    if(day.submissions<3 || profile.pendingClientReply || profile.readyReply)return;
+    let modal=document.getElementById('modal-workday');
+    if(!modal){
+      modal=document.createElement('div');modal.id='modal-workday';modal.className='modal-overlay hidden';
+      modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','workday-title');
+      modal.innerHTML='<div class="modal-card workday-card"><div id="workday-summary"></div><button class="btn btn-accept" id="next-workday">Continue to next day</button></div>';
+      document.body.appendChild(modal);
+      document.getElementById('next-workday').addEventListener('click',()=>{
+        if(!window.EC_STORE.nextWorkday(profile))return;
+        window.EC_MODAL.hide(modal);updateClock();refreshHeader();currentFolder='inbox';openMailApp();
+      });
+    }
+    const summary=document.getElementById('workday-summary');
+    summary.innerHTML=`<h2 id="workday-title">Day ${day.day} complete</h2><p>5:00 PM · Your shift is over</p><div class="workday-totals"><span>${day.submissions} submissions</span><span>${day.reviews.filter(r=>r.approved).length} approved</span><span>${day.reviews.length} client reviews</span><span>${window.EC_MONEY(day.coins)} earned</span><span>+${day.xp} XP</span></div><ul class="workday-reviews"></ul>`;
+    day.reviews.forEach(review=>{
+      const item=document.createElement('li');
+      item.textContent=`${review.name} · ${review.page || 'Website'} — ${'★'.repeat(review.stars)}${'☆'.repeat(5-review.stars)} · ${review.approved?'Approved':'Needs revision'} · +${review.reward} coins`;
+      summary.querySelector('ul').appendChild(item);
+    });
+    window.EC_MODAL.show(modal);document.getElementById('next-workday').focus();
+  }
+
   // and badges, with a confetti burst unless particles/motion are off.
   function showRewardPopup(level, result, outcome, leveledUp){
     const { currencyEarned, daily, newBadges, rewardBreakdown } = outcome;
@@ -1313,14 +1342,9 @@
 
   // ---------------- Clock ----------------
   function updateClock(){
-    const now = new Date();
-    let h = now.getHours(); const m = now.getMinutes();
-    const ampm = h >= 12 ? 'pm' : 'am';
-    h = h % 12; if(h===0) h = 12;
-    const text = `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
-    const startDay = profile.commissions?.startDay;
-    const today = Math.floor(now.getTime()/86400000);
-    const day = Math.max(1, startDay == null ? 1 : today - startDay + 1);
+    const shift=window.EC_STORE.workday(profile);
+    const text=['8:00 am','11:00 am','2:00 pm','5:00 pm'][Math.min(3,shift.submissions)];
+    const day=shift.day;
     const taskbarClock = document.getElementById('taskbar-clock');
     taskbarClock.dataset.time = text;
     taskbarClock.innerHTML = `<span>Day ${day}</span><span>${text}</span>`;
@@ -1640,14 +1664,16 @@
     });
 
     window.EC_MAIL.initOnce();
-    document.getElementById('btn-reward-collect').addEventListener('click', ()=>window.EC_MODAL.hide('modal-reward'));
+    document.getElementById('btn-reward-collect').addEventListener('click', ()=>{window.EC_MODAL.hide('modal-reward');showDaySummary();});
     window.EC_EDITOR.initToolbarOnce();
 
     window.EC_MAIL.setHandlers({
       onAccept: level => {
+        if(profile.pendingClientReply || profile.readyReply){showToast('Read your client reply before starting another task.',2500);return;}
+        if(window.EC_STORE.workday(profile).submissions>=3){showDaySummary();return;}
         showLoadingTransition((finishFade)=>{
           showScreen('screen-editor', ()=>{
-            window.EC_EDITOR.open(level);
+            window.EC_EDITOR.open(level,profile.revisionDrafts?.[level.id]);
             levelStartTime = Date.now();
             startTimerIfNeeded();
             finishFade();
@@ -1677,6 +1703,7 @@
 
     currentFolder = 'inbox';
     scheduleClientReply();
+    showDaySummary();
     let inboxDay=Math.floor(Date.now()/86400000);
     setInterval(()=>{const day=Math.floor(Date.now()/86400000);if(day!==inboxDay){inboxDay=day;refreshHeader();if(document.getElementById('screen-shell').classList.contains('active'))renderCurrentFolder();}},1000);
   }

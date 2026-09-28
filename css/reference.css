@@ -1328,3 +1328,17 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 @media(pointer:coarse) and (min-width:901px){
   #screen-editor{padding-left:max(env(safe-area-inset-left,0px),6vw);}
 }
+/* Rulers stay in screen pixels; spacing dimensions use canvas coordinates. */
+#screen-editor .canvas-rulers{position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;overflow:hidden;}
+#screen-editor .canvas-rulers path{stroke:#70aaa6;stroke-width:1;}
+#screen-editor .canvas-rulers text{font:11px var(--font-body);fill:#315e65;stroke:none;}
+#screen-editor .spacing-overlay{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+#screen-editor .spacing-overlay text{font-family:var(--font-body);font-weight:700;}
+#screen-editor .alignment-reference{position:absolute;box-sizing:border-box;border:1px solid #cf3783;background:#cf37830a;pointer-events:none;}
+.workday-card{width:min(40rem,92vw);max-height:90dvh;overflow:auto;padding:2rem;background:#fcf7ef;border:2px solid #77b9af;border-radius:1.5rem;}
+.workday-card h2{font:700 2rem var(--font-display);color:#315e65;margin:0;}
+.workday-totals{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;}
+.workday-totals>span{padding:.5rem 1rem;background:#d5eeea;border-radius:.5rem;font-weight:700;}
+.workday-reviews{padding-left:1.5rem;line-height:1.5;}
+.workday-reviews li{margin-bottom:.75rem;}
+.workday-card #next-workday{margin-top:1rem;}

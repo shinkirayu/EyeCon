@@ -114,10 +114,10 @@
   }
 
   function claimDailyMissionBonus(profile){
-    const today = localDayKey(new Date());
+    const today = 'workday-' + workday(profile).day;
     const daily = profile.daily || (profile.daily = { date:'', streak:0 });
     if(daily.date === today) return { bonus:0, streak:daily.streak, claimed:false };
-    daily.streak = daily.date === previousDayKey(new Date()) ? daily.streak + 1 : 1;
+    daily.streak = daily.date === 'workday-' + (workday(profile).day-1) ? daily.streak + 1 : 1;
     daily.date = today;
     return { bonus:20 + Math.min(daily.streak, 7) * 5, streak:daily.streak, claimed:true };
   }
@@ -141,9 +141,23 @@
   }
   function projectOf(level){ return (window.EC_PROJECTS || []).find(p=>p.id===level.project) || { needsGood:0, pay:40 }; }
   function projectUnlocked(profile, project){ return goodFeedbackCount(profile) >= project.needsGood; }
-  // 3 tasks a day; a trusted studio (6+ good reviews) gets a 4th.
-  const FOURTH_TASK_AT = 6;
-  function dailyTaskLimit(profile){ return goodFeedbackCount(profile) >= FOURTH_TASK_AT ? 4 : 3; }
+  // Three submissions per workday, including revisions.
+  function dailyTaskLimit(){ return 3; }
+  function workday(profile){
+    if(!profile.workday) profile.workday={day:1,submissions:0,reviews:[],coins:0,xp:0};
+    return profile.workday;
+  }
+  function beginWorkSubmission(profile){
+    const day=workday(profile);
+    if(day.submissions>=3 || profile.pendingClientReply || profile.readyReply)return false;
+    day.submissions++;save(profile);return true;
+  }
+  function nextWorkday(profile){
+    const day=workday(profile);
+    if(day.submissions<3 || profile.pendingClientReply || profile.readyReply)return false;
+    profile.workday={day:day.day+1,submissions:0,reviews:[],coins:0,xp:0};
+    save(profile);return true;
+  }
   // Redoing an already-approved page (to earn a better review) pays half.
   function commissionPay(profile, level){
     const pay = projectOf(level).pay;
@@ -174,6 +188,12 @@
     const daily = missionComplete ? claimDailyMissionBonus(profile) : { bonus:0, streak:(profile.daily||{}).streak||0, claimed:false };
     const reward = missionComplete ? pay.base + starBonus + daily.bonus : 0;
     profile.currency += reward;
+    const shift=workday(profile);
+    entry.workDay=shift.day;
+    entry.currencyEarned=reward;
+    shift.coins+=reward;
+    shift.xp+=missionComplete ? (result.xpAwarded || 0) : 0;
+    shift.reviews.push({name:level.clientName,page:level.pageLabel,stars,approved:missionComplete,reward});
 
     const before = new Set(profile.unlockedBadges);
     BADGES.forEach(b => { if(!before.has(b.id) && b.cond(profile)) profile.unlockedBadges.push(b.id); });
@@ -191,14 +211,13 @@
   // Emails come from a mix of clients in the order pages are listed. A page
   // is open once its client has written in (enough 4★+ reviews) and that
   // client's previous page is done; the inbox shows the first two, so there
-  // are one or two emails at a time. A day holds 3–4 approved tasks. If no
+  // are one or two emails at a time. A day holds three submissions. If no
   // new work is left while a client is still out of reach, earlier pages
   // rated below 4★ come back as polish requests to raise those reviews.
   const OPEN_EMAILS = 2;
   function dayKey(date){ return date.toISOString().slice(0,10); }
   function tasksDoneToday(profile, date = new Date()){
-    const today = dayKey(date);
-    return new Set(completedFeedback(profile).filter(e=>e.date?.slice(0,10)===today).map(e=>e.levelId)).size;
+    return workday(profile).submissions;
   }
   function nextLockedProject(profile){
     return (window.EC_PROJECTS || []).find(p=>!projectUnlocked(profile, p));
@@ -227,7 +246,6 @@
     return {
       good, doneToday: tasksDoneToday(profile, date), dailyLimit: dailyTaskLimit(profile),
       nextProject: next || null, goodNeeded: next ? Math.max(0, next.needsGood - good) : 0,
-      fourthTaskIn: good >= FOURTH_TASK_AT ? 0 : FOURTH_TASK_AT - good,
     };
   }
 
@@ -312,6 +330,7 @@
   }
 
   window.EC_STORE = {
+    workday, beginWorkSubmission, nextWorkday,
     load, save, defaultProfile, defaultSettings, levelFromTotalXp, xpForLevel, recordSubmission, xpAwardForGrade, BADGES,
     commissionInbox, commissionPrize, commissionPay, completedFeedback, goodFeedbackCount, bestStars, dailyTaskLimit, progression, isPolishTask, projectUnlocked, GOOD_STARS, dailyShop, itemPrice, getCart, toggleCart, checkout, equipItem, hasUpgrade, buyUpgrade, UPGRADES, MULTI_SLOT_CATEGORIES,
     REVISION_STAR_THRESHOLD,

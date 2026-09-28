@@ -51,12 +51,17 @@ test('a good review brings a different client, and the day holds three tasks',as
   approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-14T12:00:00Z');
   // A 4★ review: Thread & Co. writes in, and Brewbird comes back with its menu page.
   assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'thread-landing,brewbird-menu');
-  for(let i=0;i<3;i++) approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-15T12:00:00Z');
+  for(let i=0;i<3;i++){
+    const task=s.commissionInbox(p,now)[0];
+    assert.equal(s.beginWorkSubmission(p),true);
+    approve(s,p,task,4,'2026-09-15T12:00:00Z');
+  }
   assert.equal(s.dailyTaskLimit(p),3);
   assert.equal(s.commissionInbox(p,now).length,0);
   assert.equal(s.progression(p,now).doneToday,3);
-  assert.ok(s.commissionInbox(p,new Date('2026-09-16T09:00:00Z')).length>0);
-  assert.equal(s.progression(p,now).fourthTaskIn,2);
+  assert.equal(s.commissionInbox(p,new Date('2026-09-16T09:00:00Z')).length,0);
+  assert.equal(s.nextWorkday(p),true);
+  assert.ok(s.commissionInbox(p).length>0);
 });
 
 test('a redo can raise a rating but a page only counts once',async()=>{
@@ -90,4 +95,27 @@ test('approval pays exactly the advertised prize plus bonus stars and adds feedb
   assert.equal(s.goodFeedbackCount(p),1);
   assert.ok(p.history[0].quote);
   assert.ok(s.commissionPrize(p,level)<base, 'a redo pays less than the first time');
+});
+
+test('revisions use all three workday slots and keep feedback totals',async()=>{
+  const s=await setup(),p=s.defaultProfile(),level=s.commissionInbox(p)[0];
+  assert.equal(s.workday(p).day,1);
+  assert.equal(s.nextWorkday(p),false);
+  const result={stars:2,score:40,grade:'C',xpAwarded:20,categoryScores:{},mission:{complete:false}};
+  for(let i=1;i<=3;i++){
+    assert.equal(s.beginWorkSubmission(p),true);
+    s.recordSubmission(p,level,result,0);
+    assert.equal(s.workday(p).submissions,i);
+  }
+  assert.equal(s.beginWorkSubmission(p),false);
+  assert.equal(s.workday(p).reviews.length,3);
+  assert.equal(s.workday(p).coins,0);
+  assert.equal(s.workday(p).xp,0);
+  p.readyReply={levelId:level.id};
+  assert.equal(s.nextWorkday(p),false);
+  delete p.readyReply;
+  assert.equal(s.nextWorkday(p),true);
+  assert.equal(s.workday(p).day,2);
+  assert.equal(s.workday(p).submissions,0);
+  assert.ok(s.commissionInbox(p).some(l=>l.id===level.id));
 });

@@ -169,7 +169,7 @@
     const profile = window.EC_STORE ? window.EC_STORE.load() : {};
     const hasUpgrade = id => window.EC_STORE && window.EC_STORE.hasUpgrade(profile, id);
     state.tools.gridVisible = hasUpgrade('grid-buddy'); state.tools.snap = true;
-    state.tools.guides = hasUpgrade('guide-radar');
+    state.tools.guides = true;
     state.tools.inspector = false; state.tools.measure = false; state.tools.showTargets = false;
     state.tools.gridSize = 8;
     state.tools.gridOpacity = 0.35;
@@ -227,6 +227,8 @@
     canvas.style.transformOrigin = '0 0';
     canvas.style.setProperty('--selection-unit', (1 / scale) + 'px');
     syncBackdropDots(scale);
+    renderRulers();
+    renderSpacing();
     updateZoomBadge();
   }
 
@@ -500,6 +502,7 @@
     const div = state.domNodes[id];
     if(div){ div.classList.remove('intro-flash'); div.classList.add('selected'); }
     showSettings(el);
+    renderSpacing();
     // On the mobile/tablet stacked layout the settings panel starts
     // collapsed so the canvas keeps the space — picking something to edit
     // is the one moment it should open itself; the button next to its
@@ -516,6 +519,7 @@
     }
     state.selectedId = null;
     renderEditorLayers();
+    renderSpacing();
     resetSettingsPlaceholder();
   }
 
@@ -835,9 +839,75 @@
   }
 
   // ---------------- Guides while dragging ----------------
+  function renderRulers(){
+    const wrap=document.getElementById('editor-canvas-wrap');
+    let ruler=wrap.querySelector('.canvas-rulers');
+    if(!state.tools.measure || !state.level){if(ruler) ruler.remove();return;}
+    if(!ruler){ruler=document.createElementNS('http://www.w3.org/2000/svg','svg');ruler.classList.add('canvas-rulers');ruler.setAttribute('aria-hidden','true');wrap.appendChild(ruler);}
+    const w=wrap.clientWidth,h=wrap.clientHeight,scale=getScale();
+    if(!scale || !Number.isFinite(scale))return;
+    ruler.setAttribute('viewBox',`0 0 ${w} ${h}`);
+    let step=8;while(step*scale<64)step*=2;
+    let html=`<path d="M0 0H${w}V24H24V${h}H0Z" fill="#f4faf7"/>`;
+    for(const [axis,length,pan] of [['x',w,state.panX],['y',h,state.panY]]){
+      const start=Math.ceil(-pan/scale/step)*step,end=(length-pan)/scale;
+      for(let value=start;value<=end;value+=step){
+        const p=pan+value*scale;
+        if(p<24)continue;
+        html+=axis==='x'?`<path d="M${p} 17v7"/><text x="${p+3}" y="12">${Math.round(value)}</text>`:`<path d="M17 ${p}h7"/><text x="3" y="${p-3}" transform="rotate(-90 3 ${p-3})">${Math.round(value)}</text>`;
+      }
+    }
+    ruler.innerHTML=html;
+  }
+
+  function renderSpacing(){
+    state.guideLayerEl?.querySelector('.spacing-overlay')?.remove();
+    const el=byId(state.selectedId);
+    if((!state.tools.measure && !(state.dragging && state.tools.guides)) || !el || !state.guideLayerEl)return;
+    const nearest={};
+    const add=(side,gap,x1,y1,x2,y2)=>{if(gap>=0 && (!nearest[side] || gap<nearest[side].gap))nearest[side]={gap,x1,y1,x2,y2};};
+    state.elements.filter(o=>o.id!==el.id && !o.locked).forEach(o=>{
+      const top=Math.max(el.y,o.y),bottom=Math.min(el.y+el.h,o.y+o.h);
+      const left=Math.max(el.x,o.x),right=Math.min(el.x+el.w,o.x+o.w);
+      if(bottom>top){const y=(top+bottom)/2;add('left',el.x-o.x-o.w,o.x+o.w,y,el.x,y);add('right',o.x-el.x-el.w,el.x+el.w,y,o.x,y);}
+      if(right>left){const x=(left+right)/2;add('top',el.y-o.y-o.h,x,o.y+o.h,x,el.y);add('bottom',o.y-el.y-el.h,x,el.y+el.h,x,o.y);}
+    });
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('spacing-overlay');svg.setAttribute('aria-hidden','true');
+    const unit=1/getScale(),gaps=Object.values(nearest);
+    // Include adjacent gaps across the whole aligned row/column, so moving
+    // either end of a group of three still shows both intervals.
+    const aligns=(a,b,axis)=>{
+      const size=axis==='x'?'w':'h';
+      return [0,.5,1].some(f=>Math.abs(a[axis]+a[size]*f-b[axis]-b[size]*f)<1);
+    };
+    const peers=state.elements.filter(o=>!o.locked);
+    for(const axis of ['x','y']){
+      const cross=axis==='x'?'y':'x';
+      const group=peers.filter(o=>o.id===el.id || aligns(el,o,cross)).sort((a,b)=>a[axis]-b[axis]);
+      if(group.length<3)continue;
+      const pos=axis==='x'?Math.min(...group.map(o=>o.y))-16*unit:Math.max(...group.map(o=>o.x+o.w))+16*unit;
+      for(let i=1;i<group.length;i++){
+        const a=group[i-1],b=group[i],start=a[axis]+a[axis==='x'?'w':'h'],end=b[axis];
+        if(end<start)continue;
+        const g=axis==='x'?{gap:end-start,x1:start,y1:pos,x2:end,y2:pos}:{gap:end-start,x1:pos,y1:start,x2:pos,y2:end};
+        const duplicate=gaps.findIndex(n=>axis==='x'?n.y1===n.y2 && n.x1===start && n.x2===end:n.x1===n.x2 && n.y1===start && n.y2===end);
+        if(duplicate>=0)gaps.splice(duplicate,1);
+        gaps.push(g);
+      }
+    }
+    svg.innerHTML=gaps.map(g=>{
+      const x=(g.x1+g.x2)/2,y=(g.y1+g.y2)/2,equal=gaps.filter(n=>Math.abs(n.gap-g.gap)<1).length>1;
+      const color=equal?'#7852b8':'#cf3783',label=`${Math.round(g.gap)} px`,width=label.length*7*unit;
+      const bracket=g.y1===g.y2?`M${g.x1} ${g.y1+6*unit}V${g.y1}H${g.x2}V${g.y2+6*unit}`:`M${g.x1-6*unit} ${g.y1}H${g.x1}V${g.y2}H${g.x2-6*unit}`;
+      return `<path class="spacing-bracket" d="${bracket}" stroke="${color}" stroke-width="${unit}" fill="none"/><rect x="${x-width/2-3*unit}" y="${y-9*unit}" width="${width+6*unit}" height="${18*unit}" rx="${3*unit}" fill="${color}"/><text x="${x}" y="${y+4*unit}" text-anchor="middle" font-size="${12*unit}" fill="white">${label}</text>`;
+    }).join('');
+    state.guideLayerEl.appendChild(svg);
+  }
+
   function clearGuideLines(){
     if(!state.guideLayerEl) return;
-    state.guideLayerEl.querySelectorAll('.guide-line, .drag-label').forEach(n=>n.remove());
+    state.guideLayerEl.querySelectorAll('.guide-line, .drag-label, .alignment-reference').forEach(n=>n.remove());
   }
 
   function drawVGuide(x, isCenter){
@@ -860,7 +930,7 @@
     state.guideLayerEl.appendChild(l);
   }
   function applyGuideSnap(el, nx, ny){
-    if(!state.tools.guides) return { x:nx, y:ny };
+    if(!state.tools.guides && !state.tools.measure) return { x:nx, y:ny };
     const cw = state.level.canvas.w, ch = state.level.canvas.h;
     const others = state.elements.filter(o=>o.id!==el.id);
     const vCandidates = [0, cw/2, cw];
@@ -871,19 +941,27 @@
     const edgesX = [ {v:nx, off:0}, {v:nx+el.w/2, off:el.w/2}, {v:nx+el.w, off:el.w} ];
     for(const cand of vCandidates){
       for(const e of edgesX){
-        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD){ snappedX = cand-e.off; matchedV = cand; break; }
+        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD && Math.abs((cand-e.off)/8-Math.round((cand-e.off)/8))<0.001){ snappedX = cand-e.off; matchedV = cand; break; }
       }
       if(matchedV!=null) break;
     }
     const edgesY = [ {v:ny, off:0}, {v:ny+el.h/2, off:el.h/2}, {v:ny+el.h, off:el.h} ];
     for(const cand of hCandidates){
       for(const e of edgesY){
-        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD){ snappedY = cand-e.off; matchedH = cand; break; }
+        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD && Math.abs((cand-e.off)/8-Math.round((cand-e.off)/8))<0.001){ snappedY = cand-e.off; matchedH = cand; break; }
       }
       if(matchedH!=null) break;
     }
     if(matchedV!=null) drawVGuide(matchedV, matchedV === cw/2);
     if(matchedH!=null) drawHGuide(matchedH, matchedH === ch/2);
+    others.filter(o=>o.role!=='background').forEach(o=>{
+      const matches=(matchedV!=null && [o.x,o.x+o.w/2,o.x+o.w].includes(matchedV)) || (matchedH!=null && [o.y,o.y+o.h/2,o.y+o.h].includes(matchedH));
+      if(!matches)return;
+      const outline=document.createElement('div');
+      outline.className='alignment-reference';outline.dataset.referenceId=o.id;
+      Object.assign(outline.style,{left:o.x+'px',top:o.y+'px',width:o.w+'px',height:o.h+'px',borderWidth:(1/getScale())+'px'});
+      state.guideLayerEl.appendChild(outline);
+    });
     return { x:snappedX, y:snappedY };
   }
 
@@ -938,6 +1016,7 @@
       el.x = Math.round(snapped.x/8)*8;
       el.y = Math.round(snapped.y/8)*8;
       refreshElementDom(el);
+      renderSpacing();
       if(state.tools.measure){
         const marginR = Math.round(state.level.canvas.w - (el.x+el.w));
         const marginB = Math.round(state.level.canvas.h - (el.y+el.h));
@@ -978,6 +1057,7 @@
       }
       Object.assign(el, {x,y,w,h});
       refreshElementDom(el);
+      renderSpacing();
       if(state.tools.measure) drawDragLabel(el.x, Math.max(0,el.y-24), `${Math.round(w)}×${Math.round(h)}px`);
     }
   }
@@ -988,6 +1068,7 @@
     document.body.classList.remove('eyecon-dragging');
     clearGuideLines();
     pushHistory();
+    renderSpacing();
     const el = byId(state.selectedId);
     if(el) showSettings(el);
     refreshLiveOverlays();
@@ -999,6 +1080,7 @@
     document.getElementById('tool-guides').classList.toggle('active', state.tools.guides);
     document.getElementById('tool-inspector').classList.toggle('active', state.tools.inspector);
     document.getElementById('tool-measure').classList.toggle('active', state.tools.measure);
+    document.getElementById('tool-measure').setAttribute('aria-pressed',String(state.tools.measure));
     const targetBtn = document.getElementById('tool-targets');
     targetBtn.classList.toggle('active', state.tools.showTargets);
     targetBtn.setAttribute('aria-pressed', String(state.tools.showTargets));
@@ -1201,7 +1283,7 @@
     });
     document.getElementById('tool-guides').addEventListener('click', ()=>{ state.tools.guides=!state.tools.guides; updateToolButtonStates(); });
     document.getElementById('tool-inspector').addEventListener('click', ()=>{ state.tools.inspector=!state.tools.inspector; updateToolButtonStates(); renderOverlays(); });
-    document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates(); });
+    document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates();renderRulers();renderSpacing(); });
     document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
     document.getElementById('tool-show-clickable').addEventListener('click', ()=>{ playIntroFlash(); hideMobileToolsSheet(); });
     document.getElementById('tool-typescale').addEventListener('click', ()=>{

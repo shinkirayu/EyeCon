@@ -294,6 +294,7 @@ test('submission restores typing and attaching a reply before recording rewards'
   await page.locator('#attach-option-edited').click();
   await expect(send).toBeEnabled();
   await send.click();
+  await expect(page.locator('#taskbar-clock')).toContainText('11:00 am');
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
   await expect(page.locator('#mail-list')).toContainText('Awaiting their reply');
   await expect(page.getByRole('dialog', { name: 'Compose reply' })).toBeHidden();
@@ -643,4 +644,72 @@ test('desktop size grows across settings and keyboard keeps Mail stable',async({
     expect(await page.locator('#app-root').evaluate(el=>el.getBoundingClientRect().height)).toBeCloseTo(before.height,0);
     expect(await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize))).toBeCloseTo(mailSize,2);
   }
+});
+
+test('ruler tool measures nearby elements and shows drag alignment guides',async({page})=>{
+  await page.setViewportSize({width:1600,height:900});
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  const ruler=page.getByRole('button',{name:'Rulers and spacing',exact:true});
+  await ruler.click();
+  await expect(ruler).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.canvas-rulers')).toBeVisible();
+  await page.locator('[data-layer-id="cta"] .editor-layer-select').click();
+  await expect(page.locator('.spacing-overlay text').first()).toContainText('px');
+  const el=page.locator('#editor-canvas .el[data-id="cta"]');
+  const box=await el.boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+  await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2+8,{steps:4});
+  await expect(page.locator('.guide-line').first()).toBeVisible();
+  await expect(page.locator('.alignment-reference').first()).toBeVisible();
+  await expect(page.locator('.spacing-bracket').first()).toBeVisible();
+  await page.mouse.up();
+  await expect(page.locator('.alignment-reference')).toHaveCount(0);
+  await ruler.click();
+  await expect(page.locator('.canvas-rulers')).toHaveCount(0);
+  await expect(page.locator('.spacing-overlay')).toHaveCount(0);
+});
+
+test('spacing brackets show both gaps across three aligned elements',async({page})=>{
+  await page.setViewportSize({width:1600,height:900});
+  await page.goto('/');await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  await expect(page.locator('#editor-canvas .el[data-id="cta"]')).toBeVisible();
+  await page.evaluate(()=>{
+    const level=JSON.parse(JSON.stringify(EC_LEVELS[0]));
+    level.elements=[0,1,2].map(i=>({id:'box'+i,type:'rect',role:'card',x:64+i*128,y:160,w:64,h:64,bg:'#b6e1da',z:1}));
+    EC_EDITOR.open(level);
+  });
+  await page.getByRole('button',{name:'Rulers and spacing',exact:true}).click();
+  await page.locator('[data-layer-id="box0"] .editor-layer-select').click();
+  await expect(page.locator('.spacing-overlay text')).toHaveCount(2);
+  await expect(page.locator('.spacing-overlay text').first()).toHaveText('64 px');
+  await expect(page.locator('.spacing-overlay text').last()).toHaveText('64 px');
+  await expect(page.locator('.spacing-bracket')).toHaveCount(2);
+});
+
+test('workday clock and closing summary persist and continue to 8 AM',async({page})=>{
+  await page.goto('/');
+  for(const [submissions,time] of [[0,'8:00 am'],[1,'11:00 am'],[2,'2:00 pm'],[3,'5:00 pm']]){
+    await page.evaluate(submissions=>{
+      const p=EC_STORE.defaultProfile();p.onboarding.seen=true;
+      p.workday={day:2,submissions,coins:90,xp:120,reviews:[{name:'Brewbird',page:'Homepage',stars:4,approved:true,reward:90}]};
+      EC_STORE.save(p);
+    },submissions);
+    await page.reload();
+    await expect(page.locator('#taskbar-clock')).toContainText(time);
+  }
+  const summary=page.getByRole('dialog',{name:'Day 2 complete'});
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText('3 submissions');
+  await expect(summary).toContainText('120 XP');
+  await expect(summary).toContainText('Brewbird');
+  await page.getByRole('button',{name:'Continue to next day'}).click();
+  await expect(summary).toBeHidden();
+  await expect(page.locator('#taskbar-clock')).toContainText('Day 3');
+  await expect(page.locator('#taskbar-clock')).toContainText('8:00 am');
+  await expect(page.locator('#mail-list .mail-item').first()).toBeVisible();
 });

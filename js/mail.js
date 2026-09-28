@@ -30,7 +30,7 @@
     if(!levels.length){
       const prog=S.progression(profile);
       list.innerHTML = prog.doneToday >= prog.dailyLimit
-        ? `<div class="empty-state">That's all for today, you finished ${prog.doneToday} tasks! New emails arrive tomorrow.</div>`
+        ? `<div class="empty-state">It's 5 PM. Continue from the day summary to receive tomorrow's mail.</div>`
         : '<div class="empty-state">All caught up! Your finished work is in Completed.</div>';
       return;
     }
@@ -118,7 +118,7 @@
     document.getElementById('mail-detail-reward').innerHTML = '';
     const btn = document.getElementById('btn-accept-job');
     btn.style.display = '';
-    btn.textContent = missionComplete ? 'Mark Completed' : 'Back to Editor';
+    btn.textContent = missionComplete ? 'Mark Completed' : window.EC_STORE.workday(window.EC_STORE.load()).submissions>=3 ? 'Finish workday' : 'Back to Editor';
     btn.onclick = () => { window.EC_MODAL.hide('modal-mail-detail'); btn.onclick = null; replyMode = false; onContinue(); };
     window.EC_MODAL.show('modal-mail-detail');
   }
