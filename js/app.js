@@ -39,6 +39,7 @@
     const swap = () => {
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','closing'));
       document.getElementById(name).classList.add('active');
+      if(window.EC_FIT) window.EC_FIT();
       document.getElementById('global-taskbar').classList.toggle('desktop-hidden', name === 'screen-home');
       announce(name.replace('screen-','').replace('-',' ') + ' screen');
       if(onShown) onShown();

@@ -66,11 +66,26 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
   // layout at a size that fits. Portrait phones keep the phone layout.
   const LANDSCAPE_LAYOUT_H = 760;
   let phoneLandscape = false;
+  let typingSize = null;
+  const isTyping = element => element && (element.matches('input:not([type=range]):not([type=checkbox]):not([type=radio]),textarea') || element.isContentEditable);
+  document.addEventListener('focusin', event=>{
+    if(!matchMedia('(pointer:coarse)').matches || !isTyping(event.target) || typingSize) return;
+    typingSize = { width:innerWidth, height:document.getElementById('app-root').getBoundingClientRect().height };
+    document.documentElement.style.setProperty('--typing-height', typingSize.height+'px');
+    document.documentElement.classList.add('keyboard-editing');
+  });
+  document.addEventListener('focusout', ()=>setTimeout(()=>{
+    if(isTyping(document.activeElement)) return;
+    typingSize=null;
+    document.documentElement.classList.remove('keyboard-editing');
+    fit();
+  },350));
   function fitPhoneViewport(){
+    if(typingSize) return;
     const meta = document.querySelector('meta[name="viewport"]');
     if(!meta || !window.matchMedia('(pointer:coarse)').matches) return;
     const sw = screen.width, sh = screen.height;
-    const landscape = window.matchMedia('(orientation: landscape)').matches;
+    const landscape = screen.orientation ? screen.orientation.type.startsWith('landscape') : sw > sh;
     const short = Math.min(sw, sh), long = Math.max(sw, sh);
     phoneLandscape = landscape && short < 600;
     const content = phoneLandscape
@@ -99,6 +114,8 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
   // (25%) up to the largest size that still fits (100%).
   const FIT_HEIGHT = 820;
   function fit(){
+    if(typingSize && Math.abs(innerWidth-typingSize.width)<80) return;
+    if(typingSize){typingSize=null;document.documentElement.classList.remove('keyboard-editing');}
     fitPhoneViewport();
     // Use the visible height (Safari's toolbars can cover part of the window).
     const w = window.innerWidth, h = Math.min(window.innerHeight, window.visualViewport ? window.visualViewport.height : Infinity);
@@ -113,6 +130,12 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
       size = least + (most - least) * t;
     }else{
       size = w <= 900 ? base * ui : Math.min(base * ui, most);
+    }
+    // Mobile desktop shortcuts start at the former largest setting.
+    // PC and Mail retain their existing scale curves.
+    if(matchMedia('(pointer:coarse)').matches && document.getElementById('screen-desktop')?.classList.contains('active')){
+      const t=Math.min(1,Math.max(0,(ui-0.8)/0.6));
+      size=(phoneLandscape ? most : Math.min(base*1.4,most))*(1+t*0.45);
     }
     root.style.setProperty('--fit', (size / ui).toFixed(4));
     root.style.setProperty('--visible-h', h + 'px');

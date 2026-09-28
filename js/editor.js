@@ -58,7 +58,7 @@
 
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function roundTo8(n){ return Math.max(8, Math.round(n/8)*8); }
-  const ZOOM_MIN = 0.3, ZOOM_MAX = 4;
+  const ZOOM_MIN = matchMedia('(pointer:coarse)').matches ? 0.1 : 0.3, ZOOM_MAX = 4;
   const ZOOM_EASE = 0.12;          // lower = smoother/slower glide, higher = snappier
   const ZOOM_WHEEL_SENSITIVITY = 0.00085; // lower = gentler zoom per wheel notch
 
@@ -198,12 +198,13 @@
     document.getElementById('grid-settings-panel').hidden = true;
   }
 
-  // Scale that fits the whole canvas inside the visible viewport ("100%" baseline).
+  // Mobile 50% matches the former 150% view. PC keeps its fitted baseline.
   function baseFitScale(canvasW, canvasH){
     const wrap = document.getElementById('editor-canvas-wrap');
     const availW = Math.max(1, wrap.clientWidth - 24);
     const availH = Math.max(1, wrap.clientHeight - 24);
-    return Math.min(availW/canvasW, availH/canvasH);
+    const mobileMultiplier = matchMedia('(pointer:coarse)').matches ? 3 : 1;
+    return mobileMultiplier * Math.min(availW/canvasW, availH/canvasH);
   }
 
   // Applies the current base-fit * displayZoom scale AND the current pan

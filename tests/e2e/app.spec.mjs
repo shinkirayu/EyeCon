@@ -611,3 +611,29 @@ test('profile settings list and the browser shows the store and client sites',as
   await page.locator('#browser-back-btn').click();
   await expect(page.locator('#screen-shop #shop-panel')).toHaveCount(1);
 });
+
+test('desktop size grows across settings and keyboard keeps Mail stable',async({page},testInfo)=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open EyeCon'}).click();
+  await expect(page.locator('#screen-desktop')).toHaveClass(/active/);
+  const size=async(value)=>page.evaluate(value=>{document.documentElement.style.setProperty('--ui-scale',value);EC_FIT();return parseFloat(getComputedStyle(document.documentElement).fontSize);},value);
+  let previous=await size(.8);
+  const desktopBase=previous;
+  for(const value of [1,1.2,1.4]){const next=await size(value);expect(next).toBeGreaterThanOrEqual(previous);previous=next;}
+  await size(.8);
+  await page.getByRole('button',{name:'Open Mail app'}).click();
+  await expect(page.locator('#screen-shell')).toHaveClass(/active/);
+  const mailSize=await size(.8);
+  if(testInfo.project.name==='mobile-chrome') expect(mailSize).toBeLessThan(desktopBase);
+  else expect(mailSize).toBeCloseTo(desktopBase,2);
+  if(testInfo.project.name==='mobile-chrome'){
+    const close=await page.locator('#mail-back-btn').boundingBox();
+    expect(close.x+close.width).toBeLessThanOrEqual(page.viewportSize().width-24);
+    await page.locator('#mail-search-input').focus();
+    const before=await page.locator('#app-root').boundingBox();
+    await page.setViewportSize({width:page.viewportSize().width,height:500});
+    await page.waitForTimeout(100);
+    expect(await page.locator('#app-root').evaluate(el=>el.getBoundingClientRect().height)).toBeCloseTo(before.height,0);
+    expect(await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize))).toBeCloseTo(mailSize,2);
+  }
+});

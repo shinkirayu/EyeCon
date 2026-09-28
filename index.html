@@ -10,7 +10,7 @@
 (function(){
   document.documentElement.classList.add('booting');
   var s = Math.min(screen.width, screen.height), l = Math.max(screen.width, screen.height);
-  if(matchMedia('(pointer:coarse)').matches && matchMedia('(orientation: landscape)').matches && s < 600){
+  if(matchMedia('(pointer:coarse)').matches && (screen.orientation ? screen.orientation.type.indexOf('landscape') === 0 : screen.width > screen.height) && s < 600){
     document.querySelector('meta[name="viewport"]').content = 'width=' + Math.max(1280, Math.round(760 * l / s)) + ', user-scalable=no, viewport-fit=cover';
   }
 })();

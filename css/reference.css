@@ -1314,3 +1314,10 @@ html.booting #boot-loader{visibility:visible;}
 html:not(.booting) #boot-loader{display:none;}
 #boot-loader .loading-spinner{width:7rem;height:7rem;}
 #boot-loader .loading-label{font-size:2rem;}
+/* Keep the app and canvas stable while a phone keyboard covers the screen. */
+html{font-size:calc(16px * var(--ui-scale) * var(--fit,1));}
+html.keyboard-editing #app-root{height:var(--typing-height);}
+@media(pointer:coarse){
+  #screen-shell .mail-header #mail-back-btn{left:auto;right:calc(env(safe-area-inset-right,0px) + 32px);top:calc(env(safe-area-inset-top,0px) + 16px);min-width:44px;min-height:44px;}
+}
+@media(max-width:900px){html{font-size:calc(15px * var(--ui-scale) * var(--fit,1));}}
