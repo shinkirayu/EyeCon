@@ -37,6 +37,11 @@
 <link rel="stylesheet" href="css/reference.css" />
 </head>
 <body>
+  <!-- Startup loader: shown while the game is hidden until its size settles (see the inline script in <head>). -->
+  <div class="app-loading-screen boot-loader" id="boot-loader" aria-live="polite">
+    <div class="loading-spinner"><span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span><span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span></div>
+    <div class="loading-label">Loading EyeCon…</div>
+  </div>
 
 <div id="a11y-announcer" aria-live="polite" class="sr-only"></div>
 

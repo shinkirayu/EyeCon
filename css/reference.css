@@ -1309,3 +1309,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 @media(pointer:coarse){
   .mail-detail-card,.compose-card,.reward-card{max-height:calc(var(--visible-h,100dvh) - 1.5rem);overflow-y:auto;-webkit-overflow-scrolling:touch;}
 }
+/* Startup loader stays visible while the rest of the page is hidden, then goes away. */
+html.booting #boot-loader{visibility:visible;}
+html:not(.booting) #boot-loader{display:none;}
+#boot-loader .loading-spinner{width:7rem;height:7rem;}
+#boot-loader .loading-label{font-size:2rem;}
