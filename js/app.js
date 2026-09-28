@@ -300,6 +300,7 @@
     if(s.cvd && s.cvd !== 'none') document.documentElement.setAttribute('data-cvd', s.cvd);
     else document.documentElement.removeAttribute('data-cvd');
     document.documentElement.style.setProperty('--ui-scale', s.uiScale || 1);
+    if(window.EC_FIT) window.EC_FIT(); // Size is capped to what the screen can hold
     document.body.classList.toggle('reduce-motion', !!s.reduceMotion);
     window.EC_SOUND.setEnabled(!!s.soundEnabled);
     window.EC_SOUND.setVolume(s.soundVolume != null ? s.soundVolume : 0.6);

@@ -63,13 +63,15 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
   // (it then shrinks the page to fit the screen), so they get the desktop
   // layout at a size that fits. Portrait phones keep the phone layout.
   const LANDSCAPE_LAYOUT_H = 760;
+  let phoneLandscape = false;
   function fitPhoneViewport(){
     const meta = document.querySelector('meta[name="viewport"]');
     if(!meta || !window.matchMedia('(pointer:coarse)').matches) return;
     const sw = screen.width, sh = screen.height;
     const landscape = window.matchMedia('(orientation: landscape)').matches;
     const short = Math.min(sw, sh), long = Math.max(sw, sh);
-    const content = landscape && short < 600
+    phoneLandscape = landscape && short < 600;
+    const content = phoneLandscape
       ? `width=${Math.max(1280, Math.round(LANDSCAPE_LAYOUT_H * long / short))}, user-scalable=no, viewport-fit=cover`
       : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
     if(meta.content !== content){
@@ -89,13 +91,30 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
       }, 900);
     }
   }
+  // Root size = base fit × the player's Size setting, never taller than the
+  // screen can hold (the desktop layout needs ~820 px of height at 1×).
+  // On a phone held sideways the Size steps run from a comfortable minimum
+  // (25%) up to the largest size that still fits (100%).
+  const FIT_HEIGHT = 820;
   function fit(){
     fitPhoneViewport();
     // Use the visible height (Safari's toolbars can cover part of the window).
     const w = window.innerWidth, h = Math.min(window.innerHeight, window.visualViewport ? window.visualViewport.height : Infinity);
-    const f = w <= 900 ? 1 : Math.max(MIN_FIT, Math.min(1, w / DESIGN_W, h / DESIGN_H));
-    document.documentElement.style.setProperty('--fit', f.toFixed(3));
+    const base = w <= 900 ? 1 : Math.max(MIN_FIT, Math.min(1, w / DESIGN_W, h / DESIGN_H));
+    const root = document.documentElement;
+    const ui = parseFloat(getComputedStyle(root).getPropertyValue('--ui-scale')) || 1;
+    const most = h / FIT_HEIGHT;
+    let size;
+    if(phoneLandscape){
+      const least = Math.min(base * 1.2, most);
+      const t = Math.min(1, Math.max(0, (ui - 0.8) / 0.6)); // Size 25% → 0, 100% → 1
+      size = least + (most - least) * t;
+    }else{
+      size = w <= 900 ? base * ui : Math.min(base * ui, most);
+    }
+    root.style.setProperty('--fit', (size / ui).toFixed(4));
   }
+  window.EC_FIT = fit;
   fit();
   // Reveal the game (hidden by the inline script in index.html) once
   // everything has loaded and the size has had a moment to settle.
