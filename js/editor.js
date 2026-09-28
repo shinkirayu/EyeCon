@@ -173,8 +173,10 @@
     state.tools.inspector = false; state.tools.measure = false; state.tools.showTargets = false;
     state.tools.gridSize = 8;
     state.tools.gridOpacity = 0.35;
-    state.zoom = 1;
-    state.displayZoom = 1;
+    // Start mobile commissions with the whole page visible at the larger
+    // mobile zoom baseline, rather than opening cropped at 100%.
+    state.zoom = matchMedia('(pointer:coarse)').matches ? 0.3 : 1;
+    state.displayZoom = state.zoom;
     state.panX = 0; state.panY = 0;
     if(zoomAnimId){ cancelAnimationFrame(zoomAnimId); zoomAnimId = null; }
     zoomAnchor = null;

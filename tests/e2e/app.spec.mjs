@@ -532,18 +532,25 @@ test('profile popup matches the app card style',async({page})=>{
   expect(style.font).toContain('Baloo');
 });
 
-test('editing canvas uses one toolbar for history and zoom',async({page})=>{
+test('editing canvas uses one toolbar for history and zoom',async({page},testInfo)=>{
   await page.goto('/');await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
   const bar=page.locator('#screen-editor .editor-topbar');
   await expect(bar.locator('#tool-undo')).toBeVisible();
   await expect(bar.locator('#tool-redo')).toBeVisible();
-  await expect(bar.locator('#editor-zoom-label')).toHaveText('100%');
+  const mobile=testInfo.project.name==='mobile-chrome';
+  await expect(bar.locator('#editor-zoom-label')).toHaveText(mobile?'30%':'100%');
+  if(mobile){
+    const canvas=await page.locator('#editor-canvas').boundingBox();
+    const wrap=await page.locator('#editor-canvas-wrap').boundingBox();
+    expect(canvas.width).toBeLessThan(wrap.width);
+    expect(canvas.height).toBeLessThan(wrap.height);
+  }
   await bar.locator('#editor-zoom-in').click();
-  await expect(bar.locator('#editor-zoom-label')).toHaveText('125%');
+  await expect(bar.locator('#editor-zoom-label')).toHaveText(mobile?'38%':'125%');
   await bar.locator('#editor-zoom-out').click();
-  await expect(bar.locator('#editor-zoom-label')).toHaveText('100%');
+  await expect(bar.locator('#editor-zoom-label')).toHaveText(mobile?'30%':'100%');
   await expect(bar.locator('#editor-zoom-fit')).toHaveCount(0);
 });
 

@@ -137,6 +137,9 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class=
       const t=Math.min(1,Math.max(0,(ui-0.8)/0.6));
       size=(phoneLandscape ? most : Math.min(base*1.4,most))*(1+t*0.45);
     }
+    if(matchMedia('(pointer:coarse)').matches && document.getElementById('screen-editor')?.classList.contains('active')){
+      size *= 1.3;
+    }
     root.style.setProperty('--fit', (size / ui).toFixed(4));
     root.style.setProperty('--visible-h', h + 'px');
   }

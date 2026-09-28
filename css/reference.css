@@ -1321,3 +1321,10 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   #screen-shell .mail-header #mail-back-btn{left:auto;right:calc(env(safe-area-inset-right,0px) + 32px);top:calc(env(safe-area-inset-top,0px) + 16px);min-width:44px;min-height:44px;}
 }
 @media(max-width:900px){html{font-size:calc(15px * var(--ui-scale) * var(--fit,1));}}
+/* Keep the mobile editor outside the iPhone cutout, including its left rail. */
+@media(pointer:coarse){
+  #screen-editor{box-sizing:border-box;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
+}
+@media(pointer:coarse) and (min-width:901px){
+  #screen-editor{padding-left:max(env(safe-area-inset-left,0px),6vw);}
+}
