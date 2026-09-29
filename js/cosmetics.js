@@ -24,6 +24,7 @@
     { id:'wp-lavender', category:'wallpaper', name:'Lavender Fields',  rarity:'rare',      emoji:'💜', css:'linear-gradient(160deg, #e3d6f7 0%, #c6aef0 100%)' },
     { id:'wp-sunset',   category:'wallpaper', name:'Sunset Studio',    rarity:'epic',      emoji:'🌅', css:'linear-gradient(160deg, #ffb385 0%, #ff7a90 55%, #a86bd0 100%)', isNew:true },
     { id:'wp-galaxy',   category:'wallpaper', name:'Galaxy Desk',      rarity:'legendary', emoji:'🌌', css:'linear-gradient(160deg, #1b1035 0%, #3a1c6e 45%, #7b2fb5 100%)', featured:true },
+    { id:'wp-boris',    category:'wallpaper', name:'Boris Wallpaper',  rarity:'rare',      emoji:'🐱', css:"#b5a1cd url('assets/wallpapers/boris.png') center / cover no-repeat", alwaysInShop:true },
 
     // ---- Window themes (color schemes) ----
     // accent/accentDark remap --purple (selection, sidebar, tags); secondary/

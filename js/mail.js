@@ -17,13 +17,51 @@
   let composeState = { fullText:'', revealed:0, attached:false, attachedFileName:'', editedLevel:null, editedElements:null };
   const REVEAL_CHARS_PER_KEY = 3;
 
+  // ---- Mail arrival + "new" state ----
+  // After the very first email, new client emails don't pop into the inbox
+  // instantly: each one "arrives" a few seconds later (staggered), with the
+  // new-mail sound and a toast. Opened emails lose their red "new" dot.
+  // Stored per browser, apart from the profile the app saves.
+  const MAIL_KEY = 'eyecon_mail_state';
+  function mailState(){
+    try{ return Object.assign({arrivals:{}, seen:[]}, JSON.parse(localStorage.getItem(MAIL_KEY) || '{}')); }
+    catch(e){ return {arrivals:{}, seen:[]}; }
+  }
+  function saveMailState(m){ try{ localStorage.setItem(MAIL_KEY, JSON.stringify(m)); }catch(e){} }
+  let arrivalTimer = null;
+  function arrivedInbox(profile){
+    const all = window.EC_STORE.commissionInbox(profile);
+    const m = mailState(), now = Date.now();
+    let changed = false, stagger = 0;
+    all.forEach(level=>{
+      if(m.arrivals[level.id] != null) return;
+      const firstEver = !profile.completed.length && !Object.keys(m.arrivals).length;
+      m.arrivals[level.id] = firstEver ? now : now + 4000 + (stagger++) * 6000;
+      changed = true;
+    });
+    if(changed) saveMailState(m);
+    const pending = all.filter(l=>m.arrivals[l.id] > now);
+    clearTimeout(arrivalTimer);
+    if(pending.length){
+      const next = pending.reduce((a,b)=>m.arrivals[a.id] <= m.arrivals[b.id] ? a : b);
+      arrivalTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('ec-mail-arrived', {detail:next})), m.arrivals[next.id] - now + 50);
+    }
+    return all.filter(l=>m.arrivals[l.id] <= now);
+  }
+  function markSeen(level){
+    const m = mailState();
+    if(!m.seen.includes(level.id)){ m.seen.push(level.id); saveMailState(m); }
+    document.querySelector(`#mail-list [data-level-id="${level.id}"]:not(.unread) .unread-dot`)?.remove();
+  }
+
   function renderInbox(profile){
     const list=document.getElementById('mail-list');
     list.innerHTML='';
     const S=window.EC_STORE;
-    const levels=S.commissionInbox(profile);
-    // Replies stay visible even once the page counts as done or the day is full.
-    [profile.pendingClientReply, profile.readyReply].forEach(r=>{
+    const seen=mailState().seen;
+    // While a design is with the client it leaves the inbox; the reply comes back as new mail.
+    const levels=arrivedInbox(profile).filter(l=>profile.pendingClientReply?.levelId!==l.id);
+    [profile.readyReply].forEach(r=>{
       const level = r && window.EC_LEVELS.find(l=>l.id===r.levelId);
       if(level && !levels.includes(level)) levels.unshift(level);
     });
@@ -40,7 +78,7 @@
       const polish=!waiting && !replied && S.isPolishTask(profile,level);
       const clickable=!waiting;
       const row=document.createElement('div');
-      row.className='mail-item'+(replied?' unread':''); row.setAttribute('role','listitem'); row.tabIndex=clickable?0:-1;
+      row.className='mail-item'+(replied?' unread':''); row.dataset.levelId=level.id; row.setAttribute('role','listitem'); row.tabIndex=clickable?0:-1;
       const preview = waiting ? 'Your design is with the client. Awaiting their reply...'
         : replied ? `${level.clientName} replied to your design.`
         : polish ? `Could you polish our ${level.pageLabel.toLowerCase()} for an even better result?`
@@ -49,7 +87,7 @@
         : `<span class="tag tier-${level.tier}">${polish ? 'Polish' : TIER_LABEL[level.tier]}</span>`;
       const pay=S.commissionPay(profile,level);
       const prize=waiting || replied ? '' : `<span class="mail-prize" title="Paid on approval, plus ${pay.perBonusStar} for each bonus star">${window.EC_MONEY(pay.base)} <small>+${pay.perBonusStar}/★</small></span>`;
-      row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div>${prize}${tag}${replied?'<span class="unread-dot"></span>':''}`;
+      row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div>${prize}${tag}${replied || !seen.includes(level.id) ?'<span class="unread-dot" title="New"></span>':''}`;
       if(clickable){
         const open = () => replied ? handlers.onOpenReply(level) : openMailDetail(level);
         row.addEventListener('click', open);
@@ -125,6 +163,7 @@
 
   function openMailDetail(level, readOnly){
     activeLevel = level;
+    markSeen(level);
     replyMode = false;
     document.getElementById('btn-accept-job').onclick = null;
     document.getElementById('mail-detail-title').textContent = level.clientName;
@@ -308,7 +347,7 @@
   }
 
   window.EC_MAIL = {
-    renderInbox, renderCompleted, openMailDetail, openCompose, openClientReply,
+    renderInbox, renderCompleted, arrivedInbox, openMailDetail, openCompose, openClientReply,
     setHandlers: h => handlers = Object.assign(handlers, h),
     initOnce,
   };

@@ -16,6 +16,18 @@ test('daily specials are stable, unique and rotate across UTC midnight',async()=
   assert.equal(new Set(first.items.map(i=>i.id)).size,5);
   assert.notDeepEqual(first.items.map(i=>i.id),s.dailyShop(new Date('2026-09-16T00:00:00Z')).items.map(i=>i.id));
 });
+test('Boris wallpaper stays available to buy and equip',async()=>{
+  const s=await setup(),p=s.defaultProfile(),shop=s.dailyShop();
+  assert.equal(shop.items[0].id,'wp-boris');
+  assert.equal(s.dailyShop(new Date('2026-09-16T00:00:00Z')).items[0].id,'wp-boris');
+  assert.match(shop.items[0].css,/assets\/wallpapers\/boris\.png/);
+  s.toggleCart(p,'wp-boris');
+  const result=s.checkout(p,shop.date);
+  assert.equal(result.items[0].id,'wp-boris');
+  assert.ok(p.inventory.includes('wp-boris'));
+  s.equipItem(p,shop.items[0]);
+  assert.equal(p.equipped.wallpaper,'wp-boris');
+});
 test('checkout charges exact prices once and preserves existing inventory',async()=>{
   const s=await setup(),p=s.defaultProfile(),shop=s.dailyShop();p.currency=1000;
   const original=p.inventory.slice(),item=shop.items[0];s.toggleCart(p,item.id);

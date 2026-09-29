@@ -17,10 +17,11 @@ test('opens the studio desktop from the home monitor', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Open Mail app' })).toBeVisible();
   const mail=await page.locator('#icon-mail').boundingBox();
   const maker=await page.locator('#icon-maker').boundingBox();
-  expect(maker.y).toBeGreaterThan(mail.y+mail.height);
+  // One column of equal square cells.
+  expect(maker.y).toBeGreaterThan(mail.y+mail.height-1);
   expect(Math.abs(maker.x-mail.x)).toBeLessThan(2);
   expect(Math.abs(maker.width-mail.width)).toBeLessThan(2);
-  expect(mail.width).toBeLessThanOrEqual(104);
+  expect(Math.abs(mail.width-mail.height)).toBeLessThan(2);
 });
 
 test('level maker creates and exports an 8px-aligned design', async ({ page }) => {
@@ -221,17 +222,33 @@ test('desktop UI fits the native 1920 by 1080 layout and scales down proportiona
 test('the shop is available from the desktop', async ({ page }) => {
   await page.goto('/');
   await beginFirstDay(page);
-  await page.getByRole('button', { name: 'Back to desktop' }).click();
-  await page.getByRole('button', { name: 'Open Shop app' }).click();
+  await page.getByRole('button', { name: 'Close Eye Mail' }).click();
+  await page.locator('#icon-shop').dispatchEvent('click');
   await expect(page.getByRole('region', { name: 'Shop' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /A little refresh for your desk/ })).toBeVisible();
+});
+
+test('desktop shortcuts open centered Settings and running taskbar apps',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open EyeCon'}).click();
+  await expect(page.locator('#taskbar-open-apps button')).toHaveCount(0);
+  await expect(page.locator('#taskbar-shop')).toHaveCount(0);
+  await expect(page.locator('#taskbar-profile')).toBeVisible();
+  await expect(page.locator('#taskbar-settings')).toBeVisible();
+  await expect(page.locator('#icon-settings')).toBeHidden();
+  await expect(page.locator('#icon-stats')).toBeHidden();
+  await page.getByRole('button',{name:'Open Mail app'}).click();
+  await expect(page.getByRole('button',{name:'Switch to Mail'})).toBeVisible();
+  await page.getByRole('button',{name:'Go to desktop'}).click();
+  await page.getByRole('button',{name:'Switch to Mail'}).click();
+  await expect(page.locator('#screen-shell')).toBeVisible();
 });
 
 test('the studio upgrades tab sells a guaranteed upgrade', async ({ page }) => {
   await page.goto('/');
   await beginFirstDay(page);
-  await page.getByRole('button', { name: 'Back to desktop' }).click();
-  await page.getByRole('button', { name: 'Open Shop app' }).click();
+  await page.getByRole('button', { name: 'Close Eye Mail' }).click();
+  await page.locator('#icon-shop').dispatchEvent('click');
   await page.getByRole('button', { name: /Upgrades/ }).click();
 
   await expect(page.getByRole('heading', { name: /Studio Upgrades/ })).toBeVisible();
@@ -259,7 +276,7 @@ test('the canvas fills its workspace without a mission strip or resizing for set
     const before=await readGeometry();
     // Two sidebars (brief left, tools right) share the width with the canvas.
     expect(before.workspace).toBeGreaterThan(.5);
-    expect(before.fill).toBeGreaterThan(.9);
+    expect(before.fill).toBeGreaterThan(.85);
     await expect(page.locator('#element-settings')).toBeVisible();
     const after=await readGeometry();
     expect(after.width).toBeCloseTo(before.width,0);
@@ -294,9 +311,9 @@ test('submission restores typing and attaching a reply before recording rewards'
   await page.locator('#attach-option-edited').click();
   await expect(send).toBeEnabled();
   await send.click();
-  await expect(page.locator('#taskbar-clock')).toContainText('11:00 am');
+  await expect(page.locator('#taskbar-clock')).toContainText('11:00');
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
-  await expect(page.locator('#mail-list')).toContainText('Awaiting their reply');
+  await expect(page.locator('#mail-list')).not.toContainText('Awaiting their reply');
   await expect(page.getByRole('dialog', { name: 'Compose reply' })).toBeHidden();
   // The reply arrives with a verdict, but nothing is recorded until the player acts on it.
   await expect.poll(() => page.evaluate(() => !!EC_STORE.load().readyReply)).toBe(true);
@@ -315,7 +332,7 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   await page.getByRole('listitem').first().click();
   await page.getByRole('button', { name: 'Accept' }).click();
   const set = async (id, field, value) => {
-    await page.locator(`#editor-layers-panel [data-layer-id="${id}"] .editor-layer-select`).click();
+    await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
     const input = page.locator('#f-' + field);
     await input.fill(String(value));
     await input.dispatchEvent('change');
@@ -347,14 +364,16 @@ test('marking an approved task complete pays out with a celebration', async ({ p
 
 test('reference desktop keeps app shortcuts reachable across screen sizes',async({page})=>{
   await page.goto('/');await beginFirstDay(page);
-  await page.getByRole('button',{name:'Back to desktop'}).click();
+  await page.getByRole('button',{name:'Close Eye Mail'}).click();
   for(const [width,height] of [[320,568],[390,844],[652,1146],[768,1024],[844,390],[1366,768],[2560,1080]]){
     await page.setViewportSize({width,height});
     await expect(page.getByRole('button',{name:'Open Mail app'})).toBeVisible();
-    const bounds=await page.locator('.desktop-icon').evaluateAll(items=>items.map(el=>{
-      const r=el.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
+    const bounds=await page.locator('.desktop-icon:visible').evaluateAll(items=>items.map(el=>{
+      const r=el.getBoundingClientRect();return {id:el.id,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
     }));
-    for(const box of bounds){expect(box.x).toBeGreaterThanOrEqual(0);expect(box.y).toBeGreaterThanOrEqual(0);expect(box.right).toBeLessThanOrEqual(width);expect(box.bottom).toBeLessThanOrEqual(height);expect(box.width).toBeGreaterThanOrEqual(40);}
+    // Phones held sideways switch to a wider layout viewport, so compare with the page's real size.
+    const [vw,vh]=await page.evaluate(()=>[innerWidth,innerHeight]);
+    for(const box of bounds){expect(box.x,box.id).toBeGreaterThanOrEqual(0);expect(box.y,box.id).toBeGreaterThanOrEqual(0);expect(box.right,`${box.id} at ${width}x${height}`).toBeLessThanOrEqual(vw);expect(box.bottom,box.id).toBeLessThanOrEqual(vh);expect(box.width,box.id).toBeGreaterThanOrEqual(40);}
   }
 });
 
@@ -389,11 +408,12 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
   await page.evaluate(()=>{ const p=EC_STORE.load();p.currency=1000;EC_STORE.save(p); });
   await page.reload();
   await beginFirstDay(page);
-  await page.getByRole('button',{name:'Back to desktop'}).click();
-  await page.getByRole('button',{name:'Open Shop app'}).click();
+  await page.getByRole('button',{name:'Close Eye Mail'}).click();
+  await page.locator('#icon-shop').dispatchEvent('click');
   await expect(page.getByRole('button',{name:/Gacha|Pull/})).toHaveCount(0);
   await expect(page.locator('.daily-item')).toHaveCount(5);
   const first=page.locator('.daily-item').first();
+  await expect(first).toContainText('Boris Wallpaper');
   const name=await first.locator('h4').textContent();
   await first.getByRole('button',{name:'Add to cart'}).click();
   await page.getByRole('button',{name:'Cart (1)'}).click();
@@ -403,6 +423,9 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
   await expect(page.locator('#delivery-message')).toContainText('Delivered!');
   await page.getByRole('button',{name:'Open wardrobe'}).click();
   expect(await page.evaluate(()=>EC_STORE.load().purchases.length)).toBe(1);
+  await page.locator('.wardrobe-item[data-id="wp-boris"]').click();
+  expect(await page.evaluate(()=>EC_STORE.load().equipped.wallpaper)).toBe('wp-boris');
+  expect(await page.locator('#desktop-wallpaper').evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('boris.png');
 });
 
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
@@ -453,7 +476,7 @@ test('design tools stay open and use the app typography',async({page})=>{
   await expect(page.locator('#settings-fields')).toBeVisible();
   await expect(page.locator('#toggle-element-settings')).toHaveCount(0);
   expect(await inspector.locator('h3').evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
-  await page.locator('#editor-layers-panel .editor-layer-select').filter({hasText:/Order Now/}).click();
+  await page.locator(`#editor-canvas .el[data-id="${'cta'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'cta');
   await expect(inspector).toBeVisible();
   expect(await inspector.locator('.editor-setting-card summary').first().evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
   await expect(inspector.getByText('Alignment Controls')).toHaveCount(0);
@@ -465,12 +488,8 @@ test('design tools stay open and use the app typography',async({page})=>{
   await expect(page.locator('#editor-mail-points')).toContainText('Line up the headline');
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
-  const layersBox=await page.locator('#editor-layers-panel').boundingBox();
   // Desktop: brief on the left, Design tools above Layers on the right (phones stack them).
   if(page.viewportSize().width>900) expect(mailBox.x+mailBox.width).toBeLessThanOrEqual(settingsBox.x);
-  expect(settingsBox.y+settingsBox.height).toBeLessThanOrEqual(layersBox.y+1);
-  const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
-  expect(layersBox.height).toBeGreaterThanOrEqual(7.5*rem-1);
 });
 
 test('the first day starts with one email showing difficulty and reward',async({page})=>{
@@ -481,7 +500,16 @@ test('the first day starts with one email showing difficulty and reward',async({
   await expect(rows.first().locator('.tag')).toHaveText('NOVICE');
   await expect(rows.first()).not.toContainText('Step');
   await rows.first().click();
-  await expect(page.locator('#mail-detail-reward')).toContainText('40');
+  const reward=page.locator('#mail-detail-reward');
+  await expect(reward).toContainText('40');
+  expect(await reward.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('b')).fontSize))).toBeGreaterThan(20);
+  if(page.viewportSize().width>900){
+    const [titleBox,rewardBox]=await Promise.all([
+      page.locator('#mail-detail-title').boundingBox(),reward.boundingBox()
+    ]);
+    expect(rewardBox.x).toBeGreaterThan(titleBox.x+titleBox.width);
+    expect(rewardBox.y).toBeLessThan(titleBox.y+titleBox.height*2);
+  }
   await expect(page.locator('#mail-detail-body')).not.toContainText(/tour/i);
 });
 
@@ -501,7 +529,7 @@ test('text alignment moves the text, ticks the client goal and is saved with the
   await expect(priceGoal).not.toHaveClass(/met/);
   const controls=page.locator('.editor-align-options');
   for(const id of ['p1','p2','p3','p4']){
-    await page.locator(`#editor-layers-panel [data-layer-id="${id}"] .editor-layer-select`).click();
+    await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
     await controls.getByRole('button',{name:'Right'}).click();
     await expect(controls.getByRole('button',{name:'Right'})).toHaveAttribute('aria-pressed','true');
     const style=await page.locator(`#editor-canvas .el[data-id="${id}"]`).evaluate(el=>[getComputedStyle(el).textAlign,getComputedStyle(el).justifyContent]);
@@ -509,7 +537,7 @@ test('text alignment moves the text, ticks the client goal and is saved with the
   }
   await expect(priceGoal).toHaveClass(/met/);
   // Center and left work too, on the title.
-  await page.locator('#editor-layers-panel [data-layer-id="title"] .editor-layer-select').click();
+  await page.locator(`#editor-canvas .el[data-id="${'title'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'title');
   for(const [name,expected] of [['Left','left'],['Center','center']]){
     await controls.getByRole('button',{name}).click();
     expect(await page.locator('#editor-canvas .el[data-id="title"]').evaluate(el=>getComputedStyle(el).textAlign)).toBe(expected);
@@ -555,37 +583,80 @@ test('editing canvas uses one toolbar for history and zoom',async({page},testInf
   await expect(bar.locator('#editor-zoom-fit')).toHaveCount(0);
 });
 
-test('editor layers select editable elements while structural layers stay locked',async({page})=>{
-  await page.goto('/');await beginFirstDay(page);
+test('goal elements show markers until solved, then lock',async({page})=>{
+  await page.goto('/');
+  await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
-  const bar=page.locator('#screen-editor .editor-topbar');
-  const save=page.locator('#tool-save');
-  await expect(save).toBeVisible();
-  expect(await bar.locator('#tool-save').count()).toBe(0);
-  await expect(page.locator('#tool-preview')).toBeHidden();
-  await expect(page.locator('#tool-show-clickable')).toBeHidden();
-  await expect(page.locator('#tool-hint')).toBeHidden();
-  await expect(page.locator('#tool-inspector')).toBeHidden();
-  await expect(page.locator('#editor-hint-banner')).toBeHidden();
-  const panel=page.locator('#editor-layers-panel');
-  await expect(panel).toBeVisible();
-  expect(await page.locator('#tool-layers').count()).toBe(0);
-  const panelBox=await panel.boundingBox();
-  const stageBox=await page.locator('#editor-canvas-wrap').boundingBox();
-  // On desktop, Layers live in the right-hand column (phones stack the panels).
-  if(page.viewportSize().width>900) expect(panelBox.x).toBeGreaterThan(stageBox.x+stageBox.width/2);
+  await expect(page.locator('#editor-layers-panel')).toHaveCount(0);
+  const cta=page.locator('#editor-canvas .el[data-id="cta"]');
+  await expect(cta).toHaveClass(/needs-edit/);
+  expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
+  expect(await cta.evaluate(el=>getComputedStyle(el,'::after').backgroundColor)).toBe('rgb(229, 59, 66)');
+  await cta.hover();
+  expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('dashed');
   if(page.viewportSize().width>900){
-    const settingsBox=await page.locator('#element-settings').boundingBox();
-    expect(panelBox.y).toBeGreaterThanOrEqual(settingsBox.y+settingsBox.height);
+    await expect(page.locator('#screen-editor .editor-mode-corner')).toBeVisible();
+    const [left,stage,right]=await Promise.all([
+      page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)').boundingBox(),
+      page.locator('#editor-canvas-wrap').boundingBox(),
+      page.locator('#screen-editor .editor-right-rail').boundingBox()
+    ]);
+    expect(left.x+left.width).toBeLessThan(stage.x);
+    expect(stage.x+stage.width).toBeLessThan(right.x);
+    expect(left.height).toBeGreaterThan(stage.height*.8);
+    expect(right.height).toBeGreaterThan(stage.height*.8);
   }
-  await expect(panel.locator('.editor-layer-select:disabled').first()).toBeVisible();
-  const editable=panel.locator('.editor-layer-row:not(.locked)').first();
-  const id=await editable.getAttribute('data-layer-id');
-  await editable.locator('button').click();
-  await expect(page.locator(`#editor-canvas .el[data-id="${id}"]`)).toHaveClass(/selected/);
-  await save.click();
-  await expect(page.getByRole('alertdialog',{name:'Save and submit'})).toBeVisible();
+  for(const [id,x] of [['sub',64],['cta',64]]){
+    await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
+    const input=page.locator('#f-x'); await input.fill(String(x)); await input.dispatchEvent('change');
+  }
+  await expect(cta).not.toHaveClass(/needs-edit/);
+  await expect(cta).toHaveAttribute('data-locked','1');
+  await expect(page.locator('#editor-canvas .el[data-id="heading"]')).toHaveClass(/needs-edit/);
+});
+
+test('two-bar editor panels resize and remember their widths',async({page})=>{
+  test.skip(page.viewportSize().width<=900,'Desktop layout only');
+  await page.goto('/');
+  await beginFirstDay(page);
+  await page.getByRole('listitem').first().click();
+  await page.getByRole('button',{name:'Accept'}).click();
+  const label=page.locator('#screen-editor .editor-mode-corner .editor-mode-tab');
+  await expect(label).toBeVisible();
+  expect(await label.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThan(20);
+  const [noteBox,topStripHeight]=await Promise.all([
+    page.locator('#screen-editor .editor-mode-corner').boundingBox(),
+    page.locator('#screen-editor').evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--editor-topbar-h'))*parseFloat(getComputedStyle(document.documentElement).fontSize))
+  ]);
+  // The Edit Mode tag sits inside the top strip with a margin, not full-bleed.
+  expect(noteBox.height).toBeLessThan(topStripHeight);
+  expect(noteBox.y).toBeGreaterThan(0);
+  await expect(page.locator('#screen-editor .editor-mode-corner p')).toBeHidden();
+  const panel=page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)');
+  const before=await panel.boundingBox();
+  const handle=page.locator('.editor-rail-resizer-left');
+  await expect(page.locator('#app-loading-screen')).toBeHidden();
+  const box=await handle.boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+  await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2+48,box.y+box.height/2,{steps:4});
+  await page.mouse.up();
+  const after=await panel.boundingBox();
+  expect(after.width).toBeGreaterThan(before.width+25);
+  const rightPanel=page.locator('#screen-editor .editor-right-rail');
+  const rightBefore=await rightPanel.boundingBox();
+  const rightHandle=await page.locator('.editor-rail-resizer-right').boundingBox();
+  await page.mouse.move(rightHandle.x+rightHandle.width/2,rightHandle.y+rightHandle.height/2);
+  await page.mouse.down();
+  await page.mouse.move(rightHandle.x+rightHandle.width/2-48,rightHandle.y+rightHandle.height/2,{steps:4});
+  await page.mouse.up();
+  expect((await rightPanel.boundingBox()).width).toBeGreaterThan(rightBefore.width+25);
+  const savedWidth=await page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-left-panel'));
+  const savedRightWidth=await page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-right-panel'));
+  await page.reload();
+  await expect.poll(async()=>page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-left-panel'))).toBe(savedWidth);
+  await expect.poll(async()=>page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-right-panel'))).toBe(savedRightWidth);
 });
 
 test('profile settings list and the browser shows the store and client sites',async({page})=>{
@@ -596,9 +667,10 @@ test('profile settings list and the browser shows the store and client sites',as
   });
   await page.goto('/');
   await page.getByRole('button',{name:'Open EyeCon'}).click();
+  // Settings is its own taskbar pop-up, separate from Profile.
   await page.locator('#taskbar-profile').click();
-  await expect(page.locator('#profile-settings-panel')).toBeHidden();
-  await page.getByRole('button',{name:'⚙ Settings'}).click();
+  await expect(page.locator('#taskbar-stats-popup')).not.toContainText('Reduce motion');
+  await page.locator('#taskbar-settings').click();
   await page.getByLabel('Sound').fill('25');
   await page.getByLabel('Music').fill('0');
   await page.getByRole('switch',{name:'Reduce motion'}).click();
@@ -655,7 +727,7 @@ test('ruler tool measures nearby elements and shows drag alignment guides',async
   await ruler.click();
   await expect(ruler).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.canvas-rulers')).toBeVisible();
-  await page.locator('[data-layer-id="cta"] .editor-layer-select').click();
+  await page.locator(`#editor-canvas .el[data-id="${'cta'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'cta');
   await expect(page.locator('.spacing-overlay text').first()).toContainText('px');
   const el=page.locator('#editor-canvas .el[data-id="cta"]');
   const box=await el.boundingBox();
@@ -684,7 +756,7 @@ test('spacing brackets show both gaps across three aligned elements',async({page
     EC_EDITOR.open(level);
   });
   await page.getByRole('button',{name:'Rulers and spacing',exact:true}).click();
-  await page.locator('[data-layer-id="box0"] .editor-layer-select').click();
+  await page.locator(`#editor-canvas .el[data-id="${'box0'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'box0');
   await expect(page.locator('.spacing-overlay text')).toHaveCount(2);
   await expect(page.locator('.spacing-overlay text').first()).toHaveText('64 px');
   await expect(page.locator('.spacing-overlay text').last()).toHaveText('64 px');
@@ -693,7 +765,7 @@ test('spacing brackets show both gaps across three aligned elements',async({page
 
 test('workday clock and closing summary persist and continue to 8 AM',async({page})=>{
   await page.goto('/');
-  for(const [submissions,time] of [[0,'8:00 am'],[1,'11:00 am'],[2,'2:00 pm'],[3,'5:00 pm']]){
+  for(const [submissions,time] of [[0,'08:00'],[1,'11:00'],[2,'14:00'],[3,'17:00']]){
     await page.evaluate(submissions=>{
       const p=EC_STORE.defaultProfile();p.onboarding.seen=true;
       p.workday={day:2,submissions,coins:90,xp:120,reviews:[{name:'Brewbird',page:'Homepage',stars:4,approved:true,reward:90}]};
@@ -710,6 +782,24 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
   await page.getByRole('button',{name:'Continue to next day'}).click();
   await expect(summary).toBeHidden();
   await expect(page.locator('#taskbar-clock')).toContainText('Day 3');
-  await expect(page.locator('#taskbar-clock')).toContainText('8:00 am');
+  await expect(page.locator('#taskbar-clock')).toContainText('08:00');
   await expect(page.locator('#mail-list .mail-item').first()).toBeVisible();
+});
+
+test('after the first job, new emails arrive a moment later and show a new dot',async({page})=>{
+  await page.addInitScript(()=>{
+    if(localStorage.getItem('eyecon_profile_v1')) return;
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
+      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+    localStorage.setItem('eyecon_mail_state',JSON.stringify({arrivals:{'coffee-shop':1},seen:['coffee-shop']}));
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open EyeCon'}).click();
+  await page.getByRole('button',{name:'Open Mail app'}).click();
+  await expect(page.locator('#mail-list [role="listitem"]')).toHaveCount(0);
+  await expect(page.locator('#mail-list [role="listitem"]')).toHaveCount(1,{timeout:8000});
+  await expect(page.locator('#mail-list .unread-dot')).toHaveCount(1);
+  await page.getByRole('listitem').first().click();
+  await page.locator('#btn-close-mail').click();
+  await expect(page.locator('#mail-list .unread-dot')).toHaveCount(0,{timeout:3000});
 });

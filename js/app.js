@@ -16,6 +16,50 @@
   let settingsDraft = Object.assign({}, profile.settings);
   let settingsDirty = false;
   let settingsQuery = '';
+  const openApps = new Set();
+  const TASKBAR_APPS = {
+    'screen-shell':['Mail','📬'], 'screen-maker':['Level Maker','🛠️'],
+    'screen-browser':['Browser','🌐'], 'screen-shop':['Shop','🛍️'],
+    'screen-stats':['Stats','📊'], 'screen-editor':['Editor','✏️'],
+    settings:['Settings','⚙️'], profile:['Profile','👤'], stats:['Stats','📊']
+  };
+  // Running apps use the same icon art as the desktop and taskbar.
+  const sprite = sym => `<svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#${sym}"/></svg>`;
+  const iconImg = file => `<img src="assets/icons/${file}" alt="" aria-hidden="true" />`;
+  const TASKBAR_ICONS = {
+    'screen-shell':sprite('mail'), 'screen-shop':sprite('shop'), 'screen-editor':iconImg('maker-icon.svg'),
+    'screen-maker':iconImg('maker-icon.svg'), 'screen-browser':iconImg('browser-icon.svg'),
+    'screen-stats':iconImg('stats-icon.svg'), stats:iconImg('stats-icon.svg'), settings:sprite('settings'), profile:sprite('person'),
+  };
+  function renderTaskbarApps(active){
+    const host = document.getElementById('taskbar-open-apps');
+    if(!host) return;
+    host.replaceChildren();
+    openApps.forEach(id=>{
+      const spec=TASKBAR_APPS[id];
+      if(!spec || id==='profile') return; // Profile is pinned
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='taskbar-running-app'+(active===id?' active':'');
+      button.dataset.app=id;
+      button.setAttribute('aria-label',`Switch to ${spec[0]}`);
+      button.title=spec[0];
+      button.innerHTML=TASKBAR_ICONS[id] || `<span aria-hidden="true">${spec[1]}</span>`;
+      button.addEventListener('click',()=>{
+        if(id==='settings'){ openSettingsApp(); return; }
+        if(id==='profile' || id==='stats'){
+          showScreen('screen-desktop',()=>openTaskbarStatsPopup(document.getElementById(id==='profile'?'icon-profile':'icon-stats'),id),{preserve:true});
+          return;
+        }
+        if(document.getElementById(id).classList.contains('active')) showScreen('screen-desktop',null,{preserve:true});
+        else{
+          if(id==='screen-shop') returnShopPanel();
+          showScreen(id, id==='screen-shop' ? renderShopPanel : undefined);
+        }
+      });
+      host.appendChild(button);
+    });
+  }
 
   function announce(text){
     document.getElementById('a11y-announcer').textContent = text;
@@ -27,7 +71,7 @@
   // layout (e.g. EC_EDITOR.open() measuring the canvas wrap's size) MUST
   // wait for onShown rather than running right after showScreen() returns,
   // or it'll measure a still-display:none element and compute a bogus size.
-  function showScreen(name, onShown){
+  function showScreen(name, onShown, options={}){
     // Guarantee any content currently on loan to the monitor popup (see
     // openMonitorAppPopup) is back in its real screen before that screen
     // might be shown for real — otherwise it would appear empty. Instant,
@@ -37,8 +81,18 @@
     const reduceMotion = document.body.classList.contains('reduce-motion') ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const swap = () => {
+      if(name==='screen-home'){
+        closeSettingsWindow();
+        closeTaskbarStatsPopup();
+        openApps.clear();
+      }
+      if(name==='screen-desktop' && current && !options.preserve) openApps.delete(current.id);
+      if(TASKBAR_APPS[name]) openApps.add(name);
+      const settingsWindow=document.getElementById('desktop-settings-window');
+      if(settingsWindow && name!=='screen-desktop') settingsWindow.hidden=true;
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','closing'));
       document.getElementById(name).classList.add('active');
+      renderTaskbarApps(name==='screen-desktop' && settingsWindow && !settingsWindow.hidden?'settings':name);
       if(window.EC_FIT) window.EC_FIT();
       document.getElementById('global-taskbar').classList.toggle('desktop-hidden', name === 'screen-home');
       announce(name.replace('screen-','').replace('-',' ') + ' screen');
@@ -108,7 +162,7 @@
     pikoStage = 'inbox';
     setTimeout(()=>{
       const row = document.querySelector('#mail-list .mail-item');
-      const level = window.EC_STORE.commissionInbox(profile)[0];
+      const level = window.EC_MAIL.arrivedInbox(profile)[0];
       if(row && level){
         window.EC_PIKO.pointAt(row);
         window.EC_PIKO.say(window.EC_PIKO.SCRIPT.inboxGuide(level.clientName));
@@ -214,7 +268,7 @@
   // is already loaded at this point (see the top of this file), so these
   // numbers are accurate immediately.
   function updateMiniDesktop(){
-    const unread = window.EC_STORE.commissionInbox(profile).length;
+    const unread = window.EC_MAIL.arrivedInbox(profile).length;
     const badge = document.getElementById('mini-badge-mail');
     if(badge){
       badge.textContent = unread;
@@ -553,7 +607,7 @@
   function refreshHeader(){
     const lv = window.EC_STORE.levelFromTotalXp(profile.totalXp);
     document.getElementById('hdr-level').textContent = lv.level;
-    const unreadCount = window.EC_STORE.commissionInbox(profile).length;
+    const unreadCount = window.EC_MAIL.arrivedInbox(profile).length;
     document.getElementById('inbox-count').textContent = unreadCount;
     document.getElementById('desktop-inbox-badge').textContent = unreadCount;
     updateCurrencyDisplays();
@@ -627,7 +681,10 @@
   // and the title screen's desk, so a cosmetic you've equipped shows up
   // everywhere your workspace is visible, not just after you hit Start.
   function applyCosmeticsToScene(sceneEl, decorHost, fxLayerId, wp, decorIds, skin){
-    if(sceneEl) sceneEl.style.background = wp ? wp.css : '';
+    if(sceneEl){
+      if(wp) sceneEl.style.setProperty('background', wp.css, sceneEl.id === 'desktop-wallpaper' ? 'important' : '');
+      else sceneEl.style.removeProperty('background');
+    }
 
     if(decorHost){
       decorHost.innerHTML = '';
@@ -683,7 +740,10 @@
     // The monitor's mini desktop mirrors the real desktop's wallpaper (no
     // decor/particles at that scale — too small to read).
     const miniDesktop = document.getElementById('mini-desktop');
-    if(miniDesktop) miniDesktop.style.background = wp ? wp.css : '';
+    if(miniDesktop){
+      if(wp) miniDesktop.style.setProperty('background', wp.css);
+      else miniDesktop.style.removeProperty('background');
+    }
 
     // Workstation prop skins — desk surface, keyboard, mouse, PC tower,
     // monitor bezel. Each just overrides that element's background via
@@ -886,7 +946,7 @@
     const S = window.EC_STORE, C = window.EC_COSMETICS;
     const shop = S.dailyShop(), cart = S.getCart(profile);
     const hours = Math.ceil((shop.refreshAt-Date.now())/3600000);
-    return `<section class="daily-store-hero"><span class="store-eyebrow">SHOPPEYEE / COSMETICS</span><h2>A little refresh for your desk.</h2><p>Five daily finds. Pick your favorites and make them yours.</p><span>New selection in ${hours}h &middot; Refreshes at 00:00 UTC</span></section>
+    return `<section class="daily-store-hero"><span class="store-eyebrow">SHOPPEYEE / COSMETICS</span><h2>A little refresh for your desk.</h2><p>Boris Wallpaper is always here, alongside four daily finds.</p><span>New daily selection in ${hours}h &middot; Refreshes at 00:00 UTC</span></section>
       <div class="store-section-head"><h3>Daily Specials</h3><button class="btn" data-tab="cart">&#128722; Cart (${cart.ids.length})</button></div>
       <div class="daily-store-grid">${shop.items.map(item=>{
         const owned=profile.inventory.includes(item.id), added=cart.ids.includes(item.id);
@@ -1347,7 +1407,8 @@
     const day=shift.day;
     const taskbarClock = document.getElementById('taskbar-clock');
     taskbarClock.dataset.time = text;
-    taskbarClock.innerHTML = `<span>Day ${day}</span><span>${text}</span>`;
+    const hhmm = ['08:00','11:00','14:00','17:00'][Math.min(3,shift.submissions)];
+    taskbarClock.innerHTML = `<span class="taskbar-time">${hhmm}</span><span class="taskbar-day">Day ${day}</span>`;
     const desktopClock = document.getElementById('desktop-clock');
     if(desktopClock) desktopClock.textContent = text;
     updateMiniDesktop();
@@ -1416,7 +1477,11 @@
         </div>
       </li>`;
     const look = window.EC_EDITOR.readVariant();
+    const inEditor = document.getElementById('screen-editor').classList.contains('active');
+    const editorRows = `${picker('layout','Editor layout',EDITOR_LAYOUT_NAMES[look.layout])}
+      ${picker('theme','Editor theme',EDITOR_THEME_NAMES[look.theme])}`;
     return `<ul class="profile-settings-list">
+      ${inEditor ? editorRows : ''}
       ${slider('sfx','Sound',0,5)}
       ${slider('music','Music',0,5)}
       ${slider('scale','Size',25,25)}
@@ -1432,8 +1497,7 @@
           <button type="button" data-cvd-step="1" aria-label="Next colorblind mode">▶</button>
         </div>
       </li>
-      ${picker('layout','Editor layout',EDITOR_LAYOUT_NAMES[look.layout])}
-      ${picker('theme','Editor theme',EDITOR_THEME_NAMES[look.theme])}
+      ${inEditor ? '' : editorRows}
     </ul>`;
   }
   function bindQuickSettings(root){
@@ -1487,20 +1551,29 @@
       <div class="profile-quick-strip">Coins: ${window.EC_MONEY(profile.currency || 0)}</div>
       <div class="profile-quick-strip">Badges</div>
       <div class="profile-badge-grid">${badges}</div>
-      <button class="profile-quick-action" id="profile-quick-settings" aria-expanded="false" aria-controls="profile-settings-panel">⚙ Settings</button>
-      <div class="profile-settings-panel" id="profile-settings-panel" hidden>${quickSettingsList()}</div>
+
       <button class="profile-quick-action" id="profile-quick-signout">⇥ Sign out</button>
     </section>`;
   }
   function openTaskbarStatsPopup(anchor, mode){
     closeMonitorAppPopup(true);
+    closeTaskbarStatsPopup();
     const popup = document.getElementById('taskbar-stats-popup');
     const body = document.getElementById('taskbar-stats-popup-body');
     const content = document.querySelector('#screen-stats .app-content-wrap');
     if(!popup || !body || !content) return;
-    const isStats = mode === 'stats';
+    const isStats = mode === 'stats', isSettings = mode === 'settings';
     popup.classList.toggle('profile-layout', !isStats);
-    if(isStats){
+    popup.classList.toggle('settings-layout', isSettings);
+    popup.dataset.mode = mode;
+    if(isSettings){
+      if(taskbarStatsBorrowed){
+        taskbarStatsBorrowed.parent.insertBefore(taskbarStatsBorrowed.el, taskbarStatsBorrowed.next);
+        taskbarStatsBorrowed = null;
+      }
+      body.innerHTML = `<div class="settings-quick-card">${quickSettingsList()}</div>`;
+      bindQuickSettings(body);
+    }else if(isStats){
       if(!taskbarStatsBorrowed){
         taskbarStatsBorrowed = { el:content, parent:content.parentNode, next:content.nextElementSibling };
         body.replaceChildren(content);
@@ -1512,23 +1585,17 @@
         taskbarStatsBorrowed = null;
       }
       body.innerHTML = profileQuickPanelMarkup();
-      const settingsBtn = document.getElementById('profile-quick-settings');
-      const settingsPanel = document.getElementById('profile-settings-panel');
-      bindQuickSettings(settingsPanel);
-      settingsBtn.addEventListener('click', ()=>{
-        const open = settingsPanel.hidden;
-        settingsPanel.hidden = !open;
-        settingsBtn.setAttribute('aria-expanded', String(open));
-        if(open) settingsPanel.scrollIntoView({block:'nearest'});
-      });
       document.getElementById('profile-quick-signout').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); showScreen('screen-home'); });
     }
-    document.getElementById('taskbar-stats-popup-title').textContent = isStats ? 'Studio Stats' : 'Profile';
-    document.getElementById('taskbar-stats-popup-icon').src = isStats ? 'assets/icons/stats-icon.svg' : 'assets/icons/profile.svg';
+    document.getElementById('taskbar-stats-popup-title').textContent = isSettings ? 'Settings' : isStats ? 'Studio Stats' : 'Profile';
+    document.getElementById('taskbar-stats-popup-icon').src = isSettings ? 'assets/icons/settings-icon.svg' : isStats ? 'assets/icons/stats-icon.svg' : 'assets/icons/profile.svg';
     popup.classList.remove('hidden');
     statsPopupAnchor = anchor;
     positionStatsPopup();
-    document.getElementById('taskbar-profile').setAttribute('aria-expanded', String(!isStats));
+    document.getElementById('taskbar-settings').setAttribute('aria-expanded', String(isSettings));
+    if(isSettings) return;
+    openApps.add(isStats?'stats':'profile');
+    renderTaskbarApps(isStats?'stats':'profile');
   }
   // Keep the pop-up (and its title bar with ✕) inside the part of the screen
   // you can actually see, at every Size setting — Safari's bars can cover
@@ -1548,16 +1615,43 @@
   function closeTaskbarStatsPopup(){
     const popup = document.getElementById('taskbar-stats-popup');
     if(!popup || popup.classList.contains('hidden')) return;
+    document.getElementById('taskbar-settings')?.setAttribute('aria-expanded','false');
     popup.classList.add('hidden');
     if(taskbarStatsBorrowed){
       taskbarStatsBorrowed.parent.insertBefore(taskbarStatsBorrowed.el, taskbarStatsBorrowed.next);
       taskbarStatsBorrowed = null;
     }
-    document.getElementById('taskbar-profile').setAttribute('aria-expanded','false');
+    openApps.delete(popup.classList.contains('profile-layout')?'profile':'stats');
+    renderTaskbarApps(document.querySelector('.screen.active')?.id);
+  }
+  let settingsWindowContent = null;
+  function closeSettingsWindow(){
+    const popup=document.getElementById('desktop-settings-window');
+    if(popup.hidden && !settingsWindowContent) return;
+    popup.hidden=true;
+    if(settingsWindowContent){
+      settingsWindowContent.parent.appendChild(settingsWindowContent.el);
+      settingsWindowContent=null;
+    }
+    openApps.delete('settings');
+    renderTaskbarApps('screen-desktop');
   }
   function openSettingsApp(){
-    showScreen('screen-settings');
-    renderSettingsPanel();
+    closeTaskbarStatsPopup();
+    const open=()=>{
+      const popup=document.getElementById('desktop-settings-window');
+      if(!settingsWindowContent){
+        const content=document.querySelector('#screen-settings .app-content-wrap');
+        settingsWindowContent={el:content,parent:content.parentNode};
+        document.getElementById('desktop-settings-window-body').appendChild(content);
+      }
+      renderSettingsPanel();
+      popup.hidden=false;
+      openApps.add('settings');
+      renderTaskbarApps('settings');
+    };
+    if(document.getElementById('screen-desktop').classList.contains('active')) open();
+    else showScreen('screen-desktop',open,{preserve:true});
   }
 
   // ---------------- Bootstrap ----------------
@@ -1611,32 +1705,50 @@
     document.getElementById('browser-back-btn').addEventListener('click', ()=>{ returnShopPanel(); showScreen('screen-desktop'); });
     document.getElementById('browser-home-btn').addEventListener('click', ()=>{ browserPage = { kind:'home' }; renderBrowser(); });
     document.getElementById('icon-stats').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'stats'));
+    document.getElementById('icon-profile').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'profile'));
     document.getElementById('icon-shop').addEventListener('click', openShopApp);
     document.getElementById('icon-settings').addEventListener('click', openSettingsApp);
+    document.getElementById('desktop-settings-close').addEventListener('click', closeSettingsWindow);
 
     document.getElementById('mail-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     document.getElementById('stats-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     document.getElementById('settings-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     document.getElementById('shop-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
 
-    document.getElementById('taskbar-home').addEventListener('click', ()=>{ closeTaskbarStatsPopup(); showScreen('screen-desktop'); });
+    document.getElementById('taskbar-home').addEventListener('click', ()=>{
+      closeTaskbarStatsPopup();
+      document.getElementById('desktop-settings-window').hidden=true;
+      showScreen('screen-desktop',null,{preserve:true});
+    });
     // A way back to the title screen from the real desktop — matters most in
     // fullscreen, where there's no browser chrome to fall back on.
     document.getElementById('desktop-watermark-btn').addEventListener('click', ()=>showScreen('screen-home'));
-    // The profile button toggles its pop-up; clicking anywhere else closes it.
-    document.getElementById('taskbar-profile').addEventListener('click', e=>{
-      const popup = document.getElementById('taskbar-stats-popup');
-      if(!popup.classList.contains('hidden') && popup.classList.contains('profile-layout')) closeTaskbarStatsPopup();
-      else openTaskbarStatsPopup(e.currentTarget,'profile');
-    });
+    // Clicking outside the profile or stats window dismisses it.
     document.addEventListener('pointerdown', e=>{
       const popup = document.getElementById('taskbar-stats-popup');
-      if(popup.classList.contains('hidden') || popup.contains(e.target) || e.target.closest('#taskbar-profile, #icon-stats')) return;
+      if(popup.classList.contains('hidden') || popup.contains(e.target) || e.target.closest('#icon-profile, #icon-stats, #taskbar-settings, #taskbar-profile, .taskbar-running-app')) return;
       closeTaskbarStatsPopup();
     });
     document.getElementById('taskbar-stats-popup-close').addEventListener('click', closeTaskbarStatsPopup);
+    // ⚙ Settings: its own pop-up, reachable from every screen (including the editor).
+    const toggleSettingsPopup = ()=>{
+      const popup = document.getElementById('taskbar-stats-popup');
+      if(!popup.classList.contains('hidden') && popup.dataset.mode === 'settings') closeTaskbarStatsPopup();
+      else openTaskbarStatsPopup(document.getElementById('taskbar-settings'), 'settings');
+    };
+    document.getElementById('taskbar-settings').addEventListener('click', toggleSettingsPopup);
+    document.addEventListener('keydown', e=>{
+      if(e.key !== ',' || e.ctrlKey || e.metaKey || e.altKey) return;
+      if(e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if(document.getElementById('screen-home').classList.contains('active')) return;
+      e.preventDefault(); toggleSettingsPopup();
+    });
+    document.getElementById('taskbar-profile').addEventListener('click', e=>{
+      const popup = document.getElementById('taskbar-stats-popup');
+      if(!popup.classList.contains('hidden') && popup.dataset.mode === 'profile') closeTaskbarStatsPopup();
+      else openTaskbarStatsPopup(e.currentTarget, 'profile');
+    });
     document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeTaskbarStatsPopup(); });
-    document.getElementById('taskbar-shop').addEventListener('click', openShopApp);
     document.getElementById('maker-back-btn').addEventListener('click', ()=>showScreen('screen-desktop'));
     window.EC_MAKER.init();
     document.getElementById('delivery-continue').addEventListener('click',()=>{
@@ -1664,6 +1776,13 @@
     });
 
     window.EC_MAIL.initOnce();
+    // A client's email lands a few seconds after the previous job, like real mail.
+    window.addEventListener('ec-mail-arrived', e=>{
+      window.EC_SOUND.play('newMail');
+      showToast(`📧 New email from ${e.detail.clientName}`, 3200);
+      refreshHeader();
+      if(document.getElementById('screen-shell').classList.contains('active')) renderCurrentFolder();
+    });
     document.getElementById('btn-reward-collect').addEventListener('click', ()=>{window.EC_MODAL.hide('modal-reward');showDaySummary();});
     window.EC_EDITOR.initToolbarOnce();
 

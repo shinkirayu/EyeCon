@@ -196,6 +196,10 @@
           <span class="desktop-icon-glyph" id="glyph-settings">⚙️</span>
           <span class="desktop-icon-label">Settings</span>
         </button>
+        <button class="desktop-icon" id="icon-profile" aria-label="Open Profile app">
+          <span class="desktop-icon-glyph" id="glyph-profile" aria-hidden="true"></span>
+          <span class="desktop-icon-label">Profile</span>
+        </button>
       </div>
       <div class="desktop-decor" id="desktop-decor" aria-hidden="true"></div>
       <div class="desktop-hint">Welcome back, Junior Designer. Open <b>Mail</b> to see your assignments.</div>
@@ -377,11 +381,9 @@
         </div>
         <div id="settings-fields"><p class="settings-placeholder">Select an element on the canvas to edit its properties.</p></div>
       </aside>
-      <aside class="editor-layers-panel" id="editor-layers-panel" aria-label="Canvas layers">
-        <div class="editor-layers-head"><h3>Layers</h3></div>
-        <div id="editor-layers-list" class="editor-layers-list"></div>
-      </aside>
       </div>
+      <div class="editor-rail-resizer editor-rail-resizer-left" data-rail="left" role="separator" aria-label="Resize client brief panel" aria-orientation="vertical" tabindex="0"></div>
+      <div class="editor-rail-resizer editor-rail-resizer-right" data-rail="right" role="separator" aria-label="Resize design tools panel" aria-orientation="vertical" tabindex="0"></div>
     </div>
   </section>
 
@@ -456,6 +458,15 @@
 
   </div><!-- /screen-area -->
 
+  <div id="desktop-settings-window" class="desktop-app-window" role="dialog" aria-modal="false" aria-label="Settings" hidden>
+    <header class="desktop-app-window-titlebar">
+      <img src="assets/icons/settings-icon.svg" alt="" />
+      <strong>Settings</strong>
+      <button id="desktop-settings-close" type="button" aria-label="Close Settings">×</button>
+    </header>
+    <div id="desktop-settings-window-body" class="desktop-app-window-body"></div>
+  </div>
+
   <!-- Brief loading transition between "Accept" on a mail job and the
        editor actually opening — see showLoadingTransition in app.js. -->
   <div class="app-loading-screen hidden" id="app-loading-screen" aria-hidden="true">
@@ -469,8 +480,9 @@
 
   <footer class="taskbar desktop-hidden" id="global-taskbar">
     <button class="taskbar-btn taskbar-btn-primary" id="taskbar-home" title="Desktop" aria-label="Go to desktop"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#home"/></svg><span class="taskbar-btn-label">Home</span></button>
-    <button class="taskbar-btn" id="taskbar-profile" title="Profile" aria-label="Open profile summary" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#person"/></svg></button>
-    <button class="taskbar-btn" id="taskbar-shop" title="Shop" aria-label="Open shop"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#shop"/></svg></button>
+    <button class="taskbar-btn" id="taskbar-profile" title="Profile" aria-label="Open profile" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#person"/></svg></button>
+    <button class="taskbar-btn" id="taskbar-settings" title="Settings (,)" aria-label="Open settings" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#settings"/></svg></button>
+    <div id="taskbar-open-apps" class="taskbar-open-apps" aria-label="Open apps"></div>
     <div class="taskbar-spacer"></div>
     <div class="taskbar-clock" id="taskbar-clock">8:00 AM</div>
     <button class="taskbar-btn" id="taskbar-fullscreen" title="Enter fullscreen" aria-label="Toggle fullscreen">⛶</button>

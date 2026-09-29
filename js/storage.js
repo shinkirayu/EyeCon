@@ -256,12 +256,14 @@
     const day = Math.floor(Date.parse(key+'T00:00:00Z')/86400000);
     const defaults = Object.values(window.EC_COSMETICS.CATEGORY_DEFAULT);
     const C=window.EC_COSMETICS;
-    const groups=C.CATEGORY_ORDER.map(category=>C.ITEMS.filter(i=>i.category===category && !defaults.includes(i.id)));
+    const always=C.ITEMS.filter(i=>i.alwaysInShop && !defaults.includes(i.id));
+    const groups=C.CATEGORY_ORDER.map(category=>C.ITEMS.filter(i=>i.category===category && !defaults.includes(i.id) && !i.alwaysInShop));
     const catalog=[];
     for(let round=0;round<Math.max(...groups.map(g=>g.length));round++){
       groups.forEach(group=>{ if(group[round]) catalog.push(group[round]); });
     }
-    const items = Array.from({length:Math.min(5,catalog.length)}, (_,i)=>catalog[(day*5+i)%catalog.length]);
+    const rotating = Array.from({length:Math.min(5-always.length,catalog.length)}, (_,i)=>catalog[(day*5+i)%catalog.length]);
+    const items = [...always, ...rotating];
     return { date:key, items, refreshAt:(day+1)*86400000 };
   }
   function itemPrice(item){ return ITEM_PRICES[item.rarity]; }

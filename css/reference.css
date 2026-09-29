@@ -1342,3 +1342,290 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .workday-reviews{padding-left:1.5rem;line-height:1.5;}
 .workday-reviews li{margin-bottom:.75rem;}
 .workday-card #next-workday{margin-top:1rem;}
+/* Goal markers show editable elements without outlining the whole element. */
+#screen-editor .el.needs-edit:not(.selected){outline:none;}
+#screen-editor .el.needs-edit:not(.selected):hover{
+  outline:2px dashed var(--purple);
+  outline-offset:2px;
+}
+#screen-editor .el.needs-edit.intro-flash{animation:none;}
+#screen-editor .el.needs-edit::after{content:'!';position:absolute;top:calc(-14 * var(--selection-unit,1px));right:calc(-14 * var(--selection-unit,1px));width:calc(24 * var(--selection-unit,1px));height:calc(24 * var(--selection-unit,1px));display:grid;place-items:center;border-radius:50%;background:#e53b42;color:#fff;font:800 calc(15 * var(--selection-unit,1px))/1 var(--font-body);animation:goal-pulse 1.4s ease-in-out infinite;pointer-events:none;z-index:5;}
+#screen-editor .el.goal-solved{animation:goal-solved .9s ease-out;}
+@keyframes goal-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+@keyframes goal-solved{0%{box-shadow:0 0 0 0 #6ccf8ecc;}100%{box-shadow:0 0 0 calc(20 * var(--selection-unit,1px)) #6ccf8e00;}}
+.reduce-motion #screen-editor .el.needs-edit::after{animation:none;}
+/* In the two-bar blue layout, keep Design tools compact until it has controls. */
+#screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail{
+  bottom:auto!important;
+  height:auto;
+  max-height:calc(100% - var(--editor-topbar-h,5rem) - 2rem);
+}
+#screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail .element-settings{
+  flex:0 1 auto;
+  max-height:min(65vh,38rem);
+}
+#screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail .element-settings:has(.settings-placeholder){
+  max-height:none;
+}
+@media(max-width:900px){
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail{
+    top:auto!important;
+    max-height:45%;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail .element-settings{
+    max-height:40vh;
+  }
+}
+/* Match the Level Maker's left tools / center stage / right properties spacing. */
+@media(min-width:901px){
+  #screen-editor[data-layout="double"][data-ed-theme="blue"]{
+    --editor-left-panel:14rem;
+    --editor-right-panel:17rem;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-main{
+    padding-left:calc(var(--editor-left-panel) + 1rem);
+    padding-right:calc(var(--editor-right-panel) + 1rem);
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-main::before{
+    background:#fcf7ef;
+    border-bottom:2px solid #77b9af;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-canvas-wrap{
+    margin-top:1rem;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-side-rail:not(.editor-right-rail){
+    left:1rem!important;
+    top:calc(var(--editor-topbar-h) + 1rem)!important;
+    width:var(--editor-left-panel);
+    bottom:1rem!important;
+    max-height:none;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail{
+    right:1rem!important;
+    width:var(--editor-right-panel);
+    bottom:1rem!important;
+    max-height:none;
+    height:auto;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-card,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail .element-settings,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-right-rail .element-settings:has(.settings-placeholder){
+    flex:1 1 auto;
+    max-height:none;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    top:0;
+    left:0;
+    width:calc(var(--editor-left-panel) + 2rem);
+    height:var(--editor-topbar-h);
+    background:#f8e39c;
+    border-right:2px solid #e2c66c;
+    filter:none;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner .editor-mode-tab{
+    background:transparent;
+    font-size:2.5rem;
+    padding:0 .5rem;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner p{
+    display:none;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-canvas-wrap{
+    background-image:radial-gradient(#a4c8c0 1px,transparent 1px);
+    background-size:1rem 1rem;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-side-rail>*,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-side-rail .element-settings,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-side-rail .element-settings-head,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-card .editor-mail-brief{
+    background:#fcf7ef;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer{
+    display:grid;
+    place-items:center;
+    position:absolute;
+    z-index:75;
+    top:50%;
+    width:1rem;
+    height:4rem;
+    padding:0;
+    border:2px solid #77b9af;
+    border-radius:.5rem;
+    background:#fcf7ef;
+    color:#488b8e;
+    box-shadow:0 .2rem .4rem #315e6533;
+    transform:translateY(-50%);
+    cursor:col-resize;
+    touch-action:none;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer::before{
+    content:'⋮';
+    font:700 1.5rem/1 var(--font-body);
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer:hover,
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer:focus-visible{
+    background:#d8f0ec;
+    outline:2px solid #488b8e;
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer-left{
+    left:calc(var(--editor-left-panel) + 1.5rem);
+  }
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-rail-resizer-right{
+    right:calc(var(--editor-right-panel) + 1.5rem);
+  }
+}
+#screen-editor .editor-rail-resizer{display:none;}
+
+/* Put the client payment where it is easy to notice when opening a brief. */
+.mail-detail-card .mail-detail-head{padding-right:20rem;}
+.mail-detail-card .mail-detail-reward{
+  position:absolute;
+  top:6rem;
+  right:3.5rem;
+  max-width:17rem;
+  margin:0;
+  padding:.75rem 1rem;
+  border:2px solid #e4bb56;
+  border-radius:1rem;
+  background:#fff0bc;
+  box-shadow:0 .25rem 0 #b28d3d33;
+  color:#523c61;
+  font:700 1.25rem/1.3 var(--font-body);
+  text-align:center;
+}
+.mail-detail-card .mail-detail-reward b{
+  color:#5b2fa8;
+  font:800 2rem/1 var(--font-display);
+}
+@media(max-width:640px){
+  .mail-detail-card .mail-detail-head{padding-right:2rem;}
+  .mail-detail-card .mail-detail-reward{
+    position:static;
+    max-width:none;
+    width:max-content;
+    margin:.75rem 0 0;
+    padding:.5rem .75rem;
+    font-size:1rem;
+    text-align:left;
+  }
+  .mail-detail-card .mail-detail-reward b{font-size:1.5rem;}
+}
+
+/* Desktop shortcuts stay on the desktop; the taskbar fills with running apps. */
+#screen-desktop .desktop-icons{
+  display:grid;
+  grid-template-columns:repeat(2,6.5rem);
+  width:max-content;
+  gap:.75rem 1rem;
+}
+#screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile){
+  display:block;
+  position:relative;
+  bottom:auto;
+  left:auto;
+  width:6.5rem;
+  min-width:0;
+  min-height:0;
+  padding:0;
+}
+#screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-glyph{
+  display:block;
+  width:5.5rem!important;
+  height:4.875rem!important;
+  margin:0 auto;
+  border:0;
+  background-size:contain;
+  background-position:center;
+  background-repeat:no-repeat;
+  font-size:0;
+}
+#screen-desktop #icon-stats #glyph-stats{background-image:url('../assets/icons/stats-icon.svg');}
+#screen-desktop #icon-shop #glyph-shop{background-image:url('../assets/icons/shop-icon.svg');}
+#screen-desktop #icon-settings #glyph-settings{background-image:url('../assets/icons/settings-icon.svg');}
+#screen-desktop #icon-profile #glyph-profile{background-image:url('../assets/icons/profile.svg');}
+#screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-label{
+  display:block;
+  color:#254b50;
+  font:700 1rem/1 var(--font-body);
+  text-align:center;
+}
+.taskbar-open-apps{display:flex;align-items:center;gap:.375rem;min-width:0;max-width:55%;overflow-x:auto;scrollbar-width:thin;}
+.taskbar-running-app{display:flex;align-items:center;gap:.4rem;flex:none;max-width:11rem;min-height:2.75rem;padding:.375rem .75rem;border:2px solid #77b9af;border-radius:.75rem;background:#fcf7ef;color:#315e65;font:700 .875rem var(--font-body);cursor:pointer;}
+.taskbar-running-app.active,.taskbar-running-app:hover{background:#d8f0ec;border-color:#488b8e;}
+.taskbar-running-app span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.desktop-app-window{position:fixed;z-index:1500;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(55rem,calc(100vw - 2rem));height:min(42rem,calc(100dvh - 7rem));border:3px solid #77b9af;border-radius:1.25rem;background:#fcf7ef;box-shadow:0 1rem 3rem #18374555;overflow:hidden;}
+.desktop-app-window[hidden]{display:none!important;}
+.desktop-app-window-titlebar{display:flex;align-items:center;gap:.75rem;flex:none;padding:.75rem 1rem;border-bottom:2px solid #c8e6da;background:#e2f2ed;color:#315e65;font:700 1.375rem var(--font-display);}
+.desktop-app-window-titlebar img{width:2rem;height:2rem;}
+.desktop-app-window-titlebar button{margin-left:auto;width:2.25rem;height:2.25rem;border:0;border-radius:.5rem;background:#fff;color:#315e65;font:800 1.5rem/1 var(--font-body);cursor:pointer;}
+.desktop-app-window-body{flex:1;min-height:0;overflow:auto;}
+.desktop-app-window-body .app-content-wrap{height:100%;padding:1rem;}
+@media(max-width:900px){
+  #screen-desktop .desktop-icons{grid-template-columns:repeat(2,minmax(0,1fr));width:min(9rem,calc(100vw - 3rem));gap:.4rem .5rem;}
+  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile){width:100%;max-width:4rem;}
+  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-glyph{width:min(3.5rem,100%)!important;height:3.125rem!important;}
+  .taskbar-running-app{min-height:2.25rem;padding:.25rem .5rem;}
+  .taskbar-running-app span:last-child{display:none;}
+}
+@media(max-height:500px),(min-aspect-ratio:2/1){
+  #screen-desktop .desktop-icons{top:.25rem;gap:.1rem .4rem;}
+  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-glyph{height:2.5rem!important;}
+  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-label{font-size:.75rem;}
+}
+/* Taskbar: Home, Profile and Settings on the left. */
+#global-taskbar #taskbar-profile,#global-taskbar #taskbar-settings{display:flex;align-items:center;justify-content:center;background:none;font-size:0;}
+#global-taskbar :is(#taskbar-profile,#taskbar-settings)[aria-expanded="true"] .game-taskbar-icon{filter:drop-shadow(0 0 .375rem #77b9af);}
+/* Clock: big time, small day underneath. */
+#global-taskbar .taskbar-clock{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;color:#3f8a3a;}
+#global-taskbar .taskbar-clock .taskbar-time{height:auto;font:800 2rem/1 var(--font-display);}
+#global-taskbar .taskbar-clock .taskbar-day{height:auto;font:700 1.125rem/1.1 var(--font-display);opacity:.85;}
+/* Settings pop-up opens on the right, above the gear. */
+.taskbar-quick-popup.settings-layout{width:min(28rem,calc(100vw - 1.5rem));}
+.settings-quick-card{padding:1rem;}
+#global-taskbar #taskbar-home{order:-3;}#global-taskbar #taskbar-profile{order:-2;}#global-taskbar #taskbar-settings{order:-1;}
+/* Settings and Studio Stats aren't desktop apps anymore (Settings lives on the taskbar). */
+#screen-desktop #icon-settings,#screen-desktop #icon-stats{display:none!important;}
+/* Clock in white, with a slightly bigger day line. */
+#global-taskbar .taskbar-clock{color:#fff;text-shadow:0 1px 2px #1d3b4f66;}
+#global-taskbar .taskbar-clock .taskbar-day{font-size:1.375rem;opacity:1;}
+/* Clock: dark teal on the mint taskbar for readable contrast (about 8:1). */
+#global-taskbar .taskbar-clock{color:#1f4a4c;text-shadow:none;}
+/* Desktop shows just Mail, Level Maker and Browser for now (Profile is on the taskbar). */
+#screen-desktop #icon-profile,#screen-desktop #icon-shop{display:none!important;}
+/* Desktop apps: one column of equal square cells with even spacing. */
+#screen-desktop .desktop-icons{display:flex!important;flex-direction:column!important;align-items:center;gap:1.5rem!important;width:auto!important;grid-template-columns:none!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:.375rem;width:7rem!important;height:7rem!important;min-width:0;padding:0;margin:0;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{line-height:1.1;text-align:center;}
+@media(max-width:900px){#screen-desktop .desktop-icons{gap:1rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4.75rem!important;height:4.75rem!important;}}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{flex:none!important;width:4.5rem!important;height:4rem!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{white-space:nowrap;}
+@media(max-width:900px){#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:3rem!important;height:2.75rem!important;}}
+@media(max-height:500px){#screen-desktop .desktop-icons{top:.75rem!important;gap:.5rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4.25rem!important;height:4.25rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:2.75rem!important;height:2.5rem!important;}}
+/* Cell size follows the screen height too, so the column always fits above the taskbar. */
+#screen-desktop .desktop-icons{gap:min(1.5rem,2.5vh)!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:min(7rem,17vh)!important;height:min(7rem,17vh)!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:min(5.5rem,12vh)!important;height:min(4.875rem,10.5vh)!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{font-size:min(1rem,3.2vh);}
+/* Mail rows: no reward chip (the reward shows inside the opened email). */
+#screen-shell .mail-item .mail-prize{display:none!important;}
+/* Edit Mode banner: a rounded sticky tag with breathing room, not a full-bleed block. */
+@media(min-width:901px){
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner{top:.75rem;left:1rem;width:auto;height:calc(var(--editor-topbar-h) - 1.5rem);padding:0 1.25rem;border:0;border-radius:.75rem;box-shadow:0 .25rem .5rem #3b172e1f;}
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner .editor-mode-tab{font-size:2rem;}
+}
+/* Running apps look like the other taskbar buttons: just an icon, with a dot under the open one. */
+.taskbar-running-app{position:relative;justify-content:center;width:4rem;height:4rem;min-height:0;max-width:none;padding:0;border:0!important;background:none!important;}
+.taskbar-running-app .game-taskbar-icon,.taskbar-running-app img{width:3rem;height:3rem;}
+.taskbar-running-app::after{content:'';position:absolute;bottom:-.125rem;left:50%;width:.5rem;height:.5rem;margin-left:-.25rem;border-radius:50%;background:#77b9af;}
+.taskbar-running-app.active::after{width:1.25rem;margin-left:-.625rem;border-radius:999px;background:#488b8e;}
+@media(max-width:900px){.taskbar-running-app{width:3rem;height:3rem;}.taskbar-running-app .game-taskbar-icon,.taskbar-running-app img{width:2.25rem;height:2.25rem;}}
+/* Taskbar open-apps area: no scrollbar (the open-app dots sit inside the bar). */
+.taskbar-open-apps{overflow:visible!important;scrollbar-width:none;padding-bottom:.25rem;}
+.taskbar-open-apps::-webkit-scrollbar{display:none;}
+.taskbar-running-app::after{bottom:-.375rem;}
+/* "New" dot sits right beside the difficulty tag. */
+#screen-shell .mail-item .unread-dot{position:static;flex:none;width:.875rem;height:.875rem;margin-left:.5rem;border-radius:50%;background:#df0036;}
+#screen-shell .mail-item .unread-dot{width:1.375rem;height:1.375rem;margin-left:.75rem;}

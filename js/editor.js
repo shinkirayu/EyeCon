@@ -101,6 +101,7 @@
   // explains why the fix works, so players learn while they edit.
   const TIER_NAMES = { novice:'Novice', intermediate:'Intermediate', advanced:'Advanced', expert:'Expert' };
   function updateLiveScore(){
+    updateGoalMarkers();
     const list = document.getElementById('editor-mail-points');
     if(!list || !state.level) return;
     if(!state.level.goals){
@@ -335,38 +336,35 @@
     applyCanvasTransform();
     updateGridBackground();
     renderOverlays();
-    renderEditorLayers();
+    updateGoalMarkers();
   }
 
-  function renderEditorLayers(){
-    const list=document.getElementById('editor-layers-list');
-    list.replaceChildren();
-    [...state.elements].sort((a,b)=>(b.z||0)-(a.z||0)).forEach(el=>{
-      const row=document.createElement('div');
-      row.className='editor-layer-row'+(el.id===state.selectedId?' active':'')+(el.locked?' locked':'');
-      row.dataset.layerId=el.id;
-      const button=document.createElement('button');button.type='button';
-      button.className='editor-layer-select';button.disabled=!!el.locked;
-      // Canva-style: a live mini copy of the element so you can see what you're picking.
-      const thumb=document.createElement('span');thumb.className='editor-layer-thumb';
-      const src=state.canvasEl&&state.canvasEl.querySelector(`.el[data-id="${el.id}"]`);
-      if(src&&el.w&&el.h){
-        const copy=src.cloneNode(true);copy.removeAttribute('tabindex');copy.removeAttribute('role');copy.classList.remove('selected');
-        // The thumb box is 12.5rem × 2.75rem, so measure it in px at the current UI scale.
-        const u=parseFloat(getComputedStyle(document.documentElement).fontSize)/16, TW=200*u, TH=44*u;
-        const k=Math.min(TW/el.w,TH/el.h,u);
-        Object.assign(copy.style,{position:'absolute',left:`${(TW-el.w*k)/2}px`,top:`${(TH-el.h*k)/2}px`,transform:`scale(${k})`,transformOrigin:'0 0',pointerEvents:'none'});
-        thumb.appendChild(copy);
+  // Goal markers replace the Layers list: every element a client goal still
+  // needs gets a pulsing marker on the canvas. Once all goals that involve an
+  // element (bonus ones included) are met, it locks and the marker goes away.
+  function updateGoalMarkers(){
+    if(!state.level || !state.level.goals || !state.canvasEl) return;
+    const results = window.EC_GRADING.checkGoals(state.level, state.elements);
+    const status = {};
+    results.forEach(({goal, met}) => window.EC_GRADING.goalIds(goal.check).forEach(id => {
+      status[id] = (status[id] !== false) && met;
+    }));
+    Object.entries(status).forEach(([id, solved]) => {
+      const el = byId(id), div = state.canvasEl.querySelector(`.el[data-id="${id}"]`);
+      if(!el || !div) return;
+      if(solved && !el.locked){
+        el.locked = true;
+        div.style.pointerEvents = 'none';
+        div.dataset.locked = '1';
+        div.removeAttribute('tabindex');
+        div.classList.add('goal-solved');
+        setTimeout(()=>div.classList.remove('goal-solved'), 900);
+        if(state.selectedId === id){ state.selectedId = null; resetSettingsPlaceholder(); renderOverlays(); }
       }
-      const label=document.createElement('span');label.className='editor-layer-name';label.textContent=friendlyElementName(el);
-      button.append(thumb,label);button.setAttribute('aria-label',friendlyElementName(el));
-      if(!el.locked)button.addEventListener('click',()=>selectElement(el.id));
-      const status=document.createElement('span');status.className='editor-layer-status';
-      status.title=el.locked?'Locked structural layer':'Editable layer';
-      if(el.locked) status.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>';
-      row.append(button,status);list.appendChild(row);
+      div.classList.toggle('needs-edit', !el.locked);
     });
   }
+
 
   function rebuildAll(){
     buildCanvas();
@@ -496,7 +494,7 @@
     }
     clearHintHighlight();
     state.selectedId = id;
-    renderEditorLayers();
+    updateGoalMarkers();
     const el = byId(id);
     if(!el){ resetSettingsPlaceholder(); return; }
     const div = state.domNodes[id];
@@ -518,7 +516,7 @@
       if(prev) prev.classList.remove('selected');
     }
     state.selectedId = null;
-    renderEditorLayers();
+    updateGoalMarkers();
     renderSpacing();
     resetSettingsPlaceholder();
   }
@@ -1204,7 +1202,54 @@
   //   double  – brief on the left, Design tools + Layers on the right + top bar
   //   compact – one left column, no top bar (the original look)
   const VARIANT_KEY = 'eyecon_editor_variant';
+  const RAIL_SIZE_KEY = 'eyecon_editor_rail_sizes';
   const VARIANT_DEFAULT = { layout:'double', theme:'blue' };
+  const railSizes = {left:14, right:17};
+  try{
+    const saved = JSON.parse(localStorage.getItem(RAIL_SIZE_KEY) || '{}');
+    for(const side of ['left','right']){
+      if(Number.isFinite(saved[side])) railSizes[side] = Math.max(side === 'left' ? 11 : 13, Math.min(side === 'left' ? 25 : 27, saved[side]));
+    }
+  }catch(e){}
+  function applyRailSizes(){
+    const screen = document.getElementById('screen-editor');
+    screen.style.setProperty('--editor-left-panel', `${railSizes.left}rem`);
+    screen.style.setProperty('--editor-right-panel', `${railSizes.right}rem`);
+  }
+  function initRailResizers(){
+    const screen = document.getElementById('screen-editor');
+    applyRailSizes();
+    screen.querySelectorAll('.editor-rail-resizer').forEach(handle=>{
+      const side = handle.dataset.rail;
+      const minimum = side === 'left' ? 11 : 13;
+      const maximum = side === 'left' ? 25 : 27;
+      const setSize = value=>{
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const available = screen.getBoundingClientRect().width / rem - railSizes[side === 'left' ? 'right' : 'left'] - 20;
+        railSizes[side] = Math.round(Math.max(minimum, Math.min(maximum, available, value)) * 4) / 4;
+        applyRailSizes();
+        try{localStorage.setItem(RAIL_SIZE_KEY, JSON.stringify(railSizes));}catch(e){}
+      };
+      handle.addEventListener('pointerdown', event=>{
+        if(event.button !== 0) return;
+        event.preventDefault();
+        handle.setPointerCapture(event.pointerId);
+      });
+      handle.addEventListener('pointermove', event=>{
+        if(!handle.hasPointerCapture(event.pointerId)) return;
+        const bounds = screen.getBoundingClientRect();
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const px = side === 'left' ? event.clientX - bounds.left : bounds.right - event.clientX;
+        setSize((px - rem * 1.5) / rem);
+      });
+      handle.addEventListener('keydown', event=>{
+        if(!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        setSize(railSizes[side] + (side === 'left' ? direction : -direction));
+      });
+    });
+  }
   function readVariant(){
     try{ return Object.assign({}, VARIANT_DEFAULT, JSON.parse(localStorage.getItem(VARIANT_KEY) || '{}')); }
     catch(e){ return Object.assign({}, VARIANT_DEFAULT); }
@@ -1216,7 +1261,7 @@
     const left = screen.querySelector('.editor-side-rail:not(.editor-right-rail)');
     const right = screen.querySelector('.editor-right-rail');
     const target = v.layout === 'double' ? right : left;
-    ['element-settings','editor-layers-panel'].forEach(id => target.appendChild(document.getElementById(id)));
+    target.appendChild(document.getElementById('element-settings'));
     // The canvas area changes size, so re-center the design in it.
     if(state.level) requestAnimationFrame(()=>{ centerCanvas(); applyCanvasTransform(); });
   }
@@ -1229,6 +1274,7 @@
 
   function initToolbarOnce(){
     applyVariant(readVariant());
+    initRailResizers();
 
     document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
       document.getElementById('editor-hint-banner').classList.add('hidden');
@@ -1547,7 +1593,7 @@
   }
 
   window.EC_EDITOR = {
-    readVariant, setVariant,
+    readVariant, setVariant, selectElement,
     open, undo, redo,
     setOnSubmit: fn => state.onSubmit = fn,
     getElements: () => state.elements,
