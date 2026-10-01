@@ -272,7 +272,7 @@
     const badge = document.getElementById('mini-badge-mail');
     if(badge){
       badge.textContent = unread;
-      badge.style.display = unread > 0 ? '' : 'none';
+      badge.classList.toggle('hidden', unread===0);
     }
     const currency = document.getElementById('mini-taskbar-currency');
     if(currency) currency.innerHTML = window.EC_MONEY(profile.currency);
@@ -608,8 +608,11 @@
     const lv = window.EC_STORE.levelFromTotalXp(profile.totalXp);
     document.getElementById('hdr-level').textContent = lv.level;
     const unreadCount = window.EC_MAIL.arrivedInbox(profile).length;
-    document.getElementById('inbox-count').textContent = unreadCount;
-    document.getElementById('desktop-inbox-badge').textContent = unreadCount;
+    for(const id of ['inbox-count','desktop-inbox-badge']){
+      const badge=document.getElementById(id);
+      badge.textContent=unreadCount;
+      badge.classList.toggle('hidden',unreadCount===0);
+    }
     updateCurrencyDisplays();
     updateMiniDesktop();
   }
@@ -1230,6 +1233,8 @@
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
       const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
+      // Keep the client's words so Completed mail can show the whole thread.
+      profile.history[0].reply = window.EC_MAIL.buildClientReplyText(level, result, missionComplete);
       profile.revisionDrafts=Object.assign({},profile.revisionDrafts,{[level.id]:elements});
       if(outcome.missionComplete) profile.designs = Object.assign({}, profile.designs, { [level.id]: elements });
       save();
@@ -1252,9 +1257,35 @@
   }
 
   // Celebration card after marking a task complete: stars, coins, XP, streak
+  // End-of-day animation (placeholder): a sunset over the hills before the
+  // recap. Click or any key skips it; reduced motion shows it briefly, still.
+  function playDayEndAnimation(dayNumber, done){
+    const reduce = document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const el = document.createElement('div');
+    el.className = 'day-end-scene' + (reduce ? ' still' : '');
+    el.setAttribute('role','status');
+    el.innerHTML = `<div class="day-end-sun"></div><div class="day-end-hill"></div><div class="day-end-text"><b>Day ${dayNumber} · 17:00</b><span>Clocking out…</span></div>`;
+    document.body.appendChild(el);
+    let finished = false;
+    const finish = () => {
+      if(finished) return; finished = true;
+      document.removeEventListener('keydown', finish, true);
+      el.classList.add('leaving');
+      setTimeout(() => { el.remove(); done(); }, 300);
+    };
+    el.addEventListener('click', finish);
+    document.addEventListener('keydown', finish, true);
+    setTimeout(finish, reduce ? 1200 : 2600);
+  }
+
   function showDaySummary(){
     const day=window.EC_STORE.workday(profile);
     if(day.submissions<3 || profile.pendingClientReply || profile.readyReply)return;
+    if(showDaySummary.animatedDay !== day.day){
+      showDaySummary.animatedDay = day.day;
+      playDayEndAnimation(day.day, showDaySummary);
+      return;
+    }
     let modal=document.getElementById('modal-workday');
     if(!modal){
       modal=document.createElement('div');modal.id='modal-workday';modal.className='modal-overlay hidden';
@@ -1497,6 +1528,7 @@
           <button type="button" data-cvd-step="1" aria-label="Next colorblind mode">▶</button>
         </div>
       </li>
+      ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
       ${inEditor ? '' : editorRows}
     </ul>`;
   }
@@ -1515,6 +1547,15 @@
     });
     root.querySelectorAll('[data-pick]').forEach(btn=>btn.addEventListener('click', ()=>{
       const key = btn.dataset.pick;
+      if(key === 'keys'){
+        const ids = Object.keys(window.EC_SOUND.KEY_PACKS);
+        const i = ids.indexOf(window.EC_SOUND.getKeyPack());
+        const next = ids[(i + Number(btn.dataset.step) + ids.length) % ids.length];
+        window.EC_SOUND.setKeyPack(next);
+        btn.closest('.profile-picker').querySelector('output').textContent = window.EC_SOUND.KEY_PACKS[next].name;
+        setTimeout(()=>window.EC_SOUND.typeKey('a'), 150); // preview once the pack has loaded
+        return;
+      }
       const list = key === 'layout' ? EDITOR_LAYOUTS : EDITOR_THEMES;
       const names = key === 'layout' ? EDITOR_LAYOUT_NAMES : EDITOR_THEME_NAMES;
       const i = list.indexOf(window.EC_EDITOR.readVariant()[key]);

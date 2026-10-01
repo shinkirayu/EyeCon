@@ -25,14 +25,20 @@
   // this client writes in. pay = coins for an approved page; each bonus
   // star adds a quarter of that on top.
   const PROJECTS = [
-    { id:'brewbird',   name:'Brewbird Coffee Co.', avatarEmoji:'☕', tier:'novice',       needsGood:0,  pay:40 },
-    { id:'thread',     name:'Thread & Co.',        avatarEmoji:'👕', tier:'novice',       needsGood:1,  pay:55 },
-    { id:'cedar',      name:'Cedar Valley School', avatarEmoji:'🎒', tier:'intermediate', needsGood:2,  pay:70 },
-    { id:'almel',      name:"Almel's Canteen",     avatarEmoji:'🍱', tier:'intermediate', needsGood:3,  pay:85 },
-    { id:'willowmere', name:'Willowmere Clinic',   avatarEmoji:'🏥', tier:'advanced',     needsGood:5,  pay:100 },
-    { id:'flockr',     name:'Flockr',              avatarEmoji:'🐦', tier:'advanced',     needsGood:7, pay:120 },
-    { id:'meridian',   name:'Meridian Bank',       avatarEmoji:'🏦', tier:'expert',       needsGood:8, pay:140 },
-    { id:'nimbus',     name:'Nimbus Goods',        avatarEmoji:'🛒', tier:'expert',       needsGood:10, pay:160 },
+    // Figma clients come first: levels 1, 2, 3, then Brewbird as level 4, then 5 and 6.
+    { id:'mayo',       name:'Mayonnaisegee',       avatarEmoji:'<img src="assets/sprites/Mayonaisse.png" alt="">', tier:'novice', needsGood:0, pay:40 },
+    { id:'yappers',    name:'Yappers.com',         avatarEmoji:'<img src="assets/sprites/Yappers.png" alt="">', tier:'novice', needsGood:1, pay:50 },
+    { id:'haybuhay',   name:'Hay Buhay 3',         avatarEmoji:'<img src="assets/sprites/haybuhay3.png" alt="">', tier:'novice',       needsGood:2,  pay:55 },
+    { id:'brewbird',   name:'Brewbird Coffee Co.', avatarEmoji:'☕', tier:'novice',       needsGood:3,  pay:40 },
+    { id:'cones',      name:'Cones',               avatarEmoji:'<img src="assets/sprites/cones.png" alt="">', tier:'intermediate', needsGood:4, pay:65 },
+    { id:'kolehiyo',   name:'Kolehiyo ng Lungsod ng Pitipiw Piw', avatarEmoji:'<img src="assets/sprites/pitipiwpyiw.png" alt="">', tier:'intermediate', needsGood:5, pay:70 },
+    { id:'thread',     name:'Thread & Co.',        avatarEmoji:'👕', tier:'novice',       needsGood:6,  pay:55 },
+    { id:'cedar',      name:'Cedar Valley School', avatarEmoji:'🎒', tier:'intermediate', needsGood:7,  pay:70 },
+    { id:'almel',      name:"Almel's Canteen",     avatarEmoji:'🍱', tier:'intermediate', needsGood:8,  pay:85 },
+    { id:'willowmere', name:'Willowmere Clinic',   avatarEmoji:'🏥', tier:'advanced',     needsGood:10, pay:100 },
+    { id:'flockr',     name:'Flockr',              avatarEmoji:'🐦', tier:'advanced',     needsGood:12, pay:120 },
+    { id:'meridian',   name:'Meridian Bank',       avatarEmoji:'🏦', tier:'expert',       needsGood:13, pay:140 },
+    { id:'nimbus',     name:'Nimbus Goods',        avatarEmoji:'🛒', tier:'expert',       needsGood:15, pay:160 },
   ];
 
   // Compact builders for the page artwork.
@@ -41,6 +47,8 @@
   const btn = (id, text, x, y, w, h, fontSize, color, bg, o={}) => Object.assign(
     { id, type:'rect', role:'button', text, x, y, w, h, fontFamily:'Baloo 2', fontSize, fontWeight:'700', color, bg, radius:8, align:'center', z:3 }, o);
   const shape = (id, role, x, y, w, h, bg, o={}) => Object.assign({ id, type:'rect', role, x, y, w, h, bg, locked:true, z:1 }, o);
+  // Artwork layer exported from Figma (locked unless o says otherwise); bgSize/bgPos crop it.
+  const img = (id, src, x, y, w, h, o={}) => shape(id, 'decorative', x, y, w, h, null, Object.assign({ src, z:2 }, o));
   // Goals: label is the to-do, why explains the design reason once it's met,
   // tip says which control to use. Bonus goals each add a star.
   const goal = (label, check, why, tip, bonus=false) => ({ label, check, why, tip, bonus });
@@ -51,6 +59,352 @@
   // levelNumber is the skill stage: it decides which editing tools are open
   // (1 position + text alignment, 2 size, 3 type, 4 color, 5+ everything).
   const LEVELS = [
+    // ---- Figma client levels (1, 2, 3, 5, 6) ----
+    {
+      id:'mayo-portfolio', project:'mayo', levelNumber:1, tools:['position'], pageLabel:'Portfolio', concept:'Even spacing',
+      emailPreview:'I want my UI fixed. The spacing is inconsistent.',
+      emailBody:`Good day,
+
+I want my UI fixed. There is inconsistency in the spacing between elements.
+
+I have an urgent deadline.
+
+Thanks.
+— Mayonnaisegee`,
+      attachmentName:'mayonnaisegee_portfolio.png',
+      canvas:{ w:1920, h:1080, bg:'#C9EEFF' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ spacing:30 } },
+      elements:[
+        shape('bg','background',0,0,1920,1080,'#C9EEFF',{z:0}),
+        img('art','assets/levels/mayo/art-strips.png',0,120,1920,960,{bgSize:'100% auto',bgPos:'top'}),
+        shape('nav','card',0,0,1920,112,'#FFFFFF'),
+        txt('logo','heading','Mayonnaisegee',104,32,376,48,36,'#1B1E93',{fontFamily:'Autour One',fontWeight:'400',locked:true}),
+        txt('home','nav','Home',1560,40,80,32,24,'#1B1E93',{fontFamily:'Roboto Slab',fontWeight:'400',locked:true}),
+        txt('about','nav','About',1656,40,88,32,24,'#1B1E93',{fontFamily:'Roboto Slab',fontWeight:'400',locked:true}),
+        txt('contact','nav','Contact',1756,40,120,32,24,'#1B1E93',{fontFamily:'Roboto Slab',fontWeight:'400',locked:true}),
+        txt('title','heading','Explore for more!',368,208,384,48,36,'#1B1E93',{fontFamily:'Autour One',fontWeight:'400',align:'center'}),
+        img('card1','assets/levels/mayo/card1.png',192,280,184,464,{locked:false,z:3}),
+        img('card2','assets/levels/mayo/card2.png',456,280,184,464,{locked:false,z:3}),
+        img('card3','assets/levels/mayo/card3.png',688,304,184,464,{locked:false,z:3}),
+        img('insta','assets/levels/mayo/instagram.png',432,784,48,48,{locked:false,z:3}),
+        img('illus','assets/levels/mayo/illustration.png',496,784,56,48,{locked:false,z:3}),
+        img('tumblr','assets/levels/mayo/tumblr.png',600,784,48,48,{locked:false,z:3}),
+        txt('caption','body','🇵🇭 Fine Arts Student • Storyboard Artist • Illustrator',224,848,616,32,24,'#1B1E93',{fontFamily:'Roboto Slab',fontWeight:'400',align:'center'}),
+        img('banner','assets/levels/mayo/banner.png',80,920,896,88),
+      ],
+      goals:[
+        goal('Space the three artwork cards evenly.', {evenGapsX:['card1','card2','card3']},
+          'Equal gaps make the cards read as one tidy set instead of a random pile.',
+          'Make the gap between cards 1 and 2 match the gap between cards 2 and 3.'),
+        goal('Put the three cards on the same line.', {sameY:['card1','card2','card3']},
+          'Cards that share a top edge look like a row, so the eye moves across them smoothly.',
+          'Give all three cards the same Y number.'),
+        goal('Space the three social icons evenly.', {evenGapsX:['insta','illus','tumblr']},
+          'Evenly spaced icons look like one group of links.',
+          'Match the gap on both sides of the middle icon.'),
+        bonus('Center "Explore for more!" over the caption.', {sameCenterX:['title','caption']},
+          'A shared center line ties the heading and caption to the cards between them.',
+          "Move the title until its center matches the caption's center."),
+      ],
+      replyTemplates:{
+        great:'Wow, it finally looks clean! Just in time for my deadline. Thank you!',
+        ok:'Better, thanks. Still a little uneven in places.',
+        bad:"The spacing still looks off. Can you take another look?"
+      }
+    },
+    {
+      id:'yappers-login', project:'yappers', levelNumber:2, tools:['color'], pageLabel:'Login screen', concept:'Readable colors',
+      emailPreview:'Commission: Yappers.com Login Screen UI Update',
+      emailFrom:'Yappers.com Product Design Team', emailSubject:'Commission: Yappers.com Login Screen UI Update',
+      emailBody:`Greetings,
+
+We're commissioning you to help refresh the Yappers.com login screen. Our review found that the input labels, placeholder text, and error messages currently fail the WCAG 2.2 minimum 4.5:1 contrast ratio.
+
+Please update these elements to meet accessibility requirements while keeping the interface clean, friendly, and unmistakably Yappers.
+
+We're looking forward to seeing your take on the updated login experience. Please share the revised designs with the team once they're ready for review.
+
+Thanks, and happy yapping!
+
+Best regards,
+Yappers.com Product Design Team`,
+      attachmentName:'yappers_login.png',
+      canvas:{ w:1920, h:1080, bg:'#FFF9E1' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ contrast:30 } },
+      elements:[
+        shape('bg','background',0,0,1920,1080,'#FFF9E1',{z:0}),
+        img('feet','assets/levels/yappers/feet.png',0,8,1920,1072),
+        shape('card','card',272,144,1376,776,'#FFFFFF',{radius:32,z:2,shadow:{enabled:true,blur:24,color:'rgba(160,120,40,.35)'}}),
+        img('duck','assets/levels/yappers/duck.png',328,184,560,680,{z:3}),
+        txt('title','heading','Welcome Bak!',1104,240,344,80,64,'#FFEA96',{fontFamily:'Londrina Solid',fontWeight:'400',z:4}),
+        shape('input1','card',1040,360,456,56,'#FFFFFF',{radius:16,border:{width:1,style:'solid',color:'#000000'},z:3}),
+        shape('input2','card',1040,448,456,56,'#FFFFFF',{radius:16,border:{width:1,style:'solid',color:'#000000'},z:3}),
+        txt('user','label','Phone, username, or email ...',1048,376,400,24,16,'#E7E7E7',{fontFamily:'Niramit',z:4}),
+        txt('pass','label','Password',1048,464,400,24,16,'#E7E7E7',{fontFamily:'Niramit',z:4}),
+        txt('forgot','small','Forgot Password?',1048,512,448,24,16,'#0060D6',{fontFamily:'Niramit',align:'right',locked:true,z:4}),
+        btn('login','Log in',1040,552,456,72,36,'#CDCDCD','#EDC45C',{fontFamily:'Londrina Solid',fontWeight:'300',radius:32,z:4}),
+        txt('or','small','or continue with',1200,648,120,24,15,'#C2C1C1',{fontFamily:'Niramit',fontWeight:'500',align:'center',z:4}),
+        img('line1','assets/levels/yappers/line.svg',1024,656,160,8,{bgSize:'100% 1px',z:3}),
+        img('line2','assets/levels/yappers/line.svg',1320,656,160,8,{bgSize:'100% 1px',z:3}),
+        shape('c1','decorative',1168,688,56,56,'#FFFFFF',{radius:28,border:{width:1,style:'solid',color:'#C2C1C1'},z:3}),
+        shape('c2','decorative',1232,688,56,56,'#FFFFFF',{radius:28,border:{width:1,style:'solid',color:'#C2C1C1'},z:3}),
+        shape('c3','decorative',1296,688,56,56,'#FFFFFF',{radius:28,border:{width:1,style:'solid',color:'#C2C1C1'},z:3}),
+        img('facebook','assets/levels/yappers/facebook.png',1184,704,24,24,{z:4}),
+        img('google','assets/levels/yappers/google.png',1248,704,24,24,{z:4}),
+        img('apple','assets/levels/yappers/apple.png',1312,704,24,24,{z:4}),
+      ],
+      goals:[
+        goal('Make "Welcome Bak!" readable on the white card.', {contrast:'AA', ids:['title']},
+          'Pale yellow on white almost disappears. Big text still needs at least 3:1 contrast.',
+          'Pick a darker text color in Color.'),
+        goal('Make both placeholder texts pass 4.5:1.', {contrast:'AA', ids:['user','pass']},
+          'Light grey placeholders are hard to read, especially for people with low vision.',
+          'Darken the text color of both placeholders.'),
+        goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
+          'If people cannot read the main button, they cannot log in.',
+          'Change the text color or the button color until it passes.'),
+        bonus('Make "or continue with" readable too.', {contrast:'AA', ids:['or']},
+          'Small helper text needs the full 4.5:1, not just the big stuff.',
+          'Darken its text color.'),
+      ],
+      replyTemplates:{
+        great:'Clean, friendly and readable. That is unmistakably Yappers. Happy yapping!',
+        ok:'Much easier to read, thanks. A few bits are still faint.',
+        bad:'Some text still fails contrast. Could you have another go?'
+      }
+    },
+    {
+      id:'haybuhay-settings', project:'haybuhay', levelNumber:3, tools:['typography'], pageLabel:'Settings screen', concept:'Text sizes',
+      emailPreview:'Settings screen in Hay Buhay 3 needs your help (ASAP, please!)',
+      emailFrom:'Dan, Lead Developer at Hay Buhay 3', emailSubject:'Settings screen in Hay Buhay 3 needs your help (ASAP, please!)',
+      emailBody:`Hi there,
+
+This is Hay Buhay 3! We'd like to task you with a rescue mission. I built the settings screen at 3 a.m. after too much coffee, and it shows.
+
+Labels, helper text, and values all look the same right now, so players don't know where to look. Please give each its own size, weight, and color. Also, my line-height is under 1.2x and everything feels crammed like a jeepney at rush hour, so please open up the spacing.
+
+Keep it warm and calm, not like a tax form, and make sure contrast works for weaker eyesight and smaller laptop screens. You're free to regroup sections or change controls if you explain why.
+
+Send me a mockup or short screen recording by Friday. Rough is fine, I just want to see your thinking. Ask me anything, salamat!
+
+Mabuhay,
+Dan
+Lead Developer, Hay Buhay 3`,
+      attachmentName:'haybuhay3_settings.png',
+      canvas:{ w:1920, h:1080, bg:'#1A0A22' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ hierarchy:30 } },
+      elements:[
+        img('photo','assets/levels/haybuhay/photo.png',0,0,1920,1080,{bgSize:'cover',z:0}),
+        shape('shade','decorative',0,0,1920,1080,'rgba(0,0,0,.5)'),
+        shape('outer','card',552,56,808,968,'linear-gradient(180deg,#7E5590,#6C248A)',{radius:48,z:2}),
+        shape('inner','card',576,88,768,912,'radial-gradient(circle,#D87EFF,#AB4FD2)',{radius:40,z:3}),
+        ...[[640,'#D397EC',96,'settings'],[752,null,128,'graphics'],[864,null,128,'audio'],[976,null,128,'music'],[1080,null,128,'video']].flatMap(([x,bg,h,name],i)=>[
+          shape('tab'+i,'decorative',x,200,88,h,bg || 'linear-gradient(180deg,#A82ADE,#D573FF)',{radius:16,z:4}),
+          img('tabicon'+i,`assets/levels/haybuhay/tab-${name}.png`,x+20,216,48,48,{z:5}),
+        ]),
+        shape('panel','card',600,288,720,688,'linear-gradient(180deg,#D398EC,#9535BD)',{radius:32,z:6}),
+        txt('title','heading','Settings',880,128,200,56,28,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
+        txt('graphics','subheading','Graphics',896,304,200,48,15,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
+        txt('sec1','subheading','Screen Settings',632,344,200,32,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
+        txt('sec2','subheading','Detail Settings',632,448,200,32,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
+        shape('div1','decorative',824,376,480,8,'#310032',{z:7}),
+        shape('div2','decorative',816,464,488,8,'#310032',{z:7}),
+        shape('sizeBox','decorative',896,408,168,24,'#D9D9D9',{radius:8,z:7}),
+        shape('rateBox','decorative',1096,408,168,24,'#D9D9D9',{radius:8,z:7}),
+        img('sizeArrow','assets/levels/haybuhay/arrow.svg',1056,432,24,24,{z:8}),
+        img('rateArrow','assets/levels/haybuhay/arrow.svg',1256,432,24,24,{z:8}),
+        txt('size','label','Screen Size',896,384,160,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:7}),
+        txt('rate','label','Screen Refresh Rate',1096,384,200,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:8}),
+        txt('sizeVal','small','1080 x 1920',904,408,152,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
+        txt('rateVal','small','Default',1104,408,152,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
+        txt('hz','small','Hz',1272,408,24,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
+        // Checkbox, label, and whether Figma shows it ticked.
+        ...[['opt1','Enable Full Screen Mode',656,400,688,400,true],['opt2','Enable Object Hiding',672,504,704,512,true],['opt3','Enable Reflections',672,552,704,560,false],
+            ['opt4','Enable Animation Smoothing',1016,504,1056,512,true],['opt5','Enable Advance Rendering',1016,552,1056,560,false]].flatMap(([id,t,bx,by,x,y,ticked])=>[
+          shape(id+'box','decorative',bx,by,32,32,'#D9D9D9',{radius:8,z:7}),
+          ...(ticked ? [img(id+'check','assets/levels/haybuhay/check.svg',bx-8,by-8,48,48,{bgSize:'70% auto',z:8})] : []),
+          txt(id,'label',t,x,y,256,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
+        ]),
+        // Slider label, bar and star knob.
+        ...[['s1','Edge Smoothing',680,600,688,640,736],['s2','Visual Effects',680,672,688,712,736],['s3','Lighting and Shadows',680,752,688,784,736],['s4','Tree Detail',680,824,672,864,736],
+            ['s5','Draw Distance',1056,600,1072,640,1112],['s6','High Detail Lots',1056,672,1072,712,1112],['s7','Texture Detail',1056,752,1072,784,1112],['s8','Character Detail',1056,824,1056,864,1112]].flatMap(([id,t,x,y,bx,by,sx])=>[
+          txt(id,'label',t,x,y,240,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
+          shape(id+'bar','decorative',bx,by,200,8,'#CE92E8',{border:{width:1,style:'solid',color:'#310032'},radius:4,z:7}),
+          img(id+'star','assets/levels/haybuhay/star.svg',sx,by-24,32,56,{z:8}),
+        ]),
+        // Close (X) and confirm (check) buttons in the top-right corner.
+        img('ring1','assets/levels/haybuhay/ring1.svg',1288,32,136,136,{z:7}),
+        img('ring2','assets/levels/haybuhay/ring2.svg',1296,40,104,104,{z:8}),
+        img('ring3','assets/levels/haybuhay/ring3.svg',1216,24,104,104,{z:7}),
+        img('ring4','assets/levels/haybuhay/ring4.svg',1224,40,72,72,{z:8}),
+        img('confirm','assets/levels/haybuhay/check.svg',1288,56,80,80,{bgSize:'60% auto',z:9}),
+        img('close','assets/levels/haybuhay/x.svg',1224,48,48,48,{bgSize:'60% auto',z:9}),
+        btn('restore','Restore Defaults',872,904,184,48,20,'#310032','#E3B2F5',{fontFamily:'Righteous',fontWeight:'400',radius:16,locked:true,z:7}),
+      ],
+      goals:[
+        goal('Make "Screen Settings" and "Detail Settings" at least 20px.', {minFont:20, ids:['sec1','sec2']},
+          'Section headings need to stand out from the options under them, so players can find their place.',
+          'Raise their font size in Text.'),
+        goal('Make "Graphics" bigger than "Screen Settings".', {bigger:['graphics','sec1']},
+          'The page title should be the biggest thing in the panel, then sections, then options.',
+          'Give Graphics a larger font size than the section headings.'),
+        goal('Make the five checkbox labels at least 16px.', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
+          'Tiny labels are hard to read on small laptop screens.',
+          'Bump each option label up to 16px or more.'),
+        bonus('Make all eight slider labels at least 16px.', {minFont:16, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},
+          'Matching sizes across every slider keeps the screen calm and consistent.',
+          'Raise each slider label to 16px.'),
+        bonus('Make the "Settings" title 36px or bigger.', {minFont:36, ids:['title']},
+          'A confident title tells players exactly which screen they are on.',
+          'Increase the title font size.'),
+      ],
+      replyTemplates:{
+        great:'Salamat! Players can finally tell where to look. Hay Buhay 3 feels so much calmer.',
+        ok:'Better! Some text still blends together, though.',
+        bad:'Still feels like a tax form. Everything is the same size.'
+      }
+    },
+    {
+      id:'cones-landing', project:'cones', levelNumber:5, tools:['color'], pageLabel:'Landing page', concept:'Readable colors',
+      emailPreview:'Our colour-blindness site is hard to read. Ironic, right?',
+      emailBody:`Hi!
+
+We run Cones, a small site that helps people understand colour blindness. Embarrassingly, a visitor told us parts of our own landing page are hard to read.
+
+The orange headline fades into the cream background, the "Try the simulator" button text is almost invisible, and the little tagline above the headline is too pale.
+
+Could you fix the colours so everything passes WCAG AA, while keeping our bright orange and blue look?
+
+Thanks for helping everyone see clearly,
+— The Cones Team`,
+      attachmentName:'cones_landing.png',
+      canvas:{ w:1920, h:1080, bg:'#F8F2D8' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ contrast:30 } },
+      elements:[
+        shape('bg','background',0,0,1920,1080,'#F8F2D8',{z:0}),
+        shape('nav','card',0,0,1920,152,'#1400C3'),
+        img('eye','assets/levels/cones/eye.png',40,24,104,104,{z:2}),
+        txt('logo','heading','Cones',160,48,200,56,32,'#F8F2D8',{fontFamily:'Boldonse',fontWeight:'400',locked:true}),
+        ...[['Home',1352],['Learn',1472],['Tools',1600],['About',1792]].map(([t,x],i)=>txt('nav'+i,'nav',t,x,56,112,40,32,'#F8F2DA',{fontFamily:'Sansation',fontWeight:'700',locked:true})),
+        txt('tagline','subheading','Color vision awareness',88,208,400,32,24,'#9D95FF',{fontFamily:'Sansation',fontWeight:'700'}),
+        txt('headline','heading','See the world through different eyes!',88,256,944,240,64,'#FF8A4F',{fontFamily:'Boldonse',fontWeight:'400'}),
+        txt('para','body','Around 1 in 12 men and 1 in 200 women see colour differently. Explore how everyday colours look through their eyes.',88,512,880,136,32,'#1400C3',{fontFamily:'Sansation',fontWeight:'400',locked:true}),
+        btn('sim','Try the simulator',88,656,472,112,36,'#FFD9C4','#FF4E02',{fontFamily:'Sansation',radius:56}),
+        btn('test','Take test',600,656,376,112,36,'#A9A1FF','#FFFFFF',{fontFamily:'Sansation',radius:56}),
+        shape('card1','card',1072,256,392,496,'#FFFFFF',{radius:48,z:2}),
+        shape('card2','card',1488,256,392,496,'#FFFFFF',{radius:48,z:2}),
+        ...['#E11D48','#16A34A','#F59E0B','#2563EB','#9333EA'].map((c,i)=>shape('t'+i,'decorative',1104+i*66,288,64,352,c,{radius:32,z:3})),
+        ...['#B0AE41','#707169','#D5D452','#4848D4','#7675D0'].map((c,i)=>shape('p'+i,'decorative',1520+i*66,288,64,352,c,{radius:32,z:3})),
+        txt('typical','subheading','Typical Vision',1104,680,328,40,32,'#1400C3',{fontFamily:'Sansation',fontWeight:'700',align:'center',locked:true,z:3}),
+        txt('prota','subheading','Protanopia',1520,680,328,40,32,'#1400C3',{fontFamily:'Sansation',fontWeight:'700',align:'center',locked:true,z:3}),
+        txt('types','heading','Types of Color Blindness',88,848,960,64,40,'#FFB38A',{fontFamily:'Boldonse',fontWeight:'400'}),
+        ...['#8C7A2B','#A69A57','#2E8B94','#8A8A8A'].map((c,i)=>shape('b'+i,'decorative',88+i*448,952,416,128,c,{radius:32,z:1})),
+      ],
+      goals:[
+        goal('Make the headline readable on the cream background.', {contrast:'AA', ids:['headline']},
+          'Light orange on cream fails even the 3:1 rule for big text.',
+          'Pick a deeper orange or a dark color in Color.'),
+        goal('Make "Try the simulator" readable on its orange button.', {contrast:'AA', ids:['sim']},
+          'The main call to action is useless if nobody can read it.',
+          'Change the button text or its background color.'),
+        goal('Make the "Color vision awareness" tagline readable.', {contrast:'AA', ids:['tagline']},
+          'Pale lavender on cream is hard to see, especially for low vision.',
+          'Darken the tagline color.'),
+        bonus('Make "Take test" readable too.', {contrast:'AA', ids:['test']},
+          'The second button should be just as readable as the first.',
+          'Darken its text color.'),
+        bonus('Make "Types of Color Blindness" readable.', {contrast:'AA', ids:['types']},
+          'Section titles guide people down the page, so they must be easy to see.',
+          'Give it a darker color.'),
+      ],
+      replyTemplates:{
+        great:'Everything pops and passes now. Exactly what a colour-blindness site should look like!',
+        ok:'Much better, thanks. A couple of bits are still faint.',
+        bad:'Some text is still hard to read. That is a bad look for us!'
+      }
+    },
+    {
+      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
+      emailPreview:"Our student dashboard's numbers are smaller than their labels.",
+      emailBody:`Good day!
+
+This is the IT office of Kolehiyo ng Lungsod ng Pitipiw Piw. Students keep telling us our new dashboard is confusing.
+
+The stat cards shout "GWA", "UNITS" and "ENROLLMENT" in big letters, but the actual numbers are smaller than the labels, so nobody notices their grades. The welcome message is also tiny compared to the date above it.
+
+Could you fix the text sizes so the important information stands out first?
+
+Maraming salamat,
+— Kolehiyo IT Office`,
+      attachmentName:'kolehiyo_dashboard.png',
+      canvas:{ w:1920, h:1080, bg:'#011E60' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ hierarchy:30 } },
+      elements:[
+        shape('bg','background',0,0,1920,1080,'linear-gradient(180deg,#011E60,#023EC6)',{z:0}),
+        shape('main','card',248,0,1640,1080,'#DADADA',{radius:32,z:1}),
+        shape('side','card',104,0,384,1080,'#F2F1EF',{radius:32,z:2}),
+        img('logo','assets/levels/kolehiyo/logo.png',104,56,128,96,{bgSize:'contain',z:4}),
+        txt('school','small','Kolehiyo ng Lungsod ng Pitipiw Piw',240,64,200,80,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',locked:true,z:3}),
+        img('schoolArrow','assets/levels/kolehiyo/chevron.svg',440,48,24,24,{z:4}),
+        shape('navhl','decorative',32,176,456,88,'linear-gradient(90deg,#011E60,#023EC6)',{radius:24,z:3}),
+        ...[['Dashboard',208,'home.svg'],['My Profile',272,'user.png'],['Enrollment',344,'pen.png'],['Schedule',424,'calendar.svg'],['Grades',496,'book.png'],['Documents',568,'docs.png'],['Announcements',640,'marketing.png'],['Help',712,'help.svg']].flatMap(([t,y,icon],i)=>[
+          txt('nav'+i,'nav',t,160,y,280,40,24,i ? '#011E60' : '#FFFFFF',{fontFamily:'Niramit',fontWeight:'600',locked:true,z:4}),
+          img('navicon'+i,`assets/levels/kolehiyo/icon-${icon}`,40,y,40,40,{z:4}),
+        ]),
+        img('bell','assets/levels/kolehiyo/bell.svg',1464,72,48,48,{z:3}),
+        img('juan','assets/levels/kolehiyo/juan.png',1536,48,88,88,{radius:44,bgSize:'cover',z:3}),
+        txt('name','subheading','Dela Cruz, Juan',1632,64,240,32,24,'#011E60',{fontFamily:'Niramit',fontWeight:'500',locked:true,z:3}),
+        txt('year','small','3rd Year',1632,96,120,32,20,'#6A6A6A',{fontFamily:'Niramit',fontWeight:'500',locked:true,z:3}),
+        shape('hero','card',512,168,1336,296,'linear-gradient(90deg,#011E60,#023EC6)',{radius:32,z:3}),
+        txt('date','small','Wednesday, July 07, 2027',560,184,400,40,28,'#FFFFFF',{fontFamily:'Liter',fontWeight:'400',z:4}),
+        txt('welcome','heading','Welcome Back, Juan!',608,288,720,64,24,'#FFFFFF',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('program','body','BS Entertainment and Multimedia Computing | 3rd Year',696,360,720,32,14,'#FFFFFF',{fontFamily:'Niramit',fontWeight:'500',z:4}),
+        shape('stat1','card',512,488,200,128,'#FFFFFF',{radius:24,z:3}),
+        shape('stat2','card',744,488,200,128,'#FFFFFF',{radius:24,border:{width:2,style:'solid',color:'#023EC6'},z:3}),
+        shape('stat3','card',984,488,432,128,'#FFFFFF',{radius:24,z:3}),
+        txt('gwaLbl','label','GWA :',528,496,168,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('unitsLbl','label','UNITS :',768,496,168,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('enrLbl','label','ENROLLMENT :',1000,496,400,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('gwaVal','subheading','1.75',552,552,144,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        txt('unitsVal','subheading','24',792,552,144,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        txt('enrVal','subheading','Enrolled',1048,552,352,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        shape('cal','card',1456,488,384,384,'#FFFFFF',{radius:24,z:3}),
+        txt('month','subheading','July, 2027',1480,504,320,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',locked:true,z:4}),
+        // July 2027 starts on a Thursday.
+        ...['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>txt('dow'+i,'small',d,1480+i*48,568,40,32,14,'#6A6A6A',{fontFamily:'Niramit',fontWeight:'700',align:'center',locked:true,z:4})),
+        ...Array.from({length:31},(_,n)=>{ const c=(n+4)%7, r=Math.floor((n+4)/7);
+          return txt('day'+(n+1),'small',String(n+1),1480+c*48,600+r*40,40,40,16,n===6 ? '#FFFFFF' : '#011E60',
+            {fontFamily:'Niramit',fontWeight:'600',align:'center',locked:true,z:4,bg:n===6 ? '#023EC6' : null,radius:16}); }),
+        shape('announce','card',528,656,888,400,'#FFFFFF',{radius:24,z:3}),
+        txt('annTitle','subheading','Announcement :',584,688,400,48,20,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        shape('annBody','decorative',560,760,832,272,'#DADADA',{radius:16,z:4}),
+      ],
+      goals:[
+        goal('Make the GWA number bigger than its label.', {bigger:['gwaVal','gwaLbl']},
+          'The value is what students came for, so it should be the loudest thing in the card.',
+          'Raise 1.75 above 36px, or shrink the label.'),
+        goal('Make the units number bigger than its label.', {bigger:['unitsVal','unitsLbl']},
+          'Same card style, same rule: the number leads, the label supports.',
+          'Raise 24 above the UNITS label size.'),
+        goal('Make "Enrolled" bigger than its label.', {bigger:['enrVal','enrLbl']},
+          'Keeping all three cards consistent makes the row easy to scan.',
+          'Give Enrolled a larger size than ENROLLMENT.'),
+        goal('Make "Welcome Back, Juan!" bigger than the date.', {bigger:['welcome','date']},
+          'The greeting is the headline of the page. The date is supporting detail.',
+          'Increase the welcome size and shrink the date.'),
+        bonus('Make the program line at least 20px.', {minFont:20, ids:['program']},
+          'Tiny white text on blue is hard to read.',
+          'Bump its font size up.'),
+        bonus('Make "Announcement :" at least 32px.', {minFont:32, ids:['annTitle']},
+          'Card titles should match the weight of the stat cards around them.',
+          'Increase the heading size.'),
+      ],
+      replyTemplates:{
+        great:'Students can finally see their grades at a glance. Maraming salamat!',
+        ok:'Clearer, thanks. A couple of cards still feel off.',
+        bad:'The numbers still get lost. Could you try again?'
+      }
+    },
     {
       id:'coffee-shop', project:'brewbird', levelNumber:1, pageLabel:'Homepage', concept:'Lining things up',
       emailPreview:'Our homepage looks a bit messy. Could you tidy it up?',
@@ -891,6 +1245,20 @@ Nimbus Goods`,
       }
     },
   ];
+
+  // Edits saved from the Level Maker ("Save to game") replace a level's
+  // canvas and artwork on this browser. An edit that removed an element a
+  // goal needs is ignored so the level stays solvable.
+  try{
+    const saved = JSON.parse(localStorage.getItem('eyecon_level_overrides') || '{}');
+    LEVELS.forEach(level=>{
+      const edit = saved[level.id];
+      if(!edit || !Array.isArray(edit.elements)) return;
+      const ids = new Set(edit.elements.map(el=>el.id));
+      const needed = (level.goals || []).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat());
+      if(needed.every(id=>ids.has(id))) Object.assign(level, { canvas:edit.canvas, elements:edit.elements, edited:true });
+    });
+  }catch(e){ /* No storage (tests) or bad data: keep the built-in levels. */ }
 
   // Keep every canvas element's position and size on the 8-point grid.
   const to8=n=>Math.round(n/8)*8;

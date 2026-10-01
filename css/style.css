@@ -659,6 +659,7 @@ button{ font-family: inherit; }
 .mail-detail-close:hover, .mail-detail-close:focus-visible{ background: rgba(58,46,57,0.18); }
 .mail-detail-head{ display:flex; align-items:center; gap:1rem; margin-bottom:1.125rem; }
 .avatar-circle{ width:3.75rem;height:3.75rem; border-radius:50%; background:#cfe3ea; display:flex; align-items:center; justify-content:center; font-size:1.625rem; flex-shrink:0; }
+.avatar-circle img{ width:100%; height:100%; object-fit:contain; border-radius:50%; }
 .mail-detail-level-tag{ font-size:.75rem; font-weight:700; color: var(--teal-dark); text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
 .mail-detail-body{ line-height:1.7; font-size:1.0625rem; white-space:pre-line; }
 .mail-detail-attachment{ margin-top:1.125rem; }
@@ -2206,4 +2207,12 @@ button, [role='button'], a, input[type='range'], select, label{
   .piko-bubble.piko-top{ top:.75rem; }
   .piko-panel{ width:100%; }
   .piko-img{ width:6rem; }
+}
+
+.mail-item .avatar-circle,
+.mail-detail-head .avatar-circle,
+.mail-thread-msg .avatar-circle{
+  box-sizing:border-box;
+  overflow:hidden;
+  border:.1875rem solid #73bcb4;
 }

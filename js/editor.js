@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak'];
+  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak','Autour One','Roboto Slab','Londrina Solid','Niramit','Righteous','Kumbh Sans','Sansation','Boldonse','Liter','Inter'];
   const WEIGHTS = [ ['400','Regular'], ['500','Medium'], ['600','Semibold'], ['700','Bold'], ['800','Extra Bold'] ];
   const SNAP_THRESHOLD = 6;
 
@@ -58,7 +58,7 @@
 
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function roundTo8(n){ return Math.max(8, Math.round(n/8)*8); }
-  const ZOOM_MIN = matchMedia('(pointer:coarse)').matches ? 0.1 : 0.3, ZOOM_MAX = 4;
+  const ZOOM_MIN = 0.25, ZOOM_MAX = 5; // 25% – 500%
   const ZOOM_EASE = 0.12;          // lower = smoother/slower glide, higher = snappier
   const ZOOM_WHEEL_SENSITIVITY = 0.00085; // lower = gentler zoom per wheel notch
 
@@ -97,9 +97,41 @@
   // arriving as a real email instead of an instant verdict, showing a
   // running score while editing undercut that (see showHint(), which still
   // gives an on-demand nudge without giving away the number).
-  // Live client checklist in the brief: ticks goals off as they're met and
-  // explains why the fix works, so players learn while they edit.
+  // Client goals as separate cards (one per goal, with a PASS/TO DO badge,
+  // what to do, and why it matters once met), then a handoff checklist.
   const TIER_NAMES = { novice:'Novice', intermediate:'Intermediate', advanced:'Advanced', expert:'Expert' };
+  const GOAL_TOPIC = { align:'Text alignment', sameX:'Alignment', sameY:'Alignment', sameRight:'Alignment', sameCenterX:'Alignment',
+    evenGapsY:'Spacing', evenGapsX:'Spacing', safeMargin:'Margins', minW:'Size', minH:'Tap size', minFont:'Typography',
+    maxFont:'Typography', bigger:'Hierarchy', contrast:'Contrast' };
+  // A short live reading for a goal ("x 64 · 96 · 40", "2.1:1 / 4.5") so
+  // players see exactly how far off they are.
+  function goalMeasure(goal){
+    const G = window.EC_GRADING, check = goal.check, kind = G.goalKind(check);
+    const els = G.goalIds(check).map(byId).filter(Boolean);
+    if(!els.length) return '';
+    const list = f => [...new Set(els.map(f))].join(' · ');
+    const gaps = (pos, size) => { const o = els.slice().sort((a,b)=>a[pos]-b[pos]); return o.slice(1).map((e,i)=>e[pos]-(o[i][pos]+o[i][size])); };
+    switch(kind){
+      case 'sameX': return `x ${list(e=>e.x)}`;
+      case 'sameY': return `y ${list(e=>e.y)}`;
+      case 'sameRight': return `right ${list(e=>e.x+e.w)}`;
+      case 'sameCenterX': return `center ${list(e=>e.x+e.w/2)}`;
+      case 'evenGapsY': return `gaps ${gaps('y','h').join(', ')}px`;
+      case 'evenGapsX': return `gaps ${gaps('x','w').join(', ')}px`;
+      case 'align': return `${els.filter(e=>e.align===check.align).length}/${els.length} ${check.align}`;
+      case 'minH': return `height ${Math.min(...els.map(e=>e.h))}px / ${check.minH}`;
+      case 'minW': return `width ${Math.min(...els.map(e=>e.w))}px / ${check.minW}`;
+      case 'minFont': return `size ${Math.min(...els.map(e=>e.fontSize))}px / ${check.minFont}`;
+      case 'maxFont': return `size ${Math.max(...els.map(e=>e.fontSize))}px / ${check.maxFont}`;
+      case 'bigger': return `${els[0].fontSize}px vs ${els[1] ? els[1].fontSize : '?'}px`;
+      case 'safeMargin': return `edge ${Math.min(...els.map(e=>Math.min(e.x, e.y, state.level.canvas.w-e.x-e.w, state.level.canvas.h-e.y-e.h)))}px / ${check.safeMargin}`;
+      case 'contrast': {
+        const ratios = els.map(e=>window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)));
+        return `${Math.min(...ratios).toFixed(2)}:1 / 4.5`;
+      }
+    }
+    return '';
+  }
   function updateLiveScore(){
     updateGoalMarkers();
     const list = document.getElementById('editor-mail-points');
@@ -108,24 +140,33 @@
       list.replaceChildren(...(state.level.concepts || []).map(c => Object.assign(document.createElement('li'), {textContent:c})));
       return;
     }
-    const results = window.EC_GRADING.checkGoals(state.level, state.elements);
-    // Only the next unfinished goal shows its tip, so the list stays short;
-    // finished goals keep their "why" on hover (and in the client's reply).
-    const next = results.find(r => !r.met && !r.goal.bonus) || results.find(r => !r.met);
-    list.replaceChildren(...results.map(({goal, met}) => {
+    const G = window.EC_GRADING;
+    const results = G.checkGoals(state.level, state.elements);
+    const cards = results.map(({goal, met}, i) => {
       const li = document.createElement('li');
       li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '');
-      const mark = Object.assign(document.createElement('span'), {className:'editor-goal-mark', textContent: met ? '✓' : goal.bonus ? '★' : '○'});
-      mark.setAttribute('aria-hidden', 'true');
-      const text = document.createElement('span');
-      text.textContent = (goal.bonus ? 'Bonus: ' : '') + goal.label;
-      if(next && next.goal === goal) text.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
-      if(met) li.title = goal.why;
       li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
-      li.append(mark, text);
+      const head = document.createElement('div'); head.className = 'editor-goal-head';
+      head.append(Object.assign(document.createElement('b'), {textContent:`${i+1} · ${GOAL_TOPIC[G.goalKind(goal.check)] || 'Goal'}`}),
+        Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent: met ? 'PASS' : goal.bonus ? 'BONUS' : 'TO DO'}));
+      const text = Object.assign(document.createElement('p'), {textContent: goal.label});
+      const measure = Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)});
+      const note = Object.assign(document.createElement('small'), {textContent: met ? goal.why : `Tip: ${goal.tip}`});
+      li.append(head, text, measure, note);
       return li;
-    }));
+    });
+    const check = document.createElement('li');
+    check.className = 'editor-handoff';
+    check.append(Object.assign(document.createElement('b'), {textContent:'Handoff checklist'}));
+    results.forEach(({goal, met}) => {
+      const row = document.createElement('label');
+      const box = Object.assign(document.createElement('input'), {type:'checkbox', checked:met, disabled:true});
+      row.append(box, document.createTextNode(goal.label));
+      check.append(row);
+    });
+    list.replaceChildren(...cards, check);
   }
+
 
   // ---------------- History ----------------
   function pushHistory(){
@@ -190,7 +231,7 @@
     resetSettingsPlaceholder();
     document.getElementById('editor-mail-sender').textContent = level.clientName;
     document.getElementById('editor-mail-stage').textContent = `${TIER_NAMES[level.tier] || 'Client'} · ${level.pageLabel || 'Website page'}`;
-    document.getElementById('editor-mail-avatar').textContent = level.avatarEmoji || '✉';
+    document.getElementById('editor-mail-avatar').innerHTML = level.avatarEmoji || '✉';
     updateLiveScore();
     // Point straight at the first thing to fix instead of a generic
     // "click anything" — this is what used to require noticing the mission
@@ -359,7 +400,7 @@
         div.removeAttribute('tabindex');
         div.classList.add('goal-solved');
         setTimeout(()=>div.classList.remove('goal-solved'), 900);
-        if(state.selectedId === id){ state.selectedId = null; resetSettingsPlaceholder(); renderOverlays(); }
+        if(state.selectedId === id) deselect(); // clears the outline, handles and settings too
       }
       div.classList.toggle('needs-edit', !el.locked);
     });
@@ -387,6 +428,16 @@
         setTimeout(clear, 950); // safety net if reduce-motion skips the animation entirely
       }, i * 40);
     });
+  }
+
+  // Image layers (artwork exported from the level's design): drawn as a
+  // background so they scale with the element; bgSize/bgPos crop them.
+  function paintImage(div, el){
+    if(!el.src) return;
+    div.style.backgroundImage = `url("${el.src}")`;
+    div.style.backgroundSize = el.bgSize || '100% 100%';
+    div.style.backgroundPosition = el.bgPos || 'center';
+    div.style.backgroundRepeat = 'no-repeat';
   }
 
   function textAlignToFlex(align){
@@ -424,6 +475,7 @@
     div.style.boxShadow = shadowCss(el);
     div.style.opacity = el.opacity != null ? el.opacity : 1;
     if(el.bg) div.style.background = el.bg;
+    paintImage(div, el);
     if(el.text){
       div.style.alignItems = 'center';
       div.style.justifyContent = textAlignToFlex(el.align);
@@ -474,6 +526,7 @@
     div.style.boxShadow = shadowCss(el);
     div.style.opacity = el.opacity != null ? el.opacity : 1;
     if(el.bg) div.style.background = el.bg;
+    paintImage(div, el);
     if(el.text){
       div.style.padding = `0 ${el.padding}px`;
       div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
@@ -541,12 +594,39 @@
     const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
     const bold = Number(el.fontWeight) >= 700;
     const res = window.WCAG.passesWCAG(el.color, bg, el.fontSize, bold, 'AA');
-    return `<div class="contrast-value-label">Contrast Value</div>
-    <div class="contrast-badge ${res.pass?'pass':'fail'}">
-      <span class="contrast-ratio">${res.ratio.toFixed(1)}:1</span>
-      <span class="contrast-check">${res.pass?'✓':'✕'}</span>
-    </div>
-    <div class="contrast-note">${res.pass?'Passes AA':'Needs '+res.required+':1'}</div>`;
+    return `<div class="editor-contrast-card" aria-label="Color contrast comparison">
+      <div class="editor-contrast-label">Text color</div>
+      <div class="editor-contrast-color"><span class="editor-contrast-swatch" style="background:${el.color}"></span><code>${el.color.toUpperCase()}</code></div>
+      <div class="editor-contrast-label">Against background</div>
+      <div class="editor-contrast-color"><span class="editor-contrast-swatch" style="background:${bg}"></span><code>${String(bg).toUpperCase()}</code></div>
+      <div class="editor-contrast-label">Contrast value</div>
+      <div class="contrast-badge ${res.pass?'pass':'fail'}">
+        <span class="contrast-ratio">${res.ratio.toFixed(1)}:1</span>
+        <span class="contrast-check">${res.pass?'✓':'✕'}</span>
+      </div>
+      <div class="contrast-note">${res.pass?'Passes AA':'Needs '+res.required+':1'}</div>
+    </div>`;
+  }
+
+  const hexColor = value => /^#[0-9a-f]{6}$/i.test(value||'');
+  function originalColor(el,key){
+    return state.original.find(item=>item.id===el.id)?.[key] || el[key];
+  }
+  function toneColor(base,amount){
+    const channels=[1,3,5].map(i=>parseInt(base.slice(i,i+2),16));
+    const t=Math.max(0,Math.min(100,Number(amount)));
+    const result=channels.map(channel=>{
+      const value=t<=50 ? channel*t/50 : channel+(255-channel)*(t-50)/50;
+      return Math.round(value).toString(16).padStart(2,'0');
+    });
+    return '#'+result.join('');
+  }
+  function toneControl(el,key,label,id){
+    const base=originalColor(el,key);
+    if(!hexColor(base))return '';
+    const amount=Number.isFinite(el[key+'Tone'])?el[key+'Tone']:50;
+    if(key==='color') return `<label class="editor-tone-field editor-tone-vertical" style="--tone-base:${base}"><span>Text lightness <output>${amount}%</output></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text lightness, dark at bottom and light at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
+    return `<label class="editor-tone-field"><span>${label} lightness <output>${amount}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} lightness"/></div><small>Dark <span>Light</span></small></label>`;
   }
 
   function showSettings(el){
@@ -563,7 +643,8 @@
     document.getElementById('f-reset-icon').classList.remove('hidden');
 
     const lvl = state.level.levelNumber || 1;
-    const unlocked = key => lvl >= SETTINGS_UNLOCK[key];
+    // A level may list its own tools (e.g. a contrast task needs color early).
+    const unlocked = key => state.level.tools ? state.level.tools.includes(key) : lvl >= SETTINGS_UNLOCK[key];
 
     let html = '';
     const introHtmlLen = html.length;
@@ -582,11 +663,9 @@
         </div></details>`;
     }
     if((el.text||el.bg) && unlocked('color')) html += `<details class="editor-setting-card" open><summary>Color</summary>`;
-    if(el.bg && unlocked('color')){
-      html += `<div class="editor-color-field"><span>Background</span><div class="color-row"><input type="color" id="f-bg" value="${el.bg}" aria-label="Background color"/><span class="hex">${el.bg}</span></div></div>`;
-    }
+    if(el.bg && unlocked('color')) html += toneControl(el,'bg','Background','f-bg');
     if(el.text && unlocked('color')){
-      html += `<div class="editor-color-field"><span>Text</span><div class="color-row"><input type="color" id="f-color" value="${el.color}" aria-label="Text color"/><span class="hex">${el.color}</span></div></div><div id="f-contrast">${contrastBadgeHtml(el)}</div>`;
+      html += `<div class="editor-contrast-workbench">${toneControl(el,'color','Text','f-color')}<div id="f-contrast">${contrastBadgeHtml(el)}</div></div>`;
     }
     if((el.text||el.bg) && unlocked('color')) html += `</details>`;
 
@@ -602,10 +681,6 @@
       html += `<details class="editor-setting-card" open><summary>Size</summary>
         <label class="editor-unit-row"><span>Width</span><span class="editor-unit-input"><input type="number" id="f-w" step="8" value="${Math.round(el.w)}" aria-label="Width"/><span>px</span></span></label>
         <label class="editor-unit-row"><span>Height</span><span class="editor-unit-input"><input type="number" id="f-h" step="8" value="${Math.round(el.h)}" aria-label="Height"/><span>px</span></span></label>
-      </details>`;
-      html += `<details class="editor-setting-card" open><summary>Spacing</summary>
-        <label class="editor-unit-row"><span>Margin</span><span class="editor-unit-input"><input type="number" id="f-margin" value="${el.margin}" min="0" max="80" step="8" aria-label="Margin"/><span>px</span></span></label>
-        <label class="editor-unit-row"><span>Padding</span><span class="editor-unit-input"><input type="number" id="f-padding" value="${el.padding}" min="0" max="64" step="8" aria-label="Padding"/><span>px</span></span></label>
       </details>`;
     }
     if(unlocked('shape')){
@@ -659,14 +734,19 @@
       pushHistory(); refreshLiveOverlays();
     }));
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
-      el.color = e.target.value; refreshElementDom(el);
-      q('#f-color').closest('.color-row').querySelector('.hex').textContent = el.color;
+      el.colorTone=Number(e.target.value);
+      el.color=toneColor(originalColor(el,'color'),el.colorTone);refreshElementDom(el);
+      e.target.closest('.editor-tone-field').querySelector('output').textContent=el.colorTone+'%';
+      e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.color;
       refreshContrastBadge(el);
     });
     if(q('#f-color')) q('#f-color').addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); });
     if(q('#f-bg')) q('#f-bg').addEventListener('input', e=>{
-      el.bg = e.target.value; refreshElementDom(el);
-      q('#f-bg').closest('.color-row').querySelector('.hex').textContent = el.bg;
+      el.bgTone=Number(e.target.value);
+      el.bg=toneColor(originalColor(el,'bg'),el.bgTone);refreshElementDom(el);
+      e.target.closest('.editor-tone-field').querySelector('output').textContent=el.bgTone+'%';
+      e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.bg;
+      refreshContrastBadge(el);
     });
     if(q('#f-bg')) q('#f-bg').addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); showSettings(el); });
 
@@ -1559,6 +1639,7 @@
       if(el.border && el.border.width>0) d.style.border = `${el.border.width}px ${el.border.style} ${el.border.color}`;
       if(el.shadow && el.shadow.enabled) d.style.boxShadow = `0px 4px ${el.shadow.blur}px ${el.shadow.color}`;
       if(el.bg) d.style.background = el.bg;
+      paintImage(d, el);
       if(el.text){
         d.style.display = 'flex'; d.style.alignItems='center'; d.style.justifyContent = textAlignToFlex(el.align);
         d.style.fontFamily = `'${el.fontFamily}', sans-serif`;

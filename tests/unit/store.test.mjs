@@ -50,19 +50,19 @@ const approve=(s,p,level,stars,date)=>{
   p.history.unshift({levelId:level.id,date,stars,missionComplete:true});
 };
 
-test('you start with one email and each approval brings the next page',async()=>{
+test('you start with one email and each good review brings the next client',async()=>{
   const s=await setup(),p=s.defaultProfile(),day='2026-09-15T12:00:00Z',now=new Date(day);
   const first=s.commissionInbox(p,now);
-  assert.equal(first.map(l=>l.id).join(),'coffee-shop');
-  approve(s,p,first[0],3,day);
-  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'brewbird-menu');
+  assert.equal(first.map(l=>l.id).join(),'mayo-portfolio');
+  approve(s,p,first[0],4,day);
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'yappers-login');
 });
 
 test('a good review brings a different client, and the day holds three tasks',async()=>{
   const s=await setup(),p=s.defaultProfile(),now=new Date('2026-09-15T12:00:00Z');
   approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-14T12:00:00Z');
-  // A 4★ review: Thread & Co. writes in, and Brewbird comes back with its menu page.
-  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'thread-landing,brewbird-menu');
+  // A 4★ review: Yappers.com writes in.
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'yappers-login');
   for(let i=0;i<3;i++){
     const task=s.commissionInbox(p,now)[0];
     assert.equal(s.beginWorkSubmission(p),true);
@@ -86,11 +86,11 @@ test('a redo can raise a rating but a page only counts once',async()=>{
 
 test('when the next client is out of reach, low-rated pages come back to polish',async()=>{
   const w=await setupWindow(),s=w.EC_STORE,p=s.defaultProfile(),day='2026-09-15T12:00:00Z';
-  w.EC_LEVELS.filter(l=>l.project==='brewbird').forEach(l=>approve(s,p,l,3,'2026-09-14T12:00:00Z'));
+  w.EC_LEVELS.filter(l=>l.project==='mayo').forEach(l=>approve(s,p,l,3,'2026-09-14T12:00:00Z'));
   const inbox=s.commissionInbox(p,new Date(day));
-  assert.equal(inbox.length,3);
+  assert.equal(inbox.length,1);
   assert.ok(inbox.every(l=>s.isPolishTask(p,l)));
-  assert.equal(s.progression(p).nextProject.id,'thread');
+  assert.equal(s.progression(p).nextProject.id,'yappers');
   assert.equal(s.progression(p).goodNeeded,1);
 });
 

@@ -28,6 +28,7 @@
   function unlock(){
     const c = getCtx();
     if(!c) return;
+    loadKeyPack();
     if(c.state === 'suspended') c.resume().then(startMusic);
     else startMusic();
   }
@@ -194,8 +195,63 @@
   }
 
   // Soft, rounded effects to match the pastel look — no square/sawtooth buzz.
+  // Keyboard sound packs. "classic" is the built-in synthesized click; the
+  // others are optional local files in assets/sounds/keyboard (kept out of
+  // git). If a pack's files are missing, typing falls back to classic.
+  const KEY_BASE = 'assets/sounds/keyboard/';
+  const KEY_PACKS = {
+    creamy:{ name:'Creamy', letters:['creamy/letter_1.wav','creamy/letter_2.wav','creamy/letter_3.wav'],
+      Backspace:'creamy/backspace.wav', Enter:'creamy/enter.wav', ' ':'creamy/space.wav' },
+    creams:{ name:'Creams', letters:['Creams.ogg'] },
+    classic:{ name:'Classic' },
+  };
+  const KEY_PACK_PREF = 'eyecon_key_pack';
+  const keyBuffers = {};   // file -> AudioBuffer | 'loading' | 'missing'
+  let keyPackId = (()=>{ try{ return localStorage.getItem(KEY_PACK_PREF) || 'creamy'; }catch(e){ return 'creamy'; } })();
+  function packFiles(pack){ return [...(pack.letters||[]), pack.Backspace, pack.Enter, pack[' ']].filter(Boolean); }
+  function loadKeyPack(){
+    const c = getCtx(), pack = KEY_PACKS[keyPackId];
+    if(!c || !pack) return;
+    packFiles(pack).forEach(file=>{
+      if(keyBuffers[file]) return;
+      keyBuffers[file] = 'loading';
+      fetch(KEY_BASE + file).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+        .then(buf => c.decodeAudioData(buf)).then(b => { keyBuffers[file] = b; })
+        .catch(() => { keyBuffers[file] = 'missing'; });
+    });
+  }
+  function setKeyPack(id){
+    if(!KEY_PACKS[id]) return;
+    keyPackId = id;
+    try{ localStorage.setItem(KEY_PACK_PREF, id); }catch(e){}
+    loadKeyPack();
+  }
+  const KEY_VOLUME = 0.8;
+  let lastLetter = -1;
+  // Plays the pack's sound for this key (letters rotate, never the same twice in a row).
+  function playKeySample(key){
+    const pack = KEY_PACKS[keyPackId];
+    if(!enabled || !pack || !pack.letters) return false;
+    let file = pack[key];
+    if(!file){
+      let n = 0;
+      if(pack.letters.length > 1){ do{ n = Math.floor(Math.random() * pack.letters.length); }while(n === lastLetter); }
+      lastLetter = n; file = pack.letters[n];
+    }
+    const buffer = keyBuffers[file];
+    if(!buffer || typeof buffer === 'string') return false;
+    const c = getCtx(), src = c.createBufferSource(), g = c.createGain();
+    src.buffer = buffer;
+    g.gain.value = volume * KEY_VOLUME;
+    src.connect(g); g.connect(c.destination);
+    src.start();
+    src.onended = () => { src.disconnect(); g.disconnect(); };
+    return true;
+  }
+  let pendingKey = 'a';
+
   const SOUNDS = {
-    typing: () => { noiseBurst({duration:.018,gain:.05,filterFreq:3200}); tone(1800+Math.random()*400,{duration:.012,gain:.02,attack:.001}); },
+    typing: () => { if(playKeySample(pendingKey)) return; noiseBurst({duration:.018,gain:.05,filterFreq:3200}); tone(1800+Math.random()*400,{duration:.012,gain:.02,attack:.001}); },
     click: () => { tone(620,{duration:.06,gain:.14,glideTo:520,attack:.002}); noiseBurst({duration:.012,gain:.03,filterFreq:3000}); },
     menuOpen: () => { [523.25,659.25,783.99].forEach((f,i)=>pluck(f,i*.06,.1,.4)); },
     menuBack: () => { pluck(659.25,0,.1,.25); pluck(523.25,.07,.09,.3); },
@@ -225,7 +281,9 @@
     if(fn) fn();
   }
 
-  window.EC_SOUND = { play, setEnabled, setVolume, setMusicEnabled, setMusicVolume, unlock };
+  // Plays the typing sound for a specific key ('Backspace', 'Enter', ' ' or any letter).
+  function typeKey(key){ pendingKey = key || 'a'; play('typing'); pendingKey = 'a'; }
+  window.EC_SOUND = { typeKey, setKeyPack, getKeyPack: () => keyPackId, KEY_PACKS, play, setEnabled, setVolume, setMusicEnabled, setMusicVolume, unlock };
 
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' ') unlock(); });
@@ -253,3 +311,11 @@
     if(document.hidden) stopMusic(); else if(ctx) unlock();
   });
 })();
+
+// Typing in any text field clicks too (the reply composer plays its own).
+document.addEventListener('keydown', e=>{
+  if(e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if(!t.closest || !t.closest('input:not([type=range]):not([type=checkbox]), textarea, [contenteditable="true"]') || t.closest('#compose-body')) return;
+  if(e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') window.EC_SOUND.typeKey(e.key);
+});

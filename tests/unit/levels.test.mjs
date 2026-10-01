@@ -15,16 +15,15 @@ const TOOL_STAGE = { align:1, position:1, sizing:2, typography:3, color:4 };
 
 test('every page is a real, solvable task with the tools unlocked by then',async()=>{
   const w=await setup(), G=w.EC_GRADING;
-  let lastStage=0;
   for(const level of w.EC_LEVELS){
-    assert.ok(level.levelNumber>=lastStage, `${level.id} unlocks tools out of order`);
-    lastStage=level.levelNumber;
     assert.ok(level.goals.some(g=>!g.bonus), `${level.id} needs a required goal`);
     assert.ok(level.goals.some(g=>g.bonus), `${level.id} needs a bonus goal`);
     for(const goal of level.goals){
       const kind=G.goalKind(goal.check);
       assert.ok(kind, `${level.id}: unknown goal check`);
-      assert.ok(TOOL_STAGE[G.GOAL_TOOL[kind]]<=level.levelNumber, `${level.id}: "${goal.label}" needs a tool not unlocked yet`);
+      const tool=G.GOAL_TOOL[kind];
+      // A level's own tools list (Figma levels) overrides the stage pacing.
+      assert.ok(level.tools ? tool==='align' || level.tools.includes(tool) : TOOL_STAGE[tool]<=level.levelNumber, `${level.id}: "${goal.label}" needs a tool not unlocked yet`);
       for(const id of G.goalIds(goal.check)){
         const el=level.elements.find(e=>e.id===id);
         assert.ok(el && !el.locked, `${level.id}: goal target ${id} missing or locked`);

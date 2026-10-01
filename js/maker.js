@@ -9,12 +9,25 @@
   const snap = n => Math.round(n/8)*8;
   const safe = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const state = {title:'My design',preset:'website',canvas:{w:960,h:640,bg:'#fffaf3'},elements:[],targets:[],selected:null,selectedTarget:null};
-  let scale = 1, zoom = 1, panX = 0, panY = 0, drag = null, layerDrag = null, stagePan = null, peeking = false;
+  let scale = 1, zoom = 1, panX = 0, panY = 0, drag = null, layerDrag = null, stagePan = null, peeking = false, spacePan = false;
+  const RAIL_KEY='eyecon.maker-rails.v1';
+  let rails={left:22,right:20};
+  try{Object.assign(rails,JSON.parse(localStorage.getItem(RAIL_KEY)||'{}'));}catch(_){}
   let history = [], future = [];
   const $ = id => document.getElementById(id);
+  const icon = name => {
+    const paths={
+      eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
+      hidden:'<path d="M3 3l18 18M10.6 6.1A11 11 0 0 1 12 6c6.5 0 10 6 10 6a15 15 0 0 1-3.1 3.6M6.1 6.1C3.4 8 2 12 2 12s3.5 6 10 6c1.5 0 2.8-.3 4-.9M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+      lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+      unlock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.8-1.2"/>',
+      delete:'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/>'
+    };
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg>`;
+  };
   const selected = () => state.elements.find(el=>el.id===state.selected);
   const selectedTarget = () => state.targets.find(target=>target.id===state.selectedTarget);
-  const snapshot = () => JSON.stringify({title:state.title,preset:state.preset,canvas:state.canvas,elements:state.elements,targets:state.targets,selected:state.selected,selectedTarget:state.selectedTarget});
+  const snapshot = () => JSON.stringify({gameLevel:state.gameLevel,title:state.title,preset:state.preset,canvas:state.canvas,elements:state.elements,targets:state.targets,selected:state.selected,selectedTarget:state.selectedTarget});
   function record(){
     const next=snapshot();if(history.at(-1)===next)return;
     history.push(next);if(history.length>60)history.shift();future=[];updateToolbar();
@@ -35,7 +48,7 @@
     el.x = Math.max(0,Math.min(snap(Number(el.x)||0),state.canvas.w-el.w));
     el.y = Math.max(0,Math.min(snap(Number(el.y)||0),state.canvas.h-el.h));
     el.radius = Math.max(0,snap(Number(el.radius)||0));
-    el.fontSize = Math.max(8,snap(Number(el.fontSize)||16));
+    el.fontSize = Math.max(8,Math.round(Number(el.fontSize)||16));
   }
   function normalizeTarget(target){
     target.x=Math.max(0,Math.min(snap(Number(target.x)||0),state.canvas.w-8));
@@ -54,6 +67,7 @@
       const draft=JSON.parse(localStorage.getItem(KEY)||'null');
       if(draft && Array.isArray(draft.elements) && draft.canvas){
         state.title=String(draft.title||'My design');
+        state.gameLevel=draft.gameLevel||null;
         state.preset=(PRESETS[draft.preset]||draft.preset==='custom')?draft.preset:'website';
         state.canvas={w:validSize(draft.canvas.w),h:validSize(draft.canvas.h),bg:draft.canvas.bg||'#fffaf3'};
         state.elements=draft.elements.filter(el=>el&&typeof el.id==='string').map(el=>({...el}));
@@ -76,16 +90,31 @@
     canvas.style.setProperty('--maker-handle-zoom',String(Math.max(1,1/scale)));
     updateToolbar();
   }
-  function setZoom(value){zoom=Math.max(.25,Math.min(4,Math.round(value*4)/4));if(zoom===1){panX=0;panY=0;}fit();}
+  function setZoom(value){zoom=Math.max(.25,Math.min(4,Math.round(value*4)/4));fit();}
+  // Styling that game levels carry (see levels.js); plain maker designs skip it.
+  function gameStyle(node,el){
+    if(el.src && el.type!=='image'){
+      node.style.backgroundImage=`url("${el.src}")`;
+      node.style.backgroundSize=el.bgSize||'100% 100%';
+      node.style.backgroundPosition=el.bgPos||'center';
+      node.style.backgroundRepeat='no-repeat';
+    }
+    if(el.fontFamily) node.style.fontFamily=`'${el.fontFamily}', sans-serif`;
+    if(el.fontWeight) node.style.fontWeight=el.fontWeight;
+    if(el.border&&el.border.width) node.style.border=`${el.border.width}px ${el.border.style} ${el.border.color}`;
+    if(el.align){ node.style.textAlign=el.align; node.style.justifyContent={left:'flex-start',right:'flex-end'}[el.align]||'center'; }
+    if(el.opacity!=null) node.style.opacity=el.opacity;
+  }
   function renderCanvas(){
     const canvas=$('maker-canvas');
     canvas.innerHTML='';
     canvas.classList.toggle('peek-targets',peeking);
-    state.elements.forEach(el=>{
+    state.elements.filter(el=>!el.hidden).forEach(el=>{
       const node=document.createElement('div');
       node.className='maker-element'+(el.id===state.selected?' selected':'')+(el.locked?' locked':'');
       node.dataset.id=el.id;
-      node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.type==='text'?'transparent':el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
+      node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
+      gameStyle(node,el);
       if(el.type==='image' && el.src){
         const img=document.createElement('img'); img.src=el.src; img.alt=el.text||''; node.appendChild(img);
       } else node.textContent=el.text||'';
@@ -99,11 +128,11 @@
       canvas.appendChild(node);
     });
     const item=selectedTarget()||selected();
-    if(item&&!peeking&&!item.locked){
+    if(item&&!item.hidden&&!peeking){
       const box=document.createElement('div');
-      box.className='maker-selection-box';
+      box.className=item.locked?'maker-locked-outline':'maker-selection-box';
       box.style.cssText=`left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${item.h}px;`;
-      for(const dir of ['nw','n','ne','e','se','s','sw','w']){
+      if(!item.locked)for(const dir of ['nw','n','ne','e','se','s','sw','w']){
         const handle=document.createElement('span');
         handle.className='maker-resize-handle '+dir;
         handle.dataset.resize=dir;
@@ -111,6 +140,12 @@
         box.appendChild(handle);
       }
       canvas.appendChild(box);
+      if(selected()){
+        const actions=document.createElement('div');actions.className='maker-selection-actions';
+        actions.style.cssText=`left:${item.x+item.w/2}px;top:${item.y}px;`;
+        actions.innerHTML=`<button type="button" data-maker-quick="visibility" aria-label="Hide selected element" title="Hide">${icon('eye')}</button><button type="button" data-maker-quick="lock" aria-label="${item.locked?'Unlock':'Lock'} selected element" title="${item.locked?'Unlock':'Lock'}">${icon(item.locked?'lock':'unlock')}</button><button type="button" data-maker-quick="delete" aria-label="Delete selected element" title="Delete" ${item.locked?'disabled':''}>${icon('delete')}</button>`;
+        canvas.appendChild(actions);
+      }
     }
     fit();
   }
@@ -118,18 +153,31 @@
   function renderLayers(){
     const list=$('maker-layers'); list.innerHTML='';
     [...state.elements].reverse().forEach(el=>{
-      const row=document.createElement('div');row.className='maker-layer-row'+(el.id===state.selected?' active':'');row.dataset.layerId=el.id;
+      const row=document.createElement('div');row.className='maker-layer-row'+(el.id===state.selected?' active':'')+(el.hidden?' is-hidden':'');row.dataset.layerId=el.id;
       const button=document.createElement('button');button.type='button';button.className='maker-layer-select';
       button.innerHTML='<span class="maker-layer-grip" aria-hidden="true">☰</span>';
-      button.appendChild(document.createTextNode((el.type==='image'?'▧ ':el.type==='rect'?'▢ ':'T ')+(el.text||el.type)));
+      button.appendChild(document.createTextNode((el.type==='image'?'▧ ':el.type==='rect'?'▢ ':'T ')+(el.text||(el.id.startsWith('element-')?el.type:el.id))));
+      button.textContent='';
+      const preview=document.createElement('span');preview.className='maker-layer-preview';
+      if(el.src){const img=document.createElement('img');img.src=el.src;img.alt='';preview.appendChild(img);}
+      else if(el.type==='text'||el.text){preview.textContent=(el.text||'T').slice(0,12);preview.style.color=el.color||'#3b172e';preview.style.background=el.bg||'#fff';}
+      else{preview.classList.add('shape');preview.style.background=el.bg||'#bfe9db';preview.style.borderRadius=el.shape==='circle'?'50%':`${el.radius||0}px`;if(el.shape==='triangle')preview.style.clipPath='polygon(50% 0,100% 100%,0 100%)';}
+      button.appendChild(preview);
+      const label=document.createElement('span');label.className='maker-layer-label';label.textContent=el.text||el.id;button.appendChild(label);
       button.addEventListener('click',e=>{if(e.detail===0)select(el.id);});row.appendChild(button);
+      const visibility=document.createElement('button');visibility.type='button';visibility.className='maker-layer-visibility';
+      visibility.setAttribute('aria-label',el.hidden?'Show layer':'Hide layer');visibility.title=el.hidden?'Show layer':'Hide layer';visibility.setAttribute('aria-pressed',String(!el.hidden));visibility.innerHTML=icon(el.hidden?'hidden':'eye');
+      visibility.addEventListener('pointerdown',e=>e.stopPropagation());
+      visibility.addEventListener('click',e=>{e.stopPropagation();el.hidden=!el.hidden;render();record();});row.appendChild(visibility);
       const lock=document.createElement('button');lock.type='button';lock.className='maker-layer-lock';
       lock.setAttribute('aria-label',el.locked?'Unlock layer':'Lock layer');lock.title=el.locked?'Unlock layer':'Lock layer';lock.textContent=el.locked?'🔒':'🔓';
+      lock.innerHTML=icon(el.locked?'lock':'unlock');
       lock.addEventListener('pointerdown',e=>e.stopPropagation());
       lock.addEventListener('click',e=>{e.stopPropagation();el.locked=!el.locked;render();record();});row.appendChild(lock);
       if(el.id===state.selected&&!el.locked){
         const remove=document.createElement('button');remove.type='button';remove.className='maker-layer-delete';
         remove.setAttribute('aria-label','Delete selected layer');remove.title='Delete selected layer';remove.textContent='×';
+        remove.innerHTML=icon('delete');
         remove.addEventListener('pointerdown',e=>e.stopPropagation());
         remove.addEventListener('click',e=>{e.stopPropagation();deleteSelection();});row.appendChild(remove);
       }
@@ -171,8 +219,8 @@
       ${field('Width','w','number',el.w)}${field('Height','h','number',el.h)}
       ${el.type==='rect'||el.type==='image'||el.type==='text'?'':field('Text','text','text',el.text||'')}
       ${el.type==='text'?'':field('Fill','bg','color',el.bg||'#ffffff')}
-      ${el.type==='rect'||el.type==='image'?'':field('Text color','color','color',el.color||'#3b172e')}
-      ${el.type==='rect'||el.type==='image'?'':field('Text size','fontSize','number',el.fontSize||16)}
+      ${(el.type==='rect'||el.type==='image')&&!el.text?'':field('Text color','color','color',el.color||'#3b172e')}
+      ${(el.type==='rect'||el.type==='image')&&!el.text?'':field('Text size','fontSize','number',el.fontSize||16)}
       ${el.type==='rect'&&el.shape!=='circle'&&el.shape!=='triangle'?field('Corner radius','radius','number',el.radius||0):''}
     </div><div class="maker-props-actions">
       <button data-maker-action="back">Send back</button>
@@ -221,7 +269,7 @@
     download(filename('json'),JSON.stringify(level,null,2),'application/json');
   }
   function exportHtml(){
-    const nodes=state.elements.map(el=>{
+    const nodes=state.elements.filter(el=>!el.hidden).map(el=>{
       const style=`position:absolute;box-sizing:border-box;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.type==='text'?'transparent':el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:pre-wrap;text-align:center;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
       const body=el.type==='image'&&el.src?`<img src="${safe(el.src)}" alt="${safe(el.text||'')}" style="width:100%;height:100%;object-fit:cover">`:safe(el.text||'');
       return `<div style="${style}">${body}</div>`;
@@ -231,7 +279,7 @@
   async function exportPng(){
     const canvas=document.createElement('canvas');canvas.width=state.canvas.w;canvas.height=state.canvas.h;
     const ctx=canvas.getContext('2d');ctx.fillStyle=state.canvas.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-    for(const el of [...state.elements].sort((a,b)=>(a.z||0)-(b.z||0))){
+    for(const el of state.elements.filter(el=>!el.hidden).sort((a,b)=>(a.z||0)-(b.z||0))){
       ctx.save();ctx.beginPath();
       if(el.shape==='circle')ctx.ellipse(el.x+el.w/2,el.y+el.h/2,el.w/2,el.h/2,0,0,Math.PI*2);
       else if(el.shape==='triangle'){ctx.moveTo(el.x+el.w/2,el.y);ctx.lineTo(el.x+el.w,el.y+el.h);ctx.lineTo(el.x,el.y+el.h);ctx.closePath();}
@@ -280,12 +328,57 @@
     }
     if(drag.kind==='target')normalizeTarget(item);else normalize(item);
   }
+  // ---- Editing the game's own levels ----
+  // A game level loads into the maker unlocked (its "locked" flag is kept as
+  // gameLocked), and "Save to game" stores it for levels.js to pick up.
+  const OVERRIDES='eyecon_level_overrides';
+  const readOverrides=()=>{try{return JSON.parse(localStorage.getItem(OVERRIDES)||'{}');}catch(_){return {};}};
+  function gameLevel(){return (window.EC_LEVELS||[]).find(l=>l.id===state.gameLevel);}
+  function updateGameButtons(){
+    $('maker-game-level').value=state.gameLevel||'';
+    $('maker-save-level').hidden=!state.gameLevel;
+    $('maker-reset-level').hidden=!state.gameLevel||!readOverrides()[state.gameLevel];
+  }
+  function openGameLevel(id){
+    const level=(window.EC_LEVELS||[]).find(l=>l.id===id);
+    if(!level)return;
+    const saved=readOverrides()[id];
+    const src=saved||level;
+    state.gameLevel=id;state.title=`${level.clientName} · ${level.pageLabel}`;state.preset='custom';
+    state.canvas={...src.canvas};
+    state.elements=[...src.elements].sort((a,b)=>(a.z||0)-(b.z||0)).map(el=>{const c={...el,gameLocked:!!el.locked};delete c.locked;return c;});
+    state.targets=[];state.selected=null;state.selectedTarget=null;
+    render();record();updateGameButtons();
+  }
+  function saveGameLevel(){
+    const level=gameLevel();if(!level)return;
+    const all=readOverrides();
+    all[level.id]={canvas:{...state.canvas},elements:state.elements.map(el=>{const c={...el,locked:el.gameLocked};delete c.gameLocked;return c;})};
+    const ids=new Set(all[level.id].elements.map(el=>el.id));
+    const missing=(level.goals||[]).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()).filter(id=>!ids.has(id));
+    if(missing.length){alert('This level\'s goals need these elements, so put them back first: '+[...new Set(missing)].join(', '));return;}
+    try{localStorage.setItem(OVERRIDES,JSON.stringify(all));}catch(_){alert('Could not save: browser storage is full.');return;}
+    // Reload so levels.js re-applies grid snapping and targets to the edit.
+    if(confirm('Saved. Reload the game now to play the edited level?'))location.reload();
+    updateGameButtons();
+  }
+  function resetGameLevel(){
+    const all=readOverrides();delete all[state.gameLevel];
+    localStorage.setItem(OVERRIDES,JSON.stringify(all));
+    alert('The level is back to its original design after the game reloads.');
+    location.reload();
+  }
   function init(){
     load();
+    const picker=$('maker-game-level');
+    (window.EC_LEVELS||[]).forEach(l=>picker.add(new Option(`${l.clientName} · ${l.pageLabel}`,l.id)));
+    picker.addEventListener('change',()=>{if(picker.value)openGameLevel(picker.value);else{state.gameLevel=null;updateGameButtons();}});
+    $('maker-save-level').addEventListener('click',saveGameLevel);
+    $('maker-reset-level').addEventListener('click',resetGameLevel);
+    updateGameButtons();
     history=[snapshot()];updateToolbar();
     $('maker-zoom-out').addEventListener('click',()=>setZoom(zoom-.25));
     $('maker-zoom-in').addEventListener('click',()=>setZoom(zoom+.25));
-    $('maker-zoom-fit').addEventListener('click',()=>setZoom(1));
     $('maker-undo').addEventListener('click',undo);
     $('maker-redo').addEventListener('click',redo);
     document.querySelectorAll('[data-maker-add]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -411,6 +504,16 @@
     });
     $('maker-canvas').addEventListener('pointerdown',e=>{
       if(peeking||e.button!==0)return;
+      const quick=e.target.closest('[data-maker-quick]');
+      if(quick){
+        e.preventDefault();e.stopPropagation();
+        const el=selected();if(!el)return;
+        if(quick.dataset.makerQuick==='visibility'){el.hidden=true;render();record();}
+        else if(quick.dataset.makerQuick==='lock'){el.locked=!el.locked;render();record();}
+        else deleteSelection();
+        return;
+      }
+      if(spacePan)return;
       if(e.target.closest('[contenteditable="true"]'))return;
       const handle=e.target.closest('[data-resize]');
       if(handle){
@@ -478,7 +581,8 @@
     $('maker-stage').addEventListener('pointerdown',e=>{
       if(e.button!==0&&e.button!==1)return;
       if(e.button===1)e.preventDefault();
-      if(zoom<=1||e.target.closest('button,.maker-element,.maker-target,.maker-selection-box,.maker-resize-handle'))return;
+      if(e.target.closest('button'))return;
+      if(e.button!==1&&!spacePan&&e.target.closest('.maker-element,.maker-target,.maker-selection-box,.maker-resize-handle'))return;
       stagePan={x:e.clientX,y:e.clientY,panX,panY};
       $('maker-stage').setPointerCapture(e.pointerId);
     });
@@ -492,6 +596,7 @@
     document.addEventListener('keydown',e=>{
       if(!$('screen-maker').classList.contains('active'))return;
       const editing=e.target.closest('input,textarea,select,[contenteditable="true"]');
+      if(e.code==='Space'&&!editing){e.preventDefault();spacePan=true;$('maker-stage').classList.add('panning');return;}
       if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){
         if(editing)return;e.preventDefault();if(e.shiftKey)redo();else undo();return;
       }
@@ -503,6 +608,22 @@
       if(e.key==='Escape'){
         if(!exportOptions.hidden)closeExport();else select(null);
       }
+    });
+    document.addEventListener('keyup',e=>{if(e.code==='Space'){spacePan=false;$('maker-stage').classList.remove('panning');}});
+    const workspace=document.querySelector('.maker-workspace');
+    const applyRails=()=>{workspace.style.setProperty('--maker-left',rails.left+'rem');workspace.style.setProperty('--maker-right',rails.right+'rem');requestAnimationFrame(fit);};
+    applyRails();
+    workspace.querySelectorAll('.maker-rail-resizer').forEach(handle=>{
+      const side=handle.dataset.side;
+      const setSize=value=>{
+        const rem=parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const other=rails[side==='left'?'right':'left'];
+        rails[side]=Math.round(Math.max(9,Math.min(32,workspace.clientWidth/rem-other-16,value))*4)/4;
+        applyRails();try{localStorage.setItem(RAIL_KEY,JSON.stringify(rails));}catch(_){}
+      };
+      handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();handle.setPointerCapture(e.pointerId);});
+      handle.addEventListener('pointermove',e=>{if(!handle.hasPointerCapture(e.pointerId))return;const bounds=workspace.getBoundingClientRect();const rem=parseFloat(getComputedStyle(document.documentElement).fontSize);setSize((side==='left'?e.clientX-bounds.left:bounds.right-e.clientX)/rem-1);});
+      handle.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();setSize(rails[side]+(e.key==='ArrowRight'?1:-1)*(side==='left'?1:-1));});
     });
     window.addEventListener('resize',fit);
   }

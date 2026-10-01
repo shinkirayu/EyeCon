@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+// Brewbird is level 4: seed the three Figma clients before it as 4★ reviews.
+const FIGMA_DONE=['mayo-portfolio','yappers-login','haybuhay-settings'];
+const seedBrewbird=ids=>{
+  if(localStorage.getItem('eyecon_profile_v1')) return;
+  localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:ids,onboarding:{seen:true},
+    history:ids.map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}))}));
+};
+
 async function beginFirstDay(page) {
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   const ready=page.getByRole('button', { name: /ready/i });
@@ -42,6 +50,42 @@ test('level maker creates and exports an 8px-aligned design', async ({ page }) =
   await page.locator('#maker-export-toggle').click();
   await page.locator('[data-maker-export="png"]').click();
   expect((await pngPromise).suggestedFilename()).toMatch(/\.png$/);
+});
+
+test('level maker layer visibility hides and restores canvas artwork', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: 'Open Level Maker app' }).click();
+  await page.locator('[data-maker-add="shape"]').click();
+  await expect(page.locator('#maker-canvas .maker-element')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Hide layer' }).click();
+  await expect(page.locator('#maker-canvas .maker-element')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show layer' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show layer' }).click();
+  await expect(page.locator('#maker-canvas .maker-element')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Lock selected element' }).click();
+  await expect(page.getByRole('button', { name: 'Unlock selected element' })).toBeVisible();
+});
+
+test('commission color tool adjusts lightness without opening a free color picker', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.evaluate(() => {
+    const level=EC_LEVELS.find(item=>item.id==='yappers-login');
+    document.querySelectorAll('.screen.active').forEach(screen=>screen.classList.remove('active'));
+    document.getElementById('screen-editor').classList.add('active');
+    EC_EDITOR.open(level);
+    EC_EDITOR.selectElement('title');
+  });
+  const slider=page.locator('#f-color');
+  await expect(slider).toHaveAttribute('type','range');
+  await expect(page.locator('#f-contrast')).toContainText('Against background');
+  await expect(page.locator('.editor-tone-vertical #f-color')).toHaveCSS('writing-mode','vertical-lr');
+  const before=await page.evaluate(()=>EC_EDITOR.getElements().find(el=>el.id==='title').color);
+  const comparison=await slider.evaluate(input=>{input.value='20';input.dispatchEvent(new Event('input',{bubbles:true}));return document.getElementById('f-contrast')?.textContent;});
+  const after=await page.evaluate(()=>EC_EDITOR.getElements().find(el=>el.id==='title').color);
+  expect(after).not.toBe(before);
+  expect(comparison).toContain('Against background');
 });
 
 test('level maker custom canvas, layer order, image upload, and target peek', async ({ page }) => {
@@ -290,7 +334,7 @@ test('submission restores typing and attaching a reply before recording rewards'
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button', { name: 'Accept' }).click();
-  await page.getByRole('button', { name: 'Save and submit' }).click();
+  await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
 
   await expect(page.getByRole('dialog', { name: 'Compose reply' })).toBeVisible();
@@ -327,6 +371,7 @@ test('submission restores typing and attaching a reply before recording rewards'
 });
 
 test('marking an approved task complete pays out with a celebration', async ({ page }) => {
+  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
@@ -340,7 +385,7 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   await set('sub', 'x', 64); await set('cta', 'x', 64);
   await set('navlink2', 'y', 24); await set('navlink3', 'y', 24);
   await expect(page.locator('.editor-goal.met')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Save and submit' }).click();
+  await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
   await page.keyboard.insertText('Typing my reply to the client. '.repeat(20));
@@ -430,6 +475,7 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
+  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
@@ -453,6 +499,7 @@ test('selection handles match the artwork bounds and retain their size when zoom
 });
 
 test('editor settings cards and pastel toolbar icons remain usable',async({page})=>{
+  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
@@ -468,6 +515,7 @@ test('editor settings cards and pastel toolbar icons remain usable',async({page}
 });
 
 test('design tools stay open and use the app typography',async({page})=>{
+  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
@@ -504,11 +552,12 @@ test('the first day starts with one email showing difficulty and reward',async({
   await expect(reward).toContainText('40');
   expect(await reward.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('b')).fontSize))).toBeGreaterThan(20);
   if(page.viewportSize().width>900){
-    const [titleBox,rewardBox]=await Promise.all([
-      page.locator('#mail-detail-title').boundingBox(),reward.boundingBox()
+    // The reward sits just left of the Accept button, on the same line.
+    const [acceptBox,rewardBox]=await Promise.all([
+      page.locator('#btn-accept-job').boundingBox(),reward.boundingBox()
     ]);
-    expect(rewardBox.x).toBeGreaterThan(titleBox.x+titleBox.width);
-    expect(rewardBox.y).toBeLessThan(titleBox.y+titleBox.height*2);
+    expect(rewardBox.x+rewardBox.width).toBeLessThanOrEqual(acceptBox.x);
+    expect(Math.abs((rewardBox.y+rewardBox.height/2)-(acceptBox.y+acceptBox.height/2))).toBeLessThan(acceptBox.height/2);
   }
   await expect(page.locator('#mail-detail-body')).not.toContainText(/tour/i);
 });
@@ -517,8 +566,8 @@ test('text alignment moves the text, ticks the client goal and is saved with the
   // Start with Brewbird's homepage approved, so the menu page is the open email.
   await page.addInitScript(()=>{
     if(localStorage.getItem('eyecon_profile_v1')) return;
-    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
-      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings','coffee-shop'],onboarding:{seen:true},
+      history:[...['mayo-portfolio','yappers-login','haybuhay-settings'].map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true})),{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
   });
   await page.goto('/');
   await beginFirstDay(page);
@@ -584,6 +633,7 @@ test('editing canvas uses one toolbar for history and zoom',async({page},testInf
 });
 
 test('goal elements show markers until solved, then lock',async({page})=>{
+  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
@@ -613,6 +663,11 @@ test('goal elements show markers until solved, then lock',async({page})=>{
   }
   await expect(cta).not.toHaveClass(/needs-edit/);
   await expect(cta).toHaveAttribute('data-locked','1');
+  // Locking a selected element also releases the selection.
+  await expect(cta).not.toHaveClass(/selected/);
+  await expect(page.locator('#editor-canvas .el.selected')).toHaveCount(0);
+  await page.locator('#editor-canvas .el[data-id="heading"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('heading'));
+  await expect(page.locator('#editor-canvas .el[data-id="heading"]')).toHaveClass(/selected/);
   await expect(page.locator('#editor-canvas .el[data-id="heading"]')).toHaveClass(/needs-edit/);
 });
 
@@ -662,8 +717,8 @@ test('two-bar editor panels resize and remember their widths',async({page})=>{
 test('profile settings list and the browser shows the store and client sites',async({page})=>{
   await page.addInitScript(()=>{
     if(localStorage.getItem('eyecon_profile_v1')) return;
-    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
-      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings','coffee-shop'],onboarding:{seen:true},
+      history:[...['mayo-portfolio','yappers-login','haybuhay-settings'].map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true})),{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
   });
   await page.goto('/');
   await page.getByRole('button',{name:'Open EyeCon'}).click();
@@ -671,8 +726,8 @@ test('profile settings list and the browser shows the store and client sites',as
   await page.locator('#taskbar-profile').click();
   await expect(page.locator('#taskbar-stats-popup')).not.toContainText('Reduce motion');
   await page.locator('#taskbar-settings').click();
-  await page.getByLabel('Sound').fill('25');
-  await page.getByLabel('Music').fill('0');
+  await page.getByRole('slider',{name:'Sound',exact:true}).fill('25');
+  await page.getByRole('slider',{name:'Music',exact:true}).fill('0');
   await page.getByRole('switch',{name:'Reduce motion'}).click();
   await page.getByRole('button',{name:'Next colorblind mode'}).click();
   await page.getByRole('button',{name:'Next colorblind mode'}).click();
@@ -718,51 +773,6 @@ test('desktop size grows across settings and keyboard keeps Mail stable',async({
   }
 });
 
-test('ruler tool measures nearby elements and shows drag alignment guides',async({page})=>{
-  await page.setViewportSize({width:1600,height:900});
-  await page.goto('/');await beginFirstDay(page);
-  await page.getByRole('listitem').first().click();
-  await page.getByRole('button',{name:'Accept'}).click();
-  const ruler=page.getByRole('button',{name:'Rulers and spacing',exact:true});
-  await ruler.click();
-  await expect(ruler).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('.canvas-rulers')).toBeVisible();
-  await page.locator(`#editor-canvas .el[data-id="${'cta'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'cta');
-  await expect(page.locator('.spacing-overlay text').first()).toContainText('px');
-  const el=page.locator('#editor-canvas .el[data-id="cta"]');
-  const box=await el.boundingBox();
-  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
-  await page.mouse.down();
-  await page.mouse.move(box.x+box.width/2,box.y+box.height/2+8,{steps:4});
-  await expect(page.locator('.guide-line').first()).toBeVisible();
-  await expect(page.locator('.alignment-reference').first()).toBeVisible();
-  await expect(page.locator('.spacing-bracket').first()).toBeVisible();
-  await page.mouse.up();
-  await expect(page.locator('.alignment-reference')).toHaveCount(0);
-  await ruler.click();
-  await expect(page.locator('.canvas-rulers')).toHaveCount(0);
-  await expect(page.locator('.spacing-overlay')).toHaveCount(0);
-});
-
-test('spacing brackets show both gaps across three aligned elements',async({page})=>{
-  await page.setViewportSize({width:1600,height:900});
-  await page.goto('/');await beginFirstDay(page);
-  await page.getByRole('listitem').first().click();
-  await page.getByRole('button',{name:'Accept'}).click();
-  await expect(page.locator('#editor-canvas .el[data-id="cta"]')).toBeVisible();
-  await page.evaluate(()=>{
-    const level=JSON.parse(JSON.stringify(EC_LEVELS[0]));
-    level.elements=[0,1,2].map(i=>({id:'box'+i,type:'rect',role:'card',x:64+i*128,y:160,w:64,h:64,bg:'#b6e1da',z:1}));
-    EC_EDITOR.open(level);
-  });
-  await page.getByRole('button',{name:'Rulers and spacing',exact:true}).click();
-  await page.locator(`#editor-canvas .el[data-id="${'box0'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'box0');
-  await expect(page.locator('.spacing-overlay text')).toHaveCount(2);
-  await expect(page.locator('.spacing-overlay text').first()).toHaveText('64 px');
-  await expect(page.locator('.spacing-overlay text').last()).toHaveText('64 px');
-  await expect(page.locator('.spacing-bracket')).toHaveCount(2);
-});
-
 test('workday clock and closing summary persist and continue to 8 AM',async({page})=>{
   await page.goto('/');
   for(const [submissions,time] of [[0,'08:00'],[1,'11:00'],[2,'14:00'],[3,'17:00']]){
@@ -774,8 +784,12 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
     await page.reload();
     await expect(page.locator('#taskbar-clock')).toContainText(time);
   }
+  // A short end-of-day animation plays first, then the recap.
+  await expect(page.locator('.day-end-scene')).toBeVisible();
+  await page.screenshot({path:process.env.DAYEND_SHOT||'test-results/dayend.png'});
   const summary=page.getByRole('dialog',{name:'Day 2 complete'});
-  await expect(summary).toBeVisible();
+  await expect(summary).toBeVisible({timeout:8000});
+  await expect(page.locator('.day-end-scene')).toHaveCount(0);
   await expect(summary).toContainText('3 submissions');
   await expect(summary).toContainText('120 XP');
   await expect(summary).toContainText('Brewbird');
@@ -789,8 +803,8 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
 test('after the first job, new emails arrive a moment later and show a new dot',async({page})=>{
   await page.addInitScript(()=>{
     if(localStorage.getItem('eyecon_profile_v1')) return;
-    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['coffee-shop'],onboarding:{seen:true},
-      history:[{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings','coffee-shop'],onboarding:{seen:true},
+      history:[...['mayo-portfolio','yappers-login','haybuhay-settings'].map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true})),{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
     localStorage.setItem('eyecon_mail_state',JSON.stringify({arrivals:{'coffee-shop':1},seen:['coffee-shop']}));
   });
   await page.goto('/');

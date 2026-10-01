@@ -17,7 +17,7 @@
 </script>
 <meta name="theme-color" content="#bfe9db" />
 <title>EyeCon — UI/UX Design Studio</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><ellipse cx=%2230%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><ellipse cx=%2270%22 cy=%2230%22 rx=%2226%22 ry=%2222%22 fill=%22white%22 stroke=%22%233A2E39%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/><circle cx=%2268%22 cy=%2230%22 r=%2211%22 fill=%22%233A2E39%22/></svg>">
+<link rel="icon" type="image/png" href="assets/sprites/piko.png" />
 
 <!-- ============ PWA / "Add to Home Screen" fullscreen support ============
      A regular webpage can never hide Safari's own URL bar while browsing
@@ -32,7 +32,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="EyeCon" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fjalla+One&family=Quicksand:wght@500;600;700&family=Patrick+Hand&family=Just+Another+Hand&family=Modak&family=Nunito:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fjalla+One&family=Quicksand:wght@500;600;700&family=Patrick+Hand&family=Just+Another+Hand&family=Modak&family=Nunito:wght@500;600;700;800&family=PT+Sans:wght@400;700&family=Autour+One&family=Roboto+Slab:wght@400;700&family=Londrina+Solid:wght@300;400&family=Niramit:wght@500;600;700&family=Righteous&family=Kumbh+Sans:wght@400;700&family=Sansation:wght@400;700&family=Boldonse&family=Liter&family=Inter:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/reference.css" />
 </head>
@@ -95,7 +95,7 @@
             <div class="mini-watermark"><span class="eyecon-logo small"><span class="eye"><span class="pupil"></span></span><span class="eye"><span class="pupil"></span></span></span>EyeCon OS</div>
             <div class="mini-icons">
               <div class="mini-desktop-icon" data-app="mail">
-                <div class="mini-icon-glyph" id="mini-icon-mail">📬<span class="mini-badge" id="mini-badge-mail">0</span></div>
+                <div class="mini-icon-glyph" id="mini-icon-mail">📬<span class="mini-badge hidden" id="mini-badge-mail">0</span></div>
                 <div class="mini-icon-label">Mail</div>
               </div>
               <div class="mini-desktop-icon" data-app="stats">
@@ -174,7 +174,7 @@
         <button class="desktop-icon" id="icon-mail" aria-label="Open Mail app">
           <span class="desktop-icon-glyph" id="glyph-mail">📬</span>
           <span class="desktop-icon-label">Mail</span>
-          <span class="badge-count desktop-icon-badge" id="desktop-inbox-badge">0</span>
+          <span class="badge-count desktop-icon-badge hidden" id="desktop-inbox-badge">0</span>
         </button>
         <button class="desktop-icon" id="icon-maker" aria-label="Open Level Maker app">
           <span class="desktop-icon-glyph" id="glyph-maker" aria-hidden="true"></span>
@@ -227,7 +227,7 @@
     <div class="mail-body">
       <nav class="mail-sidebar" aria-label="Mail folders">
         <button class="side-btn active" data-folder="inbox">
-          <span class="side-icon side-icon-inbox"><span class="badge-count" id="inbox-count">0</span></span><span class="folder-label">Inbox</span>
+          <span class="side-icon side-icon-inbox"><span class="badge-count hidden" id="inbox-count">0</span></span><span class="folder-label">Inbox</span>
         </button>
         <button class="side-btn" data-folder="completed">
           <span class="side-icon side-icon-completed"></span><span class="folder-label">Completed</span>
@@ -318,32 +318,32 @@
       <!-- Left zone: identity + history -->
       <div class="editor-topbar-zone zone-identity">
         <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
-        <div class="editor-tools-left">
-          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#undo"/></svg><span class="btn-label">Undo</span></button>
-          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#redo"/></svg><span class="btn-label">Redo</span></button>
-        </div>
-        <span class="editor-toolbar-divider" aria-hidden="true"></span>
-        <div class="editor-zoom-controls" aria-label="Canvas zoom controls">
-          <button type="button" id="editor-zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
-          <output id="editor-zoom-label" aria-live="polite">100%</output>
-          <button type="button" id="editor-zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
-        </div>
       </div>
 
       <!-- Center zone: view aids, grouped into one pill so they read as
            "one toolset" rather than four separate decisions -->
       <div class="editor-tools-center tool-pill">
-        <button class="tool-btn toggle-btn" id="tool-targets" title="Show hidden grading boxes" aria-label="Show hidden grading boxes" aria-pressed="false"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg><span class="btn-label">Targets</span></button>
         <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid"/></svg></button>
-        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#settings"/></svg></button>
+        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg></button>
+        <button class="tool-btn toggle-btn hidden" id="tool-targets" title="Show hidden grading boxes" aria-label="Show hidden grading boxes" aria-pressed="false"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg><span class="btn-label">Targets</span></button>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <button class="tool-btn toggle-btn" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#magnet"/></svg></button>
         <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#spark"/></svg></button>
-        <button class="tool-btn toggle-btn" id="tool-measure" title="Rulers and spacing" aria-label="Rulers and spacing" aria-pressed="false"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="#b6e1da" stroke="#528f91"/><path d="M6 6v6m4-6v4m4-4v6m4-6v4" stroke="#528f91" stroke-width="2"/></svg></button>
+        <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Rulers and spacing" aria-label="Rulers and spacing" aria-pressed="false"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="#b6e1da" stroke="#528f91"/><path d="M6 6v6m4-6v4m4-4v6m4-6v4" stroke="#528f91" stroke-width="2"/></svg></button>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#bulb"/></svg></button>
         <button class="tool-btn hidden" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
         <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#triangle"/></svg></button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <div class="editor-zoom-controls" aria-label="Canvas zoom controls">
+          <button type="button" id="editor-zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
+          <output id="editor-zoom-label" aria-live="polite">100%</output>
+          <button type="button" id="editor-zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+        </div>
+        <div class="editor-tools-left">
+          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#undo"/></svg><span class="btn-label">Undo</span></button>
+          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#redo"/></svg><span class="btn-label">Redo</span></button>
+        </div>
       </div>
 
       <!-- Right zone: output actions -->
@@ -351,7 +351,7 @@
         <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
       </div>
     </div>
-    <button class="tool-btn btn-save editor-save-corner" id="tool-save" title="Save & submit" aria-label="Save and submit"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#save"/></svg><span class="editor-save-label">Save</span></button>
+    <button class="tool-btn btn-save editor-save-corner" id="tool-save" title="Submit for handoff" aria-label="Submit for handoff"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#save"/></svg><span class="editor-save-label">Submit</span></button>
 
 
         <div class="editor-hint-pill" id="editor-hint-banner">
@@ -367,9 +367,9 @@
       <div class="editor-rail-card">
       <aside class="editor-mail-brief" id="editor-mail-brief" aria-label="Client brief">
         <div class="editor-mail-brief-head"><div class="avatar-circle" id="editor-mail-avatar" aria-hidden="true"></div><div><small id="editor-mail-stage">Client brief</small><h3 id="editor-mail-sender"></h3></div></div>
-        <ul class="editor-mail-points" id="editor-mail-points"></ul>
       </aside>
       </div>
+      <ul class="editor-mail-points editor-goal-cards" id="editor-mail-points"></ul>
       </div>
       <div class="editor-side-rail editor-right-rail">
       <aside class="element-settings" id="element-settings">
@@ -408,6 +408,11 @@
         <span>×</span>
         <label>Height <input id="maker-height" type="number" min="64" max="4096" step="8" value="640" /></label>
       </div>
+      <div class="maker-game-level">
+        <select id="maker-game-level" aria-label="Edit a game level"><option value="">Edit a game level…</option></select>
+        <button class="btn" id="maker-save-level" type="button" hidden>Save to game</button>
+        <button class="btn" id="maker-reset-level" type="button" hidden>Reset level</button>
+      </div>
       <div class="maker-header-actions">
         <div class="maker-export" id="maker-export">
           <button class="btn" id="maker-export-toggle" type="button" aria-expanded="false" aria-controls="maker-export-options">Export ▾</button>
@@ -436,6 +441,7 @@
         <div class="maker-list-head">Targets</div>
         <div id="maker-targets-list" class="maker-layers"></div>
       </aside>
+      <div class="maker-rail-resizer" data-side="left" role="separator" aria-label="Resize layers panel" aria-orientation="vertical" tabindex="0"></div>
       <div class="maker-stage" id="maker-stage">
         <div class="maker-stage-toolbar" aria-label="Canvas controls">
           <button id="maker-undo" type="button" aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
@@ -444,11 +450,11 @@
           <button id="maker-zoom-out" type="button" aria-label="Zoom out" title="Zoom out">−</button>
           <output id="maker-zoom-label" aria-live="polite">100%</output>
           <button id="maker-zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button>
-          <button id="maker-zoom-fit" type="button" aria-label="Fit canvas" title="Fit canvas">Fit</button>
         </div>
         <div id="maker-canvas" class="maker-canvas" aria-label="Design canvas"></div>
         <div class="maker-stage-hint">Scroll to zoom · Drag to move · Edge handles resize · Corner handles scale · Shift for free resize</div>
       </div>
+      <div class="maker-rail-resizer" data-side="right" role="separator" aria-label="Resize properties panel" aria-orientation="vertical" tabindex="0"></div>
       <aside class="maker-properties" aria-label="Element properties">
         <div class="maker-properties-head"><h2>Properties</h2></div>
         <div id="maker-properties-fields">Select an element to edit it.</div>
@@ -503,16 +509,19 @@
     <div class="modal-card mail-detail-card">
       <button class="mail-detail-close" id="btn-close-mail" aria-label="Close email"></button>
       <div class="mail-detail-head">
-        <div class="avatar-circle"><img src="assets/icons/profile.svg" alt="" /></div>
-        <div>
-          <div class="mail-detail-level-tag" id="mail-detail-level-tag"></div>
-          <h2 id="mail-detail-title">Client</h2>
-          <p class="mail-detail-reward" id="mail-detail-reward"></p>
+        <div class="mail-detail-level-tag" id="mail-detail-level-tag"></div>
+        <div class="mail-detail-from">
+          <div class="avatar-circle" id="mail-detail-avatar"><img src="assets/icons/profile.svg" alt="" /></div>
+          <div class="mail-detail-sender">
+            <h2 id="mail-detail-title">Client</h2>
+            <dl class="mail-detail-meta" id="mail-detail-meta"></dl>
+          </div>
         </div>
       </div>
       <div class="mail-detail-body" id="mail-detail-body"></div>
       <div class="mail-detail-attachment" id="mail-detail-attachment"></div>
       <div class="mail-detail-actions">
+        <p class="mail-detail-reward" id="mail-detail-reward"></p>
         <button class="btn btn-accept" id="btn-accept-job">Accept</button>
       </div>
     </div>
@@ -527,9 +536,9 @@
   </div>
 
   <!-- SAVE/SUBMIT CONFIRM -->
-  <div id="modal-confirm-submit" class="modal-overlay hidden" role="alertdialog" aria-modal="true" aria-label="Save and submit">
+  <div id="modal-confirm-submit" class="modal-overlay hidden" role="alertdialog" aria-modal="true" aria-label="Submit for handoff">
     <div class="confirm-card">
-      <p>Save and Submit?</p>
+      <p>Submit for handoff?</p>
       <div class="confirm-actions">
         <button class="btn btn-no" id="btn-confirm-no">No</button>
         <button class="btn btn-yes" id="btn-confirm-yes">Yes</button>

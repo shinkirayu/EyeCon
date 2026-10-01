@@ -7,3 +7,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Local-only keyboard sound pack (not ours to redistribute)
+assets/sounds/keyboard/

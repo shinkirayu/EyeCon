@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 383 383">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#D87EFF"/><stop offset="1" stop-color="#6C248A"/></linearGradient>
+    <linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F6C3FF"/><stop offset="1" stop-color="#C328DE"/></linearGradient>
+    <clipPath id="c"><circle cx="191.5" cy="191.5" r="191.5"/></clipPath>
+  </defs>
+  <circle cx="191.5" cy="191.5" r="191.5" fill="url(#bg)"/>
+  <!-- Figma "Star 1": 370x634 at (6.6, -125.6), same shape as the slider stars. -->
+  <g clip-path="url(#c)"><g transform="translate(6.6 -125.6) scale(9.55 11.71)">
+    <path d="M18.37.87c.16-1.16 1.83-1.16 1.98 0l2.18 16a1 1 0 0 0 .61.8l10.96 4.48c.83.34.83 1.52 0 1.86l-10.96 4.48a1 1 0 0 0-.61.8l-2.18 16c-.15 1.16-1.82 1.16-1.98 0l-2.18-16a1 1 0 0 0-.61-.8L4.62 24a1 1 0 0 1 0-1.85l10.96-4.49a1 1 0 0 0 .61-.8z" fill="url(#st)" stroke="#fff" stroke-width=".3"/>
+  </g></g>
+</svg>

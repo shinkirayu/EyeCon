@@ -146,10 +146,54 @@
   // Shows the client's reply after grading — approves and pays out (stars
   // met the threshold) or sends the work back for revision (mission stays
   // open in the inbox, same modal reused with a different button/behavior).
+  // Email header: subject as the title, then who it's from and who it's to.
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function emailAddress(level){
+    const domain = /\.[a-z]+$/i.test(level.clientName) ? level.clientName.toLowerCase()
+      : level.clientName.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'') + '.com';
+    return 'hello@' + domain;
+  }
+  function setEmailHeader(level, subject, fromMe){
+    const client = `${esc(level.emailFrom || level.clientName)} <span>&lt;${emailAddress(level)}&gt;</span>`;
+    const me = 'You <span>&lt;junior.designer@eyecon.studio&gt;</span>';
+    document.getElementById('mail-detail-title').textContent = subject;
+    document.getElementById('mail-detail-avatar').innerHTML = level.avatarEmoji || '✉';
+    document.getElementById('mail-detail-meta').innerHTML =
+      `<dd class="mail-detail-name">${fromMe ? me : client}</dd><dd class="mail-detail-to">To: ${fromMe ? client : me}</dd>`;
+  }
+  function emailSubject(level){ return level.emailSubject || `${level.pageLabel}: ${level.emailPreview}`; }
+
+  // The reply the player types out (same text every time).
+  function myReplyText(level){
+    return `Good day, ${level.clientName} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon`;
+  }
+  // Completed mail: the whole conversation, newest first, so the approval
+  // sits on top and scrolling down goes back to the original request.
+  function threadHtml(level, profile){
+    const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ', ' + d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); };
+    const msg = (cls, avatar, name, date, text, extra='') => `<article class="mail-thread-msg ${cls}">
+        <header><span class="avatar-circle">${avatar}</span><b>${name}</b><time>${esc(date)}</time></header>
+        <p>${esc(text)}</p>${extra}</article>`;
+    const client = level.avatarEmoji || '✉', me = '<img src="assets/icons/profile.svg" alt="">';
+    const clientName = esc(level.emailFrom || level.clientName);
+    const file = (level.attachmentName || 'design.png').replace(/(\.\w+)$/, '_edited$1');
+    const parts = [];
+    profile.history.filter(h => h.levelId === level.id).forEach(h => {
+      const stars = '★'.repeat(h.stars || 0) + '☆'.repeat(5 - (h.stars || 0));
+      const text = h.reply || `Hi, ${level.clientName} here.\n\n${stars}\n\n${h.quote || ''}\n\n— ${level.clientName}`;
+      const badge = h.missionComplete ? '<span class="mail-thread-badge done">Approved</span>' : '<span class="mail-thread-badge">Needs changes</span>';
+      parts.push(msg('from-client', client, clientName + badge, when(h.date), text));
+      parts.push(msg('from-me', me, 'You', when(h.date), myReplyText(level), `<span class="mail-thread-file">📎 ${esc(file)}</span>`));
+    });
+    parts.push(msg('from-client original', client, clientName, 'Original request', level.emailBody));
+    return parts.join('');
+  }
+
   function openClientReply(level, result, missionComplete, onContinue){
     activeLevel = level;
     replyMode = true;
-    document.getElementById('mail-detail-title').textContent = level.clientName;
+    document.getElementById('mail-detail-body').classList.remove('mail-thread');
+    setEmailHeader(level, 'Re: ' + emailSubject(level));
     document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
     document.getElementById('mail-detail-body').textContent = buildClientReplyText(level, result, missionComplete);
     document.getElementById('mail-detail-attachment').innerHTML = '';
@@ -166,7 +210,8 @@
     markSeen(level);
     replyMode = false;
     document.getElementById('btn-accept-job').onclick = null;
-    document.getElementById('mail-detail-title').textContent = level.clientName;
+    const polishing = !readOnly && window.EC_STORE.isPolishTask(window.EC_STORE.load(), level);
+    setEmailHeader(level, polishing ? `One more polish? (${level.pageLabel})` : emailSubject(level));
     document.getElementById('mail-detail-level-tag').textContent = 'Personal design commission';
     const profile = window.EC_STORE.load();
     const pay = window.EC_STORE.commissionPay(profile, level);
@@ -174,8 +219,11 @@
     document.getElementById('mail-detail-body').textContent = polish
       ? `Hi! We loved your work on our ${level.pageLabel.toLowerCase()}. If you have time, could you give it one more polish? We'd happily raise our review.\n\n— ${level.clientName}`
       : level.emailBody;
+    const bodyEl = document.getElementById('mail-detail-body');
+    bodyEl.classList.toggle('mail-thread', !!readOnly);
+    if(readOnly){ bodyEl.innerHTML = threadHtml(level, profile); document.getElementById('mail-detail-title').textContent = 'Re: ' + emailSubject(level); }
     document.getElementById('mail-detail-reward').innerHTML =
-      `${readOnly ? 'Paid' : 'Reward'}: <b>${window.EC_MONEY(pay.base)}</b> · +${pay.perBonusStar} per bonus ★`;
+      readOnly ? '' : `Reward: <b>${window.EC_MONEY(pay.base)}</b>`;
     document.getElementById('mail-detail-attachment').innerHTML =
       `<button type="button" class="attachment-card" id="attachment-chip" aria-label="Preview ${level.attachmentName}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${level.attachmentName}</span></button>`;
     window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
@@ -232,7 +280,6 @@
     revealTimer=setInterval(()=>{
       if(composeState.revealed>=revealTarget){clearInterval(revealTimer);revealTimer=null;return;}
       composeState.revealed++;
-      window.EC_SOUND.play('typing');
       renderComposeText();
     },18);
   }
@@ -247,10 +294,9 @@
     revealTarget=0;
     activeLevel = level; pendingGradeResult = gradeResult;
     document.getElementById('compose-to-name').textContent = level.clientName;
-    const template = 'I have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.';
 
     composeState = {
-      fullText: `Good day, ${level.clientName} team,\n\n${template}\n\nBest regards,\nEyeCon`,
+      fullText: myReplyText(level),
       revealed: 0,
       attached: false,
       attachedFileName: '',
@@ -334,9 +380,11 @@
       // far past the point of feeling like a fun typing flourish — but
       // stagger them on a fast tick (queueReveal) rather than jumping there
       // instantly, so it still reads as typing and not chunks popping in.
+      // One sound per key press (not per revealed letter), matched to the key type.
+      window.EC_SOUND.typeKey(e.inputType === 'deleteContentBackward' ? 'Backspace' : e.inputType === 'insertParagraph' ? 'Enter' : e.data === ' ' ? ' ' : 'a');
       queueReveal(n * REVEAL_CHARS_PER_KEY);
     });
-    document.getElementById('compose-body').addEventListener('click', ()=>queueReveal(REVEAL_CHARS_PER_KEY));
+    document.getElementById('compose-body').addEventListener('click', ()=>{ window.EC_SOUND.typeKey('a'); queueReveal(REVEAL_CHARS_PER_KEY); });
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);
 
     document.getElementById('btn-send-mail').addEventListener('click', ()=>{
@@ -347,7 +395,7 @@
   }
 
   window.EC_MAIL = {
-    renderInbox, renderCompleted, arrivedInbox, openMailDetail, openCompose, openClientReply,
+    renderInbox, renderCompleted, arrivedInbox, openMailDetail, buildClientReplyText, openCompose, openClientReply,
     setHandlers: h => handlers = Object.assign(handlers, h),
     initOnce,
   };
