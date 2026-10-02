@@ -532,7 +532,7 @@ test('design tools stay open and use the app typography',async({page})=>{
   await expect(mail).toBeVisible();
   await expect(page.locator('#editor-mail-sender')).toHaveText('Mayonnaisegee');
   await expect(page.locator('#editor-mail-stage')).toContainText('Portfolio');
-  await expect(page.locator('#editor-mail-points')).toContainText('Space the three artwork cards');
+  await expect(page.locator('#editor-mail-points')).toContainText('Space the three social icons');
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
   // Desktop: brief on the left, Design tools above Layers on the right (phones stack them).
