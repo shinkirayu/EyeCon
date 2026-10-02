@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak','Autour One','Roboto Slab','Londrina Solid','Niramit','Righteous','Kumbh Sans','Sansation','Boldonse','Liter','Inter'];
+  const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak','Autour One','Roboto Slab','Londrina Solid','Niramit','Righteous','Kumbh Sans','Sansation','Boldonse','Liter','Inter','Lilita One','Kaushan Script','Lato','Mr Dafoe'];
   const WEIGHTS = [ ['400','Regular'], ['500','Medium'], ['600','Semibold'], ['700','Bold'], ['800','Extra Bold'] ];
   const SNAP_THRESHOLD = 6;
 
@@ -142,12 +142,16 @@
     }
     const G = window.EC_GRADING;
     const results = G.checkGoals(state.level, state.elements);
+    // Suggest one task at a time, in list order. When it's done, move on to the
+    // next unfinished one; an earlier task that breaks again doesn't pull it back.
+    const nextOpen = from => { for(let k = 0; k < results.length; k++){ const j = (from + k) % results.length; if(!results[j].met) return j; } return null; };
+    if(state.focusGoal == null || results[state.focusGoal]?.met) state.focusGoal = nextOpen(state.focusGoal == null ? 0 : state.focusGoal + 1);
     const cards = results.map(({goal, met}, i) => {
       const li = document.createElement('li');
-      li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '');
+      li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '') + (i === state.focusGoal ? ' focus' : '');
       li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
       const head = document.createElement('div'); head.className = 'editor-goal-head';
-      head.append(Object.assign(document.createElement('b'), {textContent:`${i+1} · ${GOAL_TOPIC[G.goalKind(goal.check)] || 'Goal'}`}),
+      head.append(Object.assign(document.createElement('b'), {textContent:GOAL_TOPIC[G.goalKind(goal.check)] || 'Goal'}),
         Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent: met ? 'PASS' : goal.bonus ? 'BONUS' : 'TO DO'}));
       const text = Object.assign(document.createElement('p'), {textContent: goal.label});
       const measure = Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)});
@@ -160,7 +164,9 @@
     check.append(Object.assign(document.createElement('b'), {textContent:'Handoff checklist'}));
     results.forEach(({goal, met}) => {
       const row = document.createElement('label');
-      const box = Object.assign(document.createElement('input'), {type:'checkbox', checked:met, disabled:true});
+      const box = Object.assign(document.createElement('span'), {className:'editor-handoff-box', textContent: met ? '✓' : ''});
+      box.setAttribute('role','img'); box.setAttribute('aria-label', met ? 'Done' : 'Not done');
+      if(met) row.classList.add('done');
       row.append(box, document.createTextNode(goal.label));
       check.append(row);
     });
@@ -192,6 +198,7 @@
   // ---------------- Open / build ----------------
   function open(level, savedElements){
     state.level = level;
+    state.focusGoal = null; // the suggested next task in the goal list
     state.elements = clone(savedElements || level.elements);
     state.elements.forEach(ensureDefaults);
     state.elements.forEach(el=>{
@@ -393,16 +400,12 @@
     Object.entries(status).forEach(([id, solved]) => {
       const el = byId(id), div = state.canvasEl.querySelector(`.el[data-id="${id}"]`);
       if(!el || !div) return;
-      if(solved && !el.locked){
-        el.locked = true;
-        div.style.pointerEvents = 'none';
-        div.dataset.locked = '1';
-        div.removeAttribute('tabindex');
+      // Solved pieces stay editable: moving one out of place un-solves it.
+      if(solved && div.classList.contains('needs-edit')){
         div.classList.add('goal-solved');
         setTimeout(()=>div.classList.remove('goal-solved'), 900);
-        if(state.selectedId === id) deselect(); // clears the outline, handles and settings too
       }
-      div.classList.toggle('needs-edit', !el.locked);
+      div.classList.toggle('needs-edit', !solved);
     });
   }
 
@@ -500,7 +503,7 @@
         if(event.key === 'Enter' || event.key === ' '){ event.preventDefault(); selectElement(el.id); }
         if(event.key === 'Escape'){ deselect(); }
       });
-      ['nw','ne','sw','se','n','s','e','w'].forEach(dir=>{
+      if(can(el,'resize')) ['nw','ne','sw','se','n','s','e','w'].forEach(dir=>{
         const h = document.createElement('div');
         h.className = `el-handle ${dir}`;
         h.dataset.handle = dir;
@@ -612,21 +615,56 @@
   function originalColor(el,key){
     return state.original.find(item=>item.id===el.id)?.[key] || el[key];
   }
-  function toneColor(base,amount){
-    const channels=[1,3,5].map(i=>parseInt(base.slice(i,i+2),16));
-    const t=Math.max(0,Math.min(100,Number(amount)));
-    const result=channels.map(channel=>{
-      const value=t<=50 ? channel*t/50 : channel+(255-channel)*(t-50)/50;
-      return Math.round(value).toString(16).padStart(2,'0');
-    });
-    return '#'+result.join('');
+  // HSV, like a colour picker: hue comes from the client's original color,
+  // Saturation (grey → vivid) and Brightness (black → brightest) are the sliders.
+  function hsvOf(hex){
+    const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);
+    const max=Math.max(r,g,b),d=max-Math.min(r,g,b);
+    let h=0;
+    if(d) h=max===r?((g-b)/d+6)%6:max===g?(b-r)/d+2:(r-g)/d+4;
+    return { h, s:max?d/max:0, v:max };
+  }
+  function hsvHex(h,sat,val){
+    const c=val*sat,x=c*(1-Math.abs(h%2-1)),m=val-c;
+    const rgb=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];
+    return '#'+rgb.map(n=>Math.round((n+m)*255).toString(16).padStart(2,'0')).join('');
+  }
+  // Slider values (0-100), defaulting to the original color's own S and V.
+  function sliderValues(el,key){
+    const o=hsvOf(originalColor(el,key));
+    return {
+      h:o.h,
+      sat:Number.isFinite(el[key+'Sat'])?el[key+'Sat']:Math.round(o.s*100),
+      tone:Number.isFinite(el[key+'Tone'])?el[key+'Tone']:Math.round(o.v*100),
+    };
+  }
+  function mixColor(el,key){
+    const {h,sat,tone}=sliderValues(el,key);
+    return hsvHex(h,sat/100,tone/100);
+  }
+  // Each bar shows what moving it would give, at the other slider's value.
+  function barColors(el,key){
+    const {h,sat,tone}=sliderValues(el,key);
+    return { grey:hsvHex(h,0,tone/100), vivid:hsvHex(h,1,tone/100), top:hsvHex(h,sat/100,1) };
+  }
+  function refreshBars(el,key,root){
+    const c=barColors(el,key);
+    root.querySelectorAll(`[data-bar="${key}"]`).forEach(n=>{ n.style.setProperty('--sat-grey',c.grey); n.style.setProperty('--sat-vivid',c.vivid); n.style.setProperty('--tone-top',c.top); });
+  }
+  function satControl(el,key,label,id){
+    const base=originalColor(el,key);
+    const amount=sliderValues(el,key).sat;
+    const {grey,vivid}=barColors(el,key);
+    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical" style="--sat-grey:${grey};--sat-vivid:${vivid}"><span>Text saturation <output>${amount}%</output></span><input type="range" class="editor-sat-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text saturation, grey at bottom and vivid at top"/></label>`;
+    return `<label class="editor-tone-field"><span>${label} saturation <output>${amount}%</output></span><div class="editor-tone-row"><input type="range" data-bar="${key}" class="editor-sat-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} saturation" style="--sat-grey:${grey};--sat-vivid:${vivid}"/></div><small>Grey <span>Vivid</span></small></label>`;
   }
   function toneControl(el,key,label,id){
     const base=originalColor(el,key);
     if(!hexColor(base))return '';
-    const amount=Number.isFinite(el[key+'Tone'])?el[key+'Tone']:50;
-    if(key==='color') return `<label class="editor-tone-field editor-tone-vertical" style="--tone-base:${base}"><span>Text lightness <output>${amount}%</output></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text lightness, dark at bottom and light at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
-    return `<label class="editor-tone-field"><span>${label} lightness <output>${amount}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} lightness"/></div><small>Dark <span>Light</span></small></label>`;
+    const amount=sliderValues(el,key).tone;
+    const top=barColors(el,key).top;
+    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${amount}%</output></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
+    return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${amount}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
   }
 
   function showSettings(el){
@@ -649,7 +687,7 @@
     let html = '';
     const introHtmlLen = html.length;
 
-    if(el.text && unlocked('typography')){
+    if(el.text && unlocked('typography') && can(el,'resize')){
       html += `<details class="editor-setting-card" open><summary>Typography</summary>`;
       html += `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
         <label class="editor-unit-row"><span>Size</span><span class="editor-unit-input"><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><span>px</span></span></label>
@@ -662,28 +700,30 @@
           ${['left','center','right'].map(a=>`<button type="button" data-text-align="${a}" aria-pressed="${el.align===a}">${a[0].toUpperCase()+a.slice(1)}</button>`).join('')}
         </div></details>`;
     }
-    if((el.text||el.bg) && unlocked('color')) html += `<details class="editor-setting-card" open><summary>Color</summary>`;
-    if(el.bg && unlocked('color')) html += toneControl(el,'bg','Background','f-bg');
-    if(el.text && unlocked('color')){
-      html += `<div class="editor-contrast-workbench">${toneControl(el,'color','Text','f-color')}<div id="f-contrast">${contrastBadgeHtml(el)}</div></div>`;
+    const colorOk = unlocked('color') && can(el,'color');
+    if((el.text||el.bg) && colorOk) html += `<details class="editor-setting-card" open><summary>Color</summary>`;
+    // Elements with text (buttons) only change their text color for contrast.
+    if(el.bg && !el.text && colorOk) html += toneControl(el,'bg','Background','f-bg') + (hexColor(originalColor(el,'bg')) ? satControl(el,'bg','Background','f-bg-sat') : '');
+    if(el.text && colorOk){
+      html += `<div class="editor-contrast-workbench">${hexColor(originalColor(el,'color')) ? satControl(el,'color','Text','f-color-sat') : ''}${toneControl(el,'color','Text','f-color')}<div id="f-contrast">${contrastBadgeHtml(el)}</div></div>`;
     }
-    if((el.text||el.bg) && unlocked('color')) html += `</details>`;
+    if((el.text||el.bg) && colorOk) html += `</details>`;
 
     if(html.length > introHtmlLen) html += `<hr class="section-divider"/>`;
 
-    if(unlocked('position')){
+    if(unlocked('position') && can(el,'move')){
       html += `<details class="editor-setting-card" open><summary>Position</summary>
         <label class="editor-unit-row"><span>X</span><span class="editor-unit-input"><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/><span>px</span></span></label>
         <label class="editor-unit-row"><span>Y</span><span class="editor-unit-input"><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/><span>px</span></span></label>
       </details>`;
     }
-    if(unlocked('sizing')){
+    if(unlocked('sizing') && can(el,'resize')){
       html += `<details class="editor-setting-card" open><summary>Size</summary>
         <label class="editor-unit-row"><span>Width</span><span class="editor-unit-input"><input type="number" id="f-w" step="8" value="${Math.round(el.w)}" aria-label="Width"/><span>px</span></span></label>
         <label class="editor-unit-row"><span>Height</span><span class="editor-unit-input"><input type="number" id="f-h" step="8" value="${Math.round(el.h)}" aria-label="Height"/><span>px</span></span></label>
       </details>`;
     }
-    if(unlocked('shape')){
+    if(unlocked('shape') && can(el,'resize')){
       html += `<div class="field-group"><label>Border Radius (px)</label>
         <input type="number" id="f-radius" value="${el.radius||0}" min="0" max="200" step="8"/>
       </div>`;
@@ -735,15 +775,29 @@
     }));
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
       el.colorTone=Number(e.target.value);
-      el.color=toneColor(originalColor(el,'color'),el.colorTone);refreshElementDom(el);
+      el.color=mixColor(el,'color');refreshElementDom(el);refreshBars(el,'color',fields);
       e.target.closest('.editor-tone-field').querySelector('output').textContent=el.colorTone+'%';
       e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.color;
       refreshContrastBadge(el);
     });
     if(q('#f-color')) q('#f-color').addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); });
+    // Saturation sliders: same flow as lightness, and the lightness swatch follows.
+    for(const [id,key] of [['#f-color-sat','color'],['#f-bg-sat','bg']]){
+      const input=q(id); if(!input) continue;
+      input.addEventListener('input', e=>{
+        el[key+'Sat']=Number(e.target.value);
+        el[key]=mixColor(el,key);refreshElementDom(el);
+        e.target.closest('.editor-tone-field').querySelector('output').textContent=el[key+'Sat']+'%';
+        const swatch=q(key==='color'?'#f-color':'#f-bg')?.closest('.editor-tone-field').querySelector('.editor-tone-swatch');
+        refreshBars(el,key,fields);
+        if(swatch) swatch.style.background=el[key];
+        refreshContrastBadge(el);
+      });
+      input.addEventListener('change', ()=>{ pushHistory(); refreshLiveOverlays(); if(key==='bg') showSettings(el); });
+    }
     if(q('#f-bg')) q('#f-bg').addEventListener('input', e=>{
       el.bgTone=Number(e.target.value);
-      el.bg=toneColor(originalColor(el,'bg'),el.bgTone);refreshElementDom(el);
+      el.bg=mixColor(el,'bg');refreshElementDom(el);refreshBars(el,'bg',fields);
       e.target.closest('.editor-tone-field').querySelector('output').textContent=el.bgTone+'%';
       e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.bg;
       refreshContrastBadge(el);
@@ -1048,6 +1102,10 @@
     return baseFitScale(state.level.canvas.w, state.level.canvas.h) * state.displayZoom;
   }
 
+  // What the player may do to an element. Levels (or the Level Maker) can
+  // narrow it with el.allow = ['move','resize','color']; no list = all.
+  const can = (el, what) => !el.allow || el.allow.includes(what);
+
   function onPointerDown(e){
     if(e.button !== 0) return; // left click only — middle-click is reserved for panning
     const target = e.target;
@@ -1058,6 +1116,7 @@
     if(!el || el.locked) return;
     selectElement(id);
     const handle = target.dataset.handle;
+    if(!(handle ? can(el,'resize') : can(el,'move'))) return;
     const scale = getScale();
     state.dragging = {
       id, mode: handle ? 'resize' : 'move', handle,
@@ -1576,7 +1635,7 @@
       if(typing) return;
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
         const el = byId(state.selectedId);
-        if(!el || el.locked) return;
+        if(!el || el.locked || !can(el,'move')) return;
         const step = e.shiftKey ? 10 : 1;
         if(e.key==='ArrowUp') el.y -= step;
         if(e.key==='ArrowDown') el.y += step;

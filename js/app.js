@@ -1717,7 +1717,6 @@
       const popup = document.getElementById('monitor-app-popup');
       if(path.includes(popup)) return;
       if(!popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
-      if(path.includes(document.getElementById('sticky-note-settings'))){ openMonitorAppPopup('settings', { noteStyle:true }); return; }
       const iconEl = e.target.closest('.mini-desktop-icon');
       if(iconEl && iconEl.dataset.app === 'stats'){
         // Profile & Stats has too much detail for the small floating preview
@@ -1727,9 +1726,6 @@
       }
       if(iconEl){ openMonitorAppPopup(iconEl.dataset.app); return; }
       if(path.includes(document.getElementById('mini-desktop'))) miniDesktopBackgroundAction();
-    });
-    document.getElementById('sticky-note-settings').addEventListener('keydown', e=>{
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openMonitorAppPopup('settings', { noteStyle:true }); }
     });
     document.getElementById('mini-desktop').addEventListener('keydown', e=>{
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); miniDesktopBackgroundAction(); }

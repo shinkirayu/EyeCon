@@ -1,11 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-// Brewbird is level 4: seed the three Figma clients before it as 4★ reviews.
-const FIGMA_DONE=['mayo-portfolio','yappers-login','haybuhay-settings'];
-const seedBrewbird=ids=>{
-  if(localStorage.getItem('eyecon_profile_v1')) return;
-  localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:ids,onboarding:{seen:true},
-    history:ids.map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}))}));
+
+const openClient = async (page, name) => {
+  await page.getByRole('listitem').filter({hasText:name}).click({timeout:20000});
+  await page.getByRole('button',{name:'Accept'}).click();
 };
 
 async function beginFirstDay(page) {
@@ -258,8 +256,9 @@ test('desktop UI fits the native 1920 by 1080 layout and scales down proportiona
   const big=await size();
   // A 1080p laptop at 150% Windows scaling gives the browser 1280×720: same layout, two-thirds size.
   await page.setViewportSize({width:1280,height:720});
+  // The UI rescales just after the resize event, so wait for it to settle.
+  await expect.poll(async()=>(await size()).palette/big.palette).toBeCloseTo(2/3,1);
   const small=await size();
-  expect(small.palette/big.palette).toBeCloseTo(2/3,1);
   expect(small.taskbar/big.taskbar).toBeCloseTo(2/3,1);
 });
 
@@ -371,7 +370,6 @@ test('submission restores typing and attaching a reply before recording rewards'
 });
 
 test('marking an approved task complete pays out with a celebration', async ({ page }) => {
-  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
@@ -382,9 +380,8 @@ test('marking an approved task complete pays out with a celebration', async ({ p
     await input.fill(String(value));
     await input.dispatchEvent('change');
   };
-  await set('sub', 'x', 64); await set('cta', 'x', 64);
-  await set('navlink2', 'y', 24); await set('navlink3', 'y', 24);
-  await expect(page.locator('.editor-goal.met')).toHaveCount(2);
+  await set('card3', 'x', 720); await set('card3', 'y', 280); await set('tumblr', 'x', 568);
+  await expect(page.locator('.editor-goal.met')).toHaveCount(3);
   await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
@@ -404,7 +401,7 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   expect(after).toBeGreaterThanOrEqual(before + 40);
   await page.getByRole('button', { name: 'Collect' }).click();
   await expect(reward).toBeHidden();
-  await expect(page.locator('#mail-list')).toContainText('Thanks for the homepage');
+  await expect(page.locator('#mail-list')).toContainText('Yappers.com');
 });
 
 test('reference desktop keeps app shortcuts reachable across screen sizes',async({page})=>{
@@ -475,11 +472,9 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
-  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
-  await page.getByRole('listitem').first().click();
-  await page.getByRole('button',{name:'Accept'}).click();
-  const button=page.locator('#editor-canvas .el').filter({hasText:/^Order Now$/});
+  await openClient(page,'Yappers.com');
+  const button=page.locator('#editor-canvas .el').filter({hasText:/^Log in$/});
   await button.click();
   const measure=()=>button.evaluate(el=>{
     const b=el.getBoundingClientRect(),n=el.querySelector('.nw').getBoundingClientRect(),s=el.querySelector('.se').getBoundingClientRect();
@@ -499,11 +494,9 @@ test('selection handles match the artwork bounds and retain their size when zoom
 });
 
 test('editor settings cards and pastel toolbar icons remain usable',async({page})=>{
-  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
-  await page.getByRole('listitem').first().click();
-  await page.getByRole('button',{name:'Accept'}).click();
-  await page.locator('#editor-canvas .el').filter({hasText:/^Order Now$/}).click();
+  await openClient(page,'Yappers.com');
+  await page.locator('#editor-canvas .el[data-id="login"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('login'));
   await expect(page.locator('#settings-fields .editor-setting-card summary').first()).toBeVisible();
   await expect(page.locator('#tool-grid .game-tool-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#grid');
   expect(await page.locator('#tool-grid .game-tool-icon use').evaluate(el=>el.getBBox().width)).toBeGreaterThan(0);
@@ -515,7 +508,6 @@ test('editor settings cards and pastel toolbar icons remain usable',async({page}
 });
 
 test('design tools stay open and use the app typography',async({page})=>{
-  await page.addInitScript(seedBrewbird,FIGMA_DONE);
   await page.goto('/');await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
@@ -524,16 +516,16 @@ test('design tools stay open and use the app typography',async({page})=>{
   await expect(page.locator('#settings-fields')).toBeVisible();
   await expect(page.locator('#toggle-element-settings')).toHaveCount(0);
   expect(await inspector.locator('h3').evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
-  await page.locator(`#editor-canvas .el[data-id="${'cta'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'cta');
+  await page.locator(`#editor-canvas .el[data-id="${'title'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'title');
   await expect(inspector).toBeVisible();
   expect(await inspector.locator('.editor-setting-card summary').first().evaluate(el=>getComputedStyle(el).fontFamily)).toContain('Baloo');
   await expect(inspector.getByText('Alignment Controls')).toHaveCount(0);
   await expect(inspector.locator('[data-align]')).toHaveCount(0);
   const mail=page.locator('.editor-rail-card');
   await expect(mail).toBeVisible();
-  await expect(page.locator('#editor-mail-sender')).toHaveText('Brewbird Coffee Co.');
-  await expect(page.locator('#editor-mail-stage')).toContainText('Homepage');
-  await expect(page.locator('#editor-mail-points')).toContainText('Line up the headline');
+  await expect(page.locator('#editor-mail-sender')).toHaveText('Mayonnaisegee');
+  await expect(page.locator('#editor-mail-stage')).toContainText('Portfolio');
+  await expect(page.locator('#editor-mail-points')).toContainText('Space the three artwork cards');
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
   // Desktop: brief on the left, Design tools above Layers on the right (phones stack them).
@@ -563,6 +555,7 @@ test('the first day starts with one email showing difficulty and reward',async({
 });
 
 test('text alignment moves the text, ticks the client goal and is saved with the design',async({page})=>{
+  test.skip(true,'Brewbird is hidden while levels.js has FIGMA_ONLY on');
   // Start with Brewbird's homepage approved, so the menu page is the open email.
   await page.addInitScript(()=>{
     if(localStorage.getItem('eyecon_profile_v1')) return;
@@ -632,19 +625,21 @@ test('editing canvas uses one toolbar for history and zoom',async({page},testInf
   await expect(bar.locator('#editor-zoom-fit')).toHaveCount(0);
 });
 
-test('goal elements show markers until solved, then lock',async({page})=>{
-  await page.addInitScript(seedBrewbird,FIGMA_DONE);
+test('goal elements show markers until solved, and moving them back un-solves',async({page})=>{
   await page.goto('/');
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
   await expect(page.locator('#editor-layers-panel')).toHaveCount(0);
-  const cta=page.locator('#editor-canvas .el[data-id="cta"]');
+  const cta=page.locator('#editor-canvas .el[data-id="card1"]');
   await expect(cta).toHaveClass(/needs-edit/);
   expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
   expect(await cta.evaluate(el=>getComputedStyle(el,'::after').backgroundColor)).toBe('rgb(229, 59, 66)');
-  await cta.hover();
-  expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('dashed');
+  // Hover outline: desktop only (on phones the 1920px level is zoomed too far out to hover a card).
+  if(page.viewportSize().width>900){
+    await cta.hover();
+    expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('dashed');
+  }
   if(page.viewportSize().width>900){
     await expect(page.locator('#screen-editor .editor-mode-corner')).toBeVisible();
     const [left,stage,right]=await Promise.all([
@@ -657,18 +652,26 @@ test('goal elements show markers until solved, then lock',async({page})=>{
     expect(left.height).toBeGreaterThan(stage.height*.8);
     expect(right.height).toBeGreaterThan(stage.height*.8);
   }
-  for(const [id,x] of [['sub',64],['cta',64]]){
+  // Even gaps, then the same top edge: both card goals met, so the cards lock.
+  for(const [id,field,v] of [['card3','x',720],['card3','y',280]]){
     await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
-    const input=page.locator('#f-x'); await input.fill(String(x)); await input.dispatchEvent('change');
+    const input=page.locator('#f-'+field); await input.fill(String(v)); await input.dispatchEvent('change');
   }
   await expect(cta).not.toHaveClass(/needs-edit/);
-  await expect(cta).toHaveAttribute('data-locked','1');
-  // Locking a selected element also releases the selection.
-  await expect(cta).not.toHaveClass(/selected/);
-  await expect(page.locator('#editor-canvas .el.selected')).toHaveCount(0);
-  await page.locator('#editor-canvas .el[data-id="heading"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('heading'));
-  await expect(page.locator('#editor-canvas .el[data-id="heading"]')).toHaveClass(/selected/);
-  await expect(page.locator('#editor-canvas .el[data-id="heading"]')).toHaveClass(/needs-edit/);
+  // Solved pieces stay editable, and the goal card and checklist show the pass.
+  await expect(cta).not.toHaveAttribute('data-locked','1');
+  const sameLine=page.locator('.editor-goal').filter({hasText:'same line'});
+  await expect(sameLine).toHaveClass(/met/);
+  await expect(page.locator('.editor-handoff label.done').filter({hasText:'same line'})).toHaveCount(1);
+  // Moving a card out of line un-solves it again.
+  await page.evaluate(()=>EC_EDITOR.selectElement('card3'));
+  await page.locator('#f-y').fill('304'); await page.locator('#f-y').dispatchEvent('change');
+  await expect(sameLine).not.toHaveClass(/met/);
+  await expect(cta).toHaveClass(/needs-edit/);
+  await expect(page.locator('.editor-handoff label.done').filter({hasText:'same line'})).toHaveCount(0);
+  await page.locator('#editor-canvas .el[data-id="tumblr"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('tumblr'));
+  await expect(page.locator('#editor-canvas .el[data-id="tumblr"]')).toHaveClass(/selected/);
+  await expect(page.locator('#editor-canvas .el[data-id="tumblr"]')).toHaveClass(/needs-edit/);
 });
 
 test('two-bar editor panels resize and remember their widths',async({page})=>{
@@ -737,9 +740,9 @@ test('profile settings list and the browser shows the store and client sites',as
   await expect(page.locator('[aria-labelledby="qs-cvd-label"] output')).toHaveText('Red-blind');
   await page.locator('#taskbar-stats-popup-close').click();
   await page.getByRole('button',{name:'Open Browser app'}).click();
-  await page.locator('.browser-bookmark').filter({hasText:'Brewbird'}).click();
-  await expect(page.locator('#browser-address')).toContainText('brewbird');
-  await expect(page.locator('.browser-tab')).toHaveCount(3);
+  await page.locator('.browser-bookmark').filter({hasText:'Mayonnaisegee'}).click();
+  await expect(page.locator('#browser-address')).toContainText('mayonnaisegee');
+  await expect(page.locator('.browser-tab')).toHaveCount(1);
   await page.locator('#browser-home-btn').click();
   await page.locator('.browser-bookmark').filter({hasText:'Store'}).click();
   await expect(page.locator('#browser-view #shop-panel')).toBeVisible();

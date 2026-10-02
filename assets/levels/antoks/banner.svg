@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1"><stop offset="0" stop-color="#FFF8F1"/><stop offset=".6" stop-color="#FBE3C8"/><stop offset="1" stop-color="#EE9F55"/></linearGradient>
+    <pattern id="legs" width="140" height="140" patternUnits="userSpaceOnUse">
+      <g fill="#E4B98F" opacity=".55">
+        <ellipse cx="40" cy="38" rx="20" ry="14" transform="rotate(-35 40 38)"/><rect x="50" y="46" width="8" height="26" rx="4" transform="rotate(-35 54 59)"/>
+        <ellipse cx="108" cy="104" rx="20" ry="14" transform="rotate(30 108 104)"/><rect x="88" y="110" width="8" height="26" rx="4" transform="rotate(30 92 123)"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <path d="M0 410 C 300 300, 650 290, 1000 360 S 1650 470, 1920 420 L1920 1080 L0 1080 Z" fill="#EDCFB0"/>
+  <path d="M0 410 C 300 300, 650 290, 1000 360 S 1650 470, 1920 420 L1920 1080 L0 1080 Z" fill="url(#legs)"/>
+</svg>

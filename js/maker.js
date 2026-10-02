@@ -111,7 +111,8 @@
     canvas.classList.toggle('peek-targets',peeking);
     state.elements.filter(el=>!el.hidden).forEach(el=>{
       const node=document.createElement('div');
-      node.className='maker-element'+(el.id===state.selected?' selected':'')+(el.locked?' locked':'');
+      const need=state.gameLevel&&(goalIds().has(el.id)||!el.gameLocked);
+      node.className='maker-element'+(el.id===state.selected?' selected':'')+(el.locked?' locked':'')+(need?' maker-needed':'')+(need&&goalIds().has(el.id)?' maker-goal':'');
       node.dataset.id=el.id;
       node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
       gameStyle(node,el);
@@ -156,6 +157,7 @@
       const row=document.createElement('div');row.className='maker-layer-row'+(el.id===state.selected?' active':'')+(el.hidden?' is-hidden':'');row.dataset.layerId=el.id;
       const button=document.createElement('button');button.type='button';button.className='maker-layer-select';
       button.innerHTML='<span class="maker-layer-grip" aria-hidden="true">☰</span>';
+      if(state.gameLevel&&(goalIds().has(el.id)||!el.gameLocked)) button.appendChild(Object.assign(document.createElement('span'),{className:'maker-need-dot',title:'Needed to solve',textContent:'!'}));
       button.appendChild(document.createTextNode((el.type==='image'?'▧ ':el.type==='rect'?'▢ ':'T ')+(el.text||(el.id.startsWith('element-')?el.type:el.id))));
       button.textContent='';
       const preview=document.createElement('span');preview.className='maker-layer-preview';
@@ -201,6 +203,18 @@
   function field(label,key,type='text',value=''){
     return `<label>${label}<input data-maker-field="${key}" type="${type}" value="${safe(value)}"${type==='number'?' step="8"':''}/></label>`;
   }
+  // Game level only: is this element part of the puzzle, and what may the
+  // player do to it. Goal targets are always needed.
+  function gameRules(el){
+    const isGoal=goalIds().has(el.id), needed=isGoal||!el.gameLocked;
+    const allow=el.allow||['move','resize','color'];
+    const box=(key,label,checked,dis)=>`<label class="maker-rule"><input type="checkbox" data-maker-rule="${key}" ${checked?'checked':''} ${dis?'disabled':''}/> ${label}</label>`;
+    return `<fieldset class="maker-rules"><legend>In the game</legend>
+      ${box('needed','Needed to solve',needed,isGoal)}${isGoal?'<small>A client goal checks this element.</small>':''}
+      <div class="maker-rule-group"${needed?'':' hidden'}>
+        ${box('move','Movable',allow.includes('move'))}${box('resize','Scalable (size &amp; text size)',allow.includes('resize'))}${box('color','Contrast color',allow.includes('color'))}
+      </div></fieldset>`;
+  }
   function renderProperties(){
     const host=$('maker-properties-fields'), el=selected(), target=selectedTarget();
     if(target){
@@ -222,7 +236,7 @@
       ${(el.type==='rect'||el.type==='image')&&!el.text?'':field('Text color','color','color',el.color||'#3b172e')}
       ${(el.type==='rect'||el.type==='image')&&!el.text?'':field('Text size','fontSize','number',el.fontSize||16)}
       ${el.type==='rect'&&el.shape!=='circle'&&el.shape!=='triangle'?field('Corner radius','radius','number',el.radius||0):''}
-    </div><div class="maker-props-actions">
+    </div>${state.gameLevel?gameRules(el):''}<div class="maker-props-actions">
       <button data-maker-action="back">Send back</button>
       <button data-maker-action="front">Bring front</button>
       <button data-maker-action="duplicate">Duplicate</button>
@@ -333,6 +347,7 @@
   // gameLocked), and "Save to game" stores it for levels.js to pick up.
   const OVERRIDES='eyecon_level_overrides';
   const readOverrides=()=>{try{return JSON.parse(localStorage.getItem(OVERRIDES)||'{}');}catch(_){return {};}};
+  function goalIds(){const l=gameLevel();return new Set((l&&l.goals||[]).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()));}
   function gameLevel(){return (window.EC_LEVELS||[]).find(l=>l.id===state.gameLevel);}
   function updateGameButtons(){
     $('maker-game-level').value=state.gameLevel||'';
@@ -368,8 +383,30 @@
     alert('The level is back to its original design after the game reloads.');
     location.reload();
   }
+  // Grid overlay: on/off, size and opacity, remembered per browser.
+  function initGrid(){
+    const KEY='eyecon.maker-grid', canvas=$('maker-canvas'), btn=$('maker-grid'), panel=$('maker-grid-panel'), gear=$('maker-grid-settings');
+    let grid={on:true,size:8,opacity:35};
+    try{Object.assign(grid,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(_){}
+    const apply=()=>{
+      canvas.classList.toggle('show-grid',grid.on);
+      canvas.style.setProperty('--maker-grid-size',grid.size+'px');
+      canvas.style.setProperty('--maker-grid-opacity',grid.opacity/100);
+      btn.setAttribute('aria-pressed',String(grid.on));
+      $('maker-grid-size').value=grid.size;$('maker-grid-size-out').textContent=grid.size;
+      $('maker-grid-opacity').value=grid.opacity;$('maker-grid-opacity-out').textContent=grid.opacity;
+      try{localStorage.setItem(KEY,JSON.stringify(grid));}catch(_){}
+    };
+    btn.addEventListener('click',()=>{grid.on=!grid.on;apply();});
+    gear.addEventListener('click',()=>{panel.hidden=!panel.hidden;gear.setAttribute('aria-expanded',String(!panel.hidden));});
+    $('maker-grid-size').addEventListener('input',e=>{grid.size=Number(e.target.value);apply();});
+    $('maker-grid-opacity').addEventListener('input',e=>{grid.opacity=Number(e.target.value);apply();});
+    document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!e.target.closest('#maker-grid-panel,#maker-grid-settings')){panel.hidden=true;gear.setAttribute('aria-expanded','false');}});
+    apply();
+  }
   function init(){
     load();
+    initGrid();
     const picker=$('maker-game-level');
     (window.EC_LEVELS||[]).forEach(l=>picker.add(new Option(`${l.clientName} · ${l.pageLabel}`,l.id)));
     picker.addEventListener('change',()=>{if(picker.value)openGameLevel(picker.value);else{state.gameLevel=null;updateGameButtons();}});
@@ -473,6 +510,16 @@
       e.target.value='';
     });
     $('maker-properties-fields').addEventListener('change',e=>{
+      const rule=e.target.dataset&&e.target.dataset.makerRule, ruleEl=selected();
+      if(rule&&ruleEl){
+        if(rule==='needed') ruleEl.gameLocked=!e.target.checked;
+        else{
+          const allow=new Set(ruleEl.allow||['move','resize','color']);
+          e.target.checked?allow.add(rule):allow.delete(rule);
+          ruleEl.allow=['move','resize','color'].filter(k=>allow.has(k));
+        }
+        render();record();return;
+      }
       const key=e.target.dataset.makerField;if(!key)return;
       if(key==='canvasBg'){state.canvas.bg=e.target.value;render();record();return;}
       if(key.startsWith('target')){
@@ -583,6 +630,8 @@
       if(e.button===1)e.preventDefault();
       if(e.target.closest('button'))return;
       if(e.button!==1&&!spacePan&&e.target.closest('.maker-element,.maker-target,.maker-selection-box,.maker-resize-handle'))return;
+      // A plain click on the empty area around the canvas clears the selection.
+      if(e.button===0&&!spacePan&&(state.selected||state.selectedTarget))select(null);
       stagePan={x:e.clientX,y:e.clientY,panX,panY};
       $('maker-stage').setPointerCapture(e.pointerId);
     });

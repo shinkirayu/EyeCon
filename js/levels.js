@@ -30,8 +30,10 @@
     { id:'yappers',    name:'Yappers.com',         avatarEmoji:'<img src="assets/sprites/Yappers.png" alt="">', tier:'novice', needsGood:1, pay:50 },
     { id:'haybuhay',   name:'Hay Buhay 3',         avatarEmoji:'<img src="assets/sprites/haybuhay3.png" alt="">', tier:'novice',       needsGood:2,  pay:55 },
     { id:'brewbird',   name:'Brewbird Coffee Co.', avatarEmoji:'☕', tier:'novice',       needsGood:3,  pay:40 },
+    { id:'antoks',     name:'Antoks Manoks',       avatarEmoji:'<img src="assets/levels/antoks/avatar.png" alt="">', tier:'intermediate', needsGood:3, pay:60 },
     { id:'cones',      name:'Cones',               avatarEmoji:'<img src="assets/sprites/cones.png" alt="">', tier:'intermediate', needsGood:4, pay:65 },
     { id:'kolehiyo',   name:'Kolehiyo ng Lungsod ng Pitipiw Piw', avatarEmoji:'<img src="assets/sprites/pitipiwpyiw.png" alt="">', tier:'intermediate', needsGood:5, pay:70 },
+    { id:'oras',       name:'BEAR ORAS',           avatarEmoji:'<img src="assets/levels/oras/badge.png" alt="">', tier:'advanced', needsGood:6, pay:80 },
     { id:'thread',     name:'Thread & Co.',        avatarEmoji:'👕', tier:'novice',       needsGood:6,  pay:55 },
     { id:'cedar',      name:'Cedar Valley School', avatarEmoji:'🎒', tier:'intermediate', needsGood:7,  pay:70 },
     { id:'almel',      name:"Almel's Canteen",     avatarEmoji:'🍱', tier:'intermediate', needsGood:8,  pay:85 },
@@ -162,7 +164,7 @@ Yappers.com Product Design Team`,
           'Darken the text color of both placeholders.'),
         goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
           'If people cannot read the main button, they cannot log in.',
-          'Change the text color or the button color until it passes.'),
+          'Change the text color until it passes.'),
         bonus('Make "or continue with" readable too.', {contrast:'AA', ids:['or']},
           'Small helper text needs the full 4.5:1, not just the big stuff.',
           'Darken its text color.'),
@@ -265,6 +267,64 @@ Lead Developer, Hay Buhay 3`,
       }
     },
     {
+      id:'antoks-home', project:'antoks', levelNumber:4, tools:['position'], pageLabel:'Homepage', concept:'Lining things up',
+      emailPreview:'Our menu cards are all over the place. Help!',
+      emailBody:`Hi!
+
+We're Antoks Manoks, a lechon manok place. Our nephew updated the homepage last night and now it looks like the chickens rearranged it.
+
+Our four best-seller cards sit at different heights with uneven gaps, and two of the menu links at the top have dropped lower than the others.
+
+Could you line everything up again? Customers should spot our best sellers at a glance.
+
+Gising sa Sarap!
+— Antoks Manoks`,
+      attachmentName:'antoks_home.png',
+      canvas:{ w:1920, h:1080, bg:'#EECFAB' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ alignment:30 } },
+      elements:[
+        img('banner','assets/levels/antoks/banner.svg',0,0,1920,1080,{z:0}),
+        img('chicken','assets/levels/antoks/chicken.png',872,152,1048,344,{z:1}),
+        // Matches the Figma design; only the cards and two menu links are knocked out of place.
+        shape('header','card',0,0,1920,160,'#FEFBF7',{z:2,shadow:{enabled:true,blur:19,color:'rgba(0,0,0,.25)'}}),
+        txt('logo','heading','ANTOKS MANOKS',40,32,680,112,85,'#7E0000',{fontFamily:'Lilita One',fontWeight:'400',align:'center',locked:true,z:3}),
+        img('mascot','assets/levels/antoks/mascot.png',728,40,80,80,{bgSize:'contain',z:3}),
+        txt('nav1','nav','Home',1000,56,168,40,32,'#7E0000',{fontFamily:'Lato',fontWeight:'400',align:'center',z:3}),
+        txt('nav2','nav','Delivery',1184,56,168,40,32,'#7E0000',{fontFamily:'Lato',fontWeight:'400',align:'center',z:3}),
+        txt('nav3','nav','Contact',1360,80,168,40,32,'#7E0000',{fontFamily:'Lato',fontWeight:'400',align:'center',z:3}),
+        txt('nav4','nav','About',1528,80,168,40,32,'#7E0000',{fontFamily:'Lato',fontWeight:'400',align:'center',z:3}),
+        btn('order','Order Now',176,216,408,88,65,'#FFFFFF','#7E0000',{fontFamily:'Lilita One',fontWeight:'400',radius:200,z:3}),
+        txt('tagline','heading','Gising sa Sarap!',784,200,528,104,80,'#7E0000',{fontFamily:'Mr Dafoe',fontWeight:'400',align:'center',locked:true,z:3}),
+        btn('best','Best Sellers',216,432,320,64,44,'#7E0000','#FDFDFD',{fontFamily:'Lilita One',fontWeight:'400',radius:200,z:3}),
+        img('card1','assets/levels/antoks/card1.png',232,512,304,472,{locked:false,z:4,radius:40,shadow:{enabled:true,blur:23,color:'rgba(0,0,0,.25)'}}),
+        img('card2','assets/levels/antoks/card2.png',624,560,304,472,{locked:false,z:4,radius:40,shadow:{enabled:true,blur:23,color:'rgba(0,0,0,.25)'}}),
+        img('card3','assets/levels/antoks/card3.png',1048,600,304,472,{locked:false,z:4,radius:40,shadow:{enabled:true,blur:23,color:'rgba(0,0,0,.25)'}}),
+        img('card4','assets/levels/antoks/card4.png',1400,536,304,472,{locked:false,z:4,radius:40,shadow:{enabled:true,blur:23,color:'rgba(0,0,0,.25)'}}),
+      ],
+      goals:[
+        goal('Put the four best-seller cards on the same line.', {sameY:['card1','card2','card3','card4']},
+          'Cards that share a top edge read as one row, so customers compare them at a glance.',
+          'Give all four cards the same Y number.'),
+        goal('Space the four cards evenly.', {evenGapsX:['card1','card2','card3','card4']},
+          'Equal gaps make the menu look planned instead of scattered.',
+          'Make every gap between neighbouring cards the same.'),
+        goal('Put the four menu links on one line.', {sameY:['nav1','nav2','nav3','nav4']},
+          'Links on one line read as a single menu.',
+          'Give Home, Delivery, Contact and About the same Y number.'),
+        bonus('Space the menu links evenly.', {evenGapsX:['nav1','nav2','nav3','nav4']},
+          'Even gaps keep the menu tidy and easy to scan.',
+          'Group the links together and match the gaps between them.'),
+        bonus('Line up "Best Sellers" with the first card.', {sameX:['best','card1']},
+          'A shared left edge ties the label to the row it introduces.',
+          "Match the Best Sellers X to the first card's X."),
+      ],
+      replyTemplates:{
+        great:'Ang ganda! Everything lines up perfectly now. Gising sa Sarap!',
+        ok:'Much neater, salamat! A couple of things still look a little off.',
+        bad:'The cards still look like they are running around. Can you try again?'
+      }
+    },
+    {
       id:'cones-landing', project:'cones', levelNumber:5, tools:['color'], pageLabel:'Landing page', concept:'Readable colors',
       emailPreview:'Our colour-blindness site is hard to read. Ironic, right?',
       emailBody:`Hi!
@@ -306,7 +366,7 @@ Thanks for helping everyone see clearly,
           'Pick a deeper orange or a dark color in Color.'),
         goal('Make "Try the simulator" readable on its orange button.', {contrast:'AA', ids:['sim']},
           'The main call to action is useless if nobody can read it.',
-          'Change the button text or its background color.'),
+          'Change the button text color until it passes.'),
         goal('Make the "Color vision awareness" tagline readable.', {contrast:'AA', ids:['tagline']},
           'Pale lavender on cream is hard to see, especially for low vision.',
           'Darken the tagline color.'),
@@ -403,6 +463,76 @@ Maraming salamat,
         great:'Students can finally see their grades at a glance. Maraming salamat!',
         ok:'Clearer, thanks. A couple of cards still feel off.',
         bad:'The numbers still get lost. Could you try again?'
+      }
+    },
+    {
+      id:'oras-signin', project:'oras', levelNumber:7, tools:['typography','color'], pageLabel:'Sign-in page', concept:'Text sizes',
+      emailPreview:'Staff can barely read our sign-in page.',
+      emailBody:`Good day,
+
+This is the BEAR ORAS internal systems team. Our new staff sign-in page went live this week, and the help desk has been flooded with calls.
+
+Everything on the page is tiny: the role choices, the field labels, the links, even the footer. Older staff are zooming in just to find the Email field. The Sign in button is also so pale that people think it's disabled.
+
+Please make the text readable and the button clearly clickable, without changing the layout.
+
+Thank you,
+BEAR ORAS Systems Team`,
+      emailFrom:'BEAR ORAS Systems Team', emailSubject:'Sign-in page text is too small to read',
+      attachmentName:'oras_signin.png',
+      canvas:{ w:1920, h:1080, bg:'#F4F6FB' },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ hierarchy:30 } },
+      elements:[
+        shape('bg','background',0,0,1920,1080,'#F4F6FB',{z:0}),
+        shape('header','card',0,0,1920,104,'#0A31AC',{z:1}),
+        img('logo','assets/levels/oras/logo.png',48,16,200,80,{bgSize:'contain',z:2}),
+        txt('headSign','label','Sign in',1632,40,136,32,13,'#FFFFFF',{fontFamily:'Inter',fontWeight:'500',z:2}),
+        img('userIcon','assets/levels/oras/user.svg',1776,24,56,56,{z:2}),
+        shape('card','card',656,136,592,824,'#FAFBFE',{radius:8,border:{width:2,style:'solid',color:'#D3D8E2'},z:1}),
+        txt('kicker','label','For BEAR Employees Use only',712,184,480,32,13,'#1D2030',{fontFamily:'Inter',fontWeight:'600',z:2}),
+        txt('title','heading','Sign in',712,224,480,48,13,'#1D2030',{fontFamily:'Inter',fontWeight:'700',z:2}),
+        txt('roleLabel','label','Sign in as (required)',712,296,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
+        ...[['Head',360],['Registration Officer',416],['National Office',472]].flatMap(([t,y],i)=>[
+          img('radio'+i,'assets/levels/oras/radio.svg',712,y,32,32,{z:2}),
+          txt('role'+i,'label',t,760,y,320,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'400',z:2}),
+          img('help'+i,'assets/levels/oras/help.svg',1136,y,32,32,{z:2}),
+        ]),
+        txt('emailLabel','label','Email (required)',712,544,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
+        shape('email','card',712,576,488,64,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},z:2}),
+        txt('passLabel','label','Password (required)',712,664,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
+        shape('password','card',712,696,488,64,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},z:2}),
+        img('eye','assets/levels/oras/eye-off.svg',1144,712,32,32,{z:3}),
+        txt('forgot','small','Forgot Password?',712,824,224,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',z:2}),
+        txt('verify','small','Verify your email address',944,824,256,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
+        btn('signin','Sign in',712,872,488,72,13,'#FFFFFF','#C5CCF6',{fontFamily:'Inter',fontWeight:'600',radius:8,z:2}),
+        shape('footer','card',0,992,1920,88,'#E4EAF4',{z:1}),
+        txt('version','small','Internal module v.0.6.8.0305',48,1016,520,40,12,'#3A3F55',{fontFamily:'Inter',fontWeight:'400',z:2}),
+        txt('copyright','small','© 2026 BEAR ORAS. All rights reserved.',1248,1016,624,40,12,'#3A3F55',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
+      ],
+      goals:[
+        goal('Make "Sign in" the biggest text on the card (at least 32px).', {minFont:32, ids:['title']},
+          'A clear heading tells staff where they are before they read anything else.',
+          'Raise the Sign in title to 32px or more.'),
+        goal('Make the role choices and field labels at least 18px.', {minFont:18, ids:['roleLabel','role0','role1','role2','emailLabel','passLabel']},
+          'Labels people have to read to fill in the form must be comfortable for older eyes.',
+          'Bump each label up to 18px.'),
+        goal('Make the Sign in button readable and clearly clickable.', {contrast:'AA', ids:['signin']},
+          'A pale button looks disabled. White text needs a strong background to pass 4.5:1.',
+          'Darken the text color, or pick a dark text that passes on the pale button.'),
+        goal('Make the "Sign in" title bigger than the line above it.', {bigger:['title','kicker']},
+          'The heading should lead, with the small "For BEAR Employees" note supporting it.',
+          'Give the title a larger size than the kicker line.'),
+        bonus('Make both links at least 16px.', {minFont:16, ids:['forgot','verify']},
+          'Small links are easy to miss and hard to tap.',
+          'Raise Forgot Password and Verify to 16px.'),
+        bonus('Make the footer text at least 16px.', {minFont:16, ids:['version','copyright']},
+          'Even fine print should stay readable.',
+          'Raise both footer lines to 16px.'),
+      ],
+      replyTemplates:{
+        great:'The help desk phones finally went quiet. Everyone can read the page now, thank you!',
+        ok:'Much easier to read, thanks. A few bits are still small.',
+        bad:'Staff still cannot read parts of the page. Could you take another look?'
       }
     },
     {
@@ -1245,6 +1375,20 @@ Nimbus Goods`,
       }
     },
   ];
+
+  // For now the game only plays the Figma client levels (1, 2, 3, 5, 6),
+  // all open from the start. Brewbird and the older clients stay defined
+  // here but hidden; set FIGMA_ONLY to false to bring them back.
+  const FIGMA_ONLY = true;
+  if(FIGMA_ONLY){
+    const figma = ['mayo','yappers','haybuhay','antoks','cones','kolehiyo','oras'];
+    for(let i = LEVELS.length - 1; i >= 0; i--) if(!figma.includes(LEVELS[i].project)) LEVELS.splice(i, 1);
+    for(let i = PROJECTS.length - 1; i >= 0; i--) if(!figma.includes(PROJECTS[i].id)) PROJECTS.splice(i, 1);
+    PROJECTS.forEach(p => p.needsGood = 0);
+  }
+
+  // Level 1 teaches spacing by moving things: no resizing or recoloring.
+  LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
 
   // Edits saved from the Level Maker ("Save to game") replace a level's
   // canvas and artwork on this browser. An edit that removed an element a

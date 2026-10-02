@@ -50,19 +50,19 @@ const approve=(s,p,level,stars,date)=>{
   p.history.unshift({levelId:level.id,date,stars,missionComplete:true});
 };
 
-test('you start with one email and each good review brings the next client',async()=>{
+const FIGMA=['mayo-portfolio','yappers-login','haybuhay-settings','antoks-home','cones-landing','kolehiyo-dashboard','oras-signin'];
+test('every Figma client writes in from the start, in level order',async()=>{
   const s=await setup(),p=s.defaultProfile(),day='2026-09-15T12:00:00Z',now=new Date(day);
   const first=s.commissionInbox(p,now);
-  assert.equal(first.map(l=>l.id).join(),'mayo-portfolio');
+  assert.equal(first.map(l=>l.id).join(),FIGMA.join());
   approve(s,p,first[0],4,day);
-  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'yappers-login');
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),FIGMA.slice(1).join());
 });
 
 test('a good review brings a different client, and the day holds three tasks',async()=>{
   const s=await setup(),p=s.defaultProfile(),now=new Date('2026-09-15T12:00:00Z');
   approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-14T12:00:00Z');
-  // A 4★ review: Yappers.com writes in.
-  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),'yappers-login');
+  assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),FIGMA.slice(1).join());
   for(let i=0;i<3;i++){
     const task=s.commissionInbox(p,now)[0];
     assert.equal(s.beginWorkSubmission(p),true);
@@ -84,14 +84,11 @@ test('a redo can raise a rating but a page only counts once',async()=>{
   assert.equal(s.bestStars(p)[level.id],5);
 });
 
-test('when the next client is out of reach, low-rated pages come back to polish',async()=>{
+test('with every client open there is nothing locked to work towards',async()=>{
   const w=await setupWindow(),s=w.EC_STORE,p=s.defaultProfile(),day='2026-09-15T12:00:00Z';
-  w.EC_LEVELS.filter(l=>l.project==='mayo').forEach(l=>approve(s,p,l,3,'2026-09-14T12:00:00Z'));
-  const inbox=s.commissionInbox(p,new Date(day));
-  assert.equal(inbox.length,1);
-  assert.ok(inbox.every(l=>s.isPolishTask(p,l)));
-  assert.equal(s.progression(p).nextProject.id,'yappers');
-  assert.equal(s.progression(p).goodNeeded,1);
+  w.EC_LEVELS.forEach(l=>approve(s,p,l,3,'2026-09-14T12:00:00Z'));
+  assert.equal(s.commissionInbox(p,new Date(day)).length,0);
+  assert.equal(s.progression(p).nextProject,null);
 });
 
 test('approval pays exactly the advertised prize plus bonus stars and adds feedback',async()=>{

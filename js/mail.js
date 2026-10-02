@@ -88,6 +88,7 @@
       const pay=S.commissionPay(profile,level);
       const prize=waiting || replied ? '' : `<span class="mail-prize" title="Paid on approval, plus ${pay.perBonusStar} for each bonus star">${window.EC_MONEY(pay.base)} <small>+${pay.perBonusStar}/★</small></span>`;
       row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div>${prize}${tag}${replied || !seen.includes(level.id) ?'<span class="unread-dot" title="New"></span>':''}`;
+      if(!waiting) row.appendChild(debugButton('Skip ⏭', 'Debug: approve this page at 5★ without editing', p => skipLevel(p, level)));
       if(clickable){
         const open = () => replied ? handlers.onOpenReply(level) : openMailDetail(level);
         row.addEventListener('click', open);
@@ -95,6 +96,29 @@
       }
       list.appendChild(row);
     });
+  }
+
+  // ponytail: debug-only Skip / Repeat buttons on mail rows; remove before release.
+  // Skip approves the page at 5★ without editing; Repeat forgets it so the
+  // email comes back. Both save and reload so the app re-reads the profile.
+  function debugButton(label, title, run){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mail-debug-btn'; b.textContent = label; b.title = title;
+    b.addEventListener('click', e => { e.stopPropagation(); const p = window.EC_STORE.load(); run(p); window.EC_STORE.save(p); location.reload(); });
+    return b;
+  }
+  function skipLevel(p, level){
+    if(!p.completed.includes(level.id)) p.completed.push(level.id);
+    p.history.unshift({ levelId:level.id, name:level.clientName, page:level.pageLabel, date:new Date().toISOString(), stars:5, missionComplete:true,
+      quote:'(Skipped for debugging)', reply:`Hi, ${level.clientName} here.\n\n★★★★★  (5/5)\n\n(Skipped for debugging.)\n\n— ${level.clientName}` });
+    if(p.readyReply && p.readyReply.levelId === level.id) delete p.readyReply;
+  }
+  function repeatLevel(p, level){
+    p.completed = p.completed.filter(id => id !== level.id);
+    p.history = p.history.filter(h => h.levelId !== level.id);
+    if(p.designs) delete p.designs[level.id];
+    if(p.revisionDrafts) delete p.revisionDrafts[level.id];
+    if(p.readyReply && p.readyReply.levelId === level.id) delete p.readyReply;
   }
 
   function renderCompleted(profile){
@@ -116,6 +140,7 @@
         <div class="mail-item-preview">${'★'.repeat(stars)+'☆'.repeat(5-stars)} · ${level.pageLabel}${hist && hist.quote ? ` · “${hist.quote}”` : ''}</div>
         <span class="tag tier-${level.tier}">${TIER_LABEL[level.tier]}</span>
       `;
+      row.appendChild(debugButton('Repeat ↺', 'Debug: forget this page so its email comes back', p => repeatLevel(p, level)));
       row.addEventListener('click', ()=>openMailDetail(level, true));
       list.appendChild(row);
     });

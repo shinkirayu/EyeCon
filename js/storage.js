@@ -214,7 +214,7 @@
   // are one or two emails at a time. A day holds three submissions. If no
   // new work is left while a client is still out of reach, earlier pages
   // rated below 4★ come back as polish requests to raise those reviews.
-  const OPEN_EMAILS = 2;
+  const OPEN_EMAILS = 7;
   function dayKey(date){ return date.toISOString().slice(0,10); }
   function tasksDoneToday(profile, date = new Date()){
     return workday(profile).submissions;
@@ -235,7 +235,8 @@
       const best = bestStars(profile);
       tasks = levels.filter(l => done(l.id) && (best[l.id] || 0) < GOOD_STARS);
     }
-    return tasks.slice(0, remaining);
+    // Every open email shows; the day still allows only three submissions.
+    return remaining ? tasks : [];
   }
   function isPolishTask(profile, level){ return profile.completed.includes(level.id); }
 
