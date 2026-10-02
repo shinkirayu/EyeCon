@@ -1525,6 +1525,13 @@ Nimbus Goods`,
   // Level 1 teaches spacing by moving things: no resizing or recoloring.
   LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
 
+  // No bonus tasks for now: every task on a page is required, and finishing
+  // them all earns 5 stars.
+  LEVELS.forEach(level=>{
+    level.goals = (level.goals || []).filter(g=>!g.bonus);
+    if(level.originalGoals) level.originalGoals = level.originalGoals.filter(g=>!g.bonus);
+  });
+
   // Keep every canvas element's position and size on the 8-point grid.
   const to8=n=>Math.round(n/8)*8;
   LEVELS.forEach(level=>{

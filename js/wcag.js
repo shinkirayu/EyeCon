@@ -49,7 +49,8 @@
   function passesWCAG(hex1, hex2, fontSizePx, bold, level){
     const ratio = contrastRatio(hex1, hex2);
     const required = requiredRatio(fontSizePx, bold, level);
-    return { ratio, required, pass: ratio >= required };
+    // Judged on the ratio shown to the player (one decimal), so "4.5:1" always passes.
+    return { ratio, required, pass: Math.round(ratio * 10) / 10 >= required };
   }
 
   function relativeLuminanceHex(hex){ return relLuminance(hexToRgb(hex)); }

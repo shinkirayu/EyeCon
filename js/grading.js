@@ -157,7 +157,9 @@
     const req = results.filter(r => !r.goal.bonus), bonus = results.filter(r => r.goal.bonus);
     const reqMet = req.filter(r => r.met).length, bonusMet = bonus.filter(r => r.met).length;
     const allReq = reqMet === req.length;
-    const stars = allReq ? Math.min(5, 3 + bonusMet) : (reqMet ? 2 : 1);
+    // All required tasks = 3★; bonus tasks fill the last two stars, so finishing
+    // every task is always 5★ however many bonus tasks a page has.
+    const stars = allReq ? (bonus.length ? 3 + Math.round(2 * bonusMet / bonus.length) : 5) : (reqMet ? 2 : 1);
     const score = Math.round((req.length ? reqMet/req.length : 1) * 80 + (allReq ? bonusMet * 10 : 0));
     return { score:Math.min(100, score), stars, allReq, reqMet, bonusMet };
   }

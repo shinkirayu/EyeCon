@@ -17,7 +17,6 @@ test('every page is a real, solvable task with the tools unlocked by then',async
   const w=await setup(), G=w.EC_GRADING;
   for(const level of w.EC_LEVELS){
     assert.ok(level.goals.some(g=>!g.bonus), `${level.id} needs a required goal`);
-    assert.ok(level.goals.some(g=>g.bonus), `${level.id} needs a bonus goal`);
     for(const goal of level.goals){
       const kind=G.goalKind(goal.check);
       assert.ok(kind, `${level.id}: unknown goal check`);

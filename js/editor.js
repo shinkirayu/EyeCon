@@ -142,7 +142,7 @@
         const ratios = els.map(e=>window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)));
         // Several elements: show each ratio, and flag when the colors don't match.
         const differ = new Set(els.map(e=>e.color.toLowerCase())).size > 1;
-        const shown = els.length > 1 ? [...new Set(ratios.map(r=>r.toFixed(2)))].join(' · ') : ratios[0].toFixed(2);
+        const shown = els.length > 1 ? [...new Set(ratios.map(r=>r.toFixed(1)))].join(' · ') : ratios[0].toFixed(1);
         return `${shown}:1 / 4.5${differ ? ' · colors differ' : ''}`;
       }
       case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
