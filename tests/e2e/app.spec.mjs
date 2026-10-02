@@ -384,9 +384,10 @@ test('marking an approved task complete pays out with a celebration', async ({ p
     await input.fill(String(value));
     await input.dispatchEvent('change');
   };
-  await set('card3', 'x', 720); await set('card3', 'y', 280); await set('illus', 'x', 496); await set('tumblr', 'x', 560);
-  await set('about', 'y', 40); // the task made for "About", which the level marks as needed
-  await expect(page.locator('.editor-goal.met')).toHaveCount(4);
+  // Illustration is locked at 504: Instagram and Tumblr get 24px gaps on one line.
+  await set('insta', 'x', 432); await set('tumblr', 'x', 576); await set('tumblr', 'y', 784);
+  await set('about', 'y', 40);
+  await expect(page.locator('.editor-goal.met')).toHaveCount(3);
   await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
@@ -637,8 +638,8 @@ test('goal elements show markers until solved, and moving them back un-solves',a
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
   await expect(page.locator('#editor-layers-panel')).toHaveCount(0);
-  // card3 is the card the player moves; cards 1 and 2 are locked reference points.
-  const cta=page.locator('#editor-canvas .el[data-id="card3"]');
+  // "About" is the menu link the player moves; Home and Contact are locked.
+  const cta=page.locator('#editor-canvas .el[data-id="about"]');
   await expect(cta).toHaveClass(/needs-edit/);
   expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
   expect(await cta.evaluate(el=>getComputedStyle(el,'::after').backgroundColor)).toBe('rgb(229, 59, 66)');
@@ -659,21 +660,21 @@ test('goal elements show markers until solved, and moving them back un-solves',a
     expect(left.height).toBeGreaterThan(stage.height*.8);
     expect(right.height).toBeGreaterThan(stage.height*.8);
   }
-  // Even gaps, then the same top edge: both card goals met, so the cards lock.
-  for(const [id,field,v] of [['card3','x',720],['card3','y',280]]){
+  // Line "About" up with Home and Contact.
+  for(const [id,field,v] of [['about','y',40]]){
     await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
     const input=page.locator('#f-'+field); await input.fill(String(v)); await input.dispatchEvent('change');
   }
   await expect(cta).not.toHaveClass(/needs-edit/);
   // Solved pieces stay editable, and the goal card and checklist show the pass.
   await expect(cta).not.toHaveAttribute('data-locked','1');
-  const sameLine=page.locator('.editor-goal').filter({hasText:'same line'});
+  const sameLine=page.locator('.editor-goal').filter({hasText:'its row'});
   await expect(sameLine).toHaveClass(/met/);
   // The handoff line for Alignment only ticks once every alignment task passes (icons still to do).
   await expect(page.locator('.editor-handoff label.done').filter({hasText:'aligned'})).toHaveCount(0);
-  // Moving a card out of line un-solves it again.
-  await page.evaluate(()=>EC_EDITOR.selectElement('card3'));
-  await page.locator('#f-y').fill('304'); await page.locator('#f-y').dispatchEvent('change');
+  // Moving it out of line un-solves it again.
+  await page.evaluate(()=>EC_EDITOR.selectElement('about'));
+  await page.locator('#f-y').fill('56'); await page.locator('#f-y').dispatchEvent('change');
   await expect(sameLine).not.toHaveClass(/met/);
   await expect(cta).toHaveClass(/needs-edit/);
   await page.locator('#editor-canvas .el[data-id="tumblr"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('tumblr'));

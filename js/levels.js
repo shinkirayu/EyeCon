@@ -101,9 +101,9 @@ Thanks.
         goal('Put the three cards on the same line.', {sameY:['card1','card2','card3']},
           'Cards that share a top edge look like a row, so the eye moves across them smoothly.',
           'Give all three cards the same Y number.'),
-        goal('Space the three social icons evenly, 16–24px apart.', {evenGapsX:['insta','illus','tumblr'], minGap:16, maxGap:24},
+        goal('Space the three social icons evenly, 24–32px apart.', {evenGapsX:['insta','illus','tumblr'], minGap:24, maxGap:32},
           'Icons that sit close together with equal gaps read as one group of links.',
-          'Keep the icons close: the same 16–24px gap on both sides of the middle icon.'),
+          'Keep the icons close: the same 24–32px gap on both sides of the middle icon.'),
         bonus('Center "Explore for more!" over the caption.', {sameCenterX:['title','caption']},
           'A shared center line ties the heading and caption to the cards between them.',
           "Move the title until its center matches the caption's center."),
@@ -1464,10 +1464,41 @@ Nimbus Goods`,
       tip:'Set every element in the group to the exact same color.', bonus:false }));
     // An element marked "needed to solve" that no goal checks gets its own
     // task: line it up with the similar items in its row (or column).
+    // Lining-up and spacing tasks the layout already satisfies are left out,
+    // so the player never starts with a task already done.
+    const byId = new Map(edit.elements.map(el=>[el.id, el]));
+    const metNow = check => {
+      const kind = Object.keys(check).find(k=>Array.isArray(check[k]) && k!=='ids'), els = (check[kind]||[]).map(id=>byId.get(id)).filter(Boolean);
+      const same = f => els.every(e=>Math.abs(f(e)-f(els[0]))<=1);
+      if(kind==='sameX') return same(e=>e.x);
+      if(kind==='sameY') return same(e=>e.y);
+      if(kind==='sameRight') return same(e=>e.x+e.w);
+      if(kind==='sameCenterX') return same(e=>e.x+e.w/2);
+      if(kind==='evenGapsX' || kind==='evenGapsY'){
+        const [p, z] = kind==='evenGapsX' ? ['x','w'] : ['y','h'];
+        const sorted = els.slice().sort((a,b)=>a[p]-b[p]), gaps = sorted.slice(1).map((e,i)=>e[p]-(sorted[i][p]+sorted[i][z]));
+        return gaps.every(g=>g >= (check.minGap ?? 8) && g <= (check.maxGap ?? Infinity) && Math.abs(g-gaps[0])<=1);
+      }
+      return false;
+    };
+    for(let i = goals.length - 1; i >= 0; i--) if(metNow(goals[i].check)) goals.splice(i, 1);
+    // A row being spaced evenly must also sit on one line (and a column on one edge).
+    goals.slice().forEach(g=>{
+      for(const [gapKind, lineKind, axis, word] of [['evenGapsX','sameY','y','row'],['evenGapsY','sameX','x','column']]){
+        const ids = g.check[gapKind]; if(!ids) continue;
+        const els = ids.map(id=>byId.get(id)).filter(Boolean);
+        if(new Set(els.map(e=>e[axis])).size > 1 && !goals.some(o=>o.check[lineKind] && ids.every(id=>o.check[lineKind].includes(id))))
+          // Name the items the way the spacing task does ("Space the three social icons evenly…").
+          goals.push({ label:`Put ${(g.label.match(/^Space (.+?) evenly/) || [, `the items in this ${word}`])[1]} on one ${word==='row'?'line':'edge'}.`,
+            check:{[lineKind]:ids}, why:'Evenly spaced items also need to share a line to read as one group.',
+            tip:`Give every item in the ${word} the same ${axis.toUpperCase()}.`, bonus:false });
+      }
+    });
     const inGoals = new Set(goals.flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()));
+    const canMove = el => (!el.allow || el.allow.includes('move')) && (!level.tools || level.tools.includes('position'));
     const overlap = (a1,a2,b1,b2) => Math.min(a2,b2) - Math.max(a1,b1) > 0;
     const similar = (a,b,k) => b[k] <= a[k]*2 && b[k] >= a[k]/2;
-    edit.elements.filter(el=>!el.locked && !inGoals.has(el.id)).forEach(el=>{
+    edit.elements.filter(el=>!el.locked && !inGoals.has(el.id) && canMove(el)).forEach(el=>{
       const others = edit.elements.filter(o=>o.id!==el.id && o.role===el.role);
       const row = others.filter(o=>overlap(el.y-16,el.y+el.h+16,o.y,o.y+o.h) && !overlap(el.x,el.x+el.w,o.x,o.x+o.w) && similar(el,o,'h'));
       const col = others.filter(o=>overlap(el.x,el.x+el.w,o.x,o.x+o.w) && !overlap(el.y,el.y+el.h,o.y,o.y+o.h) && similar(el,o,'w'));
