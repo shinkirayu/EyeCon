@@ -102,7 +102,7 @@
   const TIER_NAMES = { novice:'Novice', intermediate:'Intermediate', advanced:'Advanced', expert:'Expert' };
   const GOAL_TOPIC = { align:'Text alignment', sameX:'Alignment', sameY:'Alignment', sameRight:'Alignment', sameCenterX:'Alignment',
     evenGapsY:'Spacing', evenGapsX:'Spacing', safeMargin:'Margins', minW:'Size', minH:'Tap size', minFont:'Typography',
-    maxFont:'Typography', bigger:'Hierarchy', contrast:'Contrast' };
+    maxFont:'Typography', bigger:'Hierarchy', contrast:'Contrast', sameColor:'Consistency' };
   // A short live reading for a goal ("x 64 · 96 · 40", "2.1:1 / 4.5") so
   // players see exactly how far off they are.
   function goalMeasure(goal){
@@ -127,8 +127,10 @@
       case 'safeMargin': return `edge ${Math.min(...els.map(e=>Math.min(e.x, e.y, state.level.canvas.w-e.x-e.w, state.level.canvas.h-e.y-e.h)))}px / ${check.safeMargin}`;
       case 'contrast': {
         const ratios = els.map(e=>window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)));
-        return `${Math.min(...ratios).toFixed(2)}:1 / 4.5`;
+        const differ = new Set(els.map(e=>e.color.toLowerCase())).size > 1;
+        return `${Math.min(...ratios).toFixed(2)}:1 / 4.5${differ ? ' · colors differ' : ''}`;
       }
+      case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
     }
     return '';
   }
@@ -399,7 +401,7 @@
     }));
     Object.entries(status).forEach(([id, solved]) => {
       const el = byId(id), div = state.canvasEl.querySelector(`.el[data-id="${id}"]`);
-      if(!el || !div) return;
+      if(!el || !div || el.locked) return; // locked pieces are fixed reference points
       // Solved pieces stay editable: moving one out of place un-solves it.
       if(solved && div.classList.contains('needs-edit')){
         div.classList.add('goal-solved');
@@ -629,12 +631,14 @@
     const rgb=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];
     return '#'+rgb.map(n=>Math.round((n+m)*255).toString(16).padStart(2,'0')).join('');
   }
+  const isGrey=(el,key)=>hsvOf(originalColor(el,key)).s<0.05;
   // Slider values (0-100), defaulting to the original color's own S and V.
   function sliderValues(el,key){
     const o=hsvOf(originalColor(el,key));
     return {
       h:o.h,
-      sat:Number.isFinite(el[key+'Sat'])?el[key+'Sat']:Math.round(o.s*100),
+      // Greys have no hue, so they stay grey (no saturation slider is shown).
+      sat:isGrey(el,key)?0:Number.isFinite(el[key+'Sat'])?el[key+'Sat']:Math.round(o.s*100),
       tone:Number.isFinite(el[key+'Tone'])?el[key+'Tone']:Math.round(o.v*100),
     };
   }
@@ -652,6 +656,7 @@
     root.querySelectorAll(`[data-bar="${key}"]`).forEach(n=>{ n.style.setProperty('--sat-grey',c.grey); n.style.setProperty('--sat-vivid',c.vivid); n.style.setProperty('--tone-top',c.top); });
   }
   function satControl(el,key,label,id){
+    if(isGrey(el,key)) return '';
     const base=originalColor(el,key);
     const amount=sliderValues(el,key).sat;
     const {grey,vivid}=barColors(el,key);

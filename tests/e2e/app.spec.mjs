@@ -156,6 +156,10 @@ test('creator canvas selects layers and moves and scales elements', async ({ pag
   await page.getByRole('button', { name: 'Open Level Maker app' }).click();
   await page.locator('[data-maker-add="shape"]').click();
   await page.locator('[data-maker-add="text"]').click();
+  // Pick the shape from Layers, then move the text box off it so the drag
+  // below lands on the shape (clicks go to the topmost element).
+  await page.locator('#maker-layers [data-layer-id]').first().click();
+  await page.locator('[data-maker-field="x"]').fill('400'); await page.locator('[data-maker-field="x"]').dispatchEvent('change');
   await page.locator('#maker-layers [data-layer-id]').last().click();
   const element=page.locator('#maker-canvas .maker-element.selected');
   await expect(element).toHaveAttribute('data-id',await page.locator('#maker-layers [data-layer-id]').last().getAttribute('data-layer-id'));
@@ -215,7 +219,7 @@ test('level maker edits text, locks layers, and preserves size at canvas edges',
   await page.locator('[data-maker-add="text"]').click();
   const text=page.locator('#maker-canvas .maker-element.selected');
   await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
-  await page.locator('.maker-selection-box').dblclick();
+  await text.dblclick();
   await expect(text).toHaveAttribute('contenteditable','true');
   await text.fill('Canvas copy');
   await page.locator('#maker-title').click();

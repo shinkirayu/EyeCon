@@ -157,11 +157,11 @@ Yappers.com Product Design Team`,
       ],
       goals:[
         goal('Make "Welcome Bak!" readable on the white card.', {contrast:'AA', ids:['title']},
-          'Pale yellow on white almost disappears. Big text still needs at least 3:1 contrast.',
+          'Pale yellow on white almost disappears. Even big text needs 4.5:1 contrast.',
           'Pick a darker text color in Color.'),
-        goal('Make both placeholder texts pass 4.5:1.', {contrast:'AA', ids:['user','pass']},
-          'Light grey placeholders are hard to read, especially for people with low vision.',
-          'Darken the text color of both placeholders.'),
+        goal('Make both placeholder texts pass 4.5:1, in the same color.', {contrast:'AA', ids:['user','pass']},
+          'Light grey placeholders are hard to read, especially for people with low vision. Matching fields should look the same.',
+          'Darken both placeholders to the exact same color.'),
         goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
           'If people cannot read the main button, they cannot log in.',
           'Change the text color until it passes.'),
@@ -200,26 +200,29 @@ Lead Developer, Hay Buhay 3`,
         shape('shade','decorative',0,0,1920,1080,'rgba(0,0,0,.5)'),
         shape('outer','card',552,56,808,968,'linear-gradient(180deg,#7E5590,#6C248A)',{radius:48,z:2}),
         shape('inner','card',576,88,768,912,'radial-gradient(circle,#D87EFF,#AB4FD2)',{radius:40,z:3}),
-        ...[[640,'#D397EC',96,'settings'],[752,null,128,'graphics'],[864,null,128,'audio'],[976,null,128,'music'],[1080,null,128,'video']].flatMap(([x,bg,h,name],i)=>[
+        // Tabs in Figma order: Graphics (selected, lighter) then Audio, Settings, Video, Music.
+        ...[[640,'#D397EC',96,'graphics'],[752,null,128,'audio'],[864,null,128,'settings'],[976,null,128,'video'],[1080,null,128,'music']].flatMap(([x,bg,h,name],i)=>[
           shape('tab'+i,'decorative',x,200,88,h,bg || 'linear-gradient(180deg,#A82ADE,#D573FF)',{radius:16,z:4}),
-          img('tabicon'+i,`assets/levels/haybuhay/tab-${name}.png`,x+20,216,48,48,{z:5}),
+          img('tabicon'+i,`assets/levels/haybuhay/tab-${name}.png`,x+20,216,48,48,{bgSize:'contain',z:5}),
         ]),
         shape('panel','card',600,288,720,688,'linear-gradient(180deg,#D398EC,#9535BD)',{radius:32,z:6}),
-        txt('title','heading','Settings',880,128,200,56,28,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
-        txt('graphics','subheading','Graphics',896,304,200,48,15,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
-        txt('sec1','subheading','Screen Settings',632,344,200,32,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
-        txt('sec2','subheading','Detail Settings',632,448,200,32,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
-        shape('div1','decorative',824,376,480,8,'#310032',{z:7}),
-        shape('div2','decorative',816,464,488,8,'#310032',{z:7}),
-        shape('sizeBox','decorative',896,408,168,24,'#D9D9D9',{radius:8,z:7}),
-        shape('rateBox','decorative',1096,408,168,24,'#D9D9D9',{radius:8,z:7}),
-        img('sizeArrow','assets/levels/haybuhay/arrow.svg',1056,432,24,24,{z:8}),
-        img('rateArrow','assets/levels/haybuhay/arrow.svg',1256,432,24,24,{z:8}),
-        txt('size','label','Screen Size',896,384,160,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:7}),
-        txt('rate','label','Screen Refresh Rate',1096,384,200,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:8}),
-        txt('sizeVal','small','1080 x 1920',904,408,152,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
-        txt('rateVal','small','Default',1104,408,152,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
-        txt('hz','small','Hz',1272,408,24,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:8}),
+        // Text sizes are the Figma ones: headings are fine, but the small text
+        // (options, slider labels, values) is all crammed at 14-15px.
+        txt('title','heading','Settings',880,128,160,56,40,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:7}),
+        txt('graphics','subheading','Graphics',888,304,144,48,32,'#310032',{fontFamily:'Righteous',fontWeight:'400',locked:true,z:7}),
+        txt('sec1','subheading','Screen Settings',632,344,192,32,24,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
+        txt('sec2','subheading','Detail Settings',632,448,184,32,24,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:7}),
+        shape('div1','decorative',824,376,480,8,'linear-gradient(#310032,#310032) center/100% 3px no-repeat',{z:7}),
+        shape('div2','decorative',816,464,488,8,'linear-gradient(#310032,#310032) center/100% 3px no-repeat',{z:7}),
+        shape('sizeBox','decorative',896,408,168,24,'#EBCDF7',{radius:6,shadow:{enabled:true,blur:4,color:'rgba(49,0,50,.25)'},z:7}),
+        shape('rateBox','decorative',1096,408,168,24,'#EBCDF7',{radius:6,shadow:{enabled:true,blur:4,color:'rgba(49,0,50,.25)'},z:7}),
+        img('sizeArrow','assets/levels/haybuhay/arrow-down.svg',1040,412,16,16,{z:8}),
+        img('rateArrow','assets/levels/haybuhay/arrow-down.svg',1240,412,16,16,{z:8}),
+        txt('size','label','Screen Size',896,384,160,24,16,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:7}),
+        txt('rate','label','Screen Refresh Rate',1096,384,200,24,16,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',locked:true,z:8}),
+        txt('sizeVal','small','1080 x 1920',904,408,136,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:8}),
+        txt('rateVal','small','Default',1104,408,136,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:8}),
+        txt('hz','small','Hz',1272,408,24,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:8}),
         // Checkbox, label, and whether Figma shows it ticked.
         ...[['opt1','Enable Full Screen Mode',656,400,688,400,true],['opt2','Enable Object Hiding',672,504,704,512,true],['opt3','Enable Reflections',672,552,704,560,false],
             ['opt4','Enable Animation Smoothing',1016,504,1056,512,true],['opt5','Enable Advance Rendering',1016,552,1056,560,false]].flatMap(([id,t,bx,by,x,y,ticked])=>[
@@ -232,33 +235,30 @@ Lead Developer, Hay Buhay 3`,
             ['s5','Draw Distance',1056,600,1072,640,1112],['s6','High Detail Lots',1056,672,1072,712,1112],['s7','Texture Detail',1056,752,1072,784,1112],['s8','Character Detail',1056,824,1056,864,1112]].flatMap(([id,t,x,y,bx,by,sx])=>[
           txt(id,'label',t,x,y,240,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
           shape(id+'bar','decorative',bx,by,200,8,'#CE92E8',{border:{width:1,style:'solid',color:'#310032'},radius:4,z:7}),
-          img(id+'star','assets/levels/haybuhay/star.svg',sx,by-24,32,56,{z:8}),
+          img(id+'star','assets/levels/haybuhay/star.svg',sx,by-16,32,40,{bgSize:'contain',z:8}), // centred on the 8px bar
         ]),
-        // Close (X) and confirm (check) buttons in the top-right corner.
-        img('ring1','assets/levels/haybuhay/ring1.svg',1288,32,136,136,{z:7}),
-        img('ring2','assets/levels/haybuhay/ring2.svg',1296,40,104,104,{z:8}),
-        img('ring3','assets/levels/haybuhay/ring3.svg',1216,24,104,104,{z:7}),
-        img('ring4','assets/levels/haybuhay/ring4.svg',1224,40,72,72,{z:8}),
-        img('confirm','assets/levels/haybuhay/check.svg',1288,56,80,80,{bgSize:'60% auto',z:9}),
-        img('close','assets/levels/haybuhay/x.svg',1224,48,48,48,{bgSize:'60% auto',z:9}),
-        btn('restore','Restore Defaults',872,904,184,48,20,'#310032','#E3B2F5',{fontFamily:'Righteous',fontWeight:'400',radius:16,locked:true,z:7}),
+        // Close (X) and confirm (check): rings and icons share one centre, all on the 8px grid.
+        img('ring1','assets/levels/haybuhay/ring1.svg',1288,40,128,128,{z:7}),
+        img('ring2','assets/levels/haybuhay/ring2.svg',1304,56,96,96,{z:8}),
+        img('confirm','assets/levels/haybuhay/check.svg',1312,64,80,80,{bgSize:'60% auto',z:9}),
+        img('ring3','assets/levels/haybuhay/ring3.svg',1216,24,96,96,{z:7}),
+        img('ring4','assets/levels/haybuhay/ring4.svg',1232,40,64,64,{z:8}),
+        img('close','assets/levels/haybuhay/x.svg',1240,48,48,48,{bgSize:'55% auto',z:9}),
+        btn('restore','Restore Defaults',872,904,184,48,20,'#310032','#E3B2F5',{fontFamily:'Righteous',fontWeight:'400',radius:8,locked:true,z:7,shadow:{enabled:true,blur:6,color:'rgba(49,0,50,.3)'}}),
       ],
       goals:[
-        goal('Make "Screen Settings" and "Detail Settings" at least 20px.', {minFont:20, ids:['sec1','sec2']},
-          'Section headings need to stand out from the options under them, so players can find their place.',
-          'Raise their font size in Text.'),
-        goal('Make "Graphics" bigger than "Screen Settings".', {bigger:['graphics','sec1']},
-          'The page title should be the biggest thing in the panel, then sections, then options.',
-          'Give Graphics a larger font size than the section headings.'),
-        goal('Make the five checkbox labels at least 16px.', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
-          'Tiny labels are hard to read on small laptop screens.',
-          'Bump each option label up to 16px or more.'),
-        bonus('Make all eight slider labels at least 16px.', {minFont:16, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},
-          'Matching sizes across every slider keeps the screen calm and consistent.',
-          'Raise each slider label to 16px.'),
-        bonus('Make the "Settings" title 36px or bigger.', {minFont:36, ids:['title']},
-          'A confident title tells players exactly which screen they are on.',
-          'Increase the title font size.'),
+        goal('Make the five checkbox labels at least 18px.', {minFont:18, ids:['opt1','opt2','opt3','opt4','opt5']},
+          'Options players have to read and tick need room to breathe, especially on small laptop screens.',
+          'Bump each option label up to 18px or more.'),
+        goal('Make the eight slider labels at least 18px.', {minFont:18, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},
+          'Matching, readable slider labels keep the screen calm instead of crammed.',
+          'Raise each slider label to 18px.'),
+        goal('Make the screen values at least 16px.', {minFont:16, ids:['sizeVal','rateVal','hz']},
+          'Values are what players check and change, so they must not be the smallest text on the screen.',
+          'Raise "1080 x 1920", "Default" and "Hz" to 16px.'),
+        bonus('Make "Screen Settings" and "Detail Settings" 28px or bigger.', {minFont:28, ids:['sec1','sec2']},
+          'Clear section headings split the screen into groups, so it reads like a game menu, not a tax form.',
+          'Raise both section headings to 28px.'),
       ],
       replyTemplates:{
         great:'Salamat! Players can finally tell where to look. Hay Buhay 3 feels so much calmer.',
@@ -362,7 +362,7 @@ Thanks for helping everyone see clearly,
       ],
       goals:[
         goal('Make the headline readable on the cream background.', {contrast:'AA', ids:['headline']},
-          'Light orange on cream fails even the 3:1 rule for big text.',
+          'Light orange on cream is far below the 4.5:1 contrast text needs.',
           'Pick a deeper orange or a dark color in Color.'),
         goal('Make "Try the simulator" readable on its orange button.', {contrast:'AA', ids:['sim']},
           'The main call to action is useless if nobody can read it.',
@@ -1393,6 +1393,28 @@ Nimbus Goods`,
   // Edits saved from the Level Maker ("Save to game") replace a level's
   // canvas and artwork on this browser. An edit that removed an element a
   // goal needs is ignored so the level stays solvable.
+  // Goals after the Level Maker marks which elements are "needed to solve"
+  // (the rest are locked). Per-element checks (ids: font size, contrast)
+  // keep only the needed elements. Comparison checks keep every element:
+  // locked ones act as fixed reference points the player lines things up
+  // against. A goal is dropped when none of its elements are needed, or when
+  // its locked elements already disagree so it could never be solved.
+  function pruneGoals(goals, elements){
+    const byId = new Map(elements.map(el=>[el.id, el]));
+    const locked = id => !byId.has(id) || byId.get(id).locked;
+    const value = { sameX:e=>e.x, sameY:e=>e.y, sameRight:e=>e.x+e.w, sameCenterX:e=>e.x+e.w/2 };
+    return (goals || []).map(g=>{
+      if(!Array.isArray(g.check.ids)) return g;
+      return Object.assign({}, g, { check:Object.assign({}, g.check, { ids:g.check.ids.filter(id=>!locked(id)) }) });
+    }).filter(g=>{
+      const [kind, ids] = Object.entries(g.check).find(([, v])=>Array.isArray(v)) || [];
+      if(!ids || !ids.some(id=>!locked(id))) return false;
+      const fixed = ids.filter(locked).map(id=>byId.get(id)).filter(Boolean);
+      if(value[kind] && new Set(fixed.map(value[kind])).size > 1) return false;
+      return true;
+    });
+  }
+  window.EC_PRUNE_GOALS = pruneGoals;
   try{
     const saved = JSON.parse(localStorage.getItem('eyecon_level_overrides') || '{}');
     LEVELS.forEach(level=>{
@@ -1400,7 +1422,16 @@ Nimbus Goods`,
       if(!edit || !Array.isArray(edit.elements)) return;
       const ids = new Set(edit.elements.map(el=>el.id));
       const needed = (level.goals || []).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat());
-      if(needed.every(id=>ids.has(id))) Object.assign(level, { canvas:edit.canvas, elements:edit.elements, edited:true });
+      if(!needed.every(id=>ids.has(id))) return;
+      const goals = pruneGoals(level.goals, edit.elements);
+      // Color groups set in the Level Maker: grouped elements must share one color.
+      const groups = {};
+      edit.elements.filter(el=>!el.locked && el.colorGroup).forEach(el=>(groups[el.colorGroup] = groups[el.colorGroup] || []).push(el.id));
+      Object.entries(groups).filter(([, ids])=>ids.length > 1).forEach(([name, ids])=>goals.push({
+        label:`Give the "${name}" group one matching color.`, check:{sameColor:ids},
+        why:'Elements that do the same job should look the same, so the page feels consistent.',
+        tip:'Set every element in the group to the exact same color.', bonus:false }));
+      if(goals.some(g=>!g.bonus)) Object.assign(level, { canvas:edit.canvas, elements:edit.elements, originalGoals:level.goals, goals, edited:true });
     });
   }catch(e){ /* No storage (tests) or bad data: keep the built-in levels. */ }
 

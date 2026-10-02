@@ -41,11 +41,9 @@
     return false;
   }
 
+  // The game asks for 4.5:1 on all text, big or small, to keep the rule simple.
   function requiredRatio(fontSizePx, bold, level){
-    const large = isLargeText(fontSizePx, bold);
-    level = level || 'AA';
-    if(level === 'AAA') return large ? 4.5 : 7;
-    return large ? 3 : 4.5;
+    return (level || 'AA') === 'AAA' ? 7 : 4.5;
   }
 
   function passesWCAG(hex1, hex2, fontSizePx, bold, level){

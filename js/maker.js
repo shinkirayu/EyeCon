@@ -111,8 +111,8 @@
     canvas.classList.toggle('peek-targets',peeking);
     state.elements.filter(el=>!el.hidden).forEach(el=>{
       const node=document.createElement('div');
-      const need=state.gameLevel&&(goalIds().has(el.id)||!el.gameLocked);
-      node.className='maker-element'+(el.id===state.selected?' selected':'')+(el.locked?' locked':'')+(need?' maker-needed':'')+(need&&goalIds().has(el.id)?' maker-goal':'');
+      const need=state.gameLevel&&!el.gameLocked;
+      node.className='maker-element'+(el.id===state.selected?' selected':'')+(multi.includes(el.id)?' multi-selected':'')+(el.locked?' locked':'')+(need?' maker-needed':'')+(need&&goalIds().has(el.id)?' maker-goal':'');
       node.dataset.id=el.id;
       node.style.cssText=`left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1};border-radius:${el.shape==='circle'?'50%':(el.radius||0)+'px'};background:${el.bg||'transparent'};color:${el.color||'#3b172e'};font-size:${el.fontSize||16}px;${el.shape==='triangle'?'clip-path:polygon(50% 0,100% 100%,0 100%);':''}`;
       gameStyle(node,el);
@@ -157,7 +157,7 @@
       const row=document.createElement('div');row.className='maker-layer-row'+(el.id===state.selected?' active':'')+(el.hidden?' is-hidden':'');row.dataset.layerId=el.id;
       const button=document.createElement('button');button.type='button';button.className='maker-layer-select';
       button.innerHTML='<span class="maker-layer-grip" aria-hidden="true">☰</span>';
-      if(state.gameLevel&&(goalIds().has(el.id)||!el.gameLocked)) button.appendChild(Object.assign(document.createElement('span'),{className:'maker-need-dot',title:'Needed to solve',textContent:'!'}));
+      if(state.gameLevel&&!el.gameLocked) button.appendChild(Object.assign(document.createElement('span'),{className:'maker-need-dot',title:'Needed to solve',textContent:'!'}));
       button.appendChild(document.createTextNode((el.type==='image'?'▧ ':el.type==='rect'?'▢ ':'T ')+(el.text||(el.id.startsWith('element-')?el.type:el.id))));
       button.textContent='';
       const preview=document.createElement('span');preview.className='maker-layer-preview';
@@ -206,17 +206,31 @@
   // Game level only: is this element part of the puzzle, and what may the
   // player do to it. Goal targets are always needed.
   function gameRules(el){
-    const isGoal=goalIds().has(el.id), needed=isGoal||!el.gameLocked;
+    const isGoal=goalIds().has(el.id), needed=!el.gameLocked;
     const allow=el.allow||['move','resize','color'];
     const box=(key,label,checked,dis)=>`<label class="maker-rule"><input type="checkbox" data-maker-rule="${key}" ${checked?'checked':''} ${dis?'disabled':''}/> ${label}</label>`;
     return `<fieldset class="maker-rules"><legend>In the game</legend>
-      ${box('needed','Needed to solve',needed,isGoal)}${isGoal?'<small>A client goal checks this element.</small>':''}
+      ${box('needed','Needed to solve',needed)}${isGoal?`<small>${needed?'A client goal checks this element.':'Left out of its client goal.'}</small>`:''}
       <div class="maker-rule-group"${needed?'':' hidden'}>
         ${box('move','Movable',allow.includes('move'))}${box('resize','Scalable (size &amp; text size)',allow.includes('resize'))}${box('color','Contrast color',allow.includes('color'))}
+        <label class="maker-group-field">Color group <input type="text" data-maker-group value="${safe(el.colorGroup||'')}" placeholder="e.g. placeholders" maxlength="30"/></label>
+        <small>Elements with the same group name must end up the exact same color.</small>
       </div></fieldset>`;
   }
   function renderProperties(){
     const host=$('maker-properties-fields'), el=selected(), target=selectedTarget();
+    if(multi.length>1){
+      const els=state.elements.filter(x=>multi.includes(x.id));
+      const shared=els.every(x=>x.colorGroup&&x.colorGroup===els[0].colorGroup)?els[0].colorGroup:'';
+      host.innerHTML=`<p><b>${els.length} elements selected</b><br><small>${els.map(x=>safe(x.text||x.id)).join(', ')}</small></p>
+        <label class="maker-group-field">Color group <input type="text" id="maker-multi-group" value="${safe(shared)}" placeholder="e.g. placeholders" maxlength="30"/></label>
+        <div class="maker-props-actions">
+          <button type="button" data-maker-multi="group">Group (same color)</button>
+          <button type="button" data-maker-multi="ungroup">Ungroup</button>
+          <button type="button" data-maker-multi="needed">Mark needed to solve</button>
+        </div><small>Shift- or Ctrl-click elements to add or remove them.</small>`;
+      return;
+    }
     if(target){
       host.innerHTML=`<p>Target for ${safe(state.elements.find(el=>el.id===target.id)?.text||target.id)}</p><div class="maker-props-grid">
         ${field('X','targetX','number',target.x)}${field('Y','targetY','number',target.y)}
@@ -249,7 +263,8 @@
     $('maker-width').value=state.canvas.w;$('maker-height').value=state.canvas.h;
     renderCanvas();renderLayers();renderProperties();persist();updateToolbar();
   }
-  function select(id){state.selected=id;state.selectedTarget=null;renderCanvas();renderLayers();renderProperties();updateToolbar();}
+  let multi=[];
+  function select(id){multi=[];state.selected=id;state.selectedTarget=null;renderCanvas();renderLayers();renderProperties();updateToolbar();}
   function selectTarget(id){state.selectedTarget=id;state.selected=null;renderCanvas();renderLayers();renderProperties();updateToolbar();}
   function add(type,src){
     const offsets={text:[240,64],button:[160,56],shape:[128,128],image:[240,160]};
@@ -347,7 +362,7 @@
   // gameLocked), and "Save to game" stores it for levels.js to pick up.
   const OVERRIDES='eyecon_level_overrides';
   const readOverrides=()=>{try{return JSON.parse(localStorage.getItem(OVERRIDES)||'{}');}catch(_){return {};}};
-  function goalIds(){const l=gameLevel();return new Set((l&&l.goals||[]).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()));}
+  function goalIds(){const l=gameLevel();return new Set((l&&(l.originalGoals||l.goals)||[]).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()));}
   function gameLevel(){return (window.EC_LEVELS||[]).find(l=>l.id===state.gameLevel);}
   function updateGameButtons(){
     $('maker-game-level').value=state.gameLevel||'';
@@ -370,8 +385,10 @@
     const all=readOverrides();
     all[level.id]={canvas:{...state.canvas},elements:state.elements.map(el=>{const c={...el,locked:el.gameLocked};delete c.gameLocked;return c;})};
     const ids=new Set(all[level.id].elements.map(el=>el.id));
-    const missing=(level.goals||[]).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()).filter(id=>!ids.has(id));
+    const goals=level.originalGoals||level.goals||[];
+    const missing=goals.flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()).filter(id=>!ids.has(id));
     if(missing.length){alert('This level\'s goals need these elements, so put them back first: '+[...new Set(missing)].join(', '));return;}
+    if(!window.EC_PRUNE_GOALS(goals,all[level.id].elements).some(g=>!g.bonus)){alert('Every required goal would be left with nothing to solve. Tick "Needed to solve" on at least one goal element.');return;}
     try{localStorage.setItem(OVERRIDES,JSON.stringify(all));}catch(_){alert('Could not save: browser storage is full.');return;}
     // Reload so levels.js re-applies grid snapping and targets to the edit.
     if(confirm('Saved. Reload the game now to play the edited level?'))location.reload();
@@ -404,8 +421,20 @@
     document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!e.target.closest('#maker-grid-panel,#maker-grid-settings')){panel.hidden=true;gear.setAttribute('aria-expanded','false');}});
     apply();
   }
+  function multiAction(action){
+    const els=state.elements.filter(x=>multi.includes(x.id));
+    if(action==='group'){
+      const input=$('maker-multi-group');
+      const name=(input.value.trim())||('group '+(new Set(state.elements.map(x=>x.colorGroup).filter(Boolean)).size+1));
+      els.forEach(x=>x.colorGroup=name);
+    }
+    if(action==='ungroup')els.forEach(x=>{delete x.colorGroup;});
+    if(action==='needed')els.forEach(x=>{x.gameLocked=false;});
+    renderCanvas();renderLayers();renderProperties();persist();record();
+  }
   function init(){
     load();
+    $('maker-properties-fields').addEventListener('click',e=>{const b=e.target.closest('[data-maker-multi]');if(b)multiAction(b.dataset.makerMulti);});
     initGrid();
     const picker=$('maker-game-level');
     (window.EC_LEVELS||[]).forEach(l=>picker.add(new Option(`${l.clientName} · ${l.pageLabel}`,l.id)));
@@ -510,6 +539,7 @@
       e.target.value='';
     });
     $('maker-properties-fields').addEventListener('change',e=>{
+      if(e.target.dataset&&'makerGroup' in e.target.dataset){const el=selected();if(el){el.colorGroup=e.target.value.trim()||undefined;render();record();}return;}
       const rule=e.target.dataset&&e.target.dataset.makerRule, ruleEl=selected();
       if(rule&&ruleEl){
         if(rule==='needed') ruleEl.gameLocked=!e.target.checked;
@@ -587,6 +617,14 @@
       const node=e.target.closest('.maker-element');
       if(!node){select(null);return;}
       e.preventDefault();e.stopPropagation();
+      if(e.shiftKey||e.ctrlKey||e.metaKey){
+        // Add or remove this element from the multi-selection.
+        if(!multi.length&&state.selected)multi=[state.selected];
+        const id=node.dataset.id;
+        multi=multi.includes(id)?multi.filter(x=>x!==id):[...multi,id];
+        state.selected=multi.length===1?multi[0]:null;if(multi.length===1)multi=[];
+        renderCanvas();renderLayers();renderProperties();return;
+      }
       if(state.selected!==node.dataset.id)select(node.dataset.id);
       const el=selected();drag={mode:'move',kind:'element',id:el.id,x:el.x,y:el.y,clientX:e.clientX,clientY:e.clientY,before:snapshot()};
       if(el.locked){drag=null;return;}

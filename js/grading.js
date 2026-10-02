@@ -90,7 +90,7 @@
   // ("these share a left edge") so there's no single pixel-perfect answer.
   const GOAL_TOOL = { align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
     evenGapsY:'position', evenGapsX:'position', safeMargin:'position', minW:'sizing', minH:'sizing',
-    minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color' };
+    minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color', sameColor:'color' };
   function goalKind(check){ return Object.keys(check).find(k => GOAL_TOOL[k]); }
   function goalIds(check){
     const kind = goalKind(check), v = check[kind];
@@ -98,6 +98,7 @@
   }
   function checkGoal(goal, elements, level){
     const check = goal.check, kind = goalKind(check);
+    const sameColor = () => new Set(goalIds(check).map(id => (elements.find(e => e.id === id)?.color || '').toLowerCase())).size <= 1;
     const byId = new Map(elements.map(el => [el.id, el]));
     const els = goalIds(check).map(id => byId.get(id)).filter(Boolean);
     if(!els.length) return false;
@@ -122,10 +123,13 @@
       case 'minFont': return els.every(el => el.fontSize >= check.minFont);
       case 'maxFont': return els.every(el => el.fontSize <= check.maxFont);
       case 'bigger': return els.length === 2 && els[0].fontSize > els[1].fontSize;
-      case 'contrast': return els.every(el => {
+      // Several elements in one contrast goal must also share one exact color,
+      // so the fix stays consistent (e.g. both input placeholders).
+      case 'contrast': return sameColor() && els.every(el => {
         const bold = Number(el.fontWeight) >= 700 || el.fontWeight === 'bold';
         return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass;
       });
+      case 'sameColor': return els.length > 1 && sameColor();
     }
     return false;
   }

@@ -202,16 +202,24 @@
     const client = level.avatarEmoji || '✉', me = '<img src="assets/icons/profile.svg" alt="">';
     const clientName = esc(level.emailFrom || level.clientName);
     const file = (level.attachmentName || 'design.png').replace(/(\.\w+)$/, '_edited$1');
+    const designs = [];
+    const attach = (name, elements) => {
+      if(!elements) return `<span class="mail-thread-file">📎 ${esc(name)}</span>`;
+      designs.push(elements);
+      return `<button type="button" class="attachment-card mail-thread-attachment" data-design="${designs.length - 1}" aria-label="Preview ${esc(name)}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${esc(name)}</span></button>`;
+    };
+    const approvedDesign = (profile.designs || {})[level.id];
     const parts = [];
     profile.history.filter(h => h.levelId === level.id).forEach(h => {
       const stars = '★'.repeat(h.stars || 0) + '☆'.repeat(5 - (h.stars || 0));
       const text = h.reply || `Hi, ${level.clientName} here.\n\n${stars}\n\n${h.quote || ''}\n\n— ${level.clientName}`;
       const badge = h.missionComplete ? '<span class="mail-thread-badge done">Approved</span>' : '<span class="mail-thread-badge">Needs changes</span>';
       parts.push(msg('from-client', client, clientName + badge, when(h.date), text));
-      parts.push(msg('from-me', me, 'You', when(h.date), myReplyText(level), `<span class="mail-thread-file">📎 ${esc(file)}</span>`));
+      // Older saves only kept the approved design, not every attempt.
+      parts.push(msg('from-me', me, 'You', when(h.date), myReplyText(level), attach(file, h.elements || (h.missionComplete ? approvedDesign : null))));
     });
-    parts.push(msg('from-client original', client, clientName, 'Original request', level.emailBody));
-    return parts.join('');
+    parts.push(msg('from-client original', client, clientName, 'Original request', level.emailBody, attach(level.attachmentName || 'design.png', level.elements)));
+    return { html: parts.join(''), designs };
   }
 
   function openClientReply(level, result, missionComplete, onContinue){
@@ -246,13 +254,24 @@
       : level.emailBody;
     const bodyEl = document.getElementById('mail-detail-body');
     bodyEl.classList.toggle('mail-thread', !!readOnly);
-    if(readOnly){ bodyEl.innerHTML = threadHtml(level, profile); document.getElementById('mail-detail-title').textContent = 'Re: ' + emailSubject(level); }
+    if(readOnly){
+      const thread = threadHtml(level, profile);
+      bodyEl.innerHTML = thread.html;
+      bodyEl.querySelectorAll('[data-design]').forEach(btn => {
+        const elements = thread.designs[btn.dataset.design];
+        window.EC_EDITOR.renderStatic(btn.querySelector('.attachment-thumb'), level, elements, { maxSize:280 });
+        btn.addEventListener('click', () => openPreview(level, elements));
+      });
+      document.getElementById('mail-detail-title').textContent = 'Re: ' + emailSubject(level);
+    }
     document.getElementById('mail-detail-reward').innerHTML =
       readOnly ? '' : `Reward: <b>${window.EC_MONEY(pay.base)}</b>`;
-    document.getElementById('mail-detail-attachment').innerHTML =
+    document.getElementById('mail-detail-attachment').innerHTML = readOnly ? '' :
       `<button type="button" class="attachment-card" id="attachment-chip" aria-label="Preview ${level.attachmentName}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${level.attachmentName}</span></button>`;
-    window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
-    document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, level.elements));
+    if(!readOnly){
+      window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
+      document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, level.elements));
+    }
     const acceptBtn = document.getElementById('btn-accept-job');
     acceptBtn.textContent = 'Accept';
     acceptBtn.style.display = readOnly ? 'none' : '';

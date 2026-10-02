@@ -1235,6 +1235,7 @@
       const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
       // Keep the client's words so Completed mail can show the whole thread.
       profile.history[0].reply = window.EC_MAIL.buildClientReplyText(level, result, missionComplete);
+      profile.history[0].elements = elements; // the design the player sent, shown in Completed mail
       profile.revisionDrafts=Object.assign({},profile.revisionDrafts,{[level.id]:elements});
       if(outcome.missionComplete) profile.designs = Object.assign({}, profile.designs, { [level.id]: elements });
       save();
