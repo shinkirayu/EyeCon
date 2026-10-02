@@ -387,7 +387,8 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   // Illustration is locked at 504: Instagram and Tumblr get 24px gaps on one line.
   await set('insta', 'x', 432); await set('tumblr', 'x', 576); await set('tumblr', 'y', 784);
   await set('about', 'y', 40);
-  await expect(page.locator('.editor-goal.met')).toHaveCount(3);
+  await set('title', 'x', 336); // centre "Explore for more!" over the caption
+  await expect(page.locator('.editor-goal.met')).toHaveCount(4);
   await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
