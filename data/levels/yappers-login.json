@@ -1,0 +1,30 @@
+{
+  "format": "eyecon-level-maker-v1",
+  "id": "yappers-com-login-screen",
+  "name": "Yappers.com · Login screen",
+  "preset": "custom",
+  "canvas": { "w": 1920, "h": 1080, "bg": "#FFF9E1" },
+  "elements": [
+    { "id": "bg", "type": "rect", "role": "background", "x": 0, "y": 0, "w": 1920, "h": 1080, "bg": "#FFF9E1", "z": 0, "gameLocked": true },
+    { "id": "feet", "type": "rect", "role": "decorative", "x": 0, "y": 8, "w": 1920, "h": 1072, "bg": null, "z": 2, "src": "assets/levels/yappers/feet.png", "gameLocked": true },
+    { "id": "card", "type": "rect", "role": "card", "x": 272, "y": 144, "w": 1376, "h": 776, "bg": "#FFFFFF", "z": 2, "radius": 32, "shadow": { "enabled": true, "blur": 24, "color": "rgba(160,120,40,.35)" }, "fontSize": 16, "gameLocked": true },
+    { "id": "duck", "type": "rect", "role": "decorative", "x": 328, "y": 184, "w": 560, "h": 680, "bg": null, "z": 3, "src": "assets/levels/yappers/duck.png", "gameLocked": true },
+    { "id": "input1", "type": "rect", "role": "card", "x": 1040, "y": 360, "w": 456, "h": 56, "bg": "#FFFFFF", "z": 3, "radius": 16, "border": { "width": 1, "style": "solid", "color": "#000000" }, "gameLocked": true },
+    { "id": "input2", "type": "rect", "role": "card", "x": 1040, "y": 448, "w": 456, "h": 56, "bg": "#FFFFFF", "z": 3, "radius": 16, "border": { "width": 1, "style": "solid", "color": "#000000" }, "gameLocked": true },
+    { "id": "line1", "type": "rect", "role": "decorative", "x": 1024, "y": 656, "w": 160, "h": 8, "bg": null, "z": 3, "src": "assets/levels/yappers/line.svg", "bgSize": "100% 1px", "gameLocked": true },
+    { "id": "line2", "type": "rect", "role": "decorative", "x": 1320, "y": 656, "w": 160, "h": 8, "bg": null, "z": 3, "src": "assets/levels/yappers/line.svg", "bgSize": "100% 1px", "gameLocked": true },
+    { "id": "c1", "type": "rect", "role": "decorative", "x": 1168, "y": 688, "w": 56, "h": 56, "bg": "#FFFFFF", "z": 3, "radius": 32, "border": { "width": 1, "style": "solid", "color": "#C2C1C1" }, "gameLocked": true },
+    { "id": "c2", "type": "rect", "role": "decorative", "x": 1232, "y": 688, "w": 56, "h": 56, "bg": "#FFFFFF", "z": 3, "radius": 32, "border": { "width": 1, "style": "solid", "color": "#C2C1C1" }, "gameLocked": true },
+    { "id": "c3", "type": "rect", "role": "decorative", "x": 1296, "y": 688, "w": 56, "h": 56, "bg": "#FFFFFF", "z": 3, "radius": 32, "border": { "width": 1, "style": "solid", "color": "#C2C1C1" }, "gameLocked": true },
+    { "id": "title", "type": "text", "role": "heading", "text": "Welcome Bak!", "x": 1104, "y": 240, "w": 344, "h": 80, "fontFamily": "Londrina Solid", "fontSize": 64, "fontWeight": "400", "color": "#FFEA96", "bg": null, "align": "left", "z": 4, "allow": ["color"], "gameLocked": false },
+    { "id": "user", "type": "text", "role": "label", "text": "Phone, username, or email ...", "x": 1048, "y": 376, "w": 400, "h": 24, "fontFamily": "Niramit", "fontSize": 16, "fontWeight": "600", "color": "#E7E7E7", "bg": null, "align": "left", "z": 4, "allow": ["color"], "gameLocked": false },
+    { "id": "pass", "type": "text", "role": "label", "text": "Password", "x": 1048, "y": 464, "w": 400, "h": 24, "fontFamily": "Niramit", "fontSize": 16, "fontWeight": "600", "color": "#E7E7E7", "bg": null, "align": "left", "z": 4, "allow": ["color"], "gameLocked": false },
+    { "id": "forgot", "type": "text", "role": "small", "text": "Forgot Password?", "x": 1048, "y": 512, "w": 448, "h": 24, "fontFamily": "Niramit", "fontSize": 16, "fontWeight": "600", "color": "#0060D6", "bg": null, "align": "right", "z": 4, "gameLocked": true },
+    { "id": "login", "type": "rect", "role": "button", "text": "Log in", "x": 1040, "y": 552, "w": 456, "h": 72, "fontFamily": "Londrina Solid", "fontSize": 36, "fontWeight": "300", "color": "#CDCDCD", "bg": "#EDC45C", "radius": 32, "align": "center", "z": 4, "allow": ["color"], "gameLocked": false },
+    { "id": "or", "type": "text", "role": "small", "text": "or continue with", "x": 1200, "y": 648, "w": 120, "h": 24, "fontFamily": "Niramit", "fontSize": 15, "fontWeight": "500", "color": "#C2C1C1", "bg": null, "align": "center", "z": 4, "allow": ["color"], "gameLocked": false },
+    { "id": "facebook", "type": "rect", "role": "decorative", "x": 1184, "y": 704, "w": 24, "h": 24, "bg": null, "z": 4, "src": "assets/levels/yappers/facebook.png", "gameLocked": true },
+    { "id": "google", "type": "rect", "role": "decorative", "x": 1248, "y": 704, "w": 24, "h": 24, "bg": null, "z": 4, "src": "assets/levels/yappers/google.png", "gameLocked": true },
+    { "id": "apple", "type": "rect", "role": "decorative", "x": 1312, "y": 704, "w": 24, "h": 24, "bg": null, "z": 4, "src": "assets/levels/yappers/apple.png", "gameLocked": true }
+  ],
+  "hiddenTargets": []
+}

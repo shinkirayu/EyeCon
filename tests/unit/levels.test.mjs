@@ -6,7 +6,7 @@ import test from 'node:test';
 async function setup(){
   const context={window:{},localStorage:{getItem:()=>null,setItem:()=>{}},console};
   vm.createContext(context);
-  for(const file of ['wcag','cosmetics','levels','storage','grading']) vm.runInContext(await readFile(`js/${file}.js`,'utf8'),context);
+  for(const file of ['wcag','cosmetics','level-edits','levels','storage','grading']) vm.runInContext(await readFile(`js/${file}.js`,'utf8'),context);
   return context.window;
 }
 
@@ -24,10 +24,11 @@ test('every page is a real, solvable task with the tools unlocked by then',async
       const tool=G.GOAL_TOOL[kind];
       // A level's own tools list (Figma levels) overrides the stage pacing.
       assert.ok(level.tools ? tool==='align' || level.tools.includes(tool) : TOOL_STAGE[tool]<=level.levelNumber, `${level.id}: "${goal.label}" needs a tool not unlocked yet`);
-      for(const id of G.goalIds(goal.check)){
-        const el=level.elements.find(e=>e.id===id);
-        assert.ok(el && !el.locked, `${level.id}: goal target ${id} missing or locked`);
-      }
+      // Every target exists and at least one can be edited; locked ones are
+      // fixed reference points (set in the Level Maker).
+      const targets=G.goalIds(goal.check).map(id=>level.elements.find(e=>e.id===id));
+      assert.ok(targets.every(Boolean), `${level.id}: "${goal.label}" points at a missing element`);
+      assert.ok(targets.some(el=>!el.locked), `${level.id}: "${goal.label}" has nothing the player can edit`);
       assert.ok(goal.label && goal.why && goal.tip, `${level.id}: goal needs label, why and tip`);
     }
     const start=G.checkGoals(level, level.elements);

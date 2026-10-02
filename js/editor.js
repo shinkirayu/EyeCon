@@ -103,6 +103,16 @@
   const GOAL_TOPIC = { align:'Text alignment', sameX:'Alignment', sameY:'Alignment', sameRight:'Alignment', sameCenterX:'Alignment',
     evenGapsY:'Spacing', evenGapsX:'Spacing', safeMargin:'Margins', minW:'Size', minH:'Tap size', minFont:'Typography',
     maxFont:'Typography', bigger:'Hierarchy', contrast:'Contrast', sameColor:'Consistency' };
+  // Goal kinds grouped into the three skills the side panel is organised by.
+  const CATEGORY_ORDER = ['Alignment', 'Contrast', 'Typography'];
+  const CATEGORY_OF = { contrast:'Contrast', sameColor:'Contrast', minFont:'Typography', maxFont:'Typography', bigger:'Typography' };
+  const goalCategory = goal => CATEGORY_OF[window.EC_GRADING.goalKind(goal.check)] || 'Alignment';
+  const CATEGORY_INTRO = {
+    Alignment: 'Place every element on the 8-point grid, so positions and sizes are multiples of 8px. Keep margins and padding equal.',
+    Contrast: 'Make sure text and cards have at least 4.5:1 contrast against their background.',
+    Typography: 'Make sure text is at least 16px and still fits and reads clearly.',
+  };
+  const HANDOFF_LINE = { Alignment:'Elements aligned to the 8pt grid', Contrast:'Text meets 4.5:1', Typography:'Text scale set and readable' };
   // A short live reading for a goal ("x 64 · 96 · 40", "2.1:1 / 4.5") so
   // players see exactly how far off they are.
   function goalMeasure(goal){
@@ -116,8 +126,11 @@
       case 'sameY': return `y ${list(e=>e.y)}`;
       case 'sameRight': return `right ${list(e=>e.x+e.w)}`;
       case 'sameCenterX': return `center ${list(e=>e.x+e.w/2)}`;
-      case 'evenGapsY': return `gaps ${gaps('y','h').join(', ')}px`;
-      case 'evenGapsX': return `gaps ${gaps('x','w').join(', ')}px`;
+      case 'evenGapsY': case 'evenGapsX': {
+        const g = kind==='evenGapsX' ? gaps('x','w') : gaps('y','h');
+        const range = check.minGap!=null || check.maxGap!=null ? ` / ${check.minGap ?? 8}–${check.maxGap ?? '∞'}` : '';
+        return `gaps ${g.join(', ')}px${range}`;
+      }
       case 'align': return `${els.filter(e=>e.align===check.align).length}/${els.length} ${check.align}`;
       case 'minH': return `height ${Math.min(...els.map(e=>e.h))}px / ${check.minH}`;
       case 'minW': return `width ${Math.min(...els.map(e=>e.w))}px / ${check.minW}`;
@@ -127,10 +140,19 @@
       case 'safeMargin': return `edge ${Math.min(...els.map(e=>Math.min(e.x, e.y, state.level.canvas.w-e.x-e.w, state.level.canvas.h-e.y-e.h)))}px / ${check.safeMargin}`;
       case 'contrast': {
         const ratios = els.map(e=>window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)));
+        // Several elements: show each ratio, and flag when the colors don't match.
         const differ = new Set(els.map(e=>e.color.toLowerCase())).size > 1;
-        return `${Math.min(...ratios).toFixed(2)}:1 / 4.5${differ ? ' · colors differ' : ''}`;
+        const shown = els.length > 1 ? [...new Set(ratios.map(r=>r.toFixed(2)))].join(' · ') : ratios[0].toFixed(2);
+        return `${shown}:1 / 4.5${differ ? ' · colors differ' : ''}`;
       }
       case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
+      case 'centeredX': return `centre ${Math.round(els[0].x + els[0].w/2)} / ${state.level.canvas.w/2}`;
+      case 'sameSize': return list(e=>`${e.w}×${e.h}`);
+      case 'above': return els.filter((e,i)=>i%2===0).map((e,k)=>e.y+e.h <= els[k*2+1].y ? 'above' : 'inside').join(' · ');
+      case 'wraps': {
+        const [box, ...inner] = els;
+        return `padding ${[Math.min(...inner.map(e=>e.y))-box.y, box.x+box.w-Math.max(...inner.map(e=>e.x+e.w)), box.y+box.h-Math.max(...inner.map(e=>e.y+e.h)), Math.min(...inner.map(e=>e.x))-box.x].join(' · ')}`;
+      }
     }
     return '';
   }
@@ -148,28 +170,52 @@
     // next unfinished one; an earlier task that breaks again doesn't pull it back.
     const nextOpen = from => { for(let k = 0; k < results.length; k++){ const j = (from + k) % results.length; if(!results[j].met) return j; } return null; };
     if(state.focusGoal == null || results[state.focusGoal]?.met) state.focusGoal = nextOpen(state.focusGoal == null ? 0 : state.focusGoal + 1);
-    const cards = results.map(({goal, met}, i) => {
-      const li = document.createElement('li');
-      li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '') + (i === state.focusGoal ? ' focus' : '');
-      li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
-      const head = document.createElement('div'); head.className = 'editor-goal-head';
-      head.append(Object.assign(document.createElement('b'), {textContent:GOAL_TOPIC[G.goalKind(goal.check)] || 'Goal'}),
-        Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent: met ? 'PASS' : goal.bonus ? 'BONUS' : 'TO DO'}));
-      const text = Object.assign(document.createElement('p'), {textContent: goal.label});
-      const measure = Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)});
-      const note = Object.assign(document.createElement('small'), {textContent: met ? goal.why : `Tip: ${goal.tip}`});
-      li.append(head, text, measure, note);
-      return li;
+    // Tasks grouped by skill, each section opening with its rule (a level can
+    // reword it with level.categoryIntro), then a handoff checklist with one
+    // line per skill that ticks when all of that skill's required tasks pass.
+    const sections = CATEGORY_ORDER.map(cat => ({ cat, items: results.map((r, i) => Object.assign({ i }, r)).filter(r => goalCategory(r.goal) === cat) }))
+      .filter(sec => sec.items.length);
+    const cards = sections.map(({cat, items}) => {
+      const sec = document.createElement('li');
+      sec.className = 'editor-goal-section';
+      sec.append(Object.assign(document.createElement('h4'), {textContent:cat}),
+        Object.assign(document.createElement('p'), {className:'editor-goal-intro', textContent:(state.level.categoryIntro || {})[cat] || CATEGORY_INTRO[cat]}));
+      const ul = document.createElement('ul');
+      items.forEach(({goal, met, i}) => {
+        const li = document.createElement('li');
+        li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '') + (i === state.focusGoal ? ' focus' : '');
+        li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
+        const box = Object.assign(document.createElement('span'), {className:'editor-goal-tick', textContent: met ? '✓' : ''});
+        box.setAttribute('aria-hidden', 'true');
+        const body = document.createElement('div');
+        const text = Object.assign(document.createElement('p'), {textContent: goal.label});
+        if(goal.bonus) text.append(Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent:'BONUS'}));
+        body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
+        // The tip shows on the suggested task; the reason shows once a task is done.
+        if(i === state.focusGoal) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
+        else if(met) body.append(Object.assign(document.createElement('small'), {textContent:goal.why}));
+        li.append(box, body);
+        ul.append(li);
+      });
+      sec.append(ul);
+      return sec;
     });
     const check = document.createElement('li');
     check.className = 'editor-handoff';
     check.append(Object.assign(document.createElement('b'), {textContent:'Handoff checklist'}));
-    results.forEach(({goal, met}) => {
+    sections.forEach(({cat, items}) => {
+      const required = items.filter(r => !r.goal.bonus);
+      const done = (required.length ? required : items).every(r => r.met);
       const row = document.createElement('label');
-      const box = Object.assign(document.createElement('span'), {className:'editor-handoff-box', textContent: met ? '✓' : ''});
-      box.setAttribute('role','img'); box.setAttribute('aria-label', met ? 'Done' : 'Not done');
-      if(met) row.classList.add('done');
-      row.append(box, document.createTextNode(goal.label));
+      const box = Object.assign(document.createElement('span'), {className:'editor-handoff-box', textContent: done ? '✓' : ''});
+      box.setAttribute('role','img'); box.setAttribute('aria-label', done ? 'Done' : 'Not done');
+      if(done) row.classList.add('done');
+      row.append(box, document.createTextNode(HANDOFF_LINE[cat]));
+      check.append(row);
+    });
+    (state.level.handoffExtras || []).forEach(text => {
+      const row = document.createElement('label');
+      row.append(Object.assign(document.createElement('span'), {className:'editor-handoff-box'}), document.createTextNode(text));
       check.append(row);
     });
     list.replaceChildren(...cards, check);
@@ -1003,7 +1049,8 @@
     if((!state.tools.measure && !(state.dragging && state.tools.guides)) || !el || !state.guideLayerEl)return;
     const nearest={};
     const add=(side,gap,x1,y1,x2,y2)=>{if(gap>=0 && (!nearest[side] || gap<nearest[side].gap))nearest[side]={gap,x1,y1,x2,y2};};
-    state.elements.filter(o=>o.id!==el.id && !o.locked).forEach(o=>{
+    // Measure to every element, locked ones included (they're the reference points).
+    state.elements.filter(o=>o.id!==el.id).forEach(o=>{
       const top=Math.max(el.y,o.y),bottom=Math.min(el.y+el.h,o.y+o.h);
       const left=Math.max(el.x,o.x),right=Math.min(el.x+el.w,o.x+o.w);
       if(bottom>top){const y=(top+bottom)/2;add('left',el.x-o.x-o.w,o.x+o.w,y,el.x,y);add('right',o.x-el.x-el.w,el.x+el.w,y,o.x,y);}
@@ -1014,14 +1061,15 @@
     const unit=1/getScale(),gaps=Object.values(nearest);
     // Include adjacent gaps across the whole aligned row/column, so moving
     // either end of a group of three still shows both intervals.
-    const aligns=(a,b,axis)=>{
-      const size=axis==='x'?'w':'h';
-      return [0,.5,1].some(f=>Math.abs(a[axis]+a[size]*f-b[axis]-b[size]*f)<1);
-    };
-    const peers=state.elements.filter(o=>!o.locked);
+    // A row (or column) is everything sharing the selected element's band,
+    // locked pieces included, so spacing a card shows every gap in its row.
+    const span=(o,axis)=>axis==='x'?[o.x,o.x+o.w]:[o.y,o.y+o.h];
+    const overlaps=(a,b,axis)=>{const [a1,a2]=span(a,axis),[b1,b2]=span(b,axis);return Math.min(a2,b2)-Math.max(a1,b1)>0;};
     for(const axis of ['x','y']){
       const cross=axis==='x'?'y':'x';
-      const group=peers.filter(o=>o.id===el.id || aligns(el,o,cross)).sort((a,b)=>a[axis]-b[axis]);
+      // Peers are similar in size across the row, so big backgrounds and bars don't join in.
+      const size=o=>axis==='x'?o.h:o.w, similar=o=>size(o)<=size(el)*2 && size(o)>=size(el)/2;
+      const group=state.elements.filter(o=>o.id===el.id || (overlaps(el,o,cross) && !overlaps(el,o,axis) && similar(o))).sort((a,b)=>a[axis]-b[axis]);
       if(group.length<3)continue;
       const pos=axis==='x'?Math.min(...group.map(o=>o.y))-16*unit:Math.max(...group.map(o=>o.x+o.w))+16*unit;
       for(let i=1;i<group.length;i++){

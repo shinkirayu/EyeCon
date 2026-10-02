@@ -9,6 +9,7 @@ const files = [
   'js/storage.js',
   'js/sound.js',
   'js/mail.js',
+  'js/level-edits.js',
   'js/levels.js',
   'js/grading.js',
   'js/editor.js',

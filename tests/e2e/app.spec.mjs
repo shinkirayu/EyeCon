@@ -384,8 +384,9 @@ test('marking an approved task complete pays out with a celebration', async ({ p
     await input.fill(String(value));
     await input.dispatchEvent('change');
   };
-  await set('card3', 'x', 720); await set('card3', 'y', 280); await set('tumblr', 'x', 568);
-  await expect(page.locator('.editor-goal.met')).toHaveCount(3);
+  await set('card3', 'x', 720); await set('card3', 'y', 280); await set('illus', 'x', 496); await set('tumblr', 'x', 560);
+  await set('about', 'y', 40); // the task made for "About", which the level marks as needed
+  await expect(page.locator('.editor-goal.met')).toHaveCount(4);
   await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
@@ -477,9 +478,10 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
   await page.goto('/');await beginFirstDay(page);
-  await openClient(page,'Yappers.com');
-  const button=page.locator('#editor-canvas .el').filter({hasText:/^Log in$/});
-  await button.click();
+  // A resizable element: Hay Buhay's first checkbox label.
+  await openClient(page,'Hay Buhay 3');
+  const button=page.locator('#editor-canvas .el[data-id="opt1"]');
+  await button.waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('opt1'));
   const measure=()=>button.evaluate(el=>{
     const b=el.getBoundingClientRect(),n=el.querySelector('.nw').getBoundingClientRect(),s=el.querySelector('.se').getBoundingClientRect();
     return {left:Math.abs(n.x+n.width/2-b.x),top:Math.abs(n.y+n.height/2-b.y),right:Math.abs(s.x+s.width/2-b.right),bottom:Math.abs(s.y+s.height/2-b.bottom),handle:n.width,outline:getComputedStyle(el).outlineStyle};
@@ -635,7 +637,8 @@ test('goal elements show markers until solved, and moving them back un-solves',a
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
   await expect(page.locator('#editor-layers-panel')).toHaveCount(0);
-  const cta=page.locator('#editor-canvas .el[data-id="card1"]');
+  // card3 is the card the player moves; cards 1 and 2 are locked reference points.
+  const cta=page.locator('#editor-canvas .el[data-id="card3"]');
   await expect(cta).toHaveClass(/needs-edit/);
   expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
   expect(await cta.evaluate(el=>getComputedStyle(el,'::after').backgroundColor)).toBe('rgb(229, 59, 66)');
@@ -666,13 +669,13 @@ test('goal elements show markers until solved, and moving them back un-solves',a
   await expect(cta).not.toHaveAttribute('data-locked','1');
   const sameLine=page.locator('.editor-goal').filter({hasText:'same line'});
   await expect(sameLine).toHaveClass(/met/);
-  await expect(page.locator('.editor-handoff label.done').filter({hasText:'same line'})).toHaveCount(1);
+  // The handoff line for Alignment only ticks once every alignment task passes (icons still to do).
+  await expect(page.locator('.editor-handoff label.done').filter({hasText:'aligned'})).toHaveCount(0);
   // Moving a card out of line un-solves it again.
   await page.evaluate(()=>EC_EDITOR.selectElement('card3'));
   await page.locator('#f-y').fill('304'); await page.locator('#f-y').dispatchEvent('change');
   await expect(sameLine).not.toHaveClass(/met/);
   await expect(cta).toHaveClass(/needs-edit/);
-  await expect(page.locator('.editor-handoff label.done').filter({hasText:'same line'})).toHaveCount(0);
   await page.locator('#editor-canvas .el[data-id="tumblr"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('tumblr'));
   await expect(page.locator('#editor-canvas .el[data-id="tumblr"]')).toHaveClass(/selected/);
   await expect(page.locator('#editor-canvas .el[data-id="tumblr"]')).toHaveClass(/needs-edit/);

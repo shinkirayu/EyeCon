@@ -95,15 +95,15 @@ Thanks.
         img('banner','assets/levels/mayo/banner.png',80,920,896,88),
       ],
       goals:[
-        goal('Space the three artwork cards evenly.', {evenGapsX:['card1','card2','card3']},
-          'Equal gaps make the cards read as one tidy set instead of a random pile.',
-          'Make the gap between cards 1 and 2 match the gap between cards 2 and 3.'),
+        goal('Space the three artwork cards evenly, 64–80px apart.', {evenGapsX:['card1','card2','card3'], minGap:64, maxGap:80},
+          'Equal gaps make the cards read as one tidy set instead of a random pile; too far apart and they stop looking like a set.',
+          'Match the gap between cards 2 and 3 to the gap between cards 1 and 2.'),
         goal('Put the three cards on the same line.', {sameY:['card1','card2','card3']},
           'Cards that share a top edge look like a row, so the eye moves across them smoothly.',
           'Give all three cards the same Y number.'),
-        goal('Space the three social icons evenly.', {evenGapsX:['insta','illus','tumblr']},
-          'Evenly spaced icons look like one group of links.',
-          'Match the gap on both sides of the middle icon.'),
+        goal('Space the three social icons evenly, 16–24px apart.', {evenGapsX:['insta','illus','tumblr'], minGap:16, maxGap:24},
+          'Icons that sit close together with equal gaps read as one group of links.',
+          'Keep the icons close: the same 16–24px gap on both sides of the middle icon.'),
         bonus('Center "Explore for more!" over the caption.', {sameCenterX:['title','caption']},
           'A shared center line ties the heading and caption to the cards between them.',
           "Move the title until its center matches the caption's center."),
@@ -159,9 +159,9 @@ Yappers.com Product Design Team`,
         goal('Make "Welcome Bak!" readable on the white card.', {contrast:'AA', ids:['title']},
           'Pale yellow on white almost disappears. Even big text needs 4.5:1 contrast.',
           'Pick a darker text color in Color.'),
-        goal('Make both placeholder texts pass 4.5:1, in the same color.', {contrast:'AA', ids:['user','pass']},
+        goal('Make both placeholder texts pass 4.5:1, with the same color and the same contrast ratio.', {contrast:'AA', ids:['user','pass']},
           'Light grey placeholders are hard to read, especially for people with low vision. Matching fields should look the same.',
-          'Darken both placeholders to the exact same color.'),
+          'Darken both placeholders to the exact same color, so both show the same ratio of at least 4.5:1.'),
         goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
           'If people cannot read the main button, they cannot log in.',
           'Change the text color until it passes.'),
@@ -305,9 +305,9 @@ Gising sa Sarap!
         goal('Put the four best-seller cards on the same line.', {sameY:['card1','card2','card3','card4']},
           'Cards that share a top edge read as one row, so customers compare them at a glance.',
           'Give all four cards the same Y number.'),
-        goal('Space the four cards evenly.', {evenGapsX:['card1','card2','card3','card4']},
-          'Equal gaps make the menu look planned instead of scattered.',
-          'Make every gap between neighbouring cards the same.'),
+        goal('Space the four cards evenly, 80–104px apart.', {evenGapsX:['card1','card2','card3','card4'], minGap:80, maxGap:104},
+          'Equal gaps make the menu look planned instead of scattered, and keep the four cards reading as one row.',
+          'Make every gap between neighbouring cards the same, between 80 and 104px.'),
         goal('Put the four menu links on one line.', {sameY:['nav1','nav2','nav3','nav4']},
           'Links on one line read as a single menu.',
           'Give Home, Delivery, Contact and About the same Y number.'),
@@ -466,73 +466,108 @@ Maraming salamat,
       }
     },
     {
-      id:'oras-signin', project:'oras', levelNumber:7, tools:['typography','color'], pageLabel:'Sign-in page', concept:'Text sizes',
-      emailPreview:'Staff can barely read our sign-in page.',
+      id:'oras-signin', project:'oras', levelNumber:7, tools:['position','sizing','typography','color'], pageLabel:'Sign-in page', concept:'Putting it together',
+      emailPreview:'Our staff sign-in page is a mess. Can you clean it up?',
       emailBody:`Good day,
 
 This is the BEAR ORAS internal systems team. Our new staff sign-in page went live this week, and the help desk has been flooded with calls.
 
-Everything on the page is tiny: the role choices, the field labels, the links, even the footer. Older staff are zooming in just to find the Email field. The Sign in button is also so pale that people think it's disabled.
+The sign-in card sits off to one side and nothing inside it lines up. The field labels are stuck inside the boxes, the boxes are all different sizes, and the "?" icons are scattered. Most of the text is tiny and pale, and the Sign in button looks disabled.
 
-Please make the text readable and the button clearly clickable, without changing the layout.
+Please line everything up on the 8-point grid, make all the text readable, and make the card fit its contents neatly.
 
 Thank you,
 BEAR ORAS Systems Team`,
-      emailFrom:'BEAR ORAS Systems Team', emailSubject:'Sign-in page text is too small to read',
+      emailFrom:'BEAR ORAS Systems Team', emailSubject:'Staff sign-in page needs a full clean-up',
       attachmentName:'oras_signin.png',
       canvas:{ w:1920, h:1080, bg:'#F4F6FB' },
-      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ hierarchy:30 } },
+      rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ alignment:30 } },
+      categoryIntro:{ Contrast:'Make sure text and the card have at least 4.5:1 contrast against their background.' },
+      handoffExtras:['Card wraps all of its content, with no empty space at the bottom. The contents have equal padding on all four sides.'],
       elements:[
         shape('bg','background',0,0,1920,1080,'#F4F6FB',{z:0}),
         shape('header','card',0,0,1920,104,'#0A31AC',{z:1}),
-        img('logo','assets/levels/oras/logo.png',48,16,200,80,{bgSize:'contain',z:2}),
+        img('logo','assets/levels/oras/logo.png',48,16,200,80,{bgSize:'contain',locked:false,allow:['move'],z:2}),
         txt('headSign','label','Sign in',1632,40,136,32,13,'#FFFFFF',{fontFamily:'Inter',fontWeight:'500',z:2}),
         img('userIcon','assets/levels/oras/user.svg',1776,24,56,56,{z:2}),
-        shape('card','card',656,136,592,824,'#FAFBFE',{radius:8,border:{width:2,style:'solid',color:'#D3D8E2'},z:1}),
+        // The card: off-centre and too short; its contents are where a centred card wants them.
+        shape('card','card',608,136,592,824,'#FAFBFE',{radius:8,border:{width:2,style:'solid',color:'#D3D8E2'},locked:false,allow:['move','resize'],z:1}),
         txt('kicker','label','For BEAR Employees Use only',712,184,480,32,13,'#1D2030',{fontFamily:'Inter',fontWeight:'600',z:2}),
-        txt('title','heading','Sign in',712,224,480,48,13,'#1D2030',{fontFamily:'Inter',fontWeight:'700',z:2}),
+        txt('title','heading','Sign in',728,224,480,48,13,'#1D2030',{fontFamily:'Inter',fontWeight:'700',z:2}),
         txt('roleLabel','label','Sign in as (required)',712,296,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
-        ...[['Head',360],['Registration Officer',416],['National Office',472]].flatMap(([t,y],i)=>[
-          img('radio'+i,'assets/levels/oras/radio.svg',712,y,32,32,{z:2}),
-          txt('role'+i,'label',t,760,y,320,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'400',z:2}),
-          img('help'+i,'assets/levels/oras/help.svg',1136,y,32,32,{z:2}),
+        ...[['Head',360,712,808],['Registration Officer',416,720,984],['National Office',472,704,904]].flatMap(([t,y,x,hx],i)=>[
+          img('radio'+i,'assets/levels/oras/radio.svg',x,y,32,32,{locked:false,allow:['move'],z:2}),
+          txt('role'+i,'label',t,x+48,y,320,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'400',z:2}),
+          img('help'+i,'assets/levels/oras/help.svg',hx,y,32,32,{locked:false,allow:['move'],z:2}),
         ]),
-        txt('emailLabel','label','Email (required)',712,544,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
-        shape('email','card',712,576,488,64,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},z:2}),
-        txt('passLabel','label','Password (required)',712,664,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
-        shape('password','card',712,696,488,64,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},z:2}),
-        img('eye','assets/levels/oras/eye-off.svg',1144,712,32,32,{z:3}),
-        txt('forgot','small','Forgot Password?',712,824,224,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',z:2}),
-        txt('verify','small','Verify your email address',944,824,256,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
-        btn('signin','Sign in',712,872,488,72,13,'#FFFFFF','#C5CCF6',{fontFamily:'Inter',fontWeight:'600',radius:8,z:2}),
+        // Field labels are stuck inside their boxes; boxes and button differ in size.
+        txt('emailLabel','label','Email (required)',728,592,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',z:3}),
+        shape('email','card',712,576,488,48,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},locked:false,allow:['move','resize'],z:2}),
+        txt('passLabel','label','Password (required)',728,712,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',z:3}),
+        shape('password','card',720,696,456,56,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},locked:false,allow:['move','resize'],z:2}),
+        img('eye','assets/levels/oras/eye-off.svg',1136,712,32,32,{locked:false,allow:['move'],z:3}),
+        txt('forgot','small','Forgot Password?',720,824,224,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',z:2}),
+        txt('verify','small','Verify your email address',944,840,248,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
+        btn('signin','Sign in',704,880,472,48,13,'#FFFFFF','#C5CCF6',{fontFamily:'Inter',fontWeight:'600',radius:8,z:2}),
         shape('footer','card',0,992,1920,88,'#E4EAF4',{z:1}),
-        txt('version','small','Internal module v.0.6.8.0305',48,1016,520,40,12,'#3A3F55',{fontFamily:'Inter',fontWeight:'400',z:2}),
-        txt('copyright','small','© 2026 BEAR ORAS. All rights reserved.',1248,1016,624,40,12,'#3A3F55',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
+        txt('version','small','Internal module v.0.6.8.0305',72,1016,520,40,12,'#B8BCC8',{fontFamily:'Inter',fontWeight:'400',z:2}),
+        txt('copyright','small','© 2026 BEAR ORAS. All rights reserved.',1192,1016,624,40,12,'#B8BCC8',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
       ],
       goals:[
-        goal('Make "Sign in" the biggest text on the card (at least 32px).', {minFont:32, ids:['title']},
-          'A clear heading tells staff where they are before they read anything else.',
-          'Raise the Sign in title to 32px or more.'),
-        goal('Make the role choices and field labels at least 18px.', {minFont:18, ids:['roleLabel','role0','role1','role2','emailLabel','passLabel']},
-          'Labels people have to read to fill in the form must be comfortable for older eyes.',
-          'Bump each label up to 18px.'),
-        goal('Make the Sign in button readable and clearly clickable.', {contrast:'AA', ids:['signin']},
-          'A pale button looks disabled. White text needs a strong background to pass 4.5:1.',
-          'Darken the text color, or pick a dark text that passes on the pale button.'),
+        // Alignment
+        goal('Drag the header logo and the footer text to the same left margin.', {sameX:['logo','version']},
+          'Matching page margins frame the whole screen.', 'Give the logo and "Internal module" the same X.'),
+        goal('Give the footer text the same right margin as the header icon.', {sameRight:['userIcon','copyright']},
+          'Both corners line up, so the page feels finished.', "Line up the copyright's right edge with the person icon's right edge."),
+        goal('Drag the white card to the center of the page.', {centeredX:['card']},
+          'A centred card is the obvious place to look on a sign-in page.', 'Move the card until its centre matches the page centre (960).'),
+        goal('Line up everything inside the card on the same left edge.', {sameX:['kicker','title','roleLabel','radio0','radio1','radio2','emailLabel','email','passLabel','password','forgot','signin']},
+          'One shared left edge turns a scattered form into one tidy column.', 'Give every item from "For BEAR Employees" down to the Sign in button the same X.'),
+        goal('Move the "?" icons into one right-hand column.', {sameX:['help0','help1','help2']},
+          'Help icons in a column read as a set and are easy to find.', 'Give all three "?" icons the same X, on the right of the card.'),
+        goal('Move "Email (required)" and "Password (required)" out of the boxes, above them.', {above:['emailLabel','email','passLabel','password']},
+          'Labels inside a box look like typed text and disappear once people type.', 'Place each label just above its box.'),
+        goal('Make both boxes and the Sign in button the same size.', {sameSize:['email','password','signin']},
+          'Fields and button of one size read as one form.', 'Give all three the same width and height.'),
+        goal('Make both boxes and the button at least 56px tall.', {minH:56, ids:['email','password','signin']},
+          'Taller fields are easier to click and tap.', 'Set their height to 56px or more.'),
+        goal('Put "Forgot Password?" and "Verify your email address" on one row.', {sameY:['forgot','verify']},
+          'Two links side by side on one line look intentional.', 'Give both links the same Y.'),
+        bonus('Line up "Verify your email address" with the right edge of the boxes.', {sameRight:['verify','email']},
+          'The link closes off the form on the same edge as the boxes.', "Match the link's right edge to the boxes' right edge."),
+        goal('Make the card wrap its contents with equal padding on all four sides.', {wraps:['card','kicker','title','roleLabel','radio0','radio1','radio2','role0','role1','role2','help0','help1','help2','emailLabel','email','passLabel','password','eye','forgot','verify','signin']},
+          'Equal padding makes the card feel balanced, with no empty space at the bottom.', 'Resize the card so the space around its contents is the same on every side.'),
+        // Contrast
+        goal('Darken "Email (required)" and "Password (required)".', {contrast:'AA', ids:['emailLabel','passLabel']},
+          'Pale grey labels are hard to read for everyone, and impossible for some.', 'Darken both labels to the same colour.'),
+        goal('Make the Sign in button text easy to read.', {contrast:'AA', ids:['signin']},
+          'A button that looks disabled stops people from signing in.', 'Pick a text colour that passes 4.5:1 on the button.'),
+        bonus('Darken the small grey text at the bottom of the page.', {contrast:'AA', ids:['version','copyright']},
+          'Even fine print should be readable.', 'Darken both footer lines.'),
+        // Typography
+        goal('Make the "Sign in" title the largest text in the card (at least 32px).', {minFont:32, ids:['title']},
+          'A clear heading tells staff where they are.', 'Raise the title to 32px or more.'),
         goal('Make the "Sign in" title bigger than the line above it.', {bigger:['title','kicker']},
-          'The heading should lead, with the small "For BEAR Employees" note supporting it.',
-          'Give the title a larger size than the kicker line.'),
+          'The heading leads; the small note supports it.', 'Keep the title larger than "For BEAR Employees Use only".'),
+        goal('Make "For BEAR Employees Use only" at least 16px.', {minFont:16, ids:['kicker']},
+          'Even the small note needs to be readable.', 'Raise it to 16px.'),
+        goal('Make "Sign in as", "Email" and "Password" labels at least 18px.', {minFont:18, ids:['roleLabel','emailLabel','passLabel']},
+          'Labels people read to fill the form must be comfortable for older eyes.', 'Raise each label to 18px.'),
+        goal('Make "Head", "Registration Officer" and "National Office" at least 18px.', {minFont:18, ids:['role0','role1','role2']},
+          'The role choices are the first decision on the form.', 'Raise each role to 18px.'),
+        goal('Make the Sign in button text at least 20px.', {minFont:20, ids:['signin']},
+          'The main action should be the easiest thing to read.', 'Raise the button text to 20px.'),
+        bonus('Make the header "Sign in" at least 18px.', {minFont:18, ids:['headSign']},
+          'Header links should be easy to spot.', 'Raise it to 18px.'),
         bonus('Make both links at least 16px.', {minFont:16, ids:['forgot','verify']},
-          'Small links are easy to miss and hard to tap.',
-          'Raise Forgot Password and Verify to 16px.'),
+          'Small links are easy to miss.', 'Raise both links to 16px.'),
         bonus('Make the footer text at least 16px.', {minFont:16, ids:['version','copyright']},
-          'Even fine print should stay readable.',
-          'Raise both footer lines to 16px.'),
+          'Even fine print should stay readable.', 'Raise both footer lines to 16px.'),
       ],
       replyTemplates:{
-        great:'The help desk phones finally went quiet. Everyone can read the page now, thank you!',
-        ok:'Much easier to read, thanks. A few bits are still small.',
-        bad:'Staff still cannot read parts of the page. Could you take another look?'
+        great:'The help desk phones finally went quiet. Everyone can find and read everything now, thank you!',
+        ok:'Much tidier and easier to read, thanks. A few things still need attention.',
+        bad:'Staff still struggle with the page. Could you take another look?'
       }
     },
     {
@@ -1387,9 +1422,6 @@ Nimbus Goods`,
     PROJECTS.forEach(p => p.needsGood = 0);
   }
 
-  // Level 1 teaches spacing by moving things: no resizing or recoloring.
-  LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
-
   // Edits saved from the Level Maker ("Save to game") replace a level's
   // canvas and artwork on this browser. An edit that removed an element a
   // goal needs is ignored so the level stays solvable.
@@ -1415,25 +1447,52 @@ Nimbus Goods`,
     });
   }
   window.EC_PRUNE_GOALS = pruneGoals;
+  // Apply a Level Maker layout to a level. Goals always start from the
+  // level's own (code) goals, so an edit can be undone by saving again.
+  function applyEdit(level, edit){
+    if(!edit || !Array.isArray(edit.elements)) return;
+    const base = level.originalGoals || level.goals;
+    const ids = new Set(edit.elements.map(el=>el.id));
+    if(!(base || []).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()).every(id=>ids.has(id))) return;
+    const goals = pruneGoals(base, edit.elements);
+    // Color groups set in the Level Maker: grouped elements must share one color.
+    const groups = {};
+    edit.elements.filter(el=>!el.locked && el.colorGroup).forEach(el=>(groups[el.colorGroup] = groups[el.colorGroup] || []).push(el.id));
+    Object.entries(groups).filter(([, g])=>g.length > 1).forEach(([name, g])=>goals.push({
+      label:`Give the "${name}" group one matching color.`, check:{sameColor:g},
+      why:'Elements that do the same job should look the same, so the page feels consistent.',
+      tip:'Set every element in the group to the exact same color.', bonus:false }));
+    // An element marked "needed to solve" that no goal checks gets its own
+    // task: line it up with the similar items in its row (or column).
+    const inGoals = new Set(goals.flatMap(g=>Object.values(g.check).filter(Array.isArray).flat()));
+    const overlap = (a1,a2,b1,b2) => Math.min(a2,b2) - Math.max(a1,b1) > 0;
+    const similar = (a,b,k) => b[k] <= a[k]*2 && b[k] >= a[k]/2;
+    edit.elements.filter(el=>!el.locked && !inGoals.has(el.id)).forEach(el=>{
+      const others = edit.elements.filter(o=>o.id!==el.id && o.role===el.role);
+      const row = others.filter(o=>overlap(el.y-16,el.y+el.h+16,o.y,o.y+o.h) && !overlap(el.x,el.x+el.w,o.x,o.x+o.w) && similar(el,o,'h'));
+      const col = others.filter(o=>overlap(el.x,el.x+el.w,o.x,o.x+o.w) && !overlap(el.y,el.y+el.h,o.y,o.y+o.h) && similar(el,o,'w'));
+      const name = el.text ? `"${el.text}"` : el.id;
+      const ids = arr => arr.concat(el).sort((a,b)=>a.x-b.x||a.y-b.y).map(o=>o.id);
+      let g = null;
+      if(row.length && row.some(o=>o.y!==el.y)) g = { label:`Line up ${name} with the others in its row.`, check:{sameY:ids(row)},
+        why:'Items in one row should share a line, so they read as a set.', tip:`Give ${name} the same Y as the items beside it.` };
+      else if(col.length && col.some(o=>o.x!==el.x)) g = { label:`Line up ${name} with the others in its column.`, check:{sameX:ids(col)},
+        why:'Items in one column should share an edge, so they read as a set.', tip:`Give ${name} the same X as the items above and below it.` };
+      if(g) goals.push(Object.assign(g, {bonus:false}));
+    });
+    if(goals.some(g=>!g.bonus)) Object.assign(level, { canvas:edit.canvas, elements:JSON.parse(JSON.stringify(edit.elements)), originalGoals:base, goals, edited:true });
+  }
+  // Built-in layouts made in the Level Maker (js/level-edits.js), then this
+  // browser's own "Save to game" edits on top.
+  const builtIn = window.EC_LEVEL_EDITS || {};
+  LEVELS.forEach(level=>applyEdit(level, builtIn[level.id]));
   try{
     const saved = JSON.parse(localStorage.getItem('eyecon_level_overrides') || '{}');
-    LEVELS.forEach(level=>{
-      const edit = saved[level.id];
-      if(!edit || !Array.isArray(edit.elements)) return;
-      const ids = new Set(edit.elements.map(el=>el.id));
-      const needed = (level.goals || []).flatMap(g=>Object.values(g.check).filter(Array.isArray).flat());
-      if(!needed.every(id=>ids.has(id))) return;
-      const goals = pruneGoals(level.goals, edit.elements);
-      // Color groups set in the Level Maker: grouped elements must share one color.
-      const groups = {};
-      edit.elements.filter(el=>!el.locked && el.colorGroup).forEach(el=>(groups[el.colorGroup] = groups[el.colorGroup] || []).push(el.id));
-      Object.entries(groups).filter(([, ids])=>ids.length > 1).forEach(([name, ids])=>goals.push({
-        label:`Give the "${name}" group one matching color.`, check:{sameColor:ids},
-        why:'Elements that do the same job should look the same, so the page feels consistent.',
-        tip:'Set every element in the group to the exact same color.', bonus:false }));
-      if(goals.some(g=>!g.bonus)) Object.assign(level, { canvas:edit.canvas, elements:edit.elements, originalGoals:level.goals, goals, edited:true });
-    });
+    LEVELS.forEach(level=>applyEdit(level, saved[level.id]));
   }catch(e){ /* No storage (tests) or bad data: keep the built-in levels. */ }
+
+  // Level 1 teaches spacing by moving things: no resizing or recoloring.
+  LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
 
   // Keep every canvas element's position and size on the 8-point grid.
   const to8=n=>Math.round(n/8)*8;

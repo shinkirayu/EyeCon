@@ -327,6 +327,48 @@
     }
     canvas.toBlob(blob=>{if(blob)download(filename('png'),blob,'image/png');},'image/png');
   }
+  // ---- Smart guides while moving: snap to other elements' left / center /
+  // right (and top / middle / bottom), and show the gap to the nearest
+  // neighbour on each side, like the game editor.
+  function snapToGuides(item){
+    const others=state.elements.filter(o=>o.id!==item.id&&!o.hidden);
+    const tol=6/scale, guides=[];
+    const axes=[['x','w',['Left','Center','Right'],state.canvas.w],['y','h',['Top','Middle','Bottom'],state.canvas.h]];
+    for(const [p,s,names,size] of axes){
+      const cands=[{v:0,name:'Edge'},{v:size/2,name:'Center'},{v:size,name:'Edge'}];
+      others.forEach(o=>[0,.5,1].forEach((f,i)=>cands.push({v:o[p]+o[s]*f,name:names[i]})));
+      let best=null;
+      [0,.5,1].forEach((f,i)=>{const edge=item[p]+item[s]*f;cands.forEach(c=>{const d=c.v-edge;if(Math.abs(d)<=tol&&(!best||Math.abs(d)<Math.abs(best.d)))best={d,v:c.v,name:i===1&&c.name!=='Edge'?names[1]:c.name};});});
+      if(best){item[p]=Math.round(item[p]+best.d);guides.push({axis:p,v:best.v,name:best.name});}
+    }
+    return guides;
+  }
+  function drawGuides(item,guides){
+    const canvas=$('maker-canvas'),u=1/scale;
+    const add=(css,text)=>{const d=document.createElement('div');d.className='maker-guide';d.style.cssText=css;if(text)d.textContent=text;canvas.appendChild(d);return d;};
+    guides.forEach(g=>{
+      if(g.axis==='x')add(`left:${g.v}px;top:0;width:${u}px;height:${state.canvas.h}px`);
+      else add(`top:${g.v}px;left:0;height:${u}px;width:${state.canvas.w}px`);
+      add(`left:${g.axis==='x'?g.v+4*u:item.x}px;top:${g.axis==='x'?item.y-22*u:g.v+4*u}px;font-size:${11*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`,g.name).classList.add('maker-guide-label');
+    });
+    // Nearest gap on each side, to elements sharing the row or column.
+    const near={};
+    state.elements.filter(o=>o.id!==item.id&&!o.hidden).forEach(o=>{
+      const rowShare=Math.min(item.y+item.h,o.y+o.h)-Math.max(item.y,o.y)>0, colShare=Math.min(item.x+item.w,o.x+o.w)-Math.max(item.x,o.x)>0;
+      const put=(side,gap,css)=>{if(gap>0&&(!near[side]||gap<near[side].gap))near[side]={gap,css};};
+      if(rowShare&&!colShare){const y=(Math.max(item.y,o.y)+Math.min(item.y+item.h,o.y+o.h))/2;
+        put('left',item.x-o.x-o.w,`left:${o.x+o.w}px;top:${y}px;width:${item.x-o.x-o.w}px;height:${u}px`);
+        put('right',o.x-item.x-item.w,`left:${item.x+item.w}px;top:${y}px;width:${o.x-item.x-item.w}px;height:${u}px`);}
+      if(colShare&&!rowShare){const x=(Math.max(item.x,o.x)+Math.min(item.x+item.w,o.x+o.w))/2;
+        put('top',item.y-o.y-o.h,`left:${x}px;top:${o.y+o.h}px;height:${item.y-o.y-o.h}px;width:${u}px`);
+        put('bottom',o.y-item.y-item.h,`left:${x}px;top:${item.y+item.h}px;height:${o.y-item.y-item.h}px;width:${u}px`);}
+    });
+    Object.values(near).forEach(n=>{
+      const line=add(n.css);line.classList.add('maker-gap');
+      const lb=document.createElement('span');lb.className='maker-gap-label';lb.textContent=Math.round(n.gap)+' px';
+      lb.style.cssText=`font-size:${11*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`;line.appendChild(lb);
+    });
+  }
   function moveOrResize(item,e){
     const dx=snap((e.clientX-drag.clientX)/scale);
     const dy=snap((e.clientY-drag.clientY)/scale);
@@ -652,10 +694,12 @@
     $('maker-canvas').addEventListener('pointermove',e=>{
       if(!drag)return;
       const item=drag.kind==='target'?selectedTarget():selected();if(!item||item.id!==drag.id)return;
-      moveOrResize(item,e);
+      moveOrResize(item,e);drag.moved=true;
+      const guides=drag.mode==='move'&&drag.kind!=='target'&&!e.altKey?snapToGuides(item):[];
       renderCanvas();
+      if(drag.kind!=='target')drawGuides(item,guides);
     });
-    const endDrag=()=>{if(drag){const changed=drag.before!==snapshot();drag=null;renderLayers();renderProperties();persist();if(changed)record();}};
+    const endDrag=()=>{if(drag){const changed=drag.before!==snapshot(),moved=drag.moved;drag=null;if(moved)renderCanvas();renderLayers();renderProperties();persist();if(changed)record();}};
     $('maker-canvas').addEventListener('pointerup',endDrag);
     $('maker-canvas').addEventListener('pointercancel',endDrag);
     $('maker-stage').addEventListener('wheel',e=>{

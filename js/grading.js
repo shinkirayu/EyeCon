@@ -90,7 +90,8 @@
   // ("these share a left edge") so there's no single pixel-perfect answer.
   const GOAL_TOOL = { align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
     evenGapsY:'position', evenGapsX:'position', safeMargin:'position', minW:'sizing', minH:'sizing',
-    minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color', sameColor:'color' };
+    minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color', sameColor:'color',
+    centeredX:'position', above:'position', sameSize:'sizing', wraps:'sizing' };
   function goalKind(check){ return Object.keys(check).find(k => GOAL_TOOL[k]); }
   function goalIds(check){
     const kind = goalKind(check), v = check[kind];
@@ -106,7 +107,10 @@
     const evenGaps = (pos, size) => {
       const sorted = els.slice().sort((a,b) => a[pos]-b[pos]);
       const gaps = sorted.slice(1).map((el,i) => el[pos] - (sorted[i][pos] + sorted[i][size]));
-      return gaps.every(g => g >= 8 && Math.abs(g - gaps[0]) <= 1);
+      // Optional minGap/maxGap: equal gaps must also be the right size, so
+      // pushing things far apart with matching gaps doesn't pass.
+      const lo = check.minGap != null ? check.minGap : 8, hi = check.maxGap != null ? check.maxGap : Infinity;
+      return gaps.every(g => g >= lo && g <= hi && Math.abs(g - gaps[0]) <= 1);
     };
     switch(kind){
       case 'align': return els.every(el => el.align === check.align);
@@ -130,6 +134,18 @@
         return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass;
       });
       case 'sameColor': return els.length > 1 && sameColor();
+      // Horizontally centred on the canvas.
+      case 'centeredX': return els.every(el => Math.abs(el.x + el.w/2 - level.canvas.w/2) <= 1);
+      // Pairs [label, box, label, box…]: each label sits fully above its box.
+      case 'above': return els.length % 2 === 0 && els.every((el, i) => i % 2 || el.y + el.h <= els[i+1].y);
+      case 'sameSize': return same(el => el.w) && same(el => el.h);
+      // [container, ...contents]: equal padding on all four sides around the contents.
+      case 'wraps': {
+        const [box, ...inner] = els;
+        const pads = [Math.min(...inner.map(e=>e.x)) - box.x, Math.min(...inner.map(e=>e.y)) - box.y,
+          box.x + box.w - Math.max(...inner.map(e=>e.x+e.w)), box.y + box.h - Math.max(...inner.map(e=>e.y+e.h))];
+        return pads.every(p => p >= 8 && Math.abs(p - pads[0]) <= 1);
+      }
     }
     return false;
   }

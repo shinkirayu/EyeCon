@@ -5,7 +5,7 @@ import test from 'node:test';
 async function setupWindow(){
   const context={window:{},localStorage:{getItem:()=>null,setItem:()=>{}},console};
   vm.createContext(context);
-  for(const file of ['cosmetics','levels','storage']) vm.runInContext(await readFile(`js/${file}.js`,'utf8'),context);
+  for(const file of ['cosmetics','level-edits','levels','storage']) vm.runInContext(await readFile(`js/${file}.js`,'utf8'),context);
   return context.window;
 }
 async function setup(){ return (await setupWindow()).EC_STORE; }
