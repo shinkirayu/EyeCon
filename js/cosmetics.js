@@ -19,6 +19,7 @@
 
   const ITEMS = [
     // ---- Desktop wallpapers ----
+    { id:'wp-studio',   category:'wallpaper', name:'Studio Wallpaper', rarity:'common',    emoji:'🖼️', css:"#b5a1cd url('assets/wallpapers/wallpaper-1.png') center / cover no-repeat" },
     { id:'wp-mint',     category:'wallpaper', name:'Lavender Desk',    rarity:'common',    emoji:'🌿', css:'linear-gradient(160deg, #b6a1d1 0%, #a993ca 100%)' },
     { id:'wp-peach',    category:'wallpaper', name:'Peach Fuzz',       rarity:'common',    emoji:'🍑', css:'linear-gradient(160deg, #ffe3d0 0%, #ffc9a8 100%)' },
     { id:'wp-lavender', category:'wallpaper', name:'Lavender Fields',  rarity:'rare',      emoji:'💜', css:'linear-gradient(160deg, #e3d6f7 0%, #c6aef0 100%)' },
@@ -109,7 +110,7 @@
   ];
   // Every player starts owning (and wearing) these baseline items.
   const CATEGORY_DEFAULT = {
-    wallpaper:'wp-mint', windowTheme:'theme-classic', iconPack:'icons-classic',
+    wallpaper:'wp-studio', windowTheme:'theme-classic', iconPack:'icons-classic',
     cursor:'cursor-default', uiSkin:'skin-default',
     deskSkin:'desk-oak', keyboardSkin:'kb-cream', mouseSkin:'mouse-white', towerSkin:'tower-cream', monitorSkin:'monitor-cream',
   };

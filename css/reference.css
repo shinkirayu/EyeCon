@@ -14,7 +14,7 @@
   position:absolute; z-index:8; left:45.9%; top:66.6%; width:7.8%; height:11.8%;
   min-width:0; min-height:0; padding:0; background:#f18586!important;
   border:0; border-radius:8% 4% 8% 3%; box-shadow:0 .5cqw 0 #65acc480; transform:rotate(1deg);
-  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;
 }
 #screen-home #mini-desktop>*{ display:none; }
 #screen-home #mini-desktop::before{ content:'start'; font:800 3.1cqw var(--font-display); color:white; }
@@ -56,13 +56,13 @@
 #screen-desktop .desktop-icon:not(#icon-mail){ position:fixed; bottom:.5625rem; width:2.625rem; min-width:2.625rem; min-height:2.625rem; }
 #screen-desktop #icon-stats{ left:7.875rem; }#screen-desktop #icon-shop{ left:11.125rem; }#screen-desktop #icon-settings{ left:14.375rem; }
 #screen-desktop .desktop-icon:not(#icon-mail) .desktop-icon-glyph{ width:2.5rem!important; height:2.5rem!important; border:0; background:transparent; font-size:1.5rem; }
-#screen-desktop .desktop-icon-badge{ top:-.625rem; right:-.75rem; background:#df0036; border:0; box-shadow:none; font:700 clamp(1.375rem,2.4cqw,2.625rem) var(--font-display); min-width:1.875rem; padding:2px .625rem; }
+#screen-desktop .desktop-icon-badge{ top:-.625rem; right:-.75rem; background:#df0036; border:0; box-shadow:none; font:700 clamp(1.375rem,2.4cqw,2.625rem) var(--font-display); min-width:1.875rem; padding:4px 0.5rem; }
 #global-taskbar{ background:#b6e1da; border:0; box-shadow:none; height:calc(3.75rem + env(safe-area-inset-bottom,0px)); }
 #global-taskbar .taskbar-btn{ border:0; background:transparent; box-shadow:none; font-size:1.75rem; }
 #global-taskbar #taskbar-profile{ order:-2; }#global-taskbar #taskbar-home{ order:-1; }
-#global-taskbar .taskbar-clock{ background:#f8df8d; border:0; border-radius:.5625rem .5625rem 1.125rem .5625rem; font:700 1.75rem/1.3 var(--font-display); padding:.5625rem 1.125rem; color:#311c26; white-space:nowrap; flex-shrink:0; }
+#global-taskbar .taskbar-clock{ background:#f8df8d; border:0; border-radius:.5625rem .5625rem 1.125rem .5625rem; font:700 1.75rem/1.3 var(--font-display); padding:0.5rem 1rem; color:#311c26; white-space:nowrap; flex-shrink:0; }
 #screen-shell,#screen-stats,#screen-shop,#screen-settings{ background:#fcf7ef; }
-.mail-header{ min-height:clamp(6rem,10.6vw,12.75rem); padding:1.5rem 3.4%; border:0; background:#fcf7ef; gap:1.875rem; }
+.mail-header{ min-height:clamp(6rem,10.6vw,12.75rem); padding:1.5rem 3.4%; border:0; background:#fcf7ef; gap:2rem; }
 .mail-header .app-back-btn{ width:2.75rem; height:2.75rem; min-width:2.75rem; border:0; background:transparent; box-shadow:none; }
 #screen-shell .mail-header .app-back-btn{ position:absolute; left:.5rem; top:.625rem; font-size:1.25rem; }
 .mail-logo{ color:#528f91; font:700 clamp(1.875rem,3.5vw,4.125rem) var(--font-display); }
@@ -71,8 +71,8 @@
 .mail-search input{ font:400 clamp(1.5rem,2.5vw,2.875rem) var(--font-body); }.mail-search .icon-search{ font-size:1.875rem; }
 #screen-shell .mail-header-right{ display:none; }
 .mail-body{ padding:0 5.2% 3%; gap:2%; overflow:hidden; }
-.mail-sidebar{ width:20%; padding-top:2%; gap:2.375rem; flex-shrink:0; }
-.side-btn{ position:relative; min-height:clamp(5.625rem,9vw,10.875rem); border:0; border-radius:2.125rem; padding:1.25rem; background:#f9da85; box-shadow:.5rem .75rem .5rem #bd9b7133; color:#3b172e; font:700 clamp(1.75rem,2.4vw,2.875rem) var(--font-display); text-transform:uppercase; }
+.mail-sidebar{ width:20%; padding-top:2%; gap:2.5rem; flex-shrink:0; }
+.side-btn{ position:relative; min-height:clamp(5.625rem,9vw,10.875rem); border:0; border-radius:2.125rem; padding:1.5rem; background:#f9da85; box-shadow:.5rem .75rem .5rem #bd9b7133; color:#3b172e; font:700 clamp(1.75rem,2.4vw,2.875rem) var(--font-display); text-transform:uppercase; }
 .side-btn.active{ background:#ddcfe3; color:#3b172e; }.side-icon{ font-size:clamp(2.5rem,4.6vw,5.25rem); }.side-btn .badge-count{ position:absolute; top:16%; left:30%; background:#df0036; color:white; }
 .side-icon-inbox,.side-icon-completed{ display:inline-block; width:1em; height:1em; background-position:center; background-size:contain; background-repeat:no-repeat; }
 .side-icon-inbox{ background-image:url('../assets/icons/inbox-icon.svg'); }
@@ -82,52 +82,52 @@
 /* Compact single-line row: name, then its preview quoted right after it on
    the same line (truncated with an ellipsis), a small status pill, then the
    unread dot — not the old tall stacked card. */
-.mail-item{ min-height:0; height:auto; border:2px solid #e6ddc8; border-radius:1.25rem; background:#fcf8f3; gap:1rem; padding:1rem 1.625rem; margin-bottom:.75rem; align-items:center; }
-.mail-item-name{ font:700 .9375rem var(--font-display); color:#3b172e; text-transform:uppercase; flex:0 1 auto; white-space:nowrap; }
+.mail-item{ min-height:0; height:auto; border:2px solid #e6ddc8; border-radius:1.25rem; background:#fcf8f3; gap:1rem; padding:1rem 1.5rem; margin-bottom:1rem; align-items:center; }
+.mail-item-name{ font:700 1rem var(--font-display); color:#3b172e; text-transform:uppercase; flex:0 1 auto; white-space:nowrap; }
 .mail-item-preview{
-  font:400 .875rem var(--font-body); color:#a4a0a2; text-transform:none; flex:1 1 5rem; min-width:0;
+  font:400 1rem var(--font-body); color:#a4a0a2; text-transform:none; flex:1 1 5rem; min-width:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .mail-item-preview::before{ content:'"'; }
 .mail-item-preview::after{ content:'"'; }
-.mail-item .tag{ font-size:.75rem; padding:.3125rem .75rem; border-radius:.875rem; flex-shrink:0; }
+.mail-item .tag{ font-size:1rem; padding:0.25rem 1rem; border-radius:.875rem; flex-shrink:0; }
 .mail-item .unread-dot{ width:.625rem; height:.625rem; flex-shrink:0; }
 .mail-item .avatar-circle,.mail-detail-head .avatar-circle{ background:#effafa; border:.1875rem solid #9dccd9; color:#9dccd9; }
 .mail-item .avatar-circle{ width:clamp(3.25rem,4.8vw,5.75rem); height:clamp(3.25rem,4.8vw,5.75rem); font-size:0; flex-shrink:0; }
 .mail-item .avatar-circle::after{ content:'\2659'; font:400 clamp(2.5rem,4vw,4.875rem)/1 Arial; }
-.tag{ background:#91ee94!important; color:white; border:0; font:700 1.5rem var(--font-display); padding:.5rem .9375rem; }
+.tag{ background:#91ee94!important; color:white; border:0; font:700 1.5rem var(--font-display); padding:.5rem 1rem; }
 .modal-overlay{ background:#0006; backdrop-filter:none; padding:1.5rem; }
-.mail-detail-card{ width:min(76.5rem,92vw); max-width:76.5rem; padding:3.75rem 4.125rem; border:.1875rem solid #78bdb2; border-radius:2.25rem; background:#fcf7ef; box-shadow:none; }
+.mail-detail-card{ width:min(76.5rem,92vw); max-width:76.5rem; padding:4rem 4rem; border:.1875rem solid #78bdb2; border-radius:2.25rem; background:#fcf7ef; box-shadow:none; }
 .mail-detail-head h2{ font:700 clamp(2.125rem,3.2vw,3.75rem) var(--font-display); text-transform:uppercase; }
 .mail-detail-level-tag{ display:none; }
 .mail-detail-body{ white-space:pre-line; font:400 clamp(1.5625rem,2.35vw,2.75rem)/1.22 var(--font-body); color:#3b172e; }
 .mail-detail-actions .btn,.confirm-card .btn{ font:700 clamp(1.625rem,2.5vw,2.875rem) var(--font-display); text-transform:uppercase; border-radius:1.625rem; border:.1875rem solid #77b9af; }
 .btn-accept{ background:#94d9cf; color:white; box-shadow:.25rem .4375rem .5rem #bca68640; }
 .attachment-chip{
-  display:inline-flex; align-items:center; gap:.625rem; background:transparent; border:0; border-radius:0;
-  padding:.375rem 0; color:#2e8c7e; font:700 1.375rem var(--font-display); text-transform:uppercase;
-  box-shadow:none; cursor:pointer;
+  display:inline-flex; align-items:center; gap:0.5rem; background:transparent; border:0; border-radius:0;
+  padding:0.5rem 0; color:#2e8c7e; font:700 1.375rem var(--font-display); text-transform:uppercase;
+  box-shadow:none; cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;
 }
 .attachment-chip::before{
   content:'PNG'; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
   width:1.75rem; height:2rem; border-radius:.3125rem .3125rem .3125rem 0; background:#77b9af; color:#fff;
-  font:800 .5625rem var(--font-display); letter-spacing:.02em;
+  font:800 1rem var(--font-display); letter-spacing:.02em;
 }
 .confirm-card{ border:.1875rem solid #77b9af; border-radius:2.25rem; background:#fcf7ef; box-shadow:none; }.confirm-card p{ font:700 2.5rem var(--font-display); text-transform:uppercase; }
 /* Compose ("typing email") card kept visually IDENTICAL to the incoming
    client mail-detail card — same border/size/type — instead of a distinct
    look, so sending a reply and reading one feel like the same email thread,
    not two different UI systems. No dashed box, no purple focus ring. */
-.compose-card{ width:min(76.5rem,92vw); max-width:76.5rem; padding:3.75rem 4.125rem; border:.1875rem solid #78bdb2; border-radius:2.25rem; background:#fcf7ef; box-shadow:none; }
-.compose-to{ font:700 clamp(2.125rem,3.2vw,3.75rem) var(--font-display); color:#3b172e; text-transform:uppercase; margin-bottom:1.125rem; }
+.compose-card{ width:min(76.5rem,92vw); max-width:76.5rem; padding:4rem 4rem; border:.1875rem solid #78bdb2; border-radius:2.25rem; background:#fcf7ef; box-shadow:none; }
+.compose-to{ font:700 clamp(2.125rem,3.2vw,3.75rem) var(--font-display); color:#3b172e; text-transform:uppercase; margin-bottom:1rem; }
 .compose-body{ min-height:11.25rem; max-height:none; padding:0; border:0; background:transparent; color:#3b172e; font:400 clamp(1.5625rem,2.35vw,2.75rem)/1.22 var(--font-body); text-transform:uppercase; }
 .compose-body:focus-visible{ outline:none; box-shadow:none; }
-.compose-hint{ margin:.875rem 0 0; color:#528f91; font:400 1.25rem var(--font-body); text-transform:uppercase; }
-.compose-attach-row .attach-btn{ display:flex; align-items:center; gap:.625rem; padding:.625rem 1rem; border:0; border-radius:1.0625rem; background:transparent; color:#70b7b1; font:700 1.75rem var(--font-display); text-transform:uppercase; }
-#modal-compose .btn-send{ display:inline-flex; min-width:0; min-height:0; align-items:center; justify-content:center; gap:.625rem; margin-top:1.75rem; padding:.875rem 2.125rem; border:0; border-radius:1.625rem; background:#215bcc; box-shadow:none; color:#fffdf8; font:700 clamp(1.625rem,2.5vw,2.875rem) var(--font-display); text-transform:uppercase; }
+.compose-hint{ margin:1rem 0 0; color:#528f91; font:400 1.25rem var(--font-body); text-transform:uppercase; }
+.compose-attach-row .attach-btn{ display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; border:0; border-radius:1.0625rem; background:transparent; color:#70b7b1; font:700 1.75rem var(--font-display); text-transform:uppercase; }
+#modal-compose .btn-send{ display:inline-flex; min-width:0; min-height:0; align-items:center; justify-content:center; gap:0.5rem; margin-top:2rem; padding:1rem 2rem; border:0; border-radius:1.625rem; background:#215bcc; box-shadow:none; color:#fffdf8; font:700 clamp(1.625rem,2.5vw,2.875rem) var(--font-display); text-transform:uppercase; }
 #modal-compose .btn-send:disabled{ opacity:.5; }
 @media(max-width:900px){
-  .compose-card{ padding:1.75rem 1.5rem; } .compose-body{ font-size:1.75rem; } .compose-to{ font-size:2.25rem; }
+  .compose-card{ padding:2rem 1.5rem; } .compose-body{ font-size:1.75rem; } .compose-to{ font-size:2.25rem; }
 }
 
 #screen-editor{ background:#fcf7ef; }
@@ -136,10 +136,10 @@
    same --font-display already loaded here), not the handwritten font used
    elsewhere in this theme — the editor toolbar reads as UI chrome, not a
    note, in that reference. */
-#screen-editor .tool-btn{ display:inline-flex; min-height:3.625rem; align-items:center; gap:.4375rem; padding:0 1.0625rem; background:#fffaf4; color:#402238; font:1.3125rem/1 var(--font-display); border:0; box-shadow:none; border-radius:.6875rem; }
+#screen-editor .tool-btn{ display:inline-flex; min-height:3.625rem; align-items:center; gap:0.5rem; padding:0 1rem; background:#fffaf4; color:#402238; font:1.3125rem/1 var(--font-display); border:0; box-shadow:none; border-radius:.6875rem; }
 #screen-editor .tool-btn.active{ background:#77beb4; color:#fffdf8; }
 #screen-editor .tool-btn.btn-save{ background:#fffaf4; color:#402238; font:1.375rem/1 var(--font-display); border:0; box-shadow:none; }
-#screen-editor .tool-pill{ border:0; background:transparent; gap:.625rem; }
+#screen-editor .tool-pill{ border:0; background:transparent; gap:0.5rem; }
 #screen-editor .editor-main{ background:#fcf7ef; }
 #screen-editor .editor-canvas-wrap{ background:#e4e1da; background-image:none; border-radius:1.75rem 1.75rem 0 0; }
 #screen-editor .editor-canvas{ box-shadow:none; }
@@ -149,26 +149,26 @@
 #screen-editor .element-settings-head{ background:#fcf7ef; }
 #screen-editor .element-settings h3{ font:700 1.75rem var(--font-display); text-transform:uppercase; }
 #screen-editor .element-settings input,#screen-editor .element-settings select{ border:2px solid #e4d8ca; border-radius:.75rem; background:#fcf7ef; font-family:var(--font-body); font-size:1.4375rem; }
-#screen-editor .field-group label{ font:700 .9375rem var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin-bottom:.5rem; }
+#screen-editor .field-group label{ font:700 1rem var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin-bottom:.5rem; }
 #screen-editor .mini-field{ border:2px solid #e4d8ca; border-radius:.75rem; background:#fcf7ef; }
 #screen-editor .mini-field .mini-label{ background:#e7f3f0; color:#528f91; font-family:var(--font-display); }
-#screen-editor .color-row{ background:#fcf7ef; border:2px solid #e4d8ca; border-radius:.75rem; padding:.625rem .875rem; gap:.75rem; }
+#screen-editor .color-row{ background:#fcf7ef; border:2px solid #e4d8ca; border-radius:.75rem; padding:0.5rem 1rem; gap:1rem; }
 #screen-editor .color-row input[type=color]{ width:2.125rem; height:2.125rem; border-radius:.5rem; }
 #screen-editor .color-row .hex{ font-family:var(--font-display); font-weight:700; font-size:1rem; color:#3b172e; }
-#screen-editor .contrast-value-label{ font:700 .9375rem var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin:.875rem 0 .5rem; }
+#screen-editor .contrast-value-label{ font:700 1rem var(--font-display); letter-spacing:.04em; text-transform:uppercase; color:#528f91; margin:1rem 0 .5rem; }
 #screen-editor .contrast-badge{
-  background:#fcf7ef; border:2px solid #e4d8ca; border-radius:.875rem; padding:.75rem 1rem; justify-content:space-between;
+  background:#fcf7ef; border:2px solid #e4d8ca; border-radius:.875rem; padding:1rem 1rem; justify-content:space-between;
 }
 #screen-editor .contrast-badge .contrast-ratio{ font:800 1.5rem var(--font-display); }
 #screen-editor .contrast-badge.pass .contrast-ratio{ color:#2fa66a; }
 #screen-editor .contrast-badge.fail .contrast-ratio{ color:#d9414f; }
 #screen-editor .contrast-badge .contrast-check{
   display:inline-flex; align-items:center; justify-content:center; width:1.625rem; height:1.625rem; border-radius:50%;
-  font-size:.9375rem; font-weight:800; color:#fff;
+  font-size:1rem; font-weight:800; color:#fff;
 }
 #screen-editor .contrast-badge.pass .contrast-check{ background:#2fa66a; }
 #screen-editor .contrast-badge.fail .contrast-check{ background:#d9414f; }
-#screen-editor .contrast-note{ font-family:var(--font-body); font-size:.8125rem; color:#8a8398; margin-top:.375rem; }
+#screen-editor .contrast-note{ font-family:var(--font-body); font-size:1rem; color:#8a8398; margin-top:0.5rem; }
 @media(min-width:901px){
   /* Side tools match the reference while remaining an overlay: selection
      never changes the canvas fit or zoom. */
@@ -177,21 +177,21 @@
 }
 @media(max-width:900px){
   .mail-header{ padding:1rem; min-height:6rem; gap:1rem; }.mail-logo{font-size:1.875rem;}.mail-search{margin:0;}.mail-search input{font-size:1.5rem;}
-  .mail-body{flex-direction:column;padding:0 1rem 1rem;gap:1.125rem;overflow-y:auto;}.mail-sidebar{width:100%;flex-direction:row;gap:.875rem;padding:0;}.side-btn{min-height:4.125rem;border-radius:1.25rem;font-size:1.75rem;padding:.75rem 1.375rem;}.side-icon{font-size:1.875rem;}.side-btn .badge-count{position:static;}.mail-panel{flex:none;min-height:50vh;padding:0 .875rem;}.mail-item{min-height:6.25rem;}.mail-item-name{font-size:1.75rem;}.mail-item-preview{font-size:1.5rem;}.tag{font-size:1.25rem;}
-  .mail-detail-card{padding:1.75rem 1.5rem;}.mail-detail-body{font-size:1.75rem;}.mail-detail-head h2{font-size:2.25rem;}
+  .mail-body{flex-direction:column;padding:0 1rem 1rem;gap:1rem;overflow-y:auto;}.mail-sidebar{width:100%;flex-direction:row;gap:1rem;padding:0;}.side-btn{min-height:4.125rem;border-radius:1.25rem;font-size:1.75rem;padding:1rem 1.5rem;}.side-icon{font-size:1.875rem;}.side-btn .badge-count{position:static;}.mail-panel{flex:none;min-height:50vh;padding:0 1rem;}.mail-item{min-height:6.25rem;}.mail-item-name{font-size:1.75rem;}.mail-item-preview{font-size:1.5rem;}.tag{font-size:1.25rem;}
+  .mail-detail-card{padding:2rem 1.5rem;}.mail-detail-body{font-size:1.75rem;}.mail-detail-head h2{font-size:2.25rem;}
   #screen-desktop .desktop-wallpaper::after{left:15%;width:78%;top:18%;height:72%;}
 }
 @media(max-width:640px){
   #screen-home .desk-scene{width:100vw;height:56.25vw;overflow:visible;}
   #screen-home #mini-desktop{min-width:4.5rem;min-height:3rem;left:calc(50% - 2.25rem);top:67%;}#screen-home #mini-desktop::before{font-size:1.625rem;}
   #screen-home .sticky-note{min-width:2.75rem;min-height:2.75rem;}
-  .mail-logo .eyecon-logo{display:none;}.mail-logo{font-size:1.625rem;}.mail-search{min-width:0;height:3.125rem;padding:.5rem .75rem;}.mail-search input{font-size:1.3125rem;}.mail-search .icon-search{font-size:1.125rem;}
+  .mail-logo .eyecon-logo{display:none;}.mail-logo{font-size:1.625rem;}.mail-search{min-width:0;height:3.125rem;padding:.5rem 1rem;}.mail-search input{font-size:1.3125rem;}.mail-search .icon-search{font-size:1.125rem;}
   #screen-editor .tool-btn{font-size:1.25rem;}.mail-detail-actions .btn,.confirm-card .btn{font-size:1.75rem;}
   #screen-desktop .desktop-icons{width:4rem;left:1.25rem;top:1.5rem;}
   #screen-desktop .desktop-icon-badge{right:-.3125rem;}
   #screen-desktop .desktop-icon:not(#icon-mail){bottom:.5rem;width:2.25rem;}
   #screen-desktop #icon-stats{left:7.375rem;}#screen-desktop #icon-shop{left:9.875rem;}#screen-desktop #icon-settings{left:12.375rem;}
-  #global-taskbar .taskbar-clock{font-size:1.5rem;padding:.5rem .75rem;}
+  #global-taskbar .taskbar-clock{font-size:1.5rem;padding:.5rem 1rem;}
 }
 #screen-home #mini-desktop::before{ text-shadow:none; -webkit-text-stroke:0; }
 #screen-editor .element-settings.collapsed{ z-index:120; }
@@ -217,9 +217,9 @@
   #screen-editor .editor-hint-pill{left:1.625rem;top:0;max-width:calc(var(--tools-rail) - 3.25rem);width:15rem;padding:1rem;font-size:1.75rem;}
   #screen-editor .element-settings,#screen-editor .element-settings.collapsed{left:1.5rem;top:9.375rem;max-width:calc(var(--tools-rail) - 3rem);width:calc(var(--tools-rail) - 3rem);}
   #screen-editor .element-settings{max-height:calc(100% - 10.625rem);}
-  #global-taskbar{height:clamp(3.75rem,5.5vw,6.625rem);padding:.625rem 1.875rem;gap:1.125rem;}
+  #global-taskbar{height:clamp(3.75rem,5.5vw,6.625rem);padding:0.5rem 2rem;gap:1rem;}
   #global-taskbar .taskbar-btn{width:4rem;height:4rem;font-size:2.5rem;}
-  #global-taskbar .taskbar-clock{font-size:3rem;padding:1rem 1.625rem;}
+  #global-taskbar .taskbar-clock{font-size:3rem;padding:1rem 1.5rem;}
   #screen-desktop .desktop-icon:not(#icon-mail){bottom:1.5rem;}
   #screen-desktop #icon-stats{left:13.125rem;}#screen-desktop #icon-shop{left:16.875rem;}#screen-desktop #icon-settings{left:20.625rem;}
 }
@@ -241,15 +241,15 @@
 }
 .taskbar-quick-popup.hidden{display:none;}
 @keyframes taskbarPopupIn{from{opacity:0;transform:translateY(.625rem) scale(.97)}to{opacity:1;transform:none}}
-.taskbar-quick-popup-head{display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;background:#b6e1da;border-bottom:2px solid #91c5d8;}
+.taskbar-quick-popup-head{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:#b6e1da;border-bottom:2px solid #91c5d8;}
 .taskbar-quick-popup-head img{width:2rem;height:2rem;}
 .taskbar-quick-popup-head strong{flex:1;font-family:var(--font-display);color:#254b50;}
-.taskbar-quick-popup-head button{width:2.125rem;height:2.125rem;border:0;border-radius:.5rem;background:transparent;color:#254b50;cursor:pointer;font-size:1rem;}
+.taskbar-quick-popup-head button{width:2.125rem;height:2.125rem;border:0;border-radius:.5rem;background:transparent;color:#254b50;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;font-size:1rem;}
 .taskbar-quick-popup-head button:hover,.taskbar-quick-popup-head button:focus-visible{background:rgba(37,75,80,.1);}
 .taskbar-quick-popup-body{min-height:0;overflow:auto;}
-.taskbar-quick-popup-body .app-content-wrap{padding:.875rem;overflow:visible;}
+.taskbar-quick-popup-body .app-content-wrap{padding:1rem;overflow:visible;}
 .taskbar-quick-popup-body .content-panel{padding:0;}
-.taskbar-quick-popup-body .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5625rem;}
+.taskbar-quick-popup-body .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;}
 @media(max-width:520px){.taskbar-quick-popup{left:.75rem;width:calc(100vw - 1.5rem);}.taskbar-quick-popup-body .stat-grid{grid-template-columns:1fr 1fr;}}
 /* Keep status information secondary to navigation, including on the large
    desktop breakpoint where the earlier responsive rule made it oversized. */
@@ -258,7 +258,7 @@
   line-height:1.2;
   min-height:3.375rem;
   min-width:9.375rem;
-  padding:.625rem 1.125rem;
+  padding:0.5rem 1rem;
   border-radius:.625rem;
   display:flex;
   align-items:center;
@@ -275,7 +275,7 @@
 }
 #global-taskbar .taskbar-clock span{display:block;}
 .taskbar-quick-popup.profile-layout{width:min(20rem,calc(100vw - 1.5rem));max-height:min(38rem,calc(100vh - 6rem));background:#fcf7ef;border:2px solid #70bcb4;border-radius:1rem;}
-.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head{position:static;padding:.5rem .75rem;background:#b6e1da;border-bottom:2px solid #91c5d8;}
+.taskbar-quick-popup.profile-layout .taskbar-quick-popup-head{position:static;padding:.5rem 1rem;background:#b6e1da;border-bottom:2px solid #91c5d8;}
 .taskbar-quick-popup.profile-layout .taskbar-quick-popup-head img{display:block;}
 .taskbar-quick-popup.profile-layout .taskbar-quick-popup-head strong{display:block;}
 .taskbar-quick-popup.profile-layout .taskbar-quick-popup-head button{font-size:1.125rem;color:#265e66;}
@@ -284,16 +284,16 @@
 .profile-quick-card h2{margin:0;color:#315e65;font:700 1.75rem/1.1 var(--font-display);}
 .profile-quick-stars{display:flex;font-size:2rem;line-height:1;letter-spacing:0;}
 .profile-rating-row{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;}
-.profile-feedback-count{color:#315e65;font:700 .875rem var(--font-body);white-space:nowrap;}
+.profile-feedback-count{color:#315e65;font:700 1rem var(--font-body);white-space:nowrap;}
 .profile-quick-stars .filled{color:#f5c544;}
-.profile-quick-strip,.profile-quick-action{width:100%;min-height:2.5rem;padding:.5rem .75rem;border:2px solid #c8e6da;border-radius:.5rem;background:#fff;display:flex;align-items:center;justify-content:center;font:700 1rem/1.2 var(--font-body);color:#3b172e;}
-.profile-badge-grid{width:100%;padding:.75rem;margin:0;display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;background:#e2f2ed;border:2px solid #c8e6da;border-radius:.5rem;}
+.profile-quick-strip,.profile-quick-action{width:100%;min-height:2.5rem;padding:.5rem 1rem;border:2px solid #c8e6da;border-radius:.5rem;background:#fff;display:flex;align-items:center;justify-content:center;font:700 1rem/1.2 var(--font-body);color:#3b172e;}
+.profile-badge-grid{width:100%;padding:1rem;margin:0;display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;background:#e2f2ed;border:2px solid #c8e6da;border-radius:.5rem;}
 .profile-badge-dot{aspect-ratio:1;border-radius:50%;background:#c8d9d5;}
 .profile-badge-dot.unlocked{background:#77b9af;box-shadow:inset 0 0 0 2px #fff;}
-.profile-quick-action{justify-content:flex-start;cursor:pointer;background:#f4faf7;}
+.profile-quick-action{justify-content:flex-start;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;background:#f4faf7;}
 .profile-quick-action:hover,.profile-quick-action:focus-visible{background:#d5eeea;}
-.mail-prize{flex:none;padding:.5rem;border-radius:.5rem;background:#fff1c9;color:#694b20;font:700 .8125rem var(--font-body);white-space:nowrap;}
-@media(max-width:640px){.mail-prize{font-size:.6875rem;padding:.375rem;}}
+.mail-prize{flex:none;padding:.5rem;border-radius:.5rem;background:#fff1c9;color:#694b20;font:700 1rem var(--font-body);white-space:nowrap;}
+@media(max-width:640px){.mail-prize{font-size:1rem;padding:0.5rem;}}
 /* These app shortcuts were being positioned over the taskbar and duplicating
    its controls. Mail remains on the desktop; Shop lives in the taskbar. */
 #screen-desktop #icon-stats,
@@ -324,13 +324,13 @@
 #screen-desktop #icon-mail.tutorial-mail-pulse .desktop-icon-glyph{animation:none;}
 @keyframes tutorialMailBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-.625rem)}}
 .reduce-motion #screen-desktop #icon-mail.tutorial-mail-pulse{animation:none;}
-.mail-sidebar .side-btn{display:flex;align-items:center;justify-content:flex-start;gap:clamp(.625rem,1vw,1.25rem);padding:1rem;min-width:0;}
+.mail-sidebar .side-btn{display:flex;align-items:center;justify-content:flex-start;gap:clamp(0.5rem,1vw,1.5rem);padding:1rem;min-width:0;}
 .mail-sidebar .side-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-size:clamp(2rem,3.5vw,4rem);}
 .mail-sidebar .folder-label{min-width:0;white-space:nowrap;font-size:clamp(1.5rem,2.1vw,2.5rem);line-height:1.1;}
 .mail-sidebar .side-btn .badge-count{position:absolute;left:auto;right:0;top:0;transform:translate(40%,-40%);width:1.75rem;height:1.75rem;min-width:1.75rem;margin:0;padding:0;font:700 1.375rem/1 var(--font-display);border:2px solid #fcf7ef;box-shadow:none;}
 @media(max-width:900px){
- .mail-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;}
- .mail-sidebar .side-btn{width:100%;padding:.75rem;gap:.75rem;justify-content:center;}
+ .mail-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}
+ .mail-sidebar .side-btn{width:100%;padding:1rem;gap:1rem;justify-content:center;}
  .mail-sidebar .side-icon{font-size:1.875rem;}
  .mail-sidebar .folder-label{font-size:clamp(1.375rem,4.5vw,1.75rem);}
  .mail-sidebar .side-btn .badge-count{width:1.5rem;height:1.5rem;min-width:1.5rem;font-size:1.25rem;}
@@ -346,36 +346,36 @@
 /* Mail uses edge-to-edge rows and a bounded folder rail at every size. */
 #screen-shell .mail-panel{padding:0;overflow-x:hidden;overflow-y:auto;isolation:isolate;}
 #screen-shell .mail-list{width:100%;min-width:0;}
-#screen-shell .mail-item{padding:1rem 1.875rem;gap:1rem;min-height:0;height:auto;width:100%;box-sizing:border-box;}
+#screen-shell .mail-item{padding:1rem 2rem;gap:1rem;min-height:0;height:auto;width:100%;box-sizing:border-box;}
 #screen-shell .mail-item .avatar-circle{width:2.75rem;height:2.75rem;}
-#screen-shell .mail-item-name{font-size:.9375rem;}
-#screen-shell .mail-item-preview{font-size:.875rem;}
+#screen-shell .mail-item-name{font-size:1rem;}
+#screen-shell .mail-item-preview{font-size:1rem;}
 /* Sidebar-to-panel proportions matched to the Figma wireframe (node 441:122):
    two equal-height folder cards filling the same total height as the panel
    beside them, at a ~19% width share of the row — not a fixed px column. */
 #screen-shell .mail-sidebar{width:19%;gap:5%;padding:0;overflow:visible;align-self:stretch;}
-#screen-shell .mail-sidebar .side-btn{width:100%;flex:1; height:auto;min-height:0;padding:1.625rem 1.5rem;gap:.875rem;border-radius:1.625rem;flex-direction:row;justify-content:center;align-items:center;box-shadow:0 .4375rem .625rem #bd9b7126;transform:none;}
+#screen-shell .mail-sidebar .side-btn{width:100%;flex:1; height:auto;min-height:0;padding:1.5rem 1.5rem;gap:1rem;border-radius:1.625rem;flex-direction:row;justify-content:center;align-items:center;box-shadow:0 .4375rem .625rem #bd9b7126;transform:none;}
 #screen-shell .mail-sidebar .side-icon{width:2.75rem;height:2.75rem;font-size:2.5rem;}
 #screen-shell .mail-sidebar .folder-label{font-size:1.25rem;line-height:1.1;}
 #screen-shell .side-btn:hover,#screen-shell .side-btn:focus-visible{box-shadow:0 .5625rem .875rem #bd9b713d;}
 @media(max-width:900px){
- #screen-shell .mail-sidebar{width:100%;gap:.75rem;align-self:stretch;flex-shrink:0;flex-direction:row;}
- #screen-shell .mail-sidebar .side-btn{flex:1; height:auto;min-height:0;padding:1.125rem .75rem;gap:.625rem;justify-content:center;border-radius:1.375rem;}
+ #screen-shell .mail-sidebar{width:100%;gap:1rem;align-self:stretch;flex-shrink:0;flex-direction:row;}
+ #screen-shell .mail-sidebar .side-btn{flex:1; height:auto;min-height:0;padding:1rem 1rem;gap:0.5rem;justify-content:center;border-radius:1.375rem;}
  #screen-shell .mail-sidebar .side-icon{width:2rem;height:2rem;font-size:1.875rem;}
  #screen-shell .mail-sidebar .folder-label{font-size:1rem;}
- #screen-shell .mail-item{padding:.875rem 1.375rem;min-height:0;gap:.75rem;}
- #screen-shell .mail-item-name{font-size:.875rem;}
+ #screen-shell .mail-item{padding:1rem 1.5rem;min-height:0;gap:1rem;}
+ #screen-shell .mail-item-name{font-size:1rem;}
 }
 @media(max-width:480px){
- #screen-shell .mail-body{padding:0 .75rem 1rem;gap:1.25rem;}
- #screen-shell .mail-sidebar{gap:.625rem;}
- #screen-shell .mail-sidebar .side-btn{padding:.75rem .625rem;gap:.625rem;}
+ #screen-shell .mail-body{padding:0 1rem 1rem;gap:1.5rem;}
+ #screen-shell .mail-sidebar{gap:0.5rem;}
+ #screen-shell .mail-sidebar .side-btn{padding:1rem 0.5rem;gap:0.5rem;}
  #screen-shell .mail-sidebar .side-icon{width:1.875rem;height:1.875rem;font-size:1.75rem;}
  #screen-shell .mail-sidebar .folder-label{font-size:1.5rem;}
- #screen-shell .mail-item{padding:1rem .875rem;gap:.75rem;}
+ #screen-shell .mail-item{padding:1rem 1rem;gap:1rem;}
  #screen-shell .mail-item .avatar-circle{width:2.875rem;height:2.875rem;}
  #screen-shell .mail-item-name{font-size:1.5625rem;}
- #screen-shell .mail-item .tag{font-size:1.125rem;padding:.4375rem .625rem;}
+ #screen-shell .mail-item .tag{font-size:1.125rem;padding:0.5rem 0.5rem;}
 }
 
 /* Email screen — responsive translation of the supplied 1920×1080 Figma
@@ -444,8 +444,8 @@
     width:100%;
     min-width:0;
     height:100%;
-    padding-top:2.25rem;
-    gap:2.6875rem;
+    padding-top:2.5rem;
+    gap:2.5rem;
     align-self:stretch;
     display:flex;
     flex-direction:column;
@@ -455,9 +455,9 @@
     width:100%;
     height:10.75rem;
     min-height:10.75rem;
-    padding:1.75rem 1.875rem;
+    padding:2rem 2rem;
     justify-content:center;
-    gap:1.125rem;
+    gap:1rem;
     border-radius:2.1875rem;
     min-width:0;
     overflow:hidden;
@@ -467,7 +467,7 @@
     height:clamp(2.125rem,2.7vw,3.25rem);
   }
   #screen-shell .mail-sidebar .folder-label{
-    font-size:clamp(.875rem,1.75vw,2.125rem);
+    font-size:clamp(1rem,1.75vw,2.125rem);
   }
   #screen-shell .mail-panel{
     width:100%;
@@ -483,7 +483,7 @@
   }
   #screen-shell .mail-item{
     min-height:clamp(7.375rem,13vh,10.375rem);
-    padding:1.625rem clamp(1.625rem,2.4vw,2.875rem);
+    padding:1.5rem clamp(1.5rem,2.4vw,3rem);
     margin-left:0;
     margin-right:0;
     border-left:0;
@@ -507,7 +507,7 @@
   }
   #screen-shell .mail-item .tag{
     font-size:clamp(1rem,1.25vw,1.5rem);
-    padding:.5625rem 1.125rem;
+    padding:0.5rem 1rem;
   }
   #screen-shell .mail-item .unread-dot{
     width:clamp(1rem,1.5vw,1.75rem);
@@ -515,8 +515,8 @@
   }
   body:has(#screen-shell.active) #global-taskbar{
     height:calc(7.8125rem + env(safe-area-inset-bottom,0px));
-    padding:1.375rem 1.9375rem calc(1.375rem + env(safe-area-inset-bottom,0px));
-    gap:1.6875rem;
+    padding:1.5rem 2rem calc(1.5rem + env(safe-area-inset-bottom,0px));
+    gap:1.5rem;
   }
   body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
     width:5.0625rem;
@@ -617,35 +617,35 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .maker-header .app-back-btn{position:static;width:3rem;height:3rem;flex:0 0 3rem;}
 .maker-header input,.maker-header select,.maker-header .btn,.maker-import{height:3rem;border:2px solid #77b9af;border-radius:.5rem;background:#fff;padding:.5rem 1rem;font:600 1rem var(--font-body);color:#3b172e;}
 .maker-header #maker-title{width:12rem;}
-.maker-header .btn,.maker-import{cursor:pointer;white-space:nowrap;}
+.maker-header .btn,.maker-import{cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;white-space:nowrap;}
 .maker-custom-size{display:flex;align-items:center;gap:.5rem;}
 .maker-custom-size[hidden]{display:none;}
-.maker-custom-size label{display:flex;align-items:center;gap:.5rem;font:700 .875rem var(--font-body);}
+.maker-custom-size label{display:flex;align-items:center;gap:.5rem;font:700 1rem var(--font-body);}
 .maker-custom-size input{width:6rem;}
 .maker-workspace{display:grid;grid-template-columns:14rem minmax(0,1fr) 17rem;gap:1rem;padding:1rem;min-height:0;flex:1;}
 .maker-palette,.maker-properties{background:#fcf7ef;border:2px solid #77b9af;border-radius:1rem;padding:1rem;overflow:auto;min-width:0;}
 .maker-palette h2,.maker-properties h2{margin:0 0 1rem;font:700 1.5rem var(--font-display);}
-.maker-palette>button,.maker-upload,.maker-layers button,.maker-props-actions button{display:block;width:100%;min-height:2.5rem;margin-bottom:.5rem;padding:.5rem;border:0;border-radius:.5rem;background:#d8f0ec;color:#3b172e;text-align:left;font:700 1rem var(--font-body);cursor:pointer;}
+.maker-palette>button,.maker-upload,.maker-layers button,.maker-props-actions button{display:block;width:100%;min-height:2.5rem;margin-bottom:.5rem;padding:.5rem;border:0;border-radius:.5rem;background:#d8f0ec;color:#3b172e;text-align:left;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .maker-upload{background:#ffdc8b;}
 .maker-list-head{margin:1.5rem 0 .5rem;font-weight:700;}
 .maker-layers button{background:#fff;border:1px solid #b5d9d3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .maker-layers button.active{background:#91d8d0;}
-.maker-layers button[data-layer-id]{cursor:grab;touch-action:none;}
+.maker-layers button[data-layer-id]{cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;touch-action:none;}
 .maker-layers button.dragging{opacity:.45;}
 .maker-layers button.drop-target{outline:2px solid #df3f91;}
 .maker-layers button .maker-layer-grip{display:inline-block;margin-right:.5rem;color:#528f91;}
 .maker-peek{touch-action:none;}
 .maker-peek:active,.maker-peek[aria-pressed="true"]{background:#91d8d0;}
-.maker-target{position:absolute;box-sizing:border-box;border:2px solid #df3f91;background:#df3f9129;cursor:grab;z-index:10000;}
+.maker-target{position:absolute;box-sizing:border-box;border:2px solid #df3f91;background:#df3f9129;cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;z-index:10000;}
 .maker-canvas.peek-targets .maker-element{visibility:hidden;}
 .maker-canvas.peek-targets .maker-target{pointer-events:none;}
 .maker-stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d6d5d0;border-radius:1rem;}
 .maker-canvas{position:absolute;left:50%;top:50%;transform-origin:center;box-shadow:0 1rem 2rem #3b172e33;background-image:linear-gradient(#77b9af22 1px,transparent 1px),linear-gradient(90deg,#77b9af22 1px,transparent 1px);background-size:.5rem .5rem;touch-action:none;}
-.maker-element{position:absolute;display:flex;align-items:center;justify-content:center;white-space:pre-wrap;text-align:center;overflow:hidden;cursor:grab;user-select:none;box-sizing:border-box;}
-.maker-element:active{cursor:grabbing;}
+.maker-element{position:absolute;display:flex;align-items:center;justify-content:center;white-space:pre-wrap;text-align:center;overflow:hidden;cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;user-select:none;box-sizing:border-box;}
+.maker-element:active{cursor:url("../assets/sprites/cursor-grabbing.png") 12 12, grabbing;}
 .maker-element.selected{outline:2px solid #df3f91;outline-offset:0;}
 .maker-element img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
-.maker-properties label{display:flex;flex-direction:column;gap:.5rem;font:700 .875rem var(--font-body);}
+.maker-properties label{display:flex;flex-direction:column;gap:.5rem;font:700 1rem var(--font-body);}
 .maker-props-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}
 .maker-props-grid input,.maker-properties>div>label input{width:100%;min-width:0;height:2.5rem;border:2px solid #b5d9d3;border-radius:.5rem;padding:.5rem;background:white;}
 .maker-props-actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:1.5rem;}
@@ -696,13 +696,13 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .maker-palette .maker-peek{background:#d8f0ec;}
 .maker-palette .maker-peek[aria-pressed="true"]{background:#91d8d0;}
 .maker-list-head{padding-bottom:.5rem;border-bottom:2px solid #c8e6da;color:#488b8e;font:700 1.125rem var(--font-display);}
-.maker-layers button{border:2px solid #c8e6da;border-radius:.75rem;padding:.5rem .75rem;}
+.maker-layers button{border:2px solid #c8e6da;border-radius:.75rem;padding:.5rem 1rem;}
 .maker-layers button:hover,.maker-layers button:focus-visible{background:#eef9f6;}
 .maker-layers button.active{border-color:#488b8e;background:#b6e1da;}
 .maker-stage{border:.1875rem solid #77b9af;border-radius:1.5rem;background-color:#d7e5e0;background-image:radial-gradient(#a4c8c0 1px,transparent 1px);background-size:1rem 1rem;box-shadow:inset 0 0 0 .5rem #ffffff80;}
 .maker-canvas{box-shadow:0 1rem 2rem #315e6540,0 0 0 2px #b5d9d3;}
 .maker-element.selected{outline:2px solid #418a93;outline-offset:0;}
-.maker-selection-box{position:absolute;box-sizing:border-box;border:2px solid #418a93;z-index:20000;pointer-events:auto;cursor:grab;background:transparent;touch-action:none;}
+.maker-selection-box{position:absolute;box-sizing:border-box;border:2px solid #418a93;z-index:20000;pointer-events:auto;cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;background:transparent;touch-action:none;}
 .maker-resize-handle{position:absolute;display:block;width:1rem;height:1rem;border:.1875rem solid #418a93;border-radius:.25rem;background:#fffdf8;box-shadow:0 2px .25rem #18374540;pointer-events:auto;touch-action:none;transform:scale(var(--maker-handle-zoom,1));}
 .maker-resize-handle.nw{left:-.5rem;top:-.5rem;cursor:nwse-resize;}
 .maker-resize-handle.ne{right:-.5rem;top:-.5rem;cursor:nesw-resize;}
@@ -713,40 +713,40 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .maker-resize-handle.e{right:-.5rem;top:calc(50% - .5rem);cursor:ew-resize;}
 .maker-resize-handle.w{left:-.5rem;top:calc(50% - .5rem);cursor:ew-resize;}
 .maker-stage-toolbar{position:absolute;z-index:30;top:1rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.5rem;padding:.5rem;border:2px solid #77b9af;border-radius:1rem;background:#fcf7ef;box-shadow:0 .375rem 1rem #315e6533;white-space:nowrap;}
-.maker-stage-toolbar button{min-width:2.5rem;height:2.5rem;border:0;border-radius:.5rem;background:#d8f0ec;color:#315e65;font:800 1.5rem/1 var(--font-display);cursor:pointer;}
+.maker-stage-toolbar button{min-width:2.5rem;height:2.5rem;border:0;border-radius:.5rem;background:#d8f0ec;color:#315e65;font:800 1.5rem/1 var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .maker-stage-toolbar button:hover:not(:disabled){background:#b6e1da;}
-.maker-stage-toolbar button:disabled{opacity:.4;cursor:default;}
+.maker-stage-toolbar button:disabled{opacity:.4;cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;}
 .maker-stage-toolbar output{min-width:3.5rem;text-align:center;font:700 1rem var(--font-body);color:#315e65;}
 .maker-toolbar-divider{width:2px;height:1.5rem;background:#c8e6da;margin:0 .25rem;}
-.maker-stage-hint{position:absolute;z-index:10;left:1rem;bottom:1rem;max-width:calc(100% - 2rem);padding:.5rem .75rem;border-radius:.5rem;background:#fcf7efeb;color:#315e65;font:700 .75rem/1.3 var(--font-body);pointer-events:none;}
+.maker-stage-hint{position:absolute;z-index:10;left:1rem;bottom:1rem;max-width:calc(100% - 2rem);padding:.5rem 1rem;border-radius:.5rem;background:#fcf7efeb;color:#315e65;font:700 1rem/1.3 var(--font-body);pointer-events:none;}
 .maker-properties-head{position:sticky;top:-1rem;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:0 0 1rem;background:#fcf7ef;}
 .maker-properties-head h2{margin:0;}
-#maker-quick-delete{width:2.5rem;height:2.5rem;flex:none;border:0;border-radius:.5rem;background:#e53b42;color:white;font:800 2rem/1 var(--font-display);cursor:pointer;box-shadow:0 .25rem 0 #9c2228;}
+#maker-quick-delete{width:2.5rem;height:2.5rem;flex:none;border:0;border-radius:.5rem;background:#e53b42;color:white;font:800 2rem/1 var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;box-shadow:0 .25rem 0 #9c2228;}
 #maker-quick-delete:hover:not(:disabled){background:#c92e36;}
-#maker-quick-delete:disabled{opacity:.35;cursor:default;box-shadow:none;}
+#maker-quick-delete:disabled{opacity:.35;cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;box-shadow:none;}
 .maker-props-grid input:focus-visible,.maker-header input:focus-visible,.maker-header select:focus-visible{outline:.1875rem solid #488b8e;outline-offset:2px;}
 @media(max-width:900px){.maker-stage-toolbar{top:.5rem;padding:.25rem;gap:.25rem;}.maker-stage-toolbar button{min-width:2.25rem;height:2.25rem;font-size:1.375rem;}}
-@media(max-width:600px){.maker-header{max-height:14rem;overflow:auto;}.maker-palette{max-height:11rem;overflow:auto;}.maker-stage{height:56vh;touch-action:none;}.maker-properties{max-height:none;}.maker-stage-toolbar{max-width:calc(100% - 1rem);}.maker-stage-hint{font-size:.625rem;}}
+@media(max-width:600px){.maker-header{max-height:14rem;overflow:auto;}.maker-palette{max-height:11rem;overflow:auto;}.maker-stage{height:56vh;touch-action:none;}.maker-properties{max-height:none;}.maker-stage-toolbar{max-width:calc(100% - 1rem);}.maker-stage-hint{font-size:1rem;}}
 
 /* Creator actions live in the layer list and one compact export menu. */
 .maker-export{position:relative;z-index:50;}
 .maker-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:.5rem;margin-left:auto;}
 .maker-export-options{position:absolute;top:calc(100% + .5rem);right:0;min-width:11rem;padding:.5rem;border:2px solid #77b9af;border-radius:.75rem;background:#fcf7ef;box-shadow:0 .5rem 1rem #315e6533;}
 .maker-export-options[hidden]{display:none;}
-.maker-export-options button{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;border:0;border-radius:.5rem;background:transparent;color:#3b172e;text-align:left;font:700 1rem var(--font-body);cursor:pointer;}
+.maker-export-options button{display:block;width:100%;min-height:2.5rem;padding:.5rem 1rem;border:0;border-radius:.5rem;background:transparent;color:#3b172e;text-align:left;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .maker-export-options button:hover,.maker-export-options button:focus-visible{background:#d8f0ec;}
-.maker-layer-row{display:flex;align-items:center;gap:.5rem;min-height:2.5rem;margin-bottom:.5rem;padding:.25rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fff;cursor:grab;touch-action:none;}
+.maker-layer-row{display:flex;align-items:center;gap:.5rem;min-height:2.5rem;margin-bottom:.5rem;padding:.25rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fff;cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;touch-action:none;}
 .maker-layer-row:hover,.maker-layer-row:focus-within{background:#eef9f6;}
 .maker-layer-row.active{border-color:#488b8e;background:#b6e1da;}
 .maker-layer-row.dragging{opacity:.45;}
 .maker-layer-row.drop-target{outline:2px solid #df3f91;}
 .maker-layers .maker-layer-select{flex:1;min-width:0;width:auto;min-height:2rem;margin:0;padding:.25rem .5rem;border:0;border-radius:.5rem;background:transparent;box-shadow:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;cursor:inherit;}
-.maker-layers .maker-layer-delete{flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;background:transparent;color:#e53b42;font:800 1.625rem/1 var(--font-display);text-align:center;cursor:pointer;box-shadow:none;}
+.maker-layers .maker-layer-delete{flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;background:transparent;color:#e53b42;font:800 1.625rem/1 var(--font-display);text-align:center;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;box-shadow:none;}
 .maker-layers .maker-layer-delete:hover,.maker-layers .maker-layer-delete:focus-visible{background:transparent;color:#c92e36;}
-.maker-layers .maker-layer-lock{flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;background:transparent;box-shadow:none;text-align:center;cursor:pointer;font-size:1.25rem;}
+.maker-layers .maker-layer-lock{flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;background:transparent;box-shadow:none;text-align:center;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;font-size:1.25rem;}
 .maker-shape-picker{display:flex;align-items:center;gap:.5rem;font:700 1rem var(--font-body);color:#3b172e;}
 .maker-shape-picker select{min-height:2.5rem;border:2px solid #a5d6cc;border-radius:.5rem;background:#fffdf8;color:#3b172e;padding:.5rem;font:700 1rem var(--font-body);}
-.maker-element[contenteditable="true"]{cursor:text;outline:2px solid #418a93;white-space:pre-wrap;user-select:text;}
+.maker-element[contenteditable="true"]{cursor:url("../assets/sprites/cursor-text.png") 12 12, text;outline:2px solid #418a93;white-space:pre-wrap;user-select:text;}
 
 /* Keep the 1920 x 1080 desktop composition at its native size, while
    compacting its fixed chrome when the window is narrower. */
@@ -756,29 +756,29 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .piko-hole,.piko-cursor,.piko-bubble,.settings-item:has(#set-replay-piko){display:none!important;}
 
 /* Commission editor controls follow the soft lavender settings reference. */
-#screen-editor .element-settings{border:0;background:#fbf8fc;box-shadow:0 .5rem 1.5rem #5f3c7920;padding:.75rem;}
+#screen-editor .element-settings{border:0;background:#fbf8fc;box-shadow:0 .5rem 1.5rem #5f3c7920;padding:1rem;}
 #screen-editor .element-settings-head{background:#fbf8fc;}
 #screen-editor .element-settings h3{color:#35183f;font:700 1.5rem/1.1 var(--font-display);text-transform:none;}
-#screen-editor .selection-heading small{color:#81728e;font-size:.8125rem;}
-#screen-editor .editor-setting-card{margin:0 0 .5rem;padding:1rem 1.25rem;border:2px solid #c3a6f3;border-radius:1rem;background:linear-gradient(125deg,#fffafd,#f9f5fc);color:#3a1943;}
-#screen-editor .editor-setting-card summary{display:list-item;list-style:none;position:relative;cursor:pointer;padding:0 1.75rem .5rem 0;font:700 1.5rem/1.1 var(--font-display);}
+#screen-editor .selection-heading small{color:#81728e;font-size:1rem;}
+#screen-editor .editor-setting-card{margin:0 0 .5rem;padding:1rem 1.5rem;border:2px solid #c3a6f3;border-radius:1rem;background:linear-gradient(125deg,#fffafd,#f9f5fc);color:#3a1943;}
+#screen-editor .editor-setting-card summary{display:list-item;list-style:none;position:relative;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;padding:0 2rem .5rem 0;font:700 1.5rem/1.1 var(--font-display);}
 #screen-editor .editor-setting-card summary::-webkit-details-marker{display:none;}
 #screen-editor .editor-setting-card summary::after{content:'';position:absolute;right:.25rem;top:.3125rem;width:.625rem;height:.625rem;border-top:.1875rem solid #3a1943;border-left:.1875rem solid #3a1943;transform:rotate(45deg);}
 #screen-editor .editor-setting-card:not([open]) summary{padding-bottom:0;}
 #screen-editor .editor-setting-card:not([open]) summary::after{transform:rotate(225deg);top:0;}
 #screen-editor .editor-unit-row,#screen-editor .editor-color-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:center;gap:.5rem;min-height:3rem;color:#756685;font:700 1rem var(--font-body);}
 #screen-editor .editor-unit-input{display:flex;align-items:center;min-width:0;height:2.5rem;border:2px solid #e2d8e9;border-radius:.625rem;background:white;overflow:hidden;}
-#screen-editor .editor-unit-input input{width:100%;min-width:0;height:100%;padding:.375rem .25rem .375rem .75rem;border:0;background:transparent;color:#705b7d;font:600 1rem var(--font-body);}
-#screen-editor .editor-unit-input>span{padding:0 .5rem;color:#705b7d;font:700 .875rem var(--font-body);}
+#screen-editor .editor-unit-input input{width:100%;min-width:0;height:100%;padding:0.5rem .25rem 0.5rem 1rem;border:0;background:transparent;color:#705b7d;font:600 1rem var(--font-body);}
+#screen-editor .editor-unit-input>span{padding:0 .5rem;color:#705b7d;font:700 1rem var(--font-body);}
 #screen-editor .editor-color-field .color-row{min-width:0;margin:0;gap:.5rem;}
-#screen-editor .editor-color-field input[type=color]{flex:none;width:2rem;height:2rem;border:0;border-radius:50%;overflow:hidden;cursor:pointer;}
+#screen-editor .editor-color-field input[type=color]{flex:none;width:2rem;height:2rem;border:0;border-radius:50%;overflow:hidden;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #screen-editor .editor-color-field input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
 #screen-editor .editor-color-field input[type=color]::-webkit-color-swatch{border:0;border-radius:50%;}
-#screen-editor .editor-color-field .hex{min-width:0;padding:.5rem;border:2px solid #e2d8e9;border-radius:.625rem;background:#fff;color:#705b7d;text-align:center;font:700 .8125rem var(--font-body);}
+#screen-editor .editor-color-field .hex{min-width:0;padding:.5rem;border:2px solid #e2d8e9;border-radius:.625rem;background:#fff;color:#705b7d;text-align:center;font:700 1rem var(--font-body);}
 #screen-editor .editor-setting-card .field-group{padding-bottom:.5rem;border:0;}
 #screen-editor .editor-setting-card .field-group label{color:#756685;font:700 1rem var(--font-body);text-transform:none;letter-spacing:0;}
 #screen-editor .editor-align-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;}
-#screen-editor .editor-align-options button{min-height:2.5rem;padding:.5rem .25rem;border:2px solid #c3a6f3;border-radius:.5rem;background:#fff;color:#3a1943;font:700 .875rem var(--font-body);cursor:pointer;}
+#screen-editor .editor-align-options button{min-height:2.5rem;padding:.5rem .25rem;border:2px solid #c3a6f3;border-radius:.5rem;background:#fff;color:#3a1943;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #screen-editor .editor-align-options button[aria-pressed="true"]{background:#d9c7f4;border-color:#9d7ad4;}
 #screen-editor .editor-align-options button:hover,#screen-editor .editor-align-options button:focus-visible{border-color:#7852b8;}
 #screen-editor .editor-setting-card input,#screen-editor .editor-setting-card select{background:#fff;border-color:#e2d8e9;color:#3a1943;}
@@ -790,46 +790,46 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 @media(max-width:900px){.game-taskbar-icon{width:2.5rem;height:2.5rem;}}
 
 /* One floating canvas toolbar, shared by history, zoom, view aids, and save. */
-#screen-editor .editor-topbar{left:50%;right:auto;top:1rem;transform:translateX(-50%);width:max-content;max-width:calc(100% - 2rem);min-height:3.5rem;padding:.375rem;gap:.5rem;overflow-x:auto;overflow-y:hidden;pointer-events:auto;border:2px solid #70bcb4;border-radius:1rem;background:#f4faf7;box-shadow:0 .25rem 0 #5f9f9833;scrollbar-width:thin;}
-#screen-editor .editor-topbar-zone,#screen-editor .editor-tools-left,#screen-editor .editor-tools-center,#screen-editor .editor-tools-right{position:static;flex-wrap:nowrap;flex:none;gap:.375rem;}
+#screen-editor .editor-topbar{left:50%;right:auto;top:1rem;transform:translateX(-50%);width:max-content;max-width:calc(100% - 2rem);min-height:3.5rem;padding:0.5rem;gap:.5rem;overflow-x:auto;overflow-y:hidden;pointer-events:auto;border:2px solid #70bcb4;border-radius:1rem;background:#f4faf7;box-shadow:0 .25rem 0 #5f9f9833;scrollbar-width:thin;}
+#screen-editor .editor-topbar-zone,#screen-editor .editor-tools-left,#screen-editor .editor-tools-center,#screen-editor .editor-tools-right{position:static;flex-wrap:nowrap;flex:none;gap:0.5rem;}
 #screen-editor .editor-tools-center.tool-pill{margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;}
-#screen-editor .editor-topbar .tool-btn{min-width:2.5rem;min-height:2.5rem;padding:.375rem;border:0;border-radius:.5625rem;background:#e2f2ed;box-shadow:none;}
+#screen-editor .editor-topbar .tool-btn{min-width:2.5rem;min-height:2.5rem;padding:0.5rem;border:0;border-radius:.5625rem;background:#e2f2ed;box-shadow:none;}
 #screen-editor .editor-topbar .tool-btn:hover{background:#d4e9e4;}
 #screen-editor .editor-topbar .tool-btn.active{background:#b6e1da;color:#315e65;}
 #screen-editor .editor-topbar .tool-btn .btn-label{display:none;}
-#screen-editor .editor-topbar .btn-save{background:#7852b8;color:white;padding:.375rem .75rem;}
+#screen-editor .editor-topbar .btn-save{background:#7852b8;color:white;padding:0.5rem 1rem;}
 #screen-editor .editor-toolbar-divider{display:block;flex:none;width:2px;height:2rem;margin:.25rem;background:#bedfd8;}
-#screen-editor .editor-zoom-controls{display:flex;align-items:center;flex:none;gap:.375rem;}
-#screen-editor .editor-zoom-controls button{min-width:2.5rem;height:2.5rem;padding:0 .5rem;border:0;border-radius:.5625rem;background:#d5eeea;color:#265e66;font:800 1.5rem/1 var(--font-display);cursor:pointer;}
+#screen-editor .editor-zoom-controls{display:flex;align-items:center;flex:none;gap:0.5rem;}
+#screen-editor .editor-zoom-controls button{min-width:2.5rem;height:2.5rem;padding:0 .5rem;border:0;border-radius:.5625rem;background:#d5eeea;color:#265e66;font:800 1.5rem/1 var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #screen-editor .editor-zoom-controls button:hover:not(:disabled){background:#b6e1da;}
-#screen-editor .editor-zoom-controls button:disabled{opacity:.4;cursor:default;}
+#screen-editor .editor-zoom-controls button:disabled{opacity:.4;cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;}
 #screen-editor #editor-zoom-label{min-width:3.5rem;text-align:center;color:#265e66;font:800 1rem var(--font-body);}
 @media(min-width:901px){#screen-editor .editor-topbar{left:calc(var(--tools-rail) + (100% - var(--tools-rail))/2);right:auto;max-width:calc(100% - var(--tools-rail) - 2rem);}}
 @media(max-width:640px){#screen-editor .editor-topbar{left:.5rem;right:.5rem;top:.5rem;transform:none;width:auto;max-width:none;justify-content:flex-start;}}
 
-#screen-editor .tool-btn.btn-save.editor-save-corner{position:absolute;z-index:80;top:1rem;right:1rem;display:inline-flex;align-items:center;gap:.5rem;min-height:3rem;padding:.5rem 1rem;border:0;border-radius:.625rem;background:#7852b8;color:#fff;box-shadow:0 .1875rem 0 #573b88;font:800 1rem var(--font-body);cursor:pointer;}
+#screen-editor .tool-btn.btn-save.editor-save-corner{position:absolute;z-index:80;top:1rem;right:1rem;display:inline-flex;align-items:center;gap:.5rem;min-height:3rem;padding:.5rem 1rem;border:0;border-radius:.625rem;background:#7852b8;color:#fff;box-shadow:0 .1875rem 0 #573b88;font:800 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #screen-editor .editor-save-corner:hover{background:#6844aa;}
 #screen-editor .editor-save-corner .game-tool-icon{width:1.5rem;height:1.5rem;}
 #screen-editor .zone-output,#screen-editor #tool-hint,#screen-editor #tool-show-clickable,#screen-editor #tool-preview,#screen-editor #tool-inspector,#screen-editor #editor-hint-banner,#screen-editor .issue-flag{display:none!important;}
-#screen-editor .editor-layers-panel{flex:0 0 auto;max-height:30%;padding:.75rem;border:2px solid #70bcb4;border-radius:1rem;background:#fcf7ef;box-shadow:none;overflow:auto;}
+#screen-editor .editor-layers-panel{flex:0 0 auto;max-height:30%;padding:1rem;border:2px solid #70bcb4;border-radius:1rem;background:#fcf7ef;box-shadow:none;overflow:auto;}
 #screen-editor .editor-layers-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;}
 #screen-editor .editor-layers-head h3{margin:0;color:#315e65;font:700 1.125rem var(--font-display);}
 #screen-editor .editor-layers-list{display:flex;flex-direction:column;gap:.5rem;}
 #screen-editor .editor-layer-row{display:flex;align-items:center;gap:.5rem;min-height:3rem;padding:.25rem .5rem;border:2px solid #c8e6da;border-radius:.5rem;background:#fff;}
 #screen-editor .editor-layer-row.active{border-color:#488b8e;background:#d8f0ec;}
 #screen-editor .editor-layer-row.locked{background:#f2f1ee;color:#918d91;}
-#screen-editor .editor-layer-select{flex:1;min-width:0;border:0;background:transparent;color:#3b172e;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:700 .875rem var(--font-body);cursor:pointer;}
+#screen-editor .editor-layer-select{flex:1;min-width:0;border:0;background:transparent;color:#3b172e;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #screen-editor .editor-layer-select:disabled{color:#918d91;cursor:not-allowed;}
 #screen-editor .editor-layer-status{flex:none;min-width:1.5rem;text-align:center;color:#528f91;font-size:1.125rem;}
-#screen-editor .editor-side-rail{position:absolute;z-index:60;left:1rem;top:5rem;bottom:1rem;width:17rem;display:flex;flex-direction:column;gap:.75rem;pointer-events:none;}
+#screen-editor .editor-side-rail{position:absolute;z-index:60;left:1rem;top:5rem;bottom:1rem;width:17rem;display:flex;flex-direction:column;gap:1rem;pointer-events:none;}
 #screen-editor .editor-side-rail>*{pointer-events:auto;}
 #screen-editor .editor-side-rail .element-settings,#screen-editor .editor-side-rail .element-settings.collapsed{position:static;inset:auto;width:auto;max-width:none;max-height:none;margin:0;flex:0 1 auto;min-height:0;overflow:auto;border-radius:1rem;}
-#screen-editor .editor-mail-brief{flex:0 0 auto;padding:.75rem;border:2px solid #70bcb4;border-radius:1rem;background:#fcf7ef;color:#3b172e;}
+#screen-editor .editor-mail-brief{flex:0 0 auto;padding:1rem;border:2px solid #70bcb4;border-radius:1rem;background:#fcf7ef;color:#3b172e;}
 #screen-editor .editor-mail-brief-head{display:flex;align-items:center;gap:.5rem;color:#315e65;}
 #screen-editor .editor-mail-brief-head .avatar-circle{flex:none;width:2.5rem;height:2.5rem;display:grid;place-items:center;border-radius:50%;background:#d8f0ec;font-size:1.25rem;}
-#screen-editor .editor-mail-brief-head small{font:600 .6875rem var(--font-body);text-transform:uppercase;letter-spacing:.05em;color:#528f91;}
+#screen-editor .editor-mail-brief-head small{font:600 1rem var(--font-body);text-transform:uppercase;letter-spacing:.05em;color:#528f91;}
 #screen-editor .editor-mail-brief-head h3{margin:0;font:700 1.125rem/1.1 var(--font-display);}
-#screen-editor .editor-mail-points{margin:.5rem 0 0;padding-left:1.25rem;font:600 .8125rem/1.4 var(--font-body);}
+#screen-editor .editor-mail-points{margin:.5rem 0 0;padding-left:1.5rem;font:600 1rem/1.4 var(--font-body);}
 @media(min-width:901px){#screen-editor .editor-side-rail{left:1.5rem;width:calc(var(--tools-rail) - 3rem);}}
 
 @media(max-width:900px){#screen-editor .editor-side-rail{left:.5rem;right:.5rem;top:4.5rem;bottom:.5rem;width:auto;}}
@@ -863,13 +863,13 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 @media(min-width:901px){#screen-editor .editor-side-rail{top:0;width:var(--tools-rail);}}
 @media(max-width:900px){#screen-editor .editor-side-rail{right:0!important;width:auto;border-width:0;}}
 /* Consistent inner padding for the three rail sections. */
-#screen-editor .editor-side-rail>*,#screen-editor .editor-side-rail .element-settings{padding:1.5rem 1.75rem;}
-#screen-editor .editor-side-rail .editor-mail-points{margin-top:.75rem;}
-#screen-editor .editor-layers-head{margin-bottom:.75rem;}
+#screen-editor .editor-side-rail>*,#screen-editor .editor-side-rail .element-settings{padding:1.5rem 2rem;}
+#screen-editor .editor-side-rail .editor-mail-points{margin-top:1rem;}
+#screen-editor .editor-layers-head{margin-bottom:1rem;}
 /* Sticky-note "Edit mode" tag in the canvas's top corner. */
 #screen-editor .editor-mode-note{position:absolute;z-index:70;top:5rem;right:1rem;width:12.5rem;pointer-events:none;font-family:var(--font-hand);color:#6b4a3a;text-transform:uppercase;text-align:center;}
-#screen-editor .editor-mode-tab{display:inline-block;margin-left:-.5rem;padding:.375rem 1rem;background:#f9df91;border-radius:.25rem .25rem 0 0;font-size:1.375rem;box-shadow:0 2px 0 #e7c86a;}
-#screen-editor .editor-mode-note p{margin:0;padding:.75rem 1rem;background:#fbe7a7;border-radius:0 .375rem .375rem .375rem;font-size:1.125rem;line-height:1.3;}
+#screen-editor .editor-mode-tab{display:inline-block;margin-left:-.5rem;padding:0.5rem 1rem;background:#f9df91;border-radius:.25rem .25rem 0 0;font-size:1.375rem;box-shadow:0 2px 0 #e7c86a;}
+#screen-editor .editor-mode-note p{margin:0;padding:1rem 1rem;background:#fbe7a7;border-radius:0 .375rem .375rem .375rem;font-size:1.125rem;line-height:1.3;}
 @media(max-width:900px){#screen-editor .editor-mode-note{display:none;}}
 /* Selects inside unit rows share the input look. */
 #screen-editor .editor-unit-input select{width:100%;height:100%;padding:0 .5rem;border:0;background:transparent;color:#705b7d;font:600 1rem var(--font-body);}
@@ -884,7 +884,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 @media(max-width:900px){#screen-editor .editor-side-rail{left:.5rem!important;right:.5rem!important;bottom:.5rem!important;top:4.5rem;gap:.5rem;}}
 #screen-editor .editor-side-rail>*,#screen-editor .editor-side-rail .element-settings,#screen-editor .editor-side-rail .element-settings.collapsed{pointer-events:auto;padding:1rem;background:#fcf7ef;border:.1875rem solid #77b9af;border-radius:1.5rem;box-shadow:0 .5rem 0 #5f9f9826;}
 #screen-editor .editor-side-rail>*+*{border-top:.1875rem solid #77b9af;}
-#screen-editor .editor-rail-card{flex:0 0 auto;display:flex;flex-direction:column;gap:.75rem;overflow:auto;}
+#screen-editor .editor-rail-card{flex:0 0 auto;display:flex;flex-direction:column;gap:1rem;overflow:auto;}
 #screen-editor .editor-rail-card>*{padding:0;border:0;}
 #screen-editor .editor-side-rail .element-settings h3,#screen-editor .editor-layers-head h3{color:#3b172e;font:700 1.5rem var(--font-display);}
 #screen-editor .editor-side-rail .element-settings-head{top:-1rem;}
@@ -892,10 +892,10 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-main{background:#eef3ef;}
 #screen-editor .editor-canvas-wrap{border:.1875rem solid #77b9af;border-radius:1.5rem;background-color:#d7e5e0;background-image:radial-gradient(#a4c8c0 1px,transparent 1px);background-size:1rem 1rem;box-shadow:inset 0 0 0 .5rem #ffffff80;}
 /* Canva-style layer rows: thumbnail preview + name, clear selected state. */
-#screen-editor .editor-layer-row{min-height:3.5rem;padding:.375rem .5rem;border-radius:.75rem;background:#eef1f0;border-color:transparent;}
+#screen-editor .editor-layer-row{min-height:3.5rem;padding:0.5rem .5rem;border-radius:.75rem;background:#eef1f0;border-color:transparent;}
 #screen-editor .editor-layer-row:hover{border-color:#b5d9d3;}
 #screen-editor .editor-layer-row.active{border-color:#7852b8;background:#f3eefc;}
-#screen-editor .editor-layer-select{display:flex;align-items:center;gap:.625rem;}
+#screen-editor .editor-layer-select{display:flex;align-items:center;gap:0.5rem;}
 #screen-editor .editor-layer-thumb{position:relative;flex:none;width:4rem;height:2.25rem;border-radius:.375rem;background:#fff;overflow:hidden;box-shadow:inset 0 0 0 1px #0000001a;}
 #screen-editor .editor-layer-name{min-width:0;overflow:hidden;text-overflow:ellipsis;}
 /* Layers show only the element preview. */
@@ -909,7 +909,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-rail-card .editor-mail-brief{padding-top:0;}
 #screen-editor .editor-mail-brief-head .avatar-circle{width:3.5rem;height:3.5rem;font-size:1.75rem;}
 #screen-editor .editor-mail-brief-head h3{font-size:1.375rem;}
-#screen-editor .editor-mail-points{font-size:.9375rem;}
+#screen-editor .editor-mail-points{font-size:1rem;}
 /* Mail detail: cleaner handwritten letter layout with a preview-card attachment. */
 .mail-detail-card{display:grid;grid-template-columns:1fr auto;align-items:end;gap:1rem 1.5rem;padding:2.5rem 3rem;font-family:var(--font-hand);text-transform:uppercase;color:#3b172e;}
 .mail-detail-card .mail-detail-close{position:absolute;}
@@ -921,16 +921,16 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .mail-detail-card h2{margin:0;font:400 2.5rem/1.1 var(--font-hand);text-transform:uppercase;letter-spacing:0;}
 .mail-detail-card .mail-detail-body{margin:0;white-space:pre-line;font:400 1.625rem/1.45 var(--font-hand);}
 .mail-detail-card .mail-detail-actions{margin:0;}
-.attachment-card{display:flex;flex-direction:column;width:13.5rem;padding:0;border:0;border-radius:.75rem;background:#fff;box-shadow:0 2px .5rem #0000001f;overflow:hidden;cursor:pointer;font:inherit;text-transform:none;}
+.attachment-card{display:flex;flex-direction:column;width:13.5rem;padding:0;border:0;border-radius:.75rem;background:#fff;box-shadow:0 2px .5rem #0000001f;overflow:hidden;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;font:inherit;text-transform:none;}
 .attachment-card:hover{box-shadow:0 .25rem .875rem #0000002e;}
 .attachment-card:focus-visible{outline:.1875rem solid #488b8e;outline-offset:2px;}
 .attachment-thumb{display:grid;place-items:center;height:7.5rem;background:#f1eee8;overflow:hidden;pointer-events:none;}
-.attachment-name{display:flex;align-items:center;gap:.5rem;padding:.5rem .625rem;color:#3b172e;font:700 .875rem var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.attachment-name b{flex:none;padding:.1875rem .3125rem;border-radius:.25rem;background:#5bb5a6;color:#fff;font-size:.625rem;}
+.attachment-name{display:flex;align-items:center;gap:.5rem;padding:.5rem 0.5rem;color:#3b172e;font:700 1rem var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.attachment-name b{flex:none;padding:0.25rem 0.25rem;border-radius:.25rem;background:#5bb5a6;color:#fff;font-size:1rem;}
 @media(max-width:640px){.mail-detail-card{grid-template-columns:1fr;padding:1.5rem;}.mail-detail-card .mail-detail-body{font-size:1.25rem;}.mail-detail-card h2{font-size:1.875rem;}}
 #screen-editor .editor-side-rail .element-settings-head{position:static;}
 /* Tighter letter: narrower card, less padding; attachment shows a cropped corner. */
-.mail-detail-card{width:min(47.5rem,92vw);padding:2rem 2.5rem;gap:.75rem 1.5rem;}
+.mail-detail-card{width:min(47.5rem,92vw);padding:2rem 2.5rem;gap:1rem 1.5rem;}
 .mail-detail-card .mail-detail-head .avatar-circle{width:4.5rem;height:4.5rem;}
 .mail-detail-card h2{font-size:2.125rem;}
 .mail-detail-card .mail-detail-body{font-size:1.375rem;line-height:1.4;}
@@ -969,9 +969,9 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 @media(max-width:640px){.compose-card{padding:1.5rem;}.compose-to{font-size:1.875rem;}.compose-body{font-size:1.375rem;}}
 /* Save & submit confirm: handwritten title, chunky red/green pill buttons. */
 .confirm-card{width:min(26.25rem,92vw);padding:2rem 2.5rem;text-align:center;border:.1875rem solid #77b9af;border-radius:1.75rem;background:#fcf7ef;}
-.confirm-card p{margin:0 0 1.75rem;font:400 2.125rem/1.1 var(--font-hand);color:#3b172e;text-transform:uppercase;}
+.confirm-card p{margin:0 0 2rem;font:400 2.125rem/1.1 var(--font-hand);color:#3b172e;text-transform:uppercase;}
 .confirm-actions{display:flex;justify-content:center;gap:1.5rem;}
-.confirm-card .btn{min-width:8.5rem;padding:.625rem 1.5rem;border:0;border-radius:1.25rem;color:#fff;font:400 2.25rem/1 var(--font-hand);text-transform:uppercase;cursor:pointer;}
+.confirm-card .btn{min-width:8.5rem;padding:0.5rem 1.5rem;border:0;border-radius:1.25rem;color:#fff;font:400 2.25rem/1 var(--font-hand);text-transform:uppercase;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .confirm-card .btn-no{background:#d9403f;box-shadow:inset 0 0 0 .1875rem #b83232,0 .25rem 0 #b8323255;}
 .confirm-card .btn-yes{background:#3fd26f;box-shadow:inset 0 0 0 .1875rem #2fb45b,0 .25rem 0 #2fb45b55;}
 .confirm-card .btn:hover{filter:brightness(1.06);}
@@ -982,16 +982,16 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .compose-to{margin:0 0 5vh;font-size:clamp(2rem,2.7vw,3.5rem);}
 .compose-body{flex:1;font-size:clamp(1.5rem,2vw,2.5rem);line-height:1.4;}
 .compose-hint{display:none;}
-#modal-compose .compose-card .btn-send{align-self:flex-end;margin-top:1rem;min-width:clamp(10rem,13vw,16.25rem);padding:.75rem 2.5rem;border:.1875rem solid #3354d1;border-radius:62.4375rem;background:#1553d6;color:#fff;font:400 clamp(1.875rem,2.4vw,3rem)/1 var(--font-hand);text-transform:uppercase;box-shadow:0 .375rem .75rem #1553d640;cursor:pointer;}
+#modal-compose .compose-card .btn-send{align-self:flex-end;margin-top:1rem;min-width:clamp(10rem,13vw,16.25rem);padding:1rem 2.5rem;border:.1875rem solid #3354d1;border-radius:62.4375rem;background:#1553d6;color:#fff;font:400 clamp(1.875rem,2.4vw,3rem)/1 var(--font-hand);text-transform:uppercase;box-shadow:0 .375rem .75rem #1553d640;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #modal-compose .compose-card .btn-send:disabled{background:#9db4ea;border-color:#9db4ea;box-shadow:none;cursor:not-allowed;}
-@media(max-width:900px){#modal-compose{justify-content:center;padding:8vh .75rem 0;}.compose-card{width:100%;}}
+@media(max-width:900px){#modal-compose{justify-content:center;padding:8vh 1rem 0;}.compose-card{width:100%;}}
 /* Center the reply card on screen. */
 #modal-compose{justify-content:center;align-items:center;padding:0;}
 /* Compose attach picker + attached file reuse the email's preview card. */
 #modal-compose .attach-popover{position:static;display:flex;flex-direction:column;align-items:flex-start;gap:.5rem;margin:.5rem 0 0;padding:0;border:0;background:none;box-shadow:none;}
 #modal-compose .attach-popover.hidden{display:none;}
 #modal-compose .attach-option-sub{color:#528f91;font:400 1.25rem var(--font-hand);text-transform:uppercase;}
-#modal-compose #compose-attachment-chip{padding:0;border:0;background:none;box-shadow:none;cursor:pointer;}
+#modal-compose #compose-attachment-chip{padding:0;border:0;background:none;box-shadow:none;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 #modal-compose #compose-attachment-chip.hidden{display:none;}
 
 #modal-compose #compose-attachment-chip::before{display:none;}
@@ -1007,24 +1007,24 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .money{display:inline-flex;align-items:center;gap:.12em;white-space:nowrap;}
 .money-icon{color:#9a6ae6;font:800 1.2em/1 var(--font-display);}
 .mail-prize{flex-shrink:0;color:#3b172e;font:700 1.125rem var(--font-body);}
-.mail-prize small{color:#756685;font-size:.8125rem;}
+.mail-prize small{color:#756685;font-size:1rem;}
 /* Difficulty tags. */
 .tag.tier-novice{background:#6ccf8e!important;}
 .tag.tier-intermediate{background:#f2a541!important;}
 .tag.tier-advanced{background:#e0728a!important;}
 .tag.tier-expert{background:#8f6ad8!important;}
 /* Live client checklist in the editor brief. */
-#screen-editor .editor-mail-points{list-style:none;margin:.75rem 0 0;padding:0;display:flex;flex-direction:column;gap:.5rem;}
-#screen-editor .editor-goal{display:flex;gap:.5rem;align-items:flex-start;font:600 .875rem/1.35 var(--font-body);color:#3b172e;}
-#screen-editor .editor-goal small{display:block;margin-top:2px;color:#756685;font:500 .75rem/1.35 var(--font-body);}
-#screen-editor .editor-goal-mark{flex:none;display:grid;place-items:center;width:1.375rem;height:1.375rem;border:2px solid #b8a8c8;border-radius:50%;font-size:.75rem;color:#b8a8c8;}
+#screen-editor .editor-mail-points{list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-direction:column;gap:.5rem;}
+#screen-editor .editor-goal{display:flex;gap:.5rem;align-items:flex-start;font:600 1rem/1.35 var(--font-body);color:#3b172e;}
+#screen-editor .editor-goal small{display:block;margin-top:4px;color:#756685;font:500 1rem/1.35 var(--font-body);}
+#screen-editor .editor-goal-mark{flex:none;display:grid;place-items:center;width:1.375rem;height:1.375rem;border:2px solid #b8a8c8;border-radius:50%;font-size:1rem;color:#b8a8c8;}
 #screen-editor .editor-goal.bonus .editor-goal-mark{border-color:#f0c64a;color:#d9a520;}
 #screen-editor .editor-goal.met .editor-goal-mark{background:#6ccf8e;border-color:#6ccf8e;color:#fff;}
 #screen-editor .editor-goal.met > span:last-child{color:#2f6b45;}
 #screen-editor .editor-goal.met small{color:#3d7a54;}
 /* Profile: latest client quote. */
-.profile-quote{margin:0 0 .5rem;padding:.5rem .75rem;border-left:.25rem solid #9a6ae6;background:#f6f0ff;border-radius:.5rem;color:#3b172e;font:italic 500 .875rem/1.4 var(--font-body);text-align:left;}
-.profile-quote cite{display:block;margin-top:.25rem;color:#756685;font:700 .75rem var(--font-body);font-style:normal;}
+.profile-quote{margin:0 0 .5rem;padding:.5rem 1rem;border-left:.25rem solid #9a6ae6;background:#f6f0ff;border-radius:.5rem;color:#3b172e;font:italic 500 1rem/1.4 var(--font-body);text-align:left;}
+.profile-quote cite{display:block;margin-top:.25rem;color:#756685;font:700 1rem var(--font-body);font-style:normal;}
 .mail-detail-card .mail-detail-head{padding-right:3.5rem;}
 /* Keep the brief from crowding out Design tools: it scrolls past ~40% height. */
 #screen-editor .editor-rail-card{min-height:0;max-height:42%;flex:0 1 auto;justify-content:flex-start;}
@@ -1036,12 +1036,12 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .reward-card{position:relative;width:min(27.5rem,92vw);padding:2.5rem 2rem 2rem;text-align:center;border:.1875rem solid #77b9af;border-radius:1.75rem;background:#fcf7ef;color:#3b172e;overflow:visible;animation:reward-pop .45s cubic-bezier(.2,1.4,.4,1);}
 .reward-card h2{margin:.25rem 0;font:400 2.75rem/1 var(--font-hand);text-transform:uppercase;}
 .reward-stars{color:#f0b400;font-size:2.25rem;letter-spacing:.25rem;}
-.reward-sub{margin:0 0 .75rem;color:#756685;font:600 1rem var(--font-body);}
+.reward-sub{margin:0 0 1rem;color:#756685;font:600 1rem var(--font-body);}
 .reward-total{margin:.5rem 0 1rem;font:800 3.25rem/1 var(--font-display);color:#3b172e;}
-.reward-lines{list-style:none;margin:0 0 1rem;padding:.75rem 1rem;border-radius:1rem;background:#fff;text-align:left;}
+.reward-lines{list-style:none;margin:0 0 1rem;padding:1rem 1rem;border-radius:1rem;background:#fff;text-align:left;}
 .reward-lines li{display:flex;justify-content:space-between;gap:1rem;padding:.25rem 0;font:600 1rem var(--font-body);}
 .reward-card p{margin:.25rem 0;font:700 1rem var(--font-body);}
-.reward-card .btn{margin-top:.75rem;min-width:11.25rem;}
+.reward-card .btn{margin-top:1rem;min-width:11.25rem;}
 .reward-confetti{position:absolute;left:50%;top:40%;width:0;height:0;pointer-events:none;}
 .reward-confetti span{position:absolute;width:.625rem;height:.875rem;border-radius:.1875rem;opacity:0;animation:reward-confetti 1.4s ease-out forwards;}
 @keyframes reward-confetti{0%{opacity:1;transform:translate(0,0) rotate(0);}70%{opacity:1;}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 20rem)) rotate(var(--r));}}
@@ -1067,7 +1067,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-desktop #icon-mail .desktop-icon-label{display:block;color:#254b50;font:700 1rem/1 var(--font-body);text-align:center;}
 /* Bigger profile pop-up. */
 .taskbar-quick-popup.profile-layout{width:min(28rem,calc(100vw - 1.5rem));max-height:min(48rem,calc(100vh - 6rem));}
-.taskbar-quick-popup.profile-layout .profile-quick-card{padding:1.5rem;gap:.75rem;}
+.taskbar-quick-popup.profile-layout .profile-quick-card{padding:1.5rem;gap:1rem;}
 .taskbar-quick-popup.profile-layout .profile-quick-avatar{width:7rem;height:7rem;}
 .taskbar-quick-popup.profile-layout .profile-quick-card h2{font-size:2.25rem;}
 .taskbar-quick-popup.profile-layout .profile-quick-stars{font-size:2.5rem;}
@@ -1082,39 +1082,39 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-browser.active{display:flex;flex-direction:column;background:#eef3ef;}
 .browser-chrome{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:#fcf7ef;border-bottom:2px solid #c8e6da;}
 .browser-chrome .app-back-btn{position:static;width:3rem;height:3rem;flex:0 0 3rem;}
-.browser-home-btn{width:3rem;height:3rem;flex:0 0 3rem;border:2px solid #77b9af;border-radius:50%;background:#fff;color:#315e65;font:700 1.5rem/1 var(--font-body);cursor:pointer;}
-.browser-address{flex:1;min-width:0;padding:.625rem 1.25rem;border:2px solid #c8e6da;border-radius:999px;background:#fff;color:#315e65;font:600 1.125rem var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.browser-tabs{display:flex;gap:.5rem;padding:.75rem 1.5rem 0;flex-wrap:wrap;}
+.browser-home-btn{width:3rem;height:3rem;flex:0 0 3rem;border:2px solid #77b9af;border-radius:50%;background:#fff;color:#315e65;font:700 1.5rem/1 var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+.browser-address{flex:1;min-width:0;padding:0.5rem 1.5rem;border:2px solid #c8e6da;border-radius:999px;background:#fff;color:#315e65;font:600 1.125rem var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.browser-tabs{display:flex;gap:.5rem;padding:1rem 1.5rem 0;flex-wrap:wrap;}
 .browser-tabs:empty{display:none;}
-.browser-tab{padding:.5rem 1.25rem;border:2px solid #c8e6da;border-bottom:0;border-radius:.75rem .75rem 0 0;background:#e2f2ed;color:#315e65;font:700 1rem var(--font-body);cursor:pointer;}
+.browser-tab{padding:.5rem 1.5rem;border:2px solid #c8e6da;border-bottom:0;border-radius:.75rem .75rem 0 0;background:#e2f2ed;color:#315e65;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .browser-tab.active{background:#fff;color:#3b172e;}
 .browser-view{flex:1;min-height:0;overflow:auto;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1rem;}
 .browser-view #shop-panel{align-self:stretch;}
 .browser-home-title{margin:1rem 0 0;color:#315e65;font:700 2rem var(--font-display);}
 .browser-bookmarks{display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));gap:1rem;width:min(64rem,100%);}
-.browser-bookmark{display:flex;flex-direction:column;align-items:center;gap:.375rem;padding:1.25rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;color:#3b172e;cursor:pointer;box-shadow:0 .25rem 0 #5f9f9826;}
+.browser-bookmark{display:flex;flex-direction:column;align-items:center;gap:0.5rem;padding:1.5rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;color:#3b172e;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;box-shadow:0 .25rem 0 #5f9f9826;}
 .browser-bookmark:hover,.browser-bookmark:focus-visible{border-color:#77b9af;transform:translateY(-2px);}
 .browser-bookmark-icon{display:grid;place-items:center;flex:0 0 4rem;width:4rem;height:4rem;overflow:hidden;border-radius:50%;background:#e2f2ed;font-size:2rem;}
 .browser-bookmark-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .browser-bookmark b{font:700 1.125rem var(--font-display);}
-.browser-bookmark small{color:#756685;font:600 .875rem var(--font-body);}
+.browser-bookmark small{color:#756685;font:600 1rem var(--font-body);}
 .browser-note{margin:0;padding:.5rem 1rem;border-radius:.75rem;background:#fff6dc;color:#694b20;font:600 1rem var(--font-body);}
 .browser-page{display:flex;justify-content:center;}
 
 /* Settings list in the profile card: sliders, a switch and a picker. */
 .profile-settings-panel{width:100%;}
-.profile-settings-list{list-style:none;margin:0;padding:.5rem .75rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fff;}
-.profile-setting{display:grid;grid-template-columns:7rem 1fr auto;align-items:center;gap:.75rem;min-height:3rem;border-bottom:1px solid #e2f2ed;font:700 1rem var(--font-body);color:#315e65;}
+.profile-settings-list{list-style:none;margin:0;padding:.5rem 1rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fff;}
+.profile-setting{display:grid;grid-template-columns:7rem 1fr auto;align-items:center;gap:1rem;min-height:3rem;border-bottom:1px solid #e2f2ed;font:700 1rem var(--font-body);color:#315e65;}
 .profile-setting:last-child{border-bottom:0;}
 .profile-setting input[type=range]{width:100%;accent-color:#7852b8;}
 .profile-setting output{min-width:3rem;text-align:right;color:#5b2fa8;font:800 1rem var(--font-display);}
-.profile-switch{grid-column:3;justify-self:end;position:relative;width:3.25rem;height:1.75rem;padding:0;border:0;border-radius:999px;background:#d7d1dd;cursor:pointer;transition:background .15s;}
+.profile-switch{grid-column:3;justify-self:end;position:relative;width:3.25rem;height:1.75rem;padding:0;border:0;border-radius:999px;background:#d7d1dd;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;transition:background .15s;}
 .profile-switch span{position:absolute;top:.1875rem;left:.1875rem;width:1.375rem;height:1.375rem;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .15s;}
 .profile-switch[aria-checked="true"]{background:#7852b8;}
 .profile-switch[aria-checked="true"] span{transform:translateX(1.5rem);}
 .profile-switch:focus-visible,.profile-picker button:focus-visible{outline:3px solid #488b8e;outline-offset:2px;}
 .profile-picker{grid-column:2 / 4;display:flex;align-items:center;justify-content:flex-end;gap:.5rem;}
-.profile-picker button{width:2rem;height:2rem;border:2px solid #c8e6da;border-radius:.5rem;background:#f4faf7;color:#5b2fa8;font-size:.875rem;cursor:pointer;}
+.profile-picker button{width:2rem;height:2rem;border:2px solid #c8e6da;border-radius:.5rem;background:#f4faf7;color:#5b2fa8;font-size:1rem;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .profile-picker output{min-width:6.5rem;text-align:center;}
 
 /* Desktop app icons stack by their real height so they never overlap. */
@@ -1124,7 +1124,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-desktop .desktop-icon:focus-visible{outline:3px solid #fff;outline-offset:4px;border-radius:1rem;}
 #screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label{color:#fff;}
 /* Settings rows share one grid: name | control (centered) | value. */
-.profile-setting{grid-template-columns:6.5rem 1fr 3.5rem;gap:.75rem;min-height:3.25rem;}
+.profile-setting{grid-template-columns:6.5rem 1fr 3.5rem;gap:1rem;min-height:3.25rem;}
 .profile-control{display:flex;align-items:center;justify-content:center;width:100%;}
 .profile-setting > output,.profile-setting > span[aria-hidden]{text-align:center;}
 .profile-switch{grid-column:auto;justify-self:auto;}
@@ -1139,7 +1139,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .profile-control-wide{grid-column:2 / 4;}
 /* When open, the settings list hangs straight off the Settings button as one card. */
 #profile-quick-settings[aria-expanded="true"]{border-bottom-left-radius:0;border-bottom-right-radius:0;border-color:#c8e6da;}
-.taskbar-quick-popup.profile-layout .profile-settings-panel{margin-top:-.75rem;}
+.taskbar-quick-popup.profile-layout .profile-settings-panel{margin-top:-1rem;}
 .profile-settings-panel .profile-settings-list{border-top:0;border-top-left-radius:0;border-top-right-radius:0;}
 #screen-desktop #icon-mail #glyph-mail::after{content:none;}
 #screen-desktop #icon-mail #glyph-mail::after{content:none;}
@@ -1150,7 +1150,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#ffcf52;box-shadow:0 .4375rem .625rem #bd9b7126;}
 #screen-shell .mail-sidebar .side-btn:not(.active){box-shadow:0 .4375rem .625rem #bd9b7126;}
 /* Opened email: the same big thick ✕ as the mail app, no circle. */
-.mail-detail-card .mail-detail-close{top:1.25rem;right:1.25rem;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:.5rem;background:transparent url('../assets/icons/close-icon.svg') center/85% no-repeat;cursor:pointer;}
+.mail-detail-card .mail-detail-close{top:1.25rem;right:1.25rem;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:.5rem;background:transparent url('../assets/icons/close-icon.svg') center/85% no-repeat;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .mail-detail-card .mail-detail-close{transition:transform .15s ease;}
 /* Both close ✕ buttons (opened email and mail app) show a light grey square on hover, no lift. */
 .mail-detail-card .mail-detail-close:hover,.mail-detail-card .mail-detail-close:focus-visible{background-color:#b4b8bc33;transform:none;}
@@ -1173,11 +1173,11 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-align-options button[aria-pressed="true"]{background:#d8f0ec;border-color:#77b9af;color:#1f4a4c;}
 #screen-editor .editor-align-options button:hover,#screen-editor .editor-align-options button:focus-visible{border-color:#77b9af;}
 /* One continuous settings list: no card boxes, sections separated by a thin line. */
-#screen-editor .editor-setting-card{margin:0;padding:.75rem 0;border:0;border-radius:0;background:transparent;box-shadow:none;}
+#screen-editor .editor-setting-card{margin:0;padding:1rem 0;border:0;border-radius:0;background:transparent;box-shadow:none;}
 #screen-editor .editor-setting-card ~ .editor-setting-card{border-top:1px solid #e2f2ed;}
 #screen-editor .editor-setting-card summary{font-size:1.25rem;}
 /* Section headings are plain titles (no collapse arrow). */
-#screen-editor .editor-setting-card summary{cursor:default;padding-right:0;}
+#screen-editor .editor-setting-card summary{cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;padding-right:0;}
 #screen-editor .editor-setting-card summary::after{display:none;}
 /* Editor canvas area: square corners on a white background. */
 #screen-editor .editor-canvas-wrap{border-radius:0;background:#fff;background-image:none;box-shadow:none;}
@@ -1186,8 +1186,8 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-canvas-wrap{background:#e4e1da;border:0;}
 /* Edit-mode sticky note, sized like the mockup: big tab, centered two-line note. */
 #screen-editor .editor-side-rail .editor-mode-note{width:15rem;color:#5b3f4f;text-align:left;filter:drop-shadow(0 .25rem .25rem #3b172e1f);}
-#screen-editor .editor-side-rail .editor-mode-tab{display:inline-flex;align-items:center;gap:.5rem;margin:0;padding:.5rem 1rem .375rem;background:#f9df91;border-radius:.375rem .375rem 0 0;box-shadow:none;font-size:2.125rem;line-height:1;}
-#screen-editor .editor-side-rail .editor-mode-note p{margin:0;padding:.875rem 1rem;background:#f8e39c;border-radius:0 .375rem .375rem .375rem;font-size:1.75rem;line-height:1.25;text-align:center;}
+#screen-editor .editor-side-rail .editor-mode-tab{display:inline-flex;align-items:center;gap:.5rem;margin:0;padding:.5rem 1rem 0.5rem;background:#f9df91;border-radius:.375rem .375rem 0 0;box-shadow:none;font-size:2.125rem;line-height:1;}
+#screen-editor .editor-side-rail .editor-mode-note p{margin:0;padding:1rem 1rem;background:#f8e39c;border-radius:0 .375rem .375rem .375rem;font-size:1.75rem;line-height:1.25;text-align:center;}
 /* Editing area dots, positioned by the editor to sit on the 8-point grid. */
 #screen-editor .editor-canvas-wrap{background-color:#e4e1da;background-image:radial-gradient(circle at 1px 1px,#bdb6aa 1.25px,transparent 1.75px);background-size:var(--dot-step,8px) var(--dot-step,8px);background-position:var(--dot-x,0) var(--dot-y,0);}
 /* Two sidebars: brief on the left, Design tools + Layers on the right. */
@@ -1229,8 +1229,8 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor .editor-main::before{border-bottom:0;}
 /* Edit-mode sticky note pinned to the top-left corner of the screen. */
 #screen-editor .editor-mode-note.editor-mode-corner{position:absolute;z-index:85;top:.75rem;left:1rem;right:auto;width:15rem;pointer-events:none;color:#5b3f4f;text-align:left;filter:drop-shadow(0 .25rem .25rem #3b172e1f);}
-#screen-editor .editor-mode-corner .editor-mode-tab{display:inline-flex;align-items:center;gap:.5rem;margin:0;padding:.5rem 1rem .375rem;background:#f9df91;border-radius:.375rem .375rem 0 0;box-shadow:none;font-size:2.125rem;line-height:1;}
-#screen-editor .editor-mode-corner p{margin:0;padding:.875rem 1rem;background:#f8e39c;border-radius:0 .375rem .375rem .375rem;font-size:1.75rem;line-height:1.25;text-align:center;}
+#screen-editor .editor-mode-corner .editor-mode-tab{display:inline-flex;align-items:center;gap:.5rem;margin:0;padding:.5rem 1rem 0.5rem;background:#f9df91;border-radius:.375rem .375rem 0 0;box-shadow:none;font-size:2.125rem;line-height:1;}
+#screen-editor .editor-mode-corner p{margin:0;padding:1rem 1rem;background:#f8e39c;border-radius:0 .375rem .375rem .375rem;font-size:1.75rem;line-height:1.25;text-align:center;}
 @media(min-width:901px){#screen-editor .editor-side-rail:not(.editor-right-rail){top:10.5rem!important;}}
 @media(max-width:900px){#screen-editor .editor-mode-note.editor-mode-corner{display:none;}}
 /* Level Maker theme for the design editor: mint stage with teal border and 8-point-grid dots. */
@@ -1258,9 +1258,9 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-editor[data-ed-theme="classic"] .editor-canvas-wrap{background-color:#e4e1da;border:0;border-radius:0;box-shadow:none;}
 #screen-editor[data-ed-theme="classic"] .editor-side-rail>*,#screen-editor[data-ed-theme="classic"] .editor-side-rail .element-settings,#screen-editor[data-ed-theme="classic"] .editor-side-rail .element-settings-head,#screen-editor[data-ed-theme="classic"] .editor-side-rail .editor-layers-panel,#screen-editor[data-ed-theme="classic"] .editor-rail-card .editor-mail-brief{background:#fcf7ef;}
 /* Save & submit: compact card like the mockup, labels centered in their buttons. */
-#modal-confirm-submit .confirm-card{width:min(22rem,92vw);max-width:22rem;min-width:0;padding:1.5rem 1.75rem 1.75rem;border-radius:1.5rem;}
-#modal-confirm-submit .confirm-card p{margin:0 0 1.25rem;font-size:2rem;}
-#modal-confirm-submit .confirm-actions{gap:1.25rem;}
+#modal-confirm-submit .confirm-card{width:min(22rem,92vw);max-width:22rem;min-width:0;padding:1.5rem 2rem 2rem;border-radius:1.5rem;}
+#modal-confirm-submit .confirm-card p{margin:0 0 1.5rem;font-size:2rem;}
+#modal-confirm-submit .confirm-actions{gap:1.5rem;}
 #modal-confirm-submit .confirm-card .btn{display:flex;align-items:center;justify-content:center;width:7.5rem;min-width:0;height:3.25rem;padding:0;text-align:center;line-height:1;}
 /* "1 bar, no top bar": canvas area runs edge to edge (no strips around it). */
 @media(min-width:901px){
@@ -1277,21 +1277,21 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label{text-shadow:0 1px 2px #1d3b4f99,0 0 6px #1d3b4f66;}
 /* Phones: keep the desktop mail layout — Inbox and Completed in a left column. */
 @media(max-width:900px){
-  #screen-shell .mail-body{flex-direction:row;align-items:stretch;gap:.75rem;}
-  #screen-shell .mail-sidebar{display:flex;flex-direction:column;width:26%;max-width:9rem;flex:0 0 auto;gap:.75rem;}
-  #screen-shell .mail-sidebar .side-btn{flex:0 0 auto;flex-direction:column;gap:.375rem;padding:.75rem .375rem;min-height:5.5rem;}
-  #screen-shell .mail-sidebar .folder-label{font-size:.875rem;}
+  #screen-shell .mail-body{flex-direction:row;align-items:stretch;gap:1rem;}
+  #screen-shell .mail-sidebar{display:flex;flex-direction:column;width:26%;max-width:9rem;flex:0 0 auto;gap:1rem;}
+  #screen-shell .mail-sidebar .side-btn{flex:0 0 auto;flex-direction:column;gap:0.5rem;padding:1rem 0.5rem;min-height:5.5rem;}
+  #screen-shell .mail-sidebar .folder-label{font-size:1rem;}
   #screen-shell .mail-sidebar .side-icon{width:2.25rem;height:2.25rem;font-size:2.25rem;}
   #screen-shell .mail-panel{flex:1;min-width:0;min-height:0;}
 }
 /* Phones: each email row stacks name/tag, preview and reward beside the avatar. */
 @media(max-width:900px){
-  #screen-shell .mail-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"av name tag" "av prev prev" "av prize prize";align-items:center;gap:.25rem .75rem;min-height:0;padding:.875rem .75rem;}
+  #screen-shell .mail-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"av name tag" "av prev prev" "av prize prize";align-items:center;gap:.25rem 1rem;min-height:0;padding:1rem 1rem;}
   #screen-shell .mail-item .avatar-circle{grid-area:av;align-self:start;}
   #screen-shell .mail-item .mail-item-name{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;}
-  #screen-shell .mail-item .mail-item-preview{grid-area:prev;min-width:0;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;}
+  #screen-shell .mail-item .mail-item-preview{grid-area:prev;min-width:0;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:1rem;}
   #screen-shell .mail-item .mail-prize{grid-area:prize;justify-self:start;}
-  #screen-shell .mail-item .tag{grid-area:tag;font-size:.75rem;padding:.25rem .625rem;}
+  #screen-shell .mail-item .tag{grid-area:tag;font-size:1rem;padding:.25rem 0.5rem;}
   #screen-shell .mail-search{margin-right:3.5rem;}
 }
 /* No double-tap zoom on phones. */
@@ -1320,7 +1320,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 @media(pointer:coarse){
   #screen-shell .mail-header #mail-back-btn{left:auto;right:calc(env(safe-area-inset-right,0px) + 32px);top:calc(env(safe-area-inset-top,0px) + 16px);min-width:44px;min-height:44px;}
 }
-@media(max-width:900px){html{font-size:calc(15px * var(--ui-scale) * var(--fit,1));}}
+@media(max-width:900px){html{font-size:calc(16px * var(--ui-scale) * var(--fit,1));}}
 /* Keep the mobile editor outside the iPhone cutout, including its left rail. */
 @media(pointer:coarse){
   #screen-editor{box-sizing:border-box;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
@@ -1331,7 +1331,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 /* Rulers stay in screen pixels; spacing dimensions use canvas coordinates. */
 #screen-editor .canvas-rulers{position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;overflow:hidden;}
 #screen-editor .canvas-rulers path{stroke:#70aaa6;stroke-width:1;}
-#screen-editor .canvas-rulers text{font:11px var(--font-body);fill:#315e65;stroke:none;}
+#screen-editor .canvas-rulers text{font:16px var(--font-body);fill:#315e65;stroke:none;}
 #screen-editor .spacing-overlay{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
 #screen-editor .spacing-overlay text{font-family:var(--font-body);font-weight:700;}
 #screen-editor .alignment-reference{position:absolute;box-sizing:border-box;border:1px solid #cf3783;background:#cf37830a;pointer-events:none;}
@@ -1340,7 +1340,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .workday-totals{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;}
 .workday-totals>span{padding:.5rem 1rem;background:#d5eeea;border-radius:.5rem;font-weight:700;}
 .workday-reviews{padding-left:1.5rem;line-height:1.5;}
-.workday-reviews li{margin-bottom:.75rem;}
+.workday-reviews li{margin-bottom:1rem;}
 .workday-card #next-workday{margin-top:1rem;}
 /* Goal markers show editable elements without outlining the whole element. */
 #screen-editor .el.needs-edit:not(.selected){outline:none;}
@@ -1349,7 +1349,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   outline-offset:2px;
 }
 #screen-editor .el.needs-edit.intro-flash{animation:none;}
-#screen-editor .el.needs-edit:not(.selected)::after{content:'!';position:absolute;top:calc(-14 * var(--selection-unit,1px));right:calc(-14 * var(--selection-unit,1px));width:calc(24 * var(--selection-unit,1px));height:calc(24 * var(--selection-unit,1px));display:grid;place-items:center;border-radius:50%;background:#e53b42;color:#fff;font:800 calc(15 * var(--selection-unit,1px))/1 var(--font-body);animation:goal-pulse 1.4s ease-in-out infinite;pointer-events:none;z-index:5;}
+#screen-editor .el.needs-edit:not(.selected)::after{content:'!';position:absolute;top:calc(-14 * var(--selection-unit,1px));right:calc(-14 * var(--selection-unit,1px));width:calc(24 * var(--selection-unit,1px));height:calc(24 * var(--selection-unit,1px));display:grid;place-items:center;border-radius:50%;background:#e53b42;color:#fff;font:800 calc(15 * var(--selection-unit,16px))/1 var(--font-body);animation:goal-pulse 1.4s ease-in-out infinite;pointer-events:none;z-index:5;}
 #screen-editor .el.goal-solved{animation:goal-solved .9s ease-out;}
 @keyframes goal-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
 @keyframes goal-solved{0%{box-shadow:0 0 0 0 #6ccf8ecc;}100%{box-shadow:0 0 0 calc(20 * var(--selection-unit,1px)) #6ccf8e00;}}
@@ -1379,8 +1379,8 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 /* Match the Level Maker's left tools / center stage / right properties spacing. */
 @media(min-width:901px){
   #screen-editor[data-layout="double"][data-ed-theme="blue"]{
-    --editor-left-panel:14rem;
-    --editor-right-panel:17rem;
+    --editor-left-panel:22rem;
+    --editor-right-panel:20rem;
   }
   #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-main{
     padding-left:calc(var(--editor-left-panel) + 1rem);
@@ -1487,7 +1487,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   right:3.5rem;
   max-width:17rem;
   margin:0;
-  padding:.75rem 1rem;
+  padding:1rem 1rem;
   border:2px solid #e4bb56;
   border-radius:1rem;
   background:#fff0bc;
@@ -1506,8 +1506,8 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
     position:static;
     max-width:none;
     width:max-content;
-    margin:.75rem 0 0;
-    padding:.5rem .75rem;
+    margin:1rem 0 0;
+    padding:.5rem 1rem;
     font-size:1rem;
     text-align:left;
   }
@@ -1519,7 +1519,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   display:grid;
   grid-template-columns:repeat(2,6.5rem);
   width:max-content;
-  gap:.75rem 1rem;
+  gap:1rem 1rem;
 }
 #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile){
   display:block;
@@ -1552,28 +1552,28 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   font:700 1rem/1 var(--font-body);
   text-align:center;
 }
-.taskbar-open-apps{display:flex;align-items:center;gap:.375rem;min-width:0;max-width:55%;overflow-x:auto;scrollbar-width:thin;}
-.taskbar-running-app{display:flex;align-items:center;gap:.4rem;flex:none;max-width:11rem;min-height:2.75rem;padding:.375rem .75rem;border:2px solid #77b9af;border-radius:.75rem;background:#fcf7ef;color:#315e65;font:700 .875rem var(--font-body);cursor:pointer;}
+.taskbar-open-apps{display:flex;align-items:center;gap:0.5rem;min-width:0;max-width:55%;overflow-x:auto;scrollbar-width:thin;}
+.taskbar-running-app{display:flex;align-items:center;gap:0.5rem;flex:none;max-width:11rem;min-height:2.75rem;padding:0.5rem 1rem;border:2px solid #77b9af;border-radius:.75rem;background:#fcf7ef;color:#315e65;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .taskbar-running-app.active,.taskbar-running-app:hover{background:#d8f0ec;border-color:#488b8e;}
 .taskbar-running-app span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .desktop-app-window{position:fixed;z-index:1500;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(55rem,calc(100vw - 2rem));height:min(42rem,calc(100dvh - 7rem));border:3px solid #77b9af;border-radius:1.25rem;background:#fcf7ef;box-shadow:0 1rem 3rem #18374555;overflow:hidden;}
 .desktop-app-window[hidden]{display:none!important;}
-.desktop-app-window-titlebar{display:flex;align-items:center;gap:.75rem;flex:none;padding:.75rem 1rem;border-bottom:2px solid #c8e6da;background:#e2f2ed;color:#315e65;font:700 1.375rem var(--font-display);}
+.desktop-app-window-titlebar{display:flex;align-items:center;gap:1rem;flex:none;padding:1rem 1rem;border-bottom:2px solid #c8e6da;background:#e2f2ed;color:#315e65;font:700 1.375rem var(--font-display);}
 .desktop-app-window-titlebar img{width:2rem;height:2rem;}
-.desktop-app-window-titlebar button{margin-left:auto;width:2.25rem;height:2.25rem;border:0;border-radius:.5rem;background:#fff;color:#315e65;font:800 1.5rem/1 var(--font-body);cursor:pointer;}
+.desktop-app-window-titlebar button{margin-left:auto;width:2.25rem;height:2.25rem;border:0;border-radius:.5rem;background:#fff;color:#315e65;font:800 1.5rem/1 var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .desktop-app-window-body{flex:1;min-height:0;overflow:auto;}
 .desktop-app-window-body .app-content-wrap{height:100%;padding:1rem;}
 @media(max-width:900px){
-  #screen-desktop .desktop-icons{grid-template-columns:repeat(2,minmax(0,1fr));width:min(9rem,calc(100vw - 3rem));gap:.4rem .5rem;}
+  #screen-desktop .desktop-icons{grid-template-columns:repeat(2,minmax(0,1fr));width:min(9rem,calc(100vw - 3rem));gap:0.5rem .5rem;}
   #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile){width:100%;max-width:4rem;}
   #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-glyph{width:min(3.5rem,100%)!important;height:3.125rem!important;}
   .taskbar-running-app{min-height:2.25rem;padding:.25rem .5rem;}
   .taskbar-running-app span:last-child{display:none;}
 }
 @media(max-height:500px),(min-aspect-ratio:2/1){
-  #screen-desktop .desktop-icons{top:.25rem;gap:.1rem .4rem;}
+  #screen-desktop .desktop-icons{top:.25rem;gap:0.25rem 0.5rem;}
   #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-glyph{height:2.5rem!important;}
-  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-label{font-size:.75rem;}
+  #screen-desktop .desktop-icon:is(#icon-stats,#icon-shop,#icon-settings,#icon-profile) .desktop-icon-label{font-size:1rem;}
 }
 /* Taskbar: Home, Profile and Settings on the left. */
 #global-taskbar #taskbar-profile,#global-taskbar #taskbar-settings{display:flex;align-items:center;justify-content:center;background:none;font-size:0;}
@@ -1597,7 +1597,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 #screen-desktop #icon-profile,#screen-desktop #icon-shop{display:none!important;}
 /* Desktop apps: one column of equal square cells with even spacing. */
 #screen-desktop .desktop-icons{display:flex!important;flex-direction:column!important;align-items:center;gap:1.5rem!important;width:auto!important;grid-template-columns:none!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:.375rem;width:7rem!important;height:7rem!important;min-width:0;padding:0;margin:0;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:0.5rem;width:7rem!important;height:7rem!important;min-width:0;padding:0;margin:0;}
 #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{line-height:1.1;text-align:center;}
 @media(max-width:900px){#screen-desktop .desktop-icons{gap:1rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4.75rem!important;height:4.75rem!important;}}
 #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{flex:none!important;width:4.5rem!important;height:4rem!important;}
@@ -1613,14 +1613,14 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 #screen-shell .mail-item .mail-prize{display:none!important;}
 /* Edit Mode banner: a rounded sticky tag with breathing room, not a full-bleed block. */
 @media(min-width:901px){
-  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner{top:.75rem;left:1rem;width:auto;height:calc(var(--editor-topbar-h) - 1.5rem);padding:0 1.25rem;border:0;border-radius:.75rem;box-shadow:0 .25rem .5rem #3b172e1f;}
+  #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner{top:.75rem;left:1rem;width:auto;height:calc(var(--editor-topbar-h) - 1.5rem);padding:0 1.5rem;border:0;border-radius:.75rem;box-shadow:0 .25rem .5rem #3b172e1f;}
   #screen-editor[data-layout="double"][data-ed-theme="blue"] .editor-mode-corner .editor-mode-tab{font-size:2rem;}
 }
 /* Running apps look like the other taskbar buttons: just an icon, with a dot under the open one. */
 .taskbar-running-app{position:relative;justify-content:center;width:4rem;height:4rem;min-height:0;max-width:none;padding:0;border:0!important;background:none!important;}
 .taskbar-running-app .game-taskbar-icon,.taskbar-running-app img{width:3rem;height:3rem;}
 .taskbar-running-app::after{content:'';position:absolute;bottom:-.125rem;left:50%;width:.5rem;height:.5rem;margin-left:-.25rem;border-radius:50%;background:#77b9af;}
-.taskbar-running-app.active::after{width:1.25rem;margin-left:-.625rem;border-radius:999px;background:#488b8e;}
+.taskbar-running-app.active::after{width:1.25rem;margin-left:-0.5rem;border-radius:999px;background:#488b8e;}
 @media(max-width:900px){.taskbar-running-app{width:3rem;height:3rem;}.taskbar-running-app .game-taskbar-icon,.taskbar-running-app img{width:2.25rem;height:2.25rem;}}
 /* Taskbar open-apps area: no scrollbar (the open-app dots sit inside the bar). */
 .taskbar-open-apps{overflow:visible!important;scrollbar-width:none;padding-bottom:.25rem;}
@@ -1628,34 +1628,34 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .taskbar-running-app::after{bottom:-.375rem;}
 /* "New" dot sits right beside the difficulty tag. */
 #screen-shell .mail-item .unread-dot{position:static;flex:none;width:.875rem;height:.875rem;margin-left:.5rem;border-radius:50%;background:#df0036;}
-#screen-shell .mail-item .unread-dot{width:1.375rem;height:1.375rem;margin-left:.75rem;}
+#screen-shell .mail-item .unread-dot{width:1.375rem;height:1.375rem;margin-left:1rem;}
 /* Undo/redo stay readable when unavailable (dimmed, still above 3:1). */
 #screen-editor #tool-undo:disabled,#screen-editor #tool-redo:disabled{opacity:.6;}
 /* Client goals: one card per goal, then a handoff checklist; the left rail scrolls. */
 #screen-editor .editor-side-rail:not(.editor-right-rail){overflow-y:auto;}
-#screen-editor .editor-goal-cards{list-style:none;margin:0;padding:0!important;display:flex;flex-direction:column;gap:.75rem;border:0!important;background:none!important;box-shadow:none!important;}
-#screen-editor .editor-goal-cards :is(.editor-goal,.editor-handoff){display:block;padding:.875rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;font:600 .9375rem/1.4 var(--font-body);color:#3b172e;}
-#screen-editor .editor-goal-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.375rem;}
+#screen-editor .editor-goal-cards{list-style:none;margin:0;padding:0!important;display:flex;flex-direction:column;gap:1rem;border:0!important;background:none!important;box-shadow:none!important;}
+#screen-editor .editor-goal-cards :is(.editor-goal,.editor-handoff){display:block;padding:1rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;font:600 1rem/1.4 var(--font-body);color:#3b172e;}
+#screen-editor .editor-goal-head{display:flex;align-items:center;gap:.5rem;margin-bottom:0.5rem;}
 #screen-editor .editor-goal-head b{font:700 1rem var(--font-display);}
-#screen-editor .editor-goal-badge{padding:.125rem .5rem;border-radius:.375rem;background:#fde3e3;color:#b42318;font:800 .6875rem var(--font-body);letter-spacing:.06em;}
+#screen-editor .editor-goal-badge{padding:0.25rem .5rem;border-radius:.375rem;background:#fde3e3;color:#b42318;font:800 1rem var(--font-body);letter-spacing:.06em;}
 #screen-editor .editor-goal.bonus .editor-goal-badge{background:#fff1c9;color:#8a6410;}
 #screen-editor .editor-goal.met .editor-goal-badge{background:#d9f4e2;color:#1f7a45;}
 #screen-editor .editor-goal.met{border-color:#9edcb4;}
-#screen-editor .editor-goal p{margin:0 0 .375rem;}
-#screen-editor .editor-goal small{display:block;color:#756685;font:500 .8125rem/1.4 var(--font-body);}
+#screen-editor .editor-goal p{margin:0 0 0.5rem;}
+#screen-editor .editor-goal small{display:block;color:#756685;font:500 1rem/1.4 var(--font-body);}
 #screen-editor .editor-goal.met > p{text-decoration:none;}
 #screen-editor .editor-handoff b{display:block;margin-bottom:.5rem;font:700 1rem var(--font-display);}
-#screen-editor .editor-handoff label{display:flex;gap:.5rem;align-items:flex-start;padding:.25rem 0;font:600 .875rem/1.35 var(--font-body);}
-#screen-editor .editor-handoff input{flex:none;width:1.125rem;height:1.125rem;margin-top:.1rem;accent-color:#3fae6a;}
+#screen-editor .editor-handoff label{display:flex;gap:.5rem;align-items:flex-start;padding:.25rem 0;font:600 1rem/1.35 var(--font-body);}
+#screen-editor .editor-handoff input{flex:none;width:1.125rem;height:1.125rem;margin-top:0.25rem;accent-color:#3fae6a;}
 #screen-editor .editor-side-rail:not(.editor-right-rail) .editor-rail-card{flex:none!important;max-height:none!important;overflow:visible;}#screen-editor .editor-goal-cards{flex:none;}
 
 /* Text sits flush in its box, so the selection hugs it on all four sides. */
 #editor-canvas .el[data-id]{padding-left:0!important;padding-right:0!important;}
 /* Live measurement on each goal card: red until it passes, then green. */
-#screen-editor .editor-goal-measure{display:block;margin:.375rem 0 .25rem;font:800 1.125rem/1.2 ui-monospace,'Cascadia Mono',Consolas,monospace;color:#c0282d;}
+#screen-editor .editor-goal-measure{display:block;margin:0.5rem 0 .25rem;font:800 1.125rem/1.2 ui-monospace,'Cascadia Mono',Consolas,monospace;color:#c0282d;}
 #screen-editor .editor-goal.met .editor-goal-measure{color:#1f8a4c;}
 /* End-of-day sunset (placeholder animation before the day recap). */
-.day-end-scene{position:fixed;inset:0;z-index:3000;overflow:hidden;cursor:pointer;background:linear-gradient(#ffd18a,#ffb5a0 55%,#c9a4e6);animation:day-end-sky 2.6s ease-in forwards;transition:opacity .3s;}
+.day-end-scene{position:fixed;inset:0;z-index:3000;overflow:hidden;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;background:linear-gradient(#ffd18a,#ffb5a0 55%,#c9a4e6);animation:day-end-sky 2.6s ease-in forwards;transition:opacity .3s;}
 .day-end-scene.leaving{opacity:0;}
 .day-end-sun{position:absolute;left:50%;top:38%;width:9rem;height:9rem;margin-left:-4.5rem;border-radius:50%;background:radial-gradient(#fff4c4,#ffb347);box-shadow:0 0 5rem #ffcf7a;animation:day-end-sun 2.6s ease-in forwards;}
 .day-end-hill{position:absolute;left:-10%;right:-10%;bottom:-18%;height:55%;border-radius:50% 50% 0 0;background:linear-gradient(#7fb87a,#4f8f5a);}
@@ -1674,15 +1674,15 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 
 /* Level Maker: pick a game level to edit. */
 .maker-game-level{display:flex;align-items:center;gap:.5rem;}
-.maker-game-level select{max-width:18rem;padding:.375rem .5rem;border:2px solid #c8e6da;border-radius:.5rem;background:#fff;color:#315e65;font:600 .875rem var(--font-body);}
+.maker-game-level select{max-width:18rem;padding:0.5rem .5rem;border:2px solid #c8e6da;border-radius:.5rem;background:#fff;color:#315e65;font:600 1rem var(--font-body);}
 
 /* Mail reads like an email: subject, From/To/Date header, normal-case body. */
 .mail-detail-card{text-transform:none;}
-.mail-detail-card .mail-detail-head{display:grid;grid-template-columns:1fr auto;align-items:start;gap:.75rem 1.5rem;padding-bottom:1rem;border-bottom:2px solid #c8e6da;}
+.mail-detail-card .mail-detail-head{display:grid;grid-template-columns:1fr auto;align-items:start;gap:1rem 1.5rem;padding-bottom:1rem;border-bottom:2px solid #c8e6da;}
 .mail-detail-card h2{grid-column:1/-1;margin:0;padding-right:3rem;font:700 1.75rem/1.2 var(--font-display);text-transform:none;color:#3b172e;}
 .mail-detail-from{display:flex;align-items:center;gap:1rem;min-width:0;}
 .mail-detail-card .mail-detail-from .avatar-circle{flex:none;width:3.5rem;height:3.5rem;display:grid;place-items:center;font-size:1.75rem;}
-.mail-detail-meta{display:grid;grid-template-columns:auto 1fr;gap:.125rem .75rem;margin:0;font:600 1rem/1.35 var(--font-body);color:#3b172e;}
+.mail-detail-meta{display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1rem;margin:0;font:600 1rem/1.35 var(--font-body);color:#3b172e;}
 .mail-detail-meta dt{color:#6b5b76;font-weight:700;}
 .mail-detail-meta dd{margin:0;overflow-wrap:anywhere;}
 .mail-detail-meta dd span{color:#6b5b76;font-weight:500;}
@@ -1699,14 +1699,14 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .mail-detail-from{grid-column:1;}
 .mail-detail-card .mail-detail-head{grid-template-columns:minmax(0,1fr) auto;width:100%;}.mail-detail-card .mail-detail-reward{justify-self:end;}
 /* Reward sits beside Accept, as plain text. */
-.mail-detail-card .mail-detail-actions{display:flex;align-items:center;justify-content:flex-end;gap:1.25rem;}
+.mail-detail-card .mail-detail-actions{display:flex;align-items:center;justify-content:flex-end;gap:1.5rem;}
 .mail-detail-card .mail-detail-reward{grid-column:auto;grid-row:auto;border:0;box-shadow:none;background:none;padding:0;}
 .mail-detail-card .mail-detail-from .avatar-circle{width:5.5rem;height:5.5rem;font-size:2.75rem;}
 .mail-detail-meta{font-size:1.125rem;}
 .mail-detail-card .mail-detail-from .avatar-circle{border:.1875rem solid #9fcfe0;box-sizing:border-box;}
 .mail-detail-card .mail-detail-head{padding-right:0;}
 /* Header like a mail app: avatar, then subject / sender / "To:" stacked. */
-.mail-detail-card .mail-detail-from{grid-column:1/-1;align-items:flex-start;gap:1.25rem;}
+.mail-detail-card .mail-detail-from{grid-column:1/-1;align-items:flex-start;gap:1.5rem;}
 .mail-detail-sender{min-width:0;display:flex;flex-direction:column;gap:.25rem;padding-right:3rem;}
 .mail-detail-sender h2{padding:0;font-size:1.625rem;line-height:1.2;}
 .mail-detail-meta{display:block;}
@@ -1717,10 +1717,10 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 
 /* Completed mail: the conversation, newest message first. */
 .mail-detail-card .mail-detail-body.mail-thread{display:flex;flex-direction:column;gap:1rem;white-space:normal;max-height:55vh;}
-.mail-thread-msg{padding:1rem 1.25rem;border:2px solid #d9ece6;border-radius:1rem;background:#fff;}
+.mail-thread-msg{padding:1rem 1.5rem;border:2px solid #d9ece6;border-radius:1rem;background:#fff;}
 .mail-thread-msg.from-me{margin-left:3rem;background:#f1f8f6;border-color:#c8e6da;}
 .mail-thread-msg.original{background:#fcf7ef;}
-.mail-thread-msg header{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;font:600 1rem var(--font-body);color:#3b172e;}
+.mail-thread-msg header{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;font:600 1rem var(--font-body);color:#3b172e;}
 .mail-thread-msg header .avatar-circle{width:2.25rem;height:2.25rem;flex:none;display:grid;place-items:center;border:2px solid #9fcfe0;font-size:1.125rem;}
 
 /* Keep the client portraits outlined in the inbox as well as the open email. */
@@ -1730,77 +1730,73 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
   background:#effafa;
   overflow:hidden;
 }
-.mail-thread-msg header time{margin-left:auto;color:#6b5b76;font-weight:500;font-size:.875rem;}
+.mail-thread-msg header time{margin-left:auto;color:#6b5b76;font-weight:500;font-size:1rem;}
 .mail-thread-msg p{margin:0;white-space:pre-line;font:400 1.125rem/1.5 var(--font-body);color:#3b172e;}
-.mail-thread-badge{margin-left:.5rem;padding:.125rem .5rem;border-radius:999px;background:#fde2e0;color:#8a2a22;font:700 .75rem var(--font-body);}
+.mail-thread-badge{margin-left:.5rem;padding:0.25rem .5rem;border-radius:999px;background:#fde2e0;color:#8a2a22;font:700 1rem var(--font-body);}
 .mail-thread-badge.done{background:#d8f3e4;color:#1f6b45;}
-.mail-thread-file{display:inline-block;margin-top:.5rem;color:#315e65;font:600 .9375rem var(--font-body);}
+.mail-thread-file{display:inline-block;margin-top:.5rem;color:#315e65;font:600 1rem var(--font-body);}
 
 /* Level Maker workspace controls. */
 @media(min-width:901px){
-  .maker-workspace{grid-template-columns:var(--maker-left,22rem) .5rem minmax(0,1fr) .5rem var(--maker-right,20rem);gap:.25rem;}
+  .maker-workspace{grid-template-columns:22rem minmax(0,1fr) 20rem;gap:1rem;}
 }
-.maker-rail-resizer{position:relative;z-index:3;cursor:col-resize;touch-action:none;border-radius:.5rem;}
-.maker-rail-resizer::before{content:'';position:absolute;left:50%;top:35%;bottom:35%;width:.25rem;transform:translateX(-50%);border-radius:1rem;background:#77b9af;}
-.maker-rail-resizer:hover,.maker-rail-resizer:focus-visible{background:#b6e1da;outline:none;}
-@media(max-width:900px){.maker-rail-resizer{display:none;}}
-.maker-layers .maker-layer-select{display:flex;align-items:center;gap:.625rem;}
-.maker-layer-preview{display:grid;place-items:center;flex:none;width:3.25rem;height:2.25rem;overflow:hidden;border:1px solid #b5d9d3;border-radius:.375rem;background:#fff;font:700 .625rem/1 var(--font-body);text-align:center;}
+.maker-layers .maker-layer-select{display:flex;align-items:center;gap:0.5rem;}
+.maker-layer-preview{display:grid;place-items:center;flex:none;width:3.25rem;height:2.25rem;overflow:hidden;border:1px solid #b5d9d3;border-radius:.375rem;background:#fff;font:700 1rem/1 var(--font-body);text-align:center;}
 .maker-layer-preview img{width:100%;height:100%;object-fit:cover;}
 .maker-layer-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .maker-selection-actions{position:absolute;z-index:20002;display:flex;gap:.25rem;transform:translate(-50%,calc(-100% - .75rem));padding:.25rem;border:2px solid #418a93;border-radius:.5rem;background:#fcf7ef;box-shadow:0 .25rem .5rem #315e6533;}
 .maker-locked-outline{position:absolute;z-index:20000;box-sizing:border-box;border:2px dashed #418a93;pointer-events:none;}
-.maker-selection-actions button{width:2rem;height:2rem;border:0;border-radius:.375rem;background:#d8f0ec;cursor:pointer;font-size:1.125rem;}
+.maker-selection-actions button{width:2rem;height:2rem;border:0;border-radius:.375rem;background:#d8f0ec;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;font-size:1.125rem;}
 .maker-selection-actions button:hover{background:#b6e1da;}
-.maker-selection-actions button:disabled{opacity:.4;cursor:default;}
-.maker-stage.panning,.maker-stage.panning .maker-canvas,.maker-stage.panning .maker-element,.maker-stage.panning .maker-selection-box{cursor:grab;}
-.maker-stage.panning:active,.maker-stage.panning:active .maker-canvas{cursor:grabbing;}
+.maker-selection-actions button:disabled{opacity:.4;cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;}
+.maker-stage.panning,.maker-stage.panning .maker-canvas,.maker-stage.panning .maker-element,.maker-stage.panning .maker-selection-box{cursor:url("../assets/sprites/cursor-grab.png") 12 12, grab;}
+.maker-stage.panning:active,.maker-stage.panning:active .maker-canvas{cursor:url("../assets/sprites/cursor-grabbing.png") 12 12, grabbing;}
 
 /* Compact layer stack with artwork thumbnails and quiet, consistent controls. */
 @media(min-width:901px){
   .maker-palette{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:.5rem;}
   .maker-palette h2,.maker-palette .maker-shape-picker,.maker-palette #maker-add-target,.maker-palette #maker-peek-targets,.maker-palette .maker-list-head,.maker-palette .maker-layers{grid-column:1/-1;}
   .maker-palette>button{min-width:0;min-height:2.75rem;margin:0;padding:.5rem;}
-  .maker-palette .maker-shape-picker{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.25rem .25rem .25rem .5rem;font-weight:700;}
+  .maker-palette .maker-shape-picker{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.25rem .25rem .25rem .5rem;font-weight:700;}
   .maker-palette .maker-shape-picker select{min-width:0;max-width:70%;}
 }
-.maker-palette .maker-list-head{margin:1.25rem -.5rem .5rem;padding:.5rem .75rem;border:0;border-radius:.5rem;background:#e7f2ee;color:#315e65;font:700 .9rem var(--font-body);}
+.maker-palette .maker-list-head{margin:1.5rem -.5rem .5rem;padding:.5rem 1rem;border:0;border-radius:.5rem;background:#e7f2ee;color:#315e65;font:700 1rem var(--font-body);}
 .maker-layers .maker-layer-row{gap:.25rem;min-height:3.25rem;margin-bottom:.25rem;padding:.25rem;border:1px solid transparent;border-radius:.625rem;background:transparent;box-shadow:none;}
 .maker-layers .maker-layer-row:hover,.maker-layers .maker-layer-row:focus-within{border-color:#c8e6da;background:#edf6f2;}
 .maker-layers .maker-layer-row.active{border-color:#77b9af;background:#d8f0ec;}
 .maker-layers .maker-layer-row.is-hidden .maker-layer-preview,.maker-layers .maker-layer-row.is-hidden .maker-layer-label{opacity:.45;}
-.maker-layers .maker-layer-select{gap:.625rem;min-height:2.75rem;padding:.125rem .25rem;font:600 .875rem var(--font-body);}
+.maker-layers .maker-layer-select{gap:0.5rem;min-height:2.75rem;padding:0.25rem .25rem;font:600 1rem var(--font-body);}
 .maker-layer-preview{width:2.75rem;height:2.5rem;border-color:#d4e5e0;background:#fff;}
 .maker-layer-label{color:#3b172e;}
-.maker-layers .maker-layer-visibility,.maker-layers .maker-layer-lock,.maker-layers .maker-layer-delete{display:grid;place-items:center;flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;border-radius:.375rem;background:transparent;color:#477c80;box-shadow:none;cursor:pointer;}
+.maker-layers .maker-layer-visibility,.maker-layers .maker-layer-lock,.maker-layers .maker-layer-delete{display:grid;place-items:center;flex:none;width:2rem;height:2rem;min-height:2rem;margin:0;padding:0;border:0;border-radius:.375rem;background:transparent;color:#477c80;box-shadow:none;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
 .maker-layers .maker-layer-visibility:hover,.maker-layers .maker-layer-lock:hover,.maker-layers .maker-layer-delete:hover{background:#c7e8df;color:#214c51;}
 .maker-layers .maker-layer-delete{color:#bd4d5b;}
 .maker-layers .maker-layer-delete:hover{color:#a12d40;background:#fce6e7;}
 .maker-layers .maker-layer-visibility svg,.maker-layers .maker-layer-lock svg,.maker-layers .maker-layer-delete svg,.maker-selection-actions svg{display:block;width:1.125rem;height:1.125rem;}
-.maker-selection-actions{gap:.125rem;padding:.1875rem;border:1px solid #77b9af;border-radius:.625rem;background:#fffdf8;}
+.maker-selection-actions{gap:0.25rem;padding:0.25rem;border:1px solid #77b9af;border-radius:.625rem;background:#fffdf8;}
 .maker-selection-actions button{display:grid;place-items:center;width:2rem;height:2rem;background:transparent;color:#477c80;}
 .maker-selection-actions button:hover{background:#d8f0ec;}
 .maker-selection-actions [data-maker-quick="delete"]{color:#bd4d5b;}
 .maker-selection-actions [data-maker-quick="delete"]:hover{background:#fce6e7;}
 
-#screen-editor .editor-tone-field{display:block;margin:.75rem 0 1rem;color:#315e65;font:700 .875rem var(--font-body);}
+#screen-editor .editor-tone-field{display:block;margin:1rem 0 1rem;color:#315e65;font:700 1rem var(--font-body);}
 #screen-editor .editor-tone-field>span{display:flex;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;}
 #screen-editor .editor-tone-field output{color:#3b172e;}
-#screen-editor .editor-tone-row{display:flex;align-items:center;gap:.75rem;padding:.625rem .75rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fcf7ef;}
+#screen-editor .editor-tone-row{display:flex;align-items:center;gap:1rem;padding:0.5rem 1rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fcf7ef;}
 #screen-editor .editor-tone-swatch{flex:none;width:1.75rem;height:1.75rem;border:1px solid #9aaca8;border-radius:50%;}
-#screen-editor .editor-tone-row input[type=range]{flex:1;min-width:0;accent-color:#488b8e;cursor:pointer;}
-#screen-editor .editor-tone-field small{display:flex;justify-content:space-between;margin-top:.375rem;color:#756685;font:600 .75rem var(--font-body);}
+#screen-editor .editor-tone-row input[type=range]{flex:1;min-width:0;accent-color:#488b8e;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+#screen-editor .editor-tone-field small{display:flex;justify-content:space-between;margin-top:0.5rem;color:#756685;font:600 1rem var(--font-body);}
 
-#screen-editor .editor-contrast-card{display:grid;gap:.375rem;margin:.5rem 0 1rem;padding:.875rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
-#screen-editor .editor-contrast-label{margin-top:.375rem;color:#528f91;font:700 .8125rem var(--font-display);letter-spacing:.035em;text-transform:uppercase;}
+#screen-editor .editor-contrast-card{display:grid;gap:0.5rem;margin:.5rem 0 1rem;padding:1rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
+#screen-editor .editor-contrast-label{margin-top:0.5rem;color:#528f91;font:700 1rem var(--font-display);letter-spacing:.035em;text-transform:uppercase;}
 #screen-editor .editor-contrast-label:first-child{margin-top:0;}
-#screen-editor .editor-contrast-color{display:flex;align-items:center;gap:.625rem;min-height:2.5rem;padding:.375rem .625rem;border:1px solid #dfd4c8;border-radius:.5rem;background:#fffdfa;}
+#screen-editor .editor-contrast-color{display:flex;align-items:center;gap:0.5rem;min-height:2.5rem;padding:0.5rem 0.5rem;border:1px solid #dfd4c8;border-radius:.5rem;background:#fffdfa;}
 #screen-editor .editor-contrast-swatch{flex:none;width:1.375rem;height:1.375rem;border:1px solid #9aaca8;border-radius:.25rem;}
-#screen-editor .editor-contrast-color code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b172e;font:700 .875rem var(--font-body);}
+#screen-editor .editor-contrast-color code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b172e;font:700 1rem var(--font-body);}
 #screen-editor .editor-contrast-card .contrast-badge{margin:0;}
 #screen-editor .editor-contrast-card .contrast-note{margin:0;}
 
-#screen-editor .editor-contrast-workbench{display:grid;grid-template-columns:2rem minmax(0,1fr);align-items:start;gap:.75rem;margin:.5rem 0 1rem;padding:.875rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
+#screen-editor .editor-contrast-workbench{display:grid;grid-template-columns:2rem minmax(0,1fr);align-items:start;gap:1rem;margin:.5rem 0 1rem;padding:1rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
 #screen-editor .editor-contrast-workbench .editor-contrast-card{margin:0;padding:0;border:0;border-radius:0;background:transparent;}
 #screen-editor .editor-tone-vertical{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.25rem;min-width:0;margin:0;}
 #screen-editor .editor-tone-vertical>span:first-child,#screen-editor .editor-tone-vertical>.editor-tone-swatch,#screen-editor .editor-tone-vertical small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
@@ -1815,8 +1811,8 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 
 /* Debug-only Skip / Repeat buttons on mail rows. */
 .mail-item{position:relative;}
-.mail-debug-btn{position:absolute;right:.5rem;bottom:.375rem;z-index:2;padding:.125rem .5rem;border:1px dashed #b05a2a;border-radius:.375rem;background:#fff4e8;color:#8a3d12;font:700 .75rem var(--font-body);cursor:pointer;}
-.mail-debug-btn{padding:.25rem .75rem;font-size:.9375rem;}
+.mail-debug-btn{position:absolute;right:.5rem;bottom:.375rem;z-index:2;padding:0.25rem .5rem;border:1px dashed #b05a2a;border-radius:.375rem;background:#fff4e8;color:#8a3d12;font:700 1rem var(--font-body);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+.mail-debug-btn{padding:.25rem 1rem;font-size:1rem;}
 /* Colour bars: wider, with round white handles like a colour picker. */
 #screen-editor .editor-contrast-workbench{grid-template-columns:2.25rem 2.25rem minmax(0,1fr);}
 #screen-editor .editor-tone-vertical input[type=range]{width:1.75rem;border-radius:.25rem;}
@@ -1832,7 +1828,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 #screen-editor .editor-tone-vertical input[type=range]::-moz-range-thumb{width:1.5rem;height:.5rem;border:2px solid #315e65;border-radius:.25rem;background:#fffdf8;box-shadow:0 1px 3px #18374566;}
 #screen-editor .editor-contrast-workbench{grid-template-columns:2rem 2rem minmax(0,1fr);}
 /* The "road to radiant" note is decoration only. */
-#screen-home .sticky-note{pointer-events:none;cursor:default;}
+#screen-home .sticky-note{pointer-events:none;cursor:url("../assets/sprites/cursor-arrow.png") 2 2, default;}
 
 /* Handoff checklist: finished items turn green. */
 #screen-editor .editor-handoff label.done{color:#1f6b45;background:#e3f6ea;border-radius:.5rem;padding:.25rem .5rem;margin:0 -.5rem;}
@@ -1843,14 +1839,14 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .maker-element.maker-needed::after{content:"!";position:absolute;top:4px;right:4px;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e53b42;color:#fff;font:800 18px/1 var(--font-body);z-index:5;}
 .maker-element.maker-needed:not(.maker-goal){box-shadow:0 0 0 3px #e0a42b;}
 .maker-element.maker-needed:not(.maker-goal)::after{background:#e0a42b;}
-.maker-need-dot{display:inline-grid;place-items:center;width:1.125rem;height:1.125rem;margin-right:.375rem;border-radius:50%;background:#e53b42;color:#fff;font:800 .75rem/1 var(--font-body);}
-.maker-rules{margin:.75rem 0;padding:.75rem;border:2px solid #c8e6da;border-radius:.75rem;}
-.maker-rules legend{padding:0 .375rem;font:700 .9375rem var(--font-display);color:#315e65;}
-.maker-rule{display:flex;align-items:center;gap:.5rem;padding:.25rem 0;font:600 .9375rem var(--font-body);color:#3b172e;}
+.maker-need-dot{display:inline-grid;place-items:center;width:1.125rem;height:1.125rem;margin-right:0.5rem;border-radius:50%;background:#e53b42;color:#fff;font:800 1rem/1 var(--font-body);}
+.maker-rules{margin:1rem 0;padding:1rem;border:2px solid #c8e6da;border-radius:.75rem;}
+.maker-rules legend{padding:0 0.5rem;font:700 1rem var(--font-display);color:#315e65;}
+.maker-rule{display:flex;align-items:center;gap:.5rem;padding:.25rem 0;font:600 1rem var(--font-body);color:#3b172e;}
 .maker-rule input{width:1.125rem;height:1.125rem;accent-color:#2e9a5a;}
-.maker-rules small{display:block;margin:-.125rem 0 .375rem 1.625rem;color:#6b5b76;}
-.maker-rule-group{margin-top:.375rem;padding-left:1.625rem;border-left:2px solid #e2f2ed;}
-.maker-properties .maker-rule{flex-direction:row;align-items:center;text-align:left;gap:.5rem;font:600 .9375rem var(--font-body);}
+.maker-rules small{display:block;margin:-0.25rem 0 0.5rem 1.5rem;color:#6b5b76;}
+.maker-rule-group{margin-top:0.5rem;padding-left:1.5rem;border-left:2px solid #e2f2ed;}
+.maker-properties .maker-rule{flex-direction:row;align-items:center;text-align:left;gap:.5rem;font:600 1rem var(--font-body);}
 .maker-properties .maker-rule input{flex:none;width:1.125rem;height:1.125rem;margin:0;padding:0;}
 .maker-properties .maker-rules small{text-align:left;}
 /* Level Maker selection matches the game editor: thin purple box, round handles. */
@@ -1870,25 +1866,25 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 
 .maker-stage-toolbar .game-tool-icon{width:1.25rem;height:1.25rem;}
 #maker-grid[aria-pressed="true"]{background:#d8f0ec;box-shadow:inset 0 0 0 2px #77b9af;}
-.maker-grid-panel{position:absolute;top:calc(100% + .5rem);left:0;z-index:30;display:grid;gap:.75rem;width:15rem;padding:.875rem 1rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fffdf8;box-shadow:0 .5rem 1.5rem #18374526;}
+.maker-grid-panel{position:absolute;top:calc(100% + .5rem);left:0;z-index:30;display:grid;gap:1rem;width:15rem;padding:1rem 1rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fffdf8;box-shadow:0 .5rem 1.5rem #18374526;}
 .maker-grid-panel[hidden]{display:none;}
-.maker-grid-panel label{display:grid;grid-template-columns:1fr auto auto;gap:.25rem .125rem;align-items:center;color:#315e65;font:700 .875rem var(--font-body);}
+.maker-grid-panel label{display:grid;grid-template-columns:1fr auto auto;gap:.25rem 0.25rem;align-items:center;color:#315e65;font:700 1rem var(--font-body);}
 .maker-grid-panel input{grid-column:1/-1;width:100%;accent-color:#418a93;}
 .maker-canvas{background-image:none;}
 
 /* Passed goal cards: greyed out with a big green tick. */
 #screen-editor .editor-goal-cards .editor-goal{position:relative;transition:opacity .2s,filter .2s;}
 /* Checklist ticks are green when done. */
-#screen-editor .editor-handoff-box{flex:none;display:grid;place-items:center;width:1.25rem;height:1.25rem;margin-top:.05rem;border:2px solid #b8c4bf;border-radius:.3rem;background:#fff;color:#fff;font:800 .875rem/1 var(--font-body);}
+#screen-editor .editor-handoff-box{flex:none;display:grid;place-items:center;width:1.25rem;height:1.25rem;margin-top:.05rem;border:2px solid #b8c4bf;border-radius:.3rem;background:#fff;color:#fff;font:800 1rem/1 var(--font-body);}
 #screen-editor .editor-handoff label.done .editor-handoff-box{background:#2e9a5a;border-color:#2e9a5a;}
 
 /* The suggested next task is highlighted green. */
 #screen-editor .editor-goal-cards .editor-goal.focus{border-color:#2e9a5a;background:#e9f7ee;box-shadow:0 0 0 3px #2e9a5a33;}
 
 /* Attachments inside the Completed mail thread. */
-.mail-thread-msg .mail-thread-attachment{display:inline-flex;margin-top:.75rem;max-width:20rem;}
+.mail-thread-msg .mail-thread-attachment{display:inline-flex;margin-top:1rem;max-width:20rem;}
 
-.maker-properties .maker-group-field{flex-direction:row;align-items:center;gap:.5rem;margin-top:.5rem;font:600 .9375rem var(--font-body);}
+.maker-properties .maker-group-field{flex-direction:row;align-items:center;gap:.5rem;margin-top:.5rem;font:600 1rem var(--font-body);}
 .maker-properties .maker-group-field input{flex:1;min-width:0;height:2.25rem;padding:.25rem .5rem;border:2px solid #b5d9d3;border-radius:.5rem;}
 
 /* Level Maker multi-selection (Shift/Ctrl-click). */
@@ -1899,17 +1895,17 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .maker-selection-box .maker-resize-handle,.maker-selection-box [data-maker-quick],.maker-selection-box button{pointer-events:auto;}
 
 /* Goal panel grouped by skill: Alignment, Contrast, Typography, then handoff. */
-#screen-editor .editor-goal-cards .editor-goal-section{display:block;padding:.875rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;}
+#screen-editor .editor-goal-cards .editor-goal-section{display:block;padding:1rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;}
 #screen-editor .editor-goal-section h4{margin:0 0 .25rem;font:700 1.125rem var(--font-display);color:#3b172e;}
-#screen-editor .editor-goal-intro{margin:0 0 .625rem;font:700 .875rem/1.45 var(--font-body);color:#3b172e;}
-#screen-editor .editor-goal-section ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.375rem;}
-#screen-editor .editor-goal-cards .editor-goal-section .editor-goal{display:flex;gap:.5rem;align-items:flex-start;padding:.375rem .5rem;margin:0 -.5rem;border:2px solid transparent;border-radius:.625rem;background:none;font:500 .875rem/1.45 var(--font-body);color:#3b172e;}
+#screen-editor .editor-goal-intro{margin:0 0 0.5rem;font:700 1rem/1.45 var(--font-body);color:#3b172e;}
+#screen-editor .editor-goal-section ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.5rem;}
+#screen-editor .editor-goal-cards .editor-goal-section .editor-goal{display:flex;gap:.5rem;align-items:flex-start;padding:0.5rem .5rem;margin:0 -.5rem;border:2px solid transparent;border-radius:.625rem;background:none;font:500 1rem/1.45 var(--font-body);color:#3b172e;}
 #screen-editor .editor-goal-section .editor-goal p{margin:0;}
-#screen-editor .editor-goal-section .editor-goal small{display:block;margin-top:.125rem;color:#6b5b76;font:500 .75rem/1.35 var(--font-body);}
-#screen-editor .editor-goal-section .editor-goal-measure{display:block;font:700 .75rem var(--font-mono,monospace);color:#cf3783;}
+#screen-editor .editor-goal-section .editor-goal small{display:block;margin-top:0.25rem;color:#6b5b76;font:500 1rem/1.35 var(--font-body);}
+#screen-editor .editor-goal-section .editor-goal-measure{display:block;font:700 1rem var(--font-mono,monospace);color:#cf3783;}
 #screen-editor .editor-goal-section .editor-goal.met .editor-goal-measure{color:#1f8a4c;}
-#screen-editor .editor-goal-section .editor-goal-badge{margin-left:.375rem;padding:0 .375rem;border-radius:999px;background:#fff1c7;color:#8a6410;font:700 .625rem/1.6 var(--font-body);vertical-align:middle;}
-#screen-editor .editor-goal-tick{flex:none;display:grid;place-items:center;width:1.125rem;height:1.125rem;margin-top:.15rem;border:2px solid #b8c4bf;border-radius:.3rem;background:#fff;color:#fff;font:800 .75rem/1 var(--font-body);}
+#screen-editor .editor-goal-section .editor-goal-badge{margin-left:0.5rem;padding:0 0.5rem;border-radius:999px;background:#fff1c7;color:#8a6410;font:700 1rem/1.6 var(--font-body);vertical-align:middle;}
+#screen-editor .editor-goal-tick{flex:none;display:grid;place-items:center;width:1.125rem;height:1.125rem;margin-top:0.25rem;border:2px solid #b8c4bf;border-radius:.3rem;background:#fff;color:#fff;font:800 1rem/1 var(--font-body);}
 #screen-editor .editor-goal.met .editor-goal-tick{background:#2e9a5a;border-color:#2e9a5a;}
 #screen-editor .editor-goal-cards .editor-goal-section .editor-goal.focus{border-color:#2e9a5a;background:#e9f7ee;}
 
@@ -1918,3 +1914,70 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 .maker-guide-label{background:#e5366f;color:#fff;font-weight:700;white-space:nowrap;height:auto;width:auto;}
 .maker-gap{background:#7852b8;}
 .maker-gap-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#7852b8;color:#fff;font-weight:700;white-space:nowrap;font-family:var(--font-body);}
+/* Long client names wrap in the editor brief now that text is 16px+. */
+#screen-editor .editor-mail-brief-head > div{min-width:0;}
+#screen-editor #editor-mail-sender{overflow-wrap:anywhere;line-height:1.15;}
+#screen-editor .editor-rail-card{height:auto;min-height:0;flex:none;}
+
+/* ---- Task panel: progress first, colour-coded categories, one card per task. ---- */
+#screen-editor .editor-goal-cards{gap:1rem;}
+#screen-editor .editor-task-progress{display:block;padding:1rem 1rem;border:2px solid #c8e6da;border-radius:1rem;background:#fff;}
+#screen-editor .editor-task-progress>div:first-child{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;}
+#screen-editor .editor-task-progress b{font:800 1.5rem var(--font-display);color:#3b172e;}
+#screen-editor .editor-task-progress span{font:700 1rem var(--font-body);color:#5a6f6a;}
+#screen-editor .editor-task-bar{height:.75rem;border-radius:999px;background:#e5efeb;overflow:hidden;}
+#screen-editor .editor-task-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2e9a5a,#6ccf8e);transition:width .3s;}
+
+#screen-editor .editor-goal-cards .editor-goal-section{--cat:#2f7a70;--cat-soft:#e2f2ed;padding:0;border:0;background:none;}
+#screen-editor .editor-goal-section.cat-contrast{--cat:#c2437a;--cat-soft:#fbe4ee;}
+#screen-editor .editor-goal-section.cat-typography{--cat:#6b45b0;--cat-soft:#ece5f8;}
+#screen-editor .editor-goal-cat{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:999px;background:var(--cat);color:#fff;}
+#screen-editor .editor-goal-cat h4{margin:0;flex:1;font:800 1.125rem var(--font-display);color:#fff;}
+#screen-editor .editor-goal-cat small{padding:0.25rem .5rem;border-radius:999px;background:#ffffff33;font:800 1rem var(--font-body);}
+#screen-editor .editor-goal-cat-icon{font-size:1.25rem;line-height:1;}
+#screen-editor .editor-goal-section .editor-goal-intro{margin:.5rem .25rem 0.5rem;font:600 1rem/1.4 var(--font-body);color:#5a6f6a;}
+#screen-editor .editor-goal-section ul{gap:0.5rem;}
+#screen-editor .editor-goal-cards .editor-goal-section .editor-goal{margin:0;padding:1rem 1rem 1rem 1rem;border:2px solid #e3ece8;border-left:.375rem solid var(--cat);border-radius:.875rem;background:#fff;box-shadow:0 .125rem 0 #3b172e0d;transition:transform .15s,box-shadow .15s;}
+#screen-editor .editor-goal-section .editor-goal p{font:700 1rem/1.4 var(--font-body);color:#3b172e;}
+#screen-editor .editor-goal-section .editor-goal-tick{width:1.5rem;height:1.5rem;margin-top:0;border-radius:50%;border-color:var(--cat);font-size:.9375rem;}
+#screen-editor .editor-goal-section .editor-goal.met .editor-goal-tick{background:#2e9a5a;border-color:#2e9a5a;}
+#screen-editor .editor-goal-section .editor-goal-measure{display:inline-block;margin-top:0.5rem;padding:0.25rem .5rem;border-radius:.5rem;background:#fde8ef;color:#b02a5c;font:700 1rem var(--font-mono,monospace);}
+#screen-editor .editor-goal-section .editor-goal.met .editor-goal-measure{background:#e0f5e8;color:#1f6b45;}
+#screen-editor .editor-goal-section .editor-goal small{margin-top:0.5rem;font:500 1rem/1.4 var(--font-body);color:#5a6f6a;}
+#screen-editor .editor-goal-section .editor-goal.met p{color:#1f6b45;}
+#screen-editor .editor-goal-cards .editor-goal-section .editor-goal.focus{border-color:var(--cat);background:var(--cat-soft);transform:translateY(-2px);box-shadow:0 .375rem 1rem #3b172e1f;}
+@media (prefers-reduced-motion: reduce){ #screen-editor .editor-goal-cards .editor-goal-section .editor-goal{transition:none;} #screen-editor .editor-goal-cards .editor-goal-section .editor-goal.focus{transform:none;} }
+
+/* Task progress inside the client card (top of the rail). */
+#screen-editor .editor-mail-brief .editor-task-progress{margin-top:1rem;padding:0;border:0;background:none;}
+#screen-editor .editor-mail-brief .editor-task-progress>div:first-child{margin-bottom:0.5rem;}
+#screen-editor .editor-mail-brief .editor-task-progress span{font:700 1rem var(--font-body);color:#3b172e;}
+
+/* ---- Contrast pass: every interface text at 4.5:1 or more (measured).
+   Mail difficulty tags and the Accept button keep their original colours for now (to be redesigned). ---- */
+.mail-logo span{color:#2f6f72;}
+.mail-item-preview{color:#6b6468;}
+.mail-detail-meta .mail-detail-to span,.mail-detail-meta dd span{color:#6b5b76;}
+.attachment-name b{background:#2f7a70;}
+.money-icon{color:#6b3fc0;}
+#screen-editor .editor-mail-brief-head small{color:#2f6f72;}
+#screen-editor .selection-heading small{color:#6b5b76;}
+.maker-header h1{color:#2f6f72;}
+#screen-editor .editor-goal-section .editor-goal small{color:#46524f;}
+#screen-editor .editor-contrast-label{color:#2f6f72;}
+#screen-editor .contrast-badge.fail .contrast-ratio{color:#b3263a;}
+#screen-editor .contrast-badge.fail .contrast-check{background:#b3263a;}
+#screen-editor .contrast-badge.pass .contrast-ratio{color:#1f7a45;}
+#screen-editor .contrast-badge.pass .contrast-check{background:#1f7a45;}
+#screen-editor .contrast-note{color:#6b5b76;}
+.shop-tab-btn.active,.wardrobe-cat-btn.active{background:#6b4fb0;border-color:#6b4fb0;color:#fff;}
+#screen-editor .editor-goal-section ul{margin-top:0.5rem;}
+/* 8-point grid: browser defaults (6px button, 2px input padding) moved onto the grid.
+   :where() has no specificity, so any element with its own padding keeps it. */
+:where(button){padding-inline:.5rem;}
+:where(input,select,textarea){padding-inline:.5rem;}
+/* Text fields use the I-beam sprite (browsers otherwise use their own). */
+input:not([type]),input[type="text"],input[type="number"],input[type="search"],input[type="email"],textarea,[contenteditable="true"],#compose-body{cursor:url("../assets/sprites/cursor-text.png") 12 12, text;}
+/* Editor canvas: movable pieces show the move arrows; while dragging, the closed hand. */
+#editor-canvas .el.movable:not([data-locked]){cursor:url("../assets/sprites/cursor-move.png") 12 12, move;}
+body.eyecon-dragging, body.eyecon-dragging *{cursor:url("../assets/sprites/cursor-grabbing.png") 12 12, grabbing!important;}

@@ -137,7 +137,12 @@
       // Horizontally centred on the canvas.
       case 'centeredX': return els.every(el => Math.abs(el.x + el.w/2 - level.canvas.w/2) <= 1);
       // Pairs [label, box, label, box…]: each label sits fully above its box.
-      case 'above': return els.length % 2 === 0 && els.every((el, i) => i % 2 || el.y + el.h <= els[i+1].y);
+      // Optional minGap/maxGap: how far above its partner each one must sit.
+      case 'above': return els.length % 2 === 0 && els.every((el, i) => {
+        if(i % 2) return true;
+        const gap = els[i+1].y - (el.y + el.h);
+        return gap >= (check.minGap ?? 0) && gap <= (check.maxGap ?? Infinity);
+      });
       case 'sameSize': return same(el => el.w) && same(el => el.h);
       // [container, ...contents]: equal padding on all four sides around the contents.
       case 'wraps': {

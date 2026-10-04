@@ -346,10 +346,10 @@ test('submission restores typing and attaching a reply before recording rewards'
   await expect(send).toBeDisabled();
   expect(await page.evaluate(() => EC_STORE.load().history.length)).toBe(0);
   await page.locator('#compose-body').click();
-  await expect.poll(()=>page.locator('#compose-body .revealed').textContent()).toBe('Goo');
+  await expect.poll(()=>page.locator('#compose-body .revealed').textContent()).toBe('Good d'); // 6 letters per press
   await page.locator('#compose-body').click();
   await page.locator('#compose-body').click();
-  await expect.poll(async()=> (await page.locator('#compose-body .revealed').textContent()).length).toBe(9);
+  await expect.poll(async()=> (await page.locator('#compose-body .revealed').textContent()).length).toBe(18);
   await page.locator('#compose-body').focus();
   await page.keyboard.insertText('Typing my reply to the client. '.repeat(20));
   await expect(page.locator('#compose-hint')).toHaveText('Message complete.', { timeout:15000 });
@@ -388,7 +388,8 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   await set('insta', 'x', 432); await set('tumblr', 'x', 576); await set('tumblr', 'y', 784);
   await set('about', 'y', 40);
   await set('title', 'x', 336); // centre "Explore for more!" over the caption
-  await expect(page.locator('.editor-goal.met')).toHaveCount(4);
+  await set('title', 'y', 208); // and just above the cards (24px gap)
+  await expect(page.locator('.editor-goal.met')).toHaveCount(5);
   await page.getByRole('button', { name: 'Submit for handoff' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.locator('#compose-body').focus();
@@ -562,40 +563,6 @@ test('the first day starts with one email showing difficulty and reward',async({
   await expect(page.locator('#mail-detail-body')).not.toContainText(/tour/i);
 });
 
-test('text alignment moves the text, ticks the client goal and is saved with the design',async({page})=>{
-  test.skip(true,'Brewbird is hidden while levels.js has FIGMA_ONLY on');
-  // Start with Brewbird's homepage approved, so the menu page is the open email.
-  await page.addInitScript(()=>{
-    if(localStorage.getItem('eyecon_profile_v1')) return;
-    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings','coffee-shop'],onboarding:{seen:true},
-      history:[...['mayo-portfolio','yappers-login','haybuhay-settings'].map(levelId=>({levelId,date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true})),{levelId:'coffee-shop',name:'Brewbird Coffee Co.',date:'2026-01-01T00:00:00Z',stars:4,missionComplete:true}]}));
-  });
-  await page.goto('/');
-  await beginFirstDay(page);
-  await page.getByRole('listitem').filter({hasText:'Brewbird Coffee Co.'}).click();
-  await page.getByRole('button',{name:'Accept'}).click();
-  await expect(page.locator('#editor-mail-stage')).toContainText('Menu page');
-  const priceGoal=page.locator('.editor-goal').filter({hasText:'Right-align all four prices'});
-  await expect(priceGoal).not.toHaveClass(/met/);
-  const controls=page.locator('.editor-align-options');
-  for(const id of ['p1','p2','p3','p4']){
-    await page.locator(`#editor-canvas .el[data-id="${id}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), id);
-    await controls.getByRole('button',{name:'Right'}).click();
-    await expect(controls.getByRole('button',{name:'Right'})).toHaveAttribute('aria-pressed','true');
-    const style=await page.locator(`#editor-canvas .el[data-id="${id}"]`).evaluate(el=>[getComputedStyle(el).textAlign,getComputedStyle(el).justifyContent]);
-    expect(style).toEqual(['right','flex-end']);
-  }
-  await expect(priceGoal).toHaveClass(/met/);
-  // Center and left work too, on the title.
-  await page.locator(`#editor-canvas .el[data-id="${'title'}"]`).waitFor(); await page.evaluate(i=>EC_EDITOR.selectElement(i), 'title');
-  for(const [name,expected] of [['Left','left'],['Center','center']]){
-    await controls.getByRole('button',{name}).click();
-    expect(await page.locator('#editor-canvas .el[data-id="title"]').evaluate(el=>getComputedStyle(el).textAlign)).toBe(expected);
-  }
-  const saved=await page.evaluate(()=>window.EC_EDITOR.getElements().filter(el=>/^p\d$/.test(el.id)).map(el=>el.align));
-  expect(saved).toEqual(['right','right','right','right']);
-});
-
 test('profile popup matches the app card style',async({page})=>{
   await page.goto('/');
   await page.getByRole('button',{name:'Open EyeCon'}).click();
@@ -671,8 +638,8 @@ test('goal elements show markers until solved, and moving them back un-solves',a
   await expect(cta).not.toHaveAttribute('data-locked','1');
   const sameLine=page.locator('.editor-goal').filter({hasText:'its row'});
   await expect(sameLine).toHaveClass(/met/);
-  // The handoff line for Alignment only ticks once every alignment task passes (icons still to do).
-  await expect(page.locator('.editor-handoff label.done').filter({hasText:'aligned'})).toHaveCount(0);
+  // Overall progress lives in the client card.
+  await expect(page.locator('#editor-task-progress')).toContainText('1 of 5 tasks done');
   // Moving it out of line un-solves it again.
   await page.evaluate(()=>EC_EDITOR.selectElement('about'));
   await page.locator('#f-y').fill('56'); await page.locator('#f-y').dispatchEvent('change');
@@ -683,7 +650,7 @@ test('goal elements show markers until solved, and moving them back un-solves',a
   await expect(page.locator('#editor-canvas .el[data-id="tumblr"]')).toHaveClass(/needs-edit/);
 });
 
-test('two-bar editor panels resize and remember their widths',async({page})=>{
+test('two-bar editor panels have fixed widths',async({page})=>{
   test.skip(page.viewportSize().width<=900,'Desktop layout only');
   await page.goto('/');
   await beginFirstDay(page);
@@ -700,30 +667,11 @@ test('two-bar editor panels resize and remember their widths',async({page})=>{
   expect(noteBox.height).toBeLessThan(topStripHeight);
   expect(noteBox.y).toBeGreaterThan(0);
   await expect(page.locator('#screen-editor .editor-mode-corner p')).toBeHidden();
-  const panel=page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)');
-  const before=await panel.boundingBox();
-  const handle=page.locator('.editor-rail-resizer-left');
-  await expect(page.locator('#app-loading-screen')).toBeHidden();
-  const box=await handle.boundingBox();
-  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
-  await page.mouse.down();
-  await page.mouse.move(box.x+box.width/2+48,box.y+box.height/2,{steps:4});
-  await page.mouse.up();
-  const after=await panel.boundingBox();
-  expect(after.width).toBeGreaterThan(before.width+25);
-  const rightPanel=page.locator('#screen-editor .editor-right-rail');
-  const rightBefore=await rightPanel.boundingBox();
-  const rightHandle=await page.locator('.editor-rail-resizer-right').boundingBox();
-  await page.mouse.move(rightHandle.x+rightHandle.width/2,rightHandle.y+rightHandle.height/2);
-  await page.mouse.down();
-  await page.mouse.move(rightHandle.x+rightHandle.width/2-48,rightHandle.y+rightHandle.height/2,{steps:4});
-  await page.mouse.up();
-  expect((await rightPanel.boundingBox()).width).toBeGreaterThan(rightBefore.width+25);
-  const savedWidth=await page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-left-panel'));
-  const savedRightWidth=await page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-right-panel'));
-  await page.reload();
-  await expect.poll(async()=>page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-left-panel'))).toBe(savedWidth);
-  await expect.poll(async()=>page.locator('#screen-editor').evaluate(el=>el.style.getPropertyValue('--editor-right-panel'))).toBe(savedRightWidth);
+  // Side panels have fixed widths: no drag handles.
+  await expect(page.locator('.editor-rail-resizer')).toHaveCount(0);
+  const panel=await page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)').boundingBox();
+  const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
+  expect(Math.abs(panel.width/rem-22)).toBeLessThan(1);
 });
 
 test('profile settings list and the browser shows the store and client sites',async({page})=>{

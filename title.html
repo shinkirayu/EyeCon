@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EyeCon Title</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Patrick+Hand&display=swap" />
+<style>
+  /* The scene is designed at 1920x1080 and scaled as one piece (see fit()),
+     so items keep their exact spacing at every resolution. The wall and desk
+     colours continue past the scene's edges on wider or taller screens. */
+  :root{ --sky:#a9def2; --wall:#b6e6dc; --desk:#f3d29a; --desk-front:#f2bc85; }
+  html,body{ margin:0; height:100%; overflow:hidden; }
+  body{ background:linear-gradient(var(--sky) 50%, var(--desk-front) 50%); }
+  #stage{ position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:0 0; }
+  .item{ position:absolute; display:block; }
+  .item svg{ display:block; width:100%; height:100%; overflow:visible; }
+  .item[hidden]{ display:none; }
+  /* Room: wall bands and desk, drawn inside the scene so it lines up with the items. */
+  /* The room is far wider than the scene, so its bands continue to the window edges. */
+  #room{ left:-4000px; top:0; width:9920px; height:1080px; }
+  #start{ cursor:pointer; }
+  #start:hover .start-key{ transform:translateY(-6px); }
+  #start:focus-visible{ outline:4px solid #e7476d; outline-offset:6px; border-radius:12px; }
+  .start-key{ transition:transform .15s; }
+  @media (prefers-reduced-motion: reduce){ .start-key{ transition:none; } }
+</style>
+</head>
+<body>
+<div id="stage" aria-label="EyeCon title screen">
+  <!-- Each .item is one swappable piece of the setup: data-slot says which
+       slot it fills, data-skin which variant is drawn. A store can change a
+       skin with setSkin('keyboard', 'dark') without touching anything else. -->
+  <div class="item" id="room" data-slot="room"></div>
+  <div class="item" data-slot="pc" style="left:-40px;top:250px;width:420px;height:560px"></div>
+  <div class="item" data-slot="monitor" style="left:440px;top:210px;width:1040px;height:600px"></div>
+  <div class="item" data-slot="poster" style="left:1600px;top:200px;width:270px;height:270px"></div>
+  <div class="item" data-slot="plant" style="left:1600px;top:480px;width:270px;height:330px"></div>
+  <div class="item" data-slot="keyboard" style="left:520px;top:910px;width:880px;height:150px"></div>
+  <div class="item" data-slot="mousepad" style="left:1284px;top:792px;width:256px;height:128px"></div>
+  <div class="item" data-slot="mouse" style="left:1540px;top:910px;width:190px;height:130px"></div>
+  <button class="item" id="start" style="left:850px;top:740px;width:220px;height:150px;padding:0;border:0;background:none" aria-label="Start"></button>
+</div>
+
+<script>
+// ---- Skins: one SVG per variant, drawn in its slot's own box (viewBox = slot size). ----
+const SKINS = {
+  room: {
+    classic: `<svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <rect width="1920" height="140" fill="#a9def2"/>
+      <rect y="140" width="1920" height="550" fill="#b6e6dc"/>
+      <rect y="690" width="1920" height="270" fill="#f3d29a"/>
+      <rect y="960" width="1920" height="120" fill="#f2bc85"/></svg>`,
+  },
+  pc: {
+    classic: `<svg viewBox="0 0 420 560">
+      <path d="M330 30 L420 90 V520 L330 556 Z" fill="#b2d8c6"/>
+      <rect x="0" y="16" width="334" height="540" rx="14" fill="#d9b98e"/>
+      <rect x="0" y="0" width="330" height="548" rx="14" fill="#fbf3e4"/>
+      <rect x="292" y="18" width="62" height="26" rx="6" fill="#f08a8a"/>
+      <rect x="70" y="58" width="246" height="46" rx="8" fill="#9fcfe0"/>
+      <rect x="70" y="140" width="246" height="140" rx="8" fill="#9fcfe0"/>
+      <rect x="82" y="316" width="52" height="20" rx="10" fill="#f7d76f"/>
+      <rect x="160" y="316" width="52" height="20" rx="10" fill="#f7d76f"/>
+      <circle cx="248" cy="326" r="10" fill="#f08a8a"/><circle cx="282" cy="326" r="10" fill="#6cc66c"/>
+      <circle cx="168" cy="450" r="46" fill="#9fcfe0" stroke="#6aaecb" stroke-width="6"/></svg>`,
+  },
+  monitor: {
+    classic: `<svg viewBox="0 0 1040 600">
+      <ellipse cx="520" cy="590" rx="520" ry="34" fill="#e6c38c"/>
+      <rect x="0" y="0" width="1040" height="560" rx="44" fill="#fdf1e0"/>
+      <rect x="42" y="40" width="956" height="470" rx="26" fill="#f9eada" stroke="#ffffff" stroke-width="8"/>
+      <!-- Logo: the eyes in a selection box, and the wordmark. -->
+      <g transform="translate(520 255)">
+        <rect x="-150" y="-80" width="300" height="152" fill="none" stroke="#666" stroke-width="3" stroke-dasharray="9 7"/>
+        ${[[-150,-80],[0,-80],[150,-80],[-150,-4],[150,-4],[-150,72],[0,72],[150,72]].map(([x,y])=>`<rect x="${x-8}" y="${y-8}" width="16" height="16" fill="#666"/>`).join('')}
+        <ellipse cx="-68" cy="-4" rx="68" ry="62" fill="#fff"/><ellipse cx="66" cy="-4" rx="68" ry="62" fill="#fff"/>
+        <circle cx="-42" cy="-4" r="42" fill="#444"/><circle cx="44" cy="-4" r="40" fill="#444"/>
+        <text x="0" y="150" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="92" fill="#e7476d">eyecon</text>
+      </g></svg>`,
+  },
+  poster: {
+    note: `<svg viewBox="0 0 270 270">
+      <g transform="rotate(3 135 135)">
+        <path d="M20 26 H258 L248 262 H8 Z" fill="#f7df77"/>
+        <path d="M8 222 L36 230 L22 262 Z" fill="#e9c14f"/>
+        <rect x="110" y="0" width="64" height="46" rx="4" fill="#ee8b8b" transform="rotate(4 142 23)"/>
+        <text x="135" y="104" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="56" fill="#d93c55">
+          <tspan x="135">road</tspan><tspan x="135" dy="54">to</tspan><tspan x="135" dy="54">radiant</tspan></text>
+      </g></svg>`,
+  },
+  plant: {
+    classic: `<svg viewBox="0 0 270 330">
+      <ellipse cx="140" cy="318" rx="118" ry="14" fill="#e3bd86"/>
+      <path d="M128 230 C 96 150, 40 120, 8 104 C 50 98, 108 130, 132 200" fill="#64c45f"/>
+      <path d="M140 230 C 128 120, 150 40, 196 0 C 216 70, 186 160, 150 230" fill="#64c45f"/>
+      <path d="M150 232 C 188 160, 226 130, 262 120 C 244 170, 196 210, 160 236" fill="#64c45f"/>
+      <path d="M142 230 C 140 150, 160 80, 186 40" stroke="#3d9b44" stroke-width="5" fill="none"/>
+      <path d="M152 232 C 182 180, 220 150, 248 136" stroke="#3d9b44" stroke-width="5" fill="none"/>
+      <path d="M30 226 H250 L238 312 Q236 322 224 322 H56 Q44 322 42 312 Z" fill="#9fcfe0"/>
+      <ellipse cx="140" cy="226" rx="110" ry="20" fill="#e7f6fb"/>
+      <ellipse cx="140" cy="228" rx="98" ry="14" fill="#9b6237"/></svg>`,
+  },
+  keyboard: {
+    classic: `<svg viewBox="0 0 880 150">
+      <path d="M70 0 H810 Q826 0 834 14 L880 104 V130 Q880 146 864 146 H16 Q0 146 0 130 V104 L46 14 Q54 0 70 0 Z" fill="#d9b98e"/>
+      <path d="M70 0 H810 Q826 0 834 14 L880 104 V122 Q880 138 864 138 H16 Q0 138 0 122 V104 L46 14 Q54 0 70 0 Z" fill="#fdf3e4"/>
+      ${[0,1,2,3].map(r=>Array.from({length:12},(_,c)=>`<rect x="${92-r*12+c*58}" y="${16+r*22}" width="44" height="14" rx="7" fill="#fff"/>`).join('')).join('')}
+      <rect x="250" y="102" width="380" height="14" rx="7" fill="#fff"/></svg>`,
+    dark: `<svg viewBox="0 0 880 150">
+      <path d="M70 0 H810 Q826 0 834 14 L880 104 V130 Q880 146 864 146 H16 Q0 146 0 130 V104 L46 14 Q54 0 70 0 Z" fill="#20232b"/>
+      <path d="M70 0 H810 Q826 0 834 14 L880 104 V122 Q880 138 864 138 H16 Q0 138 0 122 V104 L46 14 Q54 0 70 0 Z" fill="#3a3f4b"/>
+      ${[0,1,2,3].map(r=>Array.from({length:12},(_,c)=>`<rect x="${92-r*12+c*58}" y="${16+r*22}" width="44" height="14" rx="7" fill="#5c6373"/>`).join('')).join('')}
+      <rect x="250" y="102" width="380" height="14" rx="7" fill="#5c6373"/></svg>`,
+  },
+  mouse: {
+    classic: `<svg viewBox="0 0 190 130">
+      <ellipse cx="95" cy="72" rx="88" ry="52" fill="#9fcfe0" transform="rotate(24 95 72)"/>
+      <ellipse cx="97" cy="64" rx="86" ry="50" fill="#fdf3e4" transform="rotate(24 97 64)"/>
+      <path d="M30 26 Q 60 18 78 34" stroke="#e5d6c3" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`,
+    dark: `<svg viewBox="0 0 190 130">
+      <ellipse cx="95" cy="72" rx="88" ry="52" fill="#20232b" transform="rotate(24 95 72)"/>
+      <ellipse cx="97" cy="64" rx="86" ry="50" fill="#3a3f4b" transform="rotate(24 97 64)"/>
+      <path d="M30 26 Q 60 18 78 34" stroke="#5c6373" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`,
+  },
+  start: {
+    classic: `<svg viewBox="0 0 220 150">
+      <ellipse cx="110" cy="124" rx="108" ry="26" fill="#6aaecb"/>
+      <ellipse cx="110" cy="116" rx="108" ry="26" fill="#9fcfe0"/>
+      <rect x="62" y="60" width="96" height="40" fill="#7fb9d2"/>
+      <g class="start-key"><rect x="38" y="0" width="134" height="114" rx="6" fill="#d9706f"/>
+        <rect x="38" y="0" width="134" height="106" rx="6" fill="#f08585"/>
+        <text x="105" y="70" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="46" fill="#fff">start</text></g></svg>`,
+  },
+};
+
+// ---- Current setup. Swap a skin with setSkin(slot, skin), e.g. setSkin('keyboard','dark'). ----
+// For a quick look, skins can also come from the URL: title.html?keyboard=dark&mouse=dark
+// ---- Sketch set: the teammate's drawings from assets/sprites, laid out like their
+// mock-up. A skin can carry its own box [left, top, width, height] when the art
+// has a different size or spot than the slot's default.
+const img = (src, alt) => `<img src="assets/sprites/${src}" alt="${alt}" style="position:relative;display:block;width:100%;height:100%;object-fit:contain">`;
+// The sketches are line art with see-through insides; a white fill in the
+// drawing's own coordinates (its pixel size) keeps the room from showing through.
+const fill = (w, h, shapes) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">${shapes}</svg>`;
+// Low-fidelity room: pale wall, a table with an outlined top edge and pencil
+// hatching on its front, and a floor line. Same layout as the classic room.
+const hatch = (x0, y0, x1, y1, step) => Array.from({length: Math.ceil((x1 - x0) / step)}, (_, i) =>
+  `<line x1="${x0 + i*step}" y1="${y1}" x2="${x0 + i*step + (y1 - y0)}" y2="${y0}"/>`).join('');
+SKINS.room.sketch = `<svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+  <rect width="1920" height="1080" fill="#fbfbfa"/>
+  <rect y="140" width="1920" height="550" fill="#f3f3f1"/>
+  <path d="M0 140 H1920" stroke="#9a9a9a" stroke-width="3"/>
+  <rect y="690" width="1920" height="270" fill="#ececea"/>
+  <path d="M0 690 H1920" stroke="#3a3a3a" stroke-width="6"/>
+  <rect y="960" width="1920" height="120" fill="#dcdcda"/>
+  <path d="M0 960 H1920" stroke="#3a3a3a" stroke-width="5"/>
+  <g stroke="#c4c4c2" stroke-width="2">${hatch(-120, 966, 1920, 1080, 26)}</g></svg>`;
+SKINS.pc.sketch = { box:[176,250,360,570], html: fill(304, 481, '<path d="M6 12 L182 10 L296 58 L296 378 L184 470 L6 470 Z" fill="#fff"/>') + img('pc.png','PC tower') };
+SKINS.monitor.sketch = { box:[586,200,748,600], html: fill(523, 420, '<rect x="6" y="6" width="511" height="350" fill="#fff"/><rect x="216" y="352" width="92" height="28" fill="#fff"/>') + img('screen.png','Monitor') +
+  // The eyecon logo on the sketched screen.
+  `<svg viewBox="0 0 748 600" style="position:absolute;inset:0;width:100%;height:100%">
+    <g transform="translate(374 220) scale(.72)">
+      <rect x="-150" y="-80" width="300" height="152" fill="none" stroke="#666" stroke-width="3" stroke-dasharray="9 7"/>
+      <ellipse cx="-68" cy="-4" rx="68" ry="62" fill="#fff" stroke="#333" stroke-width="4"/><ellipse cx="66" cy="-4" rx="68" ry="62" fill="#fff" stroke="#333" stroke-width="4"/>
+      <circle cx="-42" cy="-4" r="42" fill="#333"/><circle cx="44" cy="-4" r="40" fill="#333"/>
+      <text x="0" y="150" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="92" fill="#e7476d">eyecon</text>
+    </g></svg>` };
+SKINS.keyboard.sketch = { box:[520,784,880,160], html: img('keyboard.png','Keyboard') };
+SKINS.mousepad = { none:'', sketch: { box:[1440,776,280,138], html: img('mousepad.png','Mouse pad') } };
+SKINS.mouse.sketch = { box:[1524,764,150,119], html: img('mouse.png','Mouse') };
+// Placeholder sketches until the teammate draws these two.
+SKINS.poster.sketch = `<svg viewBox="0 0 270 270"><g transform="rotate(3 135 135)" stroke="#333" stroke-width="4" stroke-linejoin="round" fill="none">
+  <path d="M20 26 L258 24 L248 262 L8 260 Z" fill="#fff"/><path d="M8 222 L36 230 L22 262" />
+  <rect x="112" y="2" width="60" height="42" fill="#e6e6e4" transform="rotate(4 142 23)"/>
+  <text x="135" y="104" text-anchor="middle" font-family="'Patrick Hand',cursive" font-size="54" fill="#333" stroke="none">
+    <tspan x="135">road</tspan><tspan x="135" dy="52">to</tspan><tspan x="135" dy="52">radiant</tspan></text></g></svg>`;
+SKINS.plant.sketch = `<svg viewBox="0 0 270 330"><g stroke="#333" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="#fff">
+  <path d="M128 230 C 96 150, 40 120, 8 104 C 50 98, 108 130, 132 200"/>
+  <path d="M140 230 C 128 120, 150 40, 196 0 C 216 70, 186 160, 150 230"/>
+  <path d="M150 232 C 188 160, 226 130, 262 120 C 244 170, 196 210, 160 236"/>
+  <path d="M142 230 C 140 150, 160 80, 186 40" fill="none"/>
+  <path d="M30 226 H250 L238 312 Q236 322 224 322 H56 Q44 322 42 312 Z"/>
+  <ellipse cx="140" cy="226" rx="110" ry="20"/></g></svg>`;
+// Start key on the sketched screen, under the logo.
+SKINS.start.sketch = { box:[890,556,140,64], html: `<svg viewBox="0 0 140 64"><g class="start-key">
+  <rect x="2" y="6" width="136" height="56" rx="10" fill="#d9706f"/><rect x="2" y="2" width="136" height="54" rx="10" fill="#f08585"/>
+  <text x="70" y="40" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="34" fill="#fff">start</text></g></svg>` };
+
+// Two full sets; ?set=classic shows the colourful one. Single slots can still be
+// overridden from the URL, e.g. ?keyboard=dark.
+const SETS = {
+  sketch:  { room:'sketch', pc:'sketch', monitor:'sketch', poster:'none', plant:'none', keyboard:'sketch', mousepad:'sketch', mouse:'sketch', start:'sketch' },
+  classic: { room:'classic', pc:'classic', monitor:'classic', poster:'note', plant:'classic', keyboard:'classic', mousepad:'none', mouse:'classic', start:'classic' },
+};
+const params = new URLSearchParams(location.search);
+const setup = Object.assign({}, SETS[params.get('set')] || SETS.sketch);
+params.forEach((skin, slot) => { if(SKINS[slot] && SKINS[slot][skin] != null) setup[slot] = skin; });
+
+function setSkin(slot, skin){
+  if(!SKINS[slot] || SKINS[slot][skin] == null) return;
+  setup[slot] = skin;
+  const el = slot === 'start' ? document.getElementById('start') : document.querySelector(`[data-slot="${slot}"]`);
+  if(el.dataset.box == null) el.dataset.box = el.getAttribute('style') || '';   // the slot's default box
+  const art = SKINS[slot][skin], box = typeof art === 'object' ? art.box : null;
+  el.setAttribute('style', el.dataset.box);
+  if(box) Object.assign(el.style, { left:box[0]+'px', top:box[1]+'px', width:box[2]+'px', height:box[3]+'px' });
+  el.dataset.skin = skin;
+  el.hidden = art === '';
+  el.innerHTML = typeof art === 'object' ? art.html : art;
+  if(slot === 'room') document.body.style.background = skin === 'sketch' ? 'linear-gradient(#fbfbfa 50%, #dcdcda 50%)' : '';   // fill outside the scene to match
+}
+Object.keys(setup).forEach(slot => setSkin(slot, setup[slot]));
+
+// ---- Uniform scaling: one scale factor for the whole scene, centred. ----
+function fit(){
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  document.getElementById('stage').style.transform = `scale(${s}) translate(-50%, -50%)`;
+}
+addEventListener('resize', fit);
+fit();
+
+document.getElementById('start').addEventListener('click', () => { location.href = 'index.html'; });
+window.EC_TITLE = { setSkin, SKINS, setup };
+</script>
+</body>
+</html>

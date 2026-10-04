@@ -15,7 +15,7 @@
   // a long reply at 1 char/keypress took far too many presses — but not a
   // whole word either, which just looked like chunks popping in rather than typing).
   let composeState = { fullText:'', revealed:0, attached:false, attachedFileName:'', editedLevel:null, editedElements:null };
-  const REVEAL_CHARS_PER_KEY = 3;
+  const REVEAL_CHARS_PER_KEY = 6;
 
   // ---- Mail arrival + "new" state ----
   // After the very first email, new client emails don't pop into the inbox
@@ -325,7 +325,7 @@
       if(composeState.revealed>=revealTarget){clearInterval(revealTimer);revealTimer=null;return;}
       composeState.revealed++;
       renderComposeText();
-    },18);
+    },10); // one letter per tick, so it still reads as typing
   }
 
   function updateSendEnabled(){

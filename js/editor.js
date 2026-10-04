@@ -107,12 +107,7 @@
   const CATEGORY_ORDER = ['Alignment', 'Contrast', 'Typography'];
   const CATEGORY_OF = { contrast:'Contrast', sameColor:'Contrast', minFont:'Typography', maxFont:'Typography', bigger:'Typography' };
   const goalCategory = goal => CATEGORY_OF[window.EC_GRADING.goalKind(goal.check)] || 'Alignment';
-  const CATEGORY_INTRO = {
-    Alignment: 'Place every element on the 8-point grid, so positions and sizes are multiples of 8px. Keep margins and padding equal.',
-    Contrast: 'Make sure text and cards have at least 4.5:1 contrast against their background.',
-    Typography: 'Make sure text is at least 16px and still fits and reads clearly.',
-  };
-  const HANDOFF_LINE = { Alignment:'Elements aligned to the 8pt grid', Contrast:'Text meets 4.5:1', Typography:'Text scale set and readable' };
+  const CATEGORY_ICON = { Alignment:'📐', Contrast:'🎨', Typography:'🔤' };
   // A short live reading for a goal ("x 64 · 96 · 40", "2.1:1 / 4.5") so
   // players see exactly how far off they are.
   function goalMeasure(goal){
@@ -148,7 +143,7 @@
       case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
       case 'centeredX': return `centre ${Math.round(els[0].x + els[0].w/2)} / ${state.level.canvas.w/2}`;
       case 'sameSize': return list(e=>`${e.w}×${e.h}`);
-      case 'above': return els.filter((e,i)=>i%2===0).map((e,k)=>e.y+e.h <= els[k*2+1].y ? 'above' : 'inside').join(' · ');
+      case 'above': return els.filter((e,i)=>i%2===0).map((e,k)=>{ const gap = els[k*2+1].y-(e.y+e.h); return gap < 0 ? 'inside' : `gap ${gap}px`; }).join(' · ') + (check.minGap!=null ? ` / ${check.minGap}–${check.maxGap}` : '');
       case 'wraps': {
         const [box, ...inner] = els;
         return `padding ${[Math.min(...inner.map(e=>e.y))-box.y, box.x+box.w-Math.max(...inner.map(e=>e.x+e.w)), box.y+box.h-Math.max(...inner.map(e=>e.y+e.h)), Math.min(...inner.map(e=>e.x))-box.x].join(' · ')}`;
@@ -175,11 +170,21 @@
     // line per skill that ticks when all of that skill's required tasks pass.
     const sections = CATEGORY_ORDER.map(cat => ({ cat, items: results.map((r, i) => Object.assign({ i }, r)).filter(r => goalCategory(r.goal) === cat) }))
       .filter(sec => sec.items.length);
+    const doneCount = results.filter(r => r.met).length;
+    // Task progress lives in the client card at the top of the rail.
+    const brief = document.getElementById('editor-mail-brief');
+    let progress = document.getElementById('editor-task-progress');
+    if(!progress){ progress = Object.assign(document.createElement('div'), {id:'editor-task-progress', className:'editor-task-progress'}); brief.append(progress); }
+    progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
+      <div class="editor-task-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${results.length}" aria-valuenow="${doneCount}" aria-label="Tasks done"><i style="width:${results.length ? doneCount / results.length * 100 : 0}%"></i></div>`;
     const cards = sections.map(({cat, items}) => {
       const sec = document.createElement('li');
-      sec.className = 'editor-goal-section';
-      sec.append(Object.assign(document.createElement('h4'), {textContent:cat}),
-        Object.assign(document.createElement('p'), {className:'editor-goal-intro', textContent:(state.level.categoryIntro || {})[cat] || CATEGORY_INTRO[cat]}));
+      sec.className = 'editor-goal-section cat-' + cat.toLowerCase();
+      // Category header (icon + name), no rule sentence under it.
+      const head = document.createElement('div'); head.className = 'editor-goal-cat';
+      head.innerHTML = `<span class="editor-goal-cat-icon" aria-hidden="true">${CATEGORY_ICON[cat]}</span><h4></h4>`;
+      head.querySelector('h4').textContent = cat;
+      sec.append(head);
       const ul = document.createElement('ul');
       items.forEach(({goal, met, i}) => {
         const li = document.createElement('li');
@@ -193,32 +198,15 @@
         body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
         // The tip shows on the suggested task; the reason shows once a task is done.
         if(i === state.focusGoal) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
-        else if(met) body.append(Object.assign(document.createElement('small'), {textContent:goal.why}));
         li.append(box, body);
         ul.append(li);
       });
       sec.append(ul);
       return sec;
     });
-    const check = document.createElement('li');
-    check.className = 'editor-handoff';
-    check.append(Object.assign(document.createElement('b'), {textContent:'Handoff checklist'}));
-    sections.forEach(({cat, items}) => {
-      const required = items.filter(r => !r.goal.bonus);
-      const done = (required.length ? required : items).every(r => r.met);
-      const row = document.createElement('label');
-      const box = Object.assign(document.createElement('span'), {className:'editor-handoff-box', textContent: done ? '✓' : ''});
-      box.setAttribute('role','img'); box.setAttribute('aria-label', done ? 'Done' : 'Not done');
-      if(done) row.classList.add('done');
-      row.append(box, document.createTextNode(HANDOFF_LINE[cat]));
-      check.append(row);
-    });
-    (state.level.handoffExtras || []).forEach(text => {
-      const row = document.createElement('label');
-      row.append(Object.assign(document.createElement('span'), {className:'editor-handoff-box'}), document.createTextNode(text));
-      check.append(row);
-    });
-    list.replaceChildren(...cards, check);
+    // Progress shows once (the client card); each task's tick shows the rest,
+    // so the category badges carry no count and there is no separate checklist.
+    list.replaceChildren(...cards);
   }
 
 
@@ -545,6 +533,9 @@
       div.dataset.locked = '1';
     } else {
       div.tabIndex = 0;
+      // Only pieces the player can actually move get the move cursor.
+      const tools = state.level && state.level.tools;
+      div.classList.toggle('movable', can(el,'move') && (!tools || tools.includes('position')));
       div.setAttribute('role','button');
       div.setAttribute('aria-label', `${el.role} ${el.text||''}`.trim());
       div.addEventListener('keydown', event=>{
@@ -745,12 +736,6 @@
         <label class="editor-unit-row"><span>Weight</span><span class="editor-unit-input"><select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select></span></label>`;
       html += `</details>`;
     }
-    if(el.text){
-      html += `<details class="editor-setting-card editor-text-alignment" open><summary>Text alignment</summary>
-        <div class="editor-align-options" role="group" aria-label="Text alignment">
-          ${['left','center','right'].map(a=>`<button type="button" data-text-align="${a}" aria-pressed="${el.align===a}">${a[0].toUpperCase()+a.slice(1)}</button>`).join('')}
-        </div></details>`;
-    }
     const colorOk = unlocked('color') && can(el,'color');
     if((el.text||el.bg) && colorOk) html += `<details class="editor-setting-card" open><summary>Color</summary>`;
     // Elements with text (buttons) only change their text color for contrast.
@@ -818,12 +803,6 @@
       summary.tabIndex=-1;
       summary.addEventListener('click',e=>e.preventDefault());
     });
-    fields.querySelectorAll('[data-text-align]').forEach(button=>button.addEventListener('click',()=>{
-      el.align=button.dataset.textAlign;
-      refreshElementDom(el);
-      fields.querySelectorAll('[data-text-align]').forEach(option=>option.setAttribute('aria-pressed',String(option===button)));
-      pushHistory(); refreshLiveOverlays();
-    }));
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
       el.colorTone=Number(e.target.value);
       el.color=mixColor(el,'color');refreshElementDom(el);refreshBars(el,'color',fields);
@@ -1083,9 +1062,9 @@
     }
     svg.innerHTML=gaps.map(g=>{
       const x=(g.x1+g.x2)/2,y=(g.y1+g.y2)/2,equal=gaps.filter(n=>Math.abs(n.gap-g.gap)<1).length>1;
-      const color=equal?'#7852b8':'#cf3783',label=`${Math.round(g.gap)} px`,width=label.length*7*unit;
+      const color=equal?'#7852b8':'#cf3783',label=`${Math.round(g.gap)} px`,width=label.length*9.5*unit;
       const bracket=g.y1===g.y2?`M${g.x1} ${g.y1+6*unit}V${g.y1}H${g.x2}V${g.y2+6*unit}`:`M${g.x1-6*unit} ${g.y1}H${g.x1}V${g.y2}H${g.x2-6*unit}`;
-      return `<path class="spacing-bracket" d="${bracket}" stroke="${color}" stroke-width="${unit}" fill="none"/><rect x="${x-width/2-3*unit}" y="${y-9*unit}" width="${width+6*unit}" height="${18*unit}" rx="${3*unit}" fill="${color}"/><text x="${x}" y="${y+4*unit}" text-anchor="middle" font-size="${12*unit}" fill="white">${label}</text>`;
+      return `<path class="spacing-bracket" d="${bracket}" stroke="${color}" stroke-width="${unit}" fill="none"/><rect x="${x-width/2-3*unit}" y="${y-11*unit}" width="${width+6*unit}" height="${22*unit}" rx="${3*unit}" fill="${color}"/><text x="${x}" y="${y+5.5*unit}" text-anchor="middle" font-size="${16*unit}" fill="white">${label}</text>`;
     }).join('');
     state.guideLayerEl.appendChild(svg);
   }
@@ -1394,54 +1373,7 @@
   //   double  – brief on the left, Design tools + Layers on the right + top bar
   //   compact – one left column, no top bar (the original look)
   const VARIANT_KEY = 'eyecon_editor_variant';
-  const RAIL_SIZE_KEY = 'eyecon_editor_rail_sizes';
   const VARIANT_DEFAULT = { layout:'double', theme:'blue' };
-  const railSizes = {left:14, right:17};
-  try{
-    const saved = JSON.parse(localStorage.getItem(RAIL_SIZE_KEY) || '{}');
-    for(const side of ['left','right']){
-      if(Number.isFinite(saved[side])) railSizes[side] = Math.max(side === 'left' ? 11 : 13, Math.min(side === 'left' ? 25 : 27, saved[side]));
-    }
-  }catch(e){}
-  function applyRailSizes(){
-    const screen = document.getElementById('screen-editor');
-    screen.style.setProperty('--editor-left-panel', `${railSizes.left}rem`);
-    screen.style.setProperty('--editor-right-panel', `${railSizes.right}rem`);
-  }
-  function initRailResizers(){
-    const screen = document.getElementById('screen-editor');
-    applyRailSizes();
-    screen.querySelectorAll('.editor-rail-resizer').forEach(handle=>{
-      const side = handle.dataset.rail;
-      const minimum = side === 'left' ? 11 : 13;
-      const maximum = side === 'left' ? 25 : 27;
-      const setSize = value=>{
-        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-        const available = screen.getBoundingClientRect().width / rem - railSizes[side === 'left' ? 'right' : 'left'] - 20;
-        railSizes[side] = Math.round(Math.max(minimum, Math.min(maximum, available, value)) * 4) / 4;
-        applyRailSizes();
-        try{localStorage.setItem(RAIL_SIZE_KEY, JSON.stringify(railSizes));}catch(e){}
-      };
-      handle.addEventListener('pointerdown', event=>{
-        if(event.button !== 0) return;
-        event.preventDefault();
-        handle.setPointerCapture(event.pointerId);
-      });
-      handle.addEventListener('pointermove', event=>{
-        if(!handle.hasPointerCapture(event.pointerId)) return;
-        const bounds = screen.getBoundingClientRect();
-        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-        const px = side === 'left' ? event.clientX - bounds.left : bounds.right - event.clientX;
-        setSize((px - rem * 1.5) / rem);
-      });
-      handle.addEventListener('keydown', event=>{
-        if(!['ArrowLeft','ArrowRight'].includes(event.key)) return;
-        event.preventDefault();
-        const direction = event.key === 'ArrowRight' ? 1 : -1;
-        setSize(railSizes[side] + (side === 'left' ? direction : -direction));
-      });
-    });
-  }
   function readVariant(){
     try{ return Object.assign({}, VARIANT_DEFAULT, JSON.parse(localStorage.getItem(VARIANT_KEY) || '{}')); }
     catch(e){ return Object.assign({}, VARIANT_DEFAULT); }
@@ -1466,7 +1398,6 @@
 
   function initToolbarOnce(){
     applyVariant(readVariant());
-    initRailResizers();
 
     document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
       document.getElementById('editor-hint-banner').classList.add('hidden');

@@ -10,9 +10,6 @@
   const safe = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const state = {title:'My design',preset:'website',canvas:{w:960,h:640,bg:'#fffaf3'},elements:[],targets:[],selected:null,selectedTarget:null};
   let scale = 1, zoom = 1, panX = 0, panY = 0, drag = null, layerDrag = null, stagePan = null, peeking = false, spacePan = false;
-  const RAIL_KEY='eyecon.maker-rails.v1';
-  let rails={left:22,right:20};
-  try{Object.assign(rails,JSON.parse(localStorage.getItem(RAIL_KEY)||'{}'));}catch(_){}
   let history = [], future = [];
   const $ = id => document.getElementById(id);
   const icon = name => {
@@ -349,7 +346,7 @@
     guides.forEach(g=>{
       if(g.axis==='x')add(`left:${g.v}px;top:0;width:${u}px;height:${state.canvas.h}px`);
       else add(`top:${g.v}px;left:0;height:${u}px;width:${state.canvas.w}px`);
-      add(`left:${g.axis==='x'?g.v+4*u:item.x}px;top:${g.axis==='x'?item.y-22*u:g.v+4*u}px;font-size:${11*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`,g.name).classList.add('maker-guide-label');
+      add(`left:${g.axis==='x'?g.v+4*u:item.x}px;top:${g.axis==='x'?item.y-22*u:g.v+4*u}px;font-size:${16*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`,g.name).classList.add('maker-guide-label');
     });
     // Nearest gap on each side, to elements sharing the row or column.
     const near={};
@@ -366,7 +363,7 @@
     Object.values(near).forEach(n=>{
       const line=add(n.css);line.classList.add('maker-gap');
       const lb=document.createElement('span');lb.className='maker-gap-label';lb.textContent=Math.round(n.gap)+' px';
-      lb.style.cssText=`font-size:${11*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`;line.appendChild(lb);
+      lb.style.cssText=`font-size:${16*u}px;padding:${u}px ${4*u}px;border-radius:${3*u}px`;line.appendChild(lb);
     });
   }
   function moveOrResize(item,e){
@@ -741,21 +738,6 @@
       }
     });
     document.addEventListener('keyup',e=>{if(e.code==='Space'){spacePan=false;$('maker-stage').classList.remove('panning');}});
-    const workspace=document.querySelector('.maker-workspace');
-    const applyRails=()=>{workspace.style.setProperty('--maker-left',rails.left+'rem');workspace.style.setProperty('--maker-right',rails.right+'rem');requestAnimationFrame(fit);};
-    applyRails();
-    workspace.querySelectorAll('.maker-rail-resizer').forEach(handle=>{
-      const side=handle.dataset.side;
-      const setSize=value=>{
-        const rem=parseFloat(getComputedStyle(document.documentElement).fontSize);
-        const other=rails[side==='left'?'right':'left'];
-        rails[side]=Math.round(Math.max(9,Math.min(32,workspace.clientWidth/rem-other-16,value))*4)/4;
-        applyRails();try{localStorage.setItem(RAIL_KEY,JSON.stringify(rails));}catch(_){}
-      };
-      handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();handle.setPointerCapture(e.pointerId);});
-      handle.addEventListener('pointermove',e=>{if(!handle.hasPointerCapture(e.pointerId))return;const bounds=workspace.getBoundingClientRect();const rem=parseFloat(getComputedStyle(document.documentElement).fontSize);setSize((side==='left'?e.clientX-bounds.left:bounds.right-e.clientX)/rem-1);});
-      handle.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();setSize(rails[side]+(e.key==='ArrowRight'?1:-1)*(side==='left'?1:-1));});
-    });
     window.addEventListener('resize',fit);
   }
   window.EC_MAKER={init,open:render};
