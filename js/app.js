@@ -110,7 +110,7 @@
   // The first trip from the title screen lands on the desk, then Pixel gives
   // the player a compact explanation before their very first client email.
   // Piko's guide sequence: null | 'mail' | 'inbox' | 'attachment' | 'accept' | 'element' | 'controls' | 'save' | 'send'
-  const pikoEnabled = false;
+  const pikoEnabled = !window.EC_NO_PIKO; // e2e tests opt out
   let pikoStage = null;
   function isFirstDay(){
     return !profile.onboarding?.seen && profile.completed.length === 0 && profile.history.length === 0;
@@ -120,16 +120,18 @@
   // pikoScript.tutorial, just driven by EC_PIKO instead of a static modal.
   function runPikoIntro(){
     const P = window.EC_PIKO, lines = P.SCRIPT.tutorial;
+    document.body.classList.add('piko-intro'); // apps locked while Piko talks
     P.say(lines[0], { onDone: ()=>{
       P.say(lines[1], { onDone: ()=>{
         window.EC_SOUND.play('newMail');
         const mailIcon = document.getElementById('icon-mail');
         if(mailIcon) mailIcon.classList.add('tutorial-mail-pulse');
         announce('New email received.');
-        P.say(lines[2], { onDone: ()=>{
-          pikoStage = 'mail';
-          P.pointAt(mailIcon);
-        }});
+        // Dim fades in together with the "you received an email" line.
+        document.body.classList.remove('piko-intro');
+        pikoStage = 'mail';
+        P.pointAt(mailIcon);
+        P.say(lines[2]);
       }});
     }});
   }
@@ -143,12 +145,108 @@
   function replayPikoTutorial(){
     if(!pikoEnabled) return;
     pikoStage = null;
+    if(profile.onboarding) profile.onboarding.lessons = {};
     window.EC_PIKO.clearTarget();
     window.EC_PIKO.hideBubble();
     showScreen('screen-desktop', ()=>{
       document.getElementById('icon-mail')?.classList.remove('tutorial-mail-pulse');
       runPikoIntro();
     });
+  }
+  // Day one in the editor: intro, red problem dots pop in one by one, then
+  // "click any" (no highlight). The click handler continues the tour.
+  function runPikoWorkspaceTour(level){
+    const P = window.EC_PIKO, W = P.SCRIPT.workspace, body = document.body;
+    profile.onboarding = profile.onboarding || {};
+    // Promise helpers: a line the player clicks through, and "wait until".
+    const talk = (line, opts = {}) => new Promise(done => P.say(line, Object.assign({ top:true }, opts, { onDone:done })));
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const elDiv = id => document.querySelector(`#editor-canvas .el[data-id="${id}"]`);
+    const goalsMet = id => window.EC_GRADING.checkGoals(level, window.EC_EDITOR.getElements())
+      .filter(r => window.EC_GRADING.goalIds(r.goal.check).includes(id)).every(r => r.met);
+    // Glow (no dim) so the player can see exactly what to click.
+    const glow = id => { document.querySelectorAll('.piko-glow').forEach(n => n.classList.remove('piko-glow')); if(id) elDiv(id)?.classList.add('piko-glow'); };
+    const step = (sel, line, opts) => { P.pointAt(document.querySelector(sel)); return talk(line, opts); };
+    (async ()=>{
+      body.classList.add('piko-tour-lock', 'piko-marks-hidden');
+      await talk(W.intro);
+      const marks = [...document.querySelectorAll('#editor-canvas .el.needs-edit')];
+      marks.forEach(m => m.classList.add('piko-mark-wait'));
+      body.classList.remove('piko-marks-hidden');
+      marks.forEach((m, i) => setTimeout(()=>{
+        m.classList.remove('piko-mark-wait'); m.classList.add('piko-mark-pop');
+        window.EC_SOUND.play('pikoLine');
+        setTimeout(()=>m.classList.remove('piko-mark-pop'), 500);
+      }, 300 + i * 350));
+      await talk(W.problems);
+      // Hands-on: fix "About" together.
+      const practice = elDiv('about') && !goalsMet('about') ? 'about' : null;
+      body.classList.remove('piko-tour-lock');
+      if(practice){
+        await talk(W.together);
+        P.clearTarget(); glow(practice);
+        P.say(W.selectAbout, { top:true });
+        await until(()=>elDiv(practice)?.classList.contains('selected'));
+        await step('#element-settings', W.controls, { left:true });
+        P.clearTarget(); glow(practice);
+        P.say(W.dragAbout, { top:true });
+        await until(()=>goalsMet(practice));
+        glow(null);
+        await talk(W.nice);
+      } else {
+        P.clearTarget();
+        P.say(W.element, { top:true });
+        await until(()=>document.querySelector('#editor-canvas .el.selected'));
+        await step('#element-settings', W.controls, { left:true });
+      }
+      await step('#screen-editor .editor-side-rail:not(.editor-right-rail)', W.tasks);
+      body.classList.add('piko-no-submit');
+      await step('#tool-save', W.submit, { left:true });
+      body.classList.remove('piko-no-submit');
+      P.clearTarget();
+      pikoStage = null;
+      profile.onboarding.seen = true;
+      save();
+      runPikoLevelTips(level, ()=>{});
+    })();
+  }
+  // First reply to a client: type it out, attach the edited design, send.
+  function initPikoComposeGuide(){
+    const modal = document.getElementById('modal-compose');
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const $ = id => document.getElementById(id);
+    new MutationObserver(async ()=>{
+      profile.onboarding = profile.onboarding || {};
+      if(!pikoEnabled || modal.classList.contains('hidden') || profile.onboarding.compose) return;
+      profile.onboarding.compose = true; save();
+      const P = window.EC_PIKO, C = P.SCRIPT.compose, open = () => !modal.classList.contains('hidden');
+      P.pointAt(modal.querySelector('.compose-card')); P.say(C.type, { top:true });
+      await until(()=>!open() || !document.querySelector('#compose-body .ghost')?.textContent);
+      if(open()){ P.pointAt($('compose-attach-btn')); P.say(C.attach, { top:true }); }
+      await until(()=>!open() || !$('attach-popover').classList.contains('hidden'));
+      if(open()) P.pointAt($('attach-option-edited')); // the file to pick
+      await until(()=>!open() || !$('compose-attachment-chip').classList.contains('hidden'));
+      if(open()){ P.pointAt($('btn-send-mail')); P.say(C.send, { top:true }); }
+      await until(()=>!open());
+      P.clearTarget(); P.hideBubble();
+    }).observe(modal, { attributes:true, attributeFilter:['class'] });
+  }
+  // Short Piko intro the first time each of the first three jobs opens.
+  function runPikoLevelTips(level, done){
+    const key = level.project || level.id; // lessons are keyed by client: mayo, yappers, haybuhay
+    const P = window.EC_PIKO, lines = pikoEnabled && P.SCRIPT.levels[key];
+    profile.onboarding = profile.onboarding || {};
+    const seen = profile.onboarding.lessons = profile.onboarding.lessons || {};
+    if(!lines || seen[key]){ requestAnimationFrame(done); return; }
+    seen[key] = true; save();
+    let lastSel = null;
+    const step = i => {
+      if(i >= lines.length){ P.clearTarget(); done(); return; }
+      const [line, sel] = lines[i], el = sel && document.querySelector(sel);
+      if(el){ P.pointAt(el); lastSel = sel; } // no selector: keep the last highlight
+      P.say(line, { top:true, left:lastSel === '#element-settings', onDone: ()=>step(i + 1) });
+    };
+    requestAnimationFrame(()=>step(0));
   }
   // Called once Mail is opened while Piko is waiting on the 'mail' stage —
   // points at the first ticket row and asks the player to open it.
@@ -176,52 +274,34 @@
       if(pikoStage === 'inbox' && e.target.closest('#mail-list .mail-item')){
         window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
         pikoStage = 'attachment';
-        requestAnimationFrame(()=>{
+        // Give the player ~2.5s to read the email before anything is clickable.
+        document.body.classList.add('piko-wait');
+        setTimeout(()=>{
+          document.body.classList.remove('piko-wait');
           const chip = document.getElementById('attachment-chip');
           if(chip){ window.EC_PIKO.pointAt(chip); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.previewGuide); }
-        });
+        }, 2500);
         return;
       }
-      if((pikoStage === 'attachment' || pikoStage === 'accept') && e.target.closest('#btn-accept-job')){
+      if(['attachment','preview','accept'].includes(pikoStage) && e.target.closest('#btn-accept-job')){
         pikoStage = 'element';
         window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
         return;
       }
       if(pikoStage === 'attachment' && e.target.closest('#attachment-chip')){
-        pikoStage = 'accept';
-        requestAnimationFrame(()=>{
+        // Let the player look at the preview; the Accept hint waits until it closes.
+        pikoStage = 'preview';
+        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
+        const modal = document.getElementById('modal-preview');
+        const obs = new MutationObserver(()=>{
+          if(!modal.classList.contains('hidden') || pikoStage !== 'preview') return;
+          obs.disconnect();
+          pikoStage = 'accept';
           window.EC_PIKO.pointAt(document.getElementById('btn-accept-job'));
           window.EC_PIKO.say(window.EC_PIKO.SCRIPT.acceptGuide, { top:true });
         });
+        obs.observe(modal, { attributes:true, attributeFilter:['class'] });
         return;
-      }
-      if(pikoStage === 'element' && e.target.closest('#editor-canvas .el:not([data-locked="1"])')){
-        pikoStage = 'controls';
-        window.EC_PIKO.clearTarget();
-        requestAnimationFrame(()=>{
-          const panel = document.getElementById('element-settings');
-          window.EC_PIKO.pointAt(panel);
-          window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.controls, { top:true, onDone: ()=>{
-            pikoStage = 'save';
-            window.EC_PIKO.pointAt(document.getElementById('tool-save'));
-          }});
-        });
-        return;
-      }
-      if(pikoStage === 'save' && e.target.closest('#tool-save')){
-        pikoStage = 'send';
-        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
-        requestAnimationFrame(()=>{
-          const yes = document.getElementById('btn-confirm-yes');
-          if(yes){ window.EC_PIKO.pointAt(yes); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.send, { top:true }); }
-        });
-        return;
-      }
-      if(pikoStage === 'send' && e.target.closest('#btn-confirm-yes')){
-        pikoStage = null;
-        window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
-        profile.onboarding.seen = true;
-        save();
       }
     });
   }
@@ -1220,6 +1300,17 @@
     refreshHeader();
     openMailApp();
     showToast(`📧 New reply from ${level.clientName}`, 3200);
+    // First client reply ever: Piko shows where it landed.
+    profile.onboarding = profile.onboarding || {};
+    if(pikoEnabled && !profile.onboarding.reply){
+      profile.onboarding.reply = true; save();
+      setTimeout(()=>{
+        const row = document.querySelector(`#mail-list .mail-item[data-level-id="${level.id}"]`);
+        if(row) window.EC_PIKO.pointAt(row);
+        window.EC_PIKO.say(window.EC_PIKO.SCRIPT.reply.arrived(level.clientName));
+        pikoStage = 'reply';
+      }, 450);
+    }
   }
 
   // Player opens the reply from the inbox. "Mark Completed" banks the
@@ -1229,6 +1320,16 @@
     const ready = profile.readyReply;
     if(!ready || ready.levelId !== level.id) return;
     const { result, elapsedMs, missionComplete, elements } = ready;
+    if(pikoStage === 'reply'){
+      pikoStage = null;
+      const P = window.EC_PIKO;
+      P.clearTarget(); P.hideBubble();
+      setTimeout(()=>{
+        P.pointAt(document.getElementById('btn-accept-job'));
+        P.say(missionComplete ? P.SCRIPT.reply.complete : P.SCRIPT.reply.revise, { top:true });
+        document.getElementById('btn-accept-job').addEventListener('click', ()=>{ P.clearTarget(); P.hideBubble(); }, { once:true });
+      }, 2000); // a moment to read their message first
+    }
     window.EC_MAIL.openClientReply(level, result, missionComplete, ()=>{
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
@@ -1733,6 +1834,7 @@
     });
     document.getElementById('monitor-app-popup-close').addEventListener('click', ()=>closeMonitorAppPopup());
     initPikoGuideChain();
+    initPikoComposeGuide();
 
     document.getElementById('icon-mail').addEventListener('click', openMailApp);
     document.getElementById('icon-maker').addEventListener('click', ()=>{
@@ -1827,19 +1929,14 @@
     window.EC_MAIL.setHandlers({
       onAccept: level => {
         if(profile.pendingClientReply || profile.readyReply){showToast('Read your client reply before starting another task.',2500);return;}
-        if(window.EC_STORE.workday(profile).submissions>=3){showDaySummary();return;}
         showLoadingTransition((finishFade)=>{
           showScreen('screen-editor', ()=>{
             window.EC_EDITOR.open(level,profile.revisionDrafts?.[level.id]);
             levelStartTime = Date.now();
             startTimerIfNeeded();
             finishFade();
-            if(pikoStage === 'element'){
-              requestAnimationFrame(()=>{
-                const el = document.querySelector('#editor-canvas .el:not([data-locked="1"])');
-                if(el){ window.EC_PIKO.pointAt(el); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.workspace.element, { top:true }); }
-              });
-            }
+            if(pikoStage === 'element') runPikoWorkspaceTour(level);
+            else runPikoLevelTips(level, ()=>{});
           });
         });
       },

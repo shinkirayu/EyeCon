@@ -9,18 +9,59 @@
   // Piko's dialogue script — text kept verbatim from the reference build.
   const SCRIPT = {
     tutorial: [
-      'Hi! I am Piko, your design helper. We make screens kind to every pair of eyes.',
-      'Keep an eye on the corner of your desktop. New client mail arrives there.',
-      "You received an email! Follow the moving guide to the inbox, then open the request."
+      "Hi, I'm Piko! Welcome to your first day at EyeCon Studio.",
+      "Clients send us designs that are hard to read or use. We fix them so everyone can enjoy them.",
+      "Oh, you've got mail! Click Mail to see your first job."
     ],
-    inboxGuide: clientName => `Your first request is waiting. Open ${clientName}'s email and read what they need.`,
-    previewGuide: "Here's a look at the page before you start editing.",
-    acceptGuide: "Whenever you're ready, Accept will get you started.",
+    inboxGuide: clientName => `${clientName} needs a hand. Open their email to see the job.`,
+    previewGuide: "They sent their design. Click the attachment to take a look.",
+    acceptGuide: "Seen enough? Click Accept to start the job.",
     workspace: {
-      element: 'Start with the element that looks off, then see what the tools tell you.',
-      controls: 'Great. The controls on the left are now editing that element.',
-      save: "Your first change is ready. Save will prepare the client's email.",
-      send: "Give the email one last look, then it's ready to send."
+      intro: "Welcome to your workspace! That's Mayonnaisegee's portfolio in the middle.",
+      problems: "Spot the red dots? Each one marks something the client wants fixed.",
+      together: "Let's fix one together so you get the feel of it.",
+      selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Click it.",
+      element: "Click any element with a red dot to get started.",
+      controls: "Got it! This panel shows what you picked. You'll use it more later.",
+      dragAbout: "Now drag About up until it's level with Home and Contact. The arrow keys work too!",
+      nice: "Perfect! See how much tidier that menu row looks? That's alignment.",
+      tasks: "Your task list keeps score. That one just ticked off!",
+      submit: "Fix the rest, then hit Submit to send it to the client."
+    },
+    reply: {
+      arrived: name => `Ooh, ${name} wrote back! Open their reply to see what they think.`,
+      complete: "They love it! Hit Mark Completed to get paid for the job.",
+      revise: "They want a few more fixes. Hit Back to Editor and give it another go!"
+    },
+    compose: {
+      type: "Now you write back to the client! Press any key on your keyboard and your reply types itself.",
+      attach: "Great message! Now attach your updated design so they can see your fix.",
+      send: "All set. Hit Send!"
+    },
+    // First visit to each of the first three jobs: one basic skill per level.
+    // [line, selector to point at (optional)]
+    levels: {
+      mayo: [
+        ["Quick tip before you go!"],
+        ["Alignment means things share an edge or a center. Lined-up pages feel calm and are easy to scan."],
+        ["Spacing counts too. Equal gaps tell people which items belong together."],
+        ["Everything snaps to an 8px grid, so just drag or nudge. No typing needed. Watch for the pink guides!"]
+      ],
+      yappers: [
+        ["New skill: CONTRAST! It's how much the text color stands out from what's behind it.", '#editor-canvas'],
+        ["Low contrast, like light gray on white, is really hard to read. Even more so on a phone in the sun, or with weaker eyesight."],
+        ["We measure it as a ratio. Normal text needs at least 4.5:1."],
+        ["Select some text, then move its color sliders. Darker text on a light background, or lighter text on a dark one.", '#element-settings'],
+        ["Watch the ratio badge in the panel. A green check means it passes."],
+        ["Tip: you only need to change the color, not the layout. Go for it!"]
+      ],
+      haybuhay: [
+        ["Last basic: TYPOGRAPHY! That's how your text looks: size, weight and spacing.", '#editor-canvas'],
+        ["Tiny text makes people squint or zoom. For body text, 16px is the smallest you should go."],
+        ["Bigger text for headings, smaller for details. That difference is called hierarchy, and it guides the eye."],
+        ["Select a label and raise its Size. This is the one number you can type!", '#element-settings'],
+        ["Alignment, contrast and typography: those are the basics. After this, you're ready for real clients!"]
+      ]
     }
   };
 
@@ -37,7 +78,7 @@
     // old approach — raising the *target's own* z-index — broke whenever
     // an ancestor had a lower z-index than the dim itself).
     const hole = document.createElement('div'); hole.className = 'piko-hole hidden';
-    const cursor = document.createElement('div'); cursor.className = 'piko-cursor hidden'; cursor.innerHTML = '👆';
+    const cursor = document.createElement('div'); cursor.className = 'piko-cursor hidden'; cursor.innerHTML = '<img src="assets/sprites/cursor-point.png" alt="">';
     const bubble = document.createElement('div'); bubble.className = 'piko-bubble hidden';
     bubble.innerHTML =
       '<div class="piko-panel"><p class="piko-name">PIKO</p><h4 class="piko-line"><span class="piko-text"></span><span class="piko-caret">|</span></h4></div>' +
@@ -52,7 +93,13 @@
   let typeTimer = null;
   let currentTarget = null;
 
+  // Pause before each Piko line so beats don't land back to back.
+  const LINE_DELAY_MS = 600;
+  let sayDelayTimer = null;
+
   function hideBubble(){
+    clearTimeout(sayDelayTimer);
+    document.removeEventListener('click', advanceAnywhere, true);
     if(!dom) return;
     dom.bubble.classList.add('hidden');
     clearInterval(typeTimer);
@@ -62,10 +109,27 @@
   // Shows one line of dialogue with a typewriter reveal; clicking mid-type
   // skips straight to the full line, clicking again (once complete) calls
   // onDone — same click-to-skip/click-to-advance behavior as PikoTalk.
+  let saidAgain = false;
+  let advanceAnywhere = () => {};
   function say(line, opts){
     opts = opts || {};
+    saidAgain = true;
+    clearTimeout(sayDelayTimer);
+    const showing = dom && !dom.bubble.classList.contains('hidden');
+    // Already on screen (chained lines): keep Piko up, no gap.
+    if(!opts.now && !showing){
+      ensureDom().bubble.classList.add('hidden');
+      sayDelayTimer = setTimeout(() => say(line, Object.assign({}, opts, { now:true })), LINE_DELAY_MS);
+      return;
+    }
     const { textEl, caretEl, bubble } = ensureDom();
     bubble.classList.toggle('piko-top', !!opts.top);
+    bubble.classList.toggle('piko-left', !!opts.left); // keep clear of right-side highlights
+    if(bubble.classList.contains('hidden')){
+      // Pop in like a storybook character jumping onto the page.
+      bubble.classList.remove('piko-pop'); void bubble.offsetWidth; bubble.classList.add('piko-pop');
+      if(window.EC_SOUND && window.EC_SOUND.play) window.EC_SOUND.play('pikoPop');
+    } else if(window.EC_SOUND && window.EC_SOUND.play) window.EC_SOUND.play('pikoLine');
     bubble.classList.remove('hidden');
     clearInterval(typeTimer);
     caretEl.classList.remove('idle');
@@ -78,16 +142,24 @@
       typeTimer = null;
       caretEl.classList.add('idle');
     }
-    typeTimer = setInterval(()=>{
-      i++;
-      textEl.textContent = full.slice(0, i);
-      if(i % SFX_EVERY_N_CHARS === 0 && window.EC_SOUND && window.EC_SOUND.play) window.EC_SOUND.play('click');
-      if(i >= full.length) finishTyping();
-    }, MS_PER_CHAR);
+    finishTyping(); // ponytail: typewriter off for now; restore the setInterval reveal to bring it back
+    // Lines that lead somewhere advance on a click anywhere; the click is
+    // swallowed so it can't also hit whatever is under it.
+    document.removeEventListener('click', advanceAnywhere, true);
+    advanceAnywhere = e => {
+      if(bubble.classList.contains('hidden')) return;
+      e.preventDefault(); e.stopPropagation();
+      bubble.onclick();
+    };
+    if(opts.onDone) setTimeout(() => document.addEventListener('click', advanceAnywhere, true));
     bubble.onclick = () => {
+      if(!opts.onDone) return; // an instruction: it stays until the player does it
+      document.removeEventListener('click', advanceAnywhere, true);
       if(typeTimer){ finishTyping(); return; }
-      hideBubble();
+      // If onDone chains another line, Piko stays up; otherwise he leaves.
+      saidAgain = false;
       if(opts.onDone) opts.onDone();
+      if(!saidAgain) hideBubble();
     };
   }
 
@@ -102,8 +174,18 @@
     opts = opts || {};
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     if(!el){ clearTarget(); return; }
+    // Piko is about to pop in: land the highlight with him, not before.
+    if(opts.delay == null && (!dom || dom.bubble.classList.contains('hidden'))) opts.delay = LINE_DELAY_MS;
+    const lift = el.classList.contains('desktop-icon');
     const run = () => {
       const { cursor, hole } = ensureDom();
+      // The icon lives inside low z-index stacking contexts, so a body-level
+      // dim can never sit under it. Put a dim right beside it instead.
+      if(lift){
+        el.classList.add('piko-lift');
+        const dim = document.createElement('div'); dim.className = 'piko-lift-dim';
+        el.parentElement.insertBefore(dim, el);
+      }
       // If the rect still isn't real yet (mid-transition), keep retrying
       // for up to ~1s instead of drawing a bogus corner position.
       let r = el.getBoundingClientRect();
@@ -118,33 +200,36 @@
         clearInterval(placeRetryTimer); placeRetryTimer = null;
         place();
         cursor.classList.remove('hidden');
-        if(opts.dim !== false) hole.classList.remove('hidden'); else hole.classList.add('hidden');
+        if(opts.dim !== false && !lift) hole.classList.remove('hidden'); else hole.classList.add('hidden');
         currentTarget = el;
       };
       const place = () => {
         r = el.getBoundingClientRect();
         // Keep the guide beside the target so the mail itself stays visible.
-        cursor.style.left = (r.right - 10) + 'px';
-        cursor.style.top = (r.top + r.height / 2 - 18) + 'px';
-        hole.style.left = (r.left - 8) + 'px';
-        hole.style.top = (r.top - 8) + 'px';
-        hole.style.width = (r.width + 16) + 'px';
-        hole.style.height = (r.height + 16) + 'px';
+        // Hand tip lands just inside the target's lower-right area.
+        cursor.style.left = (r.left + r.width * .7) + 'px';
+        cursor.style.top = (r.top + r.height * .7) + 'px';
+        // Desktop icons: dim everything and lift the icon itself above it.
+        if(lift) return;
+        // Exact fit: same box and corner radius as the target.
+        hole.style.left = r.left + 'px';
+        hole.style.top = r.top + 'px';
+        hole.style.width = r.width + 'px';
+        hole.style.height = r.height + 'px';
+        hole.style.borderRadius = getComputedStyle(el).borderRadius;
       };
       tryPlace();
       window.addEventListener('resize', place);
       window.addEventListener('scroll', place, true);
       cursor._reposition = place;
-      // CSS transforms do not fire resize/scroll events. Follow the bouncing
-      // Mail icon frame by frame so its vignette stays centered on it.
-      if(el.id === 'icon-mail'){
-        const followBounce = () => {
-          if(currentTarget !== el) return;
-          place();
-          cursor._followFrame = requestAnimationFrame(followBounce);
-        };
-        cursor._followFrame = requestAnimationFrame(followBounce);
-      }
+      // Windows/modals animate in with transforms, which fire no resize
+      // events — follow the target every frame so the spotlight stays on it.
+      const follow = () => {
+        if(currentTarget !== el) return;
+        place();
+        cursor._followFrame = requestAnimationFrame(follow);
+      };
+      cursor._followFrame = requestAnimationFrame(follow);
     };
     if(opts.delay) setTimeout(run, opts.delay); else run();
   }
@@ -153,6 +238,8 @@
     const { cursor, hole } = ensureDom();
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     currentTarget = null;
+    document.querySelectorAll('.piko-lift').forEach(n => n.classList.remove('piko-lift'));
+    document.querySelectorAll('.piko-lift-dim').forEach(n => n.remove());
     cursor.classList.add('hidden');
     hole.classList.add('hidden');
     if(cursor._reposition){

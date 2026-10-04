@@ -222,7 +222,10 @@
   function nextLockedProject(profile){
     return (window.EC_PROJECTS || []).find(p=>!projectUnlocked(profile, p));
   }
+  // ponytail: every unfinished email open at once, no day limit, for testing; set false to restore the normal flow.
+  const ALL_EMAILS_OPEN = true;
   function commissionInbox(profile, date = new Date()){
+    if(ALL_EMAILS_OPEN) return window.EC_LEVELS.filter(l => !profile.completed.includes(l.id));
     const remaining = Math.max(0, dailyTaskLimit(profile) - tasksDoneToday(profile, date));
     const levels = window.EC_LEVELS;
     const done = id => profile.completed.includes(id);

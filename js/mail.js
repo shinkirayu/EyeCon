@@ -32,11 +32,10 @@
   function arrivedInbox(profile){
     const all = window.EC_STORE.commissionInbox(profile);
     const m = mailState(), now = Date.now();
-    let changed = false, stagger = 0;
+    let changed = false;
     all.forEach(level=>{
       if(m.arrivals[level.id] != null) return;
-      const firstEver = !profile.completed.length && !Object.keys(m.arrivals).length;
-      m.arrivals[level.id] = firstEver ? now : now + 4000 + (stagger++) * 6000;
+      m.arrivals[level.id] = now; // all mail arrives at once for now (was staggered 4s + 6s each)
       changed = true;
     });
     if(changed) saveMailState(m);

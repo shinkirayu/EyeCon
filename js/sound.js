@@ -260,6 +260,10 @@
     equip: () => { pluck(783.99,0,.12,.25); pluck(1046.5,.07,.11,.35); },
     error: () => { tone(330,{duration:.12,gain:.14,glideTo:300}); tone(262,{duration:.2,gain:.12,delay:.1,glideTo:240}); },
     coin: () => { pluck(1318.5,0,.12,.2); pluck(1760,.06,.12,.45); },
+    // Storybook "boing" when Piko pops in.
+    pikoPop: () => { tone(260,{duration:.14,gain:.12,glideTo:780,attack:.004}); pluck(1174.66,.1,.12,.3); },
+    // Soft page-flip blip for each new Piko line.
+    pikoLine: () => { pluck(880,0,.08,.18); pluck(1174.66,.05,.08,.22); },
     newMail: () => { pluck(1046.5,0,.14,.35); pluck(1318.5,.12,.14,.55); },
     pullCharge: () => {
       noiseBurst({ duration:0.6, gain:0.04, filterFreq:900 });

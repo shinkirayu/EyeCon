@@ -434,6 +434,20 @@
   .nav-links::before,.nav-links::after{display:none;}
   .nav>.nav-piko{top:4px;border:0;border-radius:0;background:transparent;box-shadow:none;}
   @media(max-width:1220px){.nav-links{height:43px;border-width:2px;border-radius:14px;box-shadow:3px 3px 0 #193e5530;}.nav>.nav-piko{top:4px;}}
+  .nav-piko-eye{width:49%;}
+  .nav-piko-eye.left{left:0;}.nav-piko-eye.right{right:0;}
+  .nav>.nav-piko,.nav>.nav-piko:hover{transform:translateX(-50%) rotate(-5deg) scale(var(--piko-scale,1));transition:transform .3s ease-out;}
+  .nav-piko>img{transform:translateY(var(--brow-rise,0px));transition:transform .3s ease-out;}
+  .nav-piko-pupil{overflow:hidden;transform:translate(calc(-50% + var(--look-x,0px)),calc(-50% + var(--look-y,0px))) scale(var(--pupil-scale,1));transition:transform .22s ease-out;}
+  .nav-piko-pupil::before{content:'✦';position:absolute;z-index:1;inset:0;display:grid;place-items:center;color:#fff;font:900 27px/1 var(--font-display);opacity:var(--excitement,0);transform:scale(var(--star-scale,.25));transform-origin:center;transition:opacity .3s ease,transform .35s ease;}
+  .nav-piko-pupil::after{opacity:var(--highlight-opacity,1);transition:opacity .25s ease;}
+  .nav-piko::before,.nav-piko::after{position:absolute;z-index:2;color:#f5bf48;font:900 19px/1 var(--font-display);opacity:var(--excitement,0);pointer-events:none;transition:opacity .3s ease,transform .35s ease;}
+  .nav-piko::before{content:'✦';left:-15px;top:13px;transform:translate(6px,5px) scale(var(--sparkle-scale,.5));}
+  .nav-piko::after{content:'✧';right:-13px;top:3px;transform:translate(-6px,5px) scale(var(--sparkle-scale,.5));}
+  @keyframes pikoEyeTwinkle{0%,100%{scale:.72;}50%{scale:1.04;}}
+  .nav-piko.is-twinkling .nav-piko-pupil::before{animation:pikoEyeTwinkle 2.8s ease-in-out infinite;}
+  @media(max-width:1220px){.nav-piko-pupil::before{font-size:20px;}.nav-piko::before,.nav-piko::after{font-size:15px;}}
+  @media(prefers-reduced-motion:reduce){.nav-piko-pupil::before,.nav-piko::before,.nav-piko::after{transition:none;animation:none!important;}}
 </style>
 </head>
 <body>
@@ -706,18 +720,35 @@
   <script>
     (() => {
       const eyes = [...document.querySelectorAll('.nav-piko-eye')];
+      const piko = document.querySelector('.nav-piko');
+      const playButton = document.querySelector('.nav > .btn-play');
       let pointer = null;
       let frame = 0;
       function look() {
         frame = 0;
         if (!pointer) return;
+        const playRect = playButton.getBoundingClientRect();
+        const nearX = Math.max(playRect.left - pointer.x, 0, pointer.x - playRect.right);
+        const nearY = Math.max(playRect.top - pointer.y, 0, pointer.y - playRect.bottom);
+        const reactionRadius = Math.min(320, Math.max(220, window.innerWidth * .25));
+        const closeness = Math.max(0, 1 - Math.hypot(nearX, nearY) / reactionRadius);
+        const excitement = closeness * closeness * (3 - 2 * closeness);
+        piko.classList.toggle('is-twinkling', excitement > .12);
+        piko.style.setProperty('--excitement', excitement.toFixed(3));
+        piko.style.setProperty('--star-scale', (.25 + .75 * excitement).toFixed(3));
+        piko.style.setProperty('--sparkle-scale', (.5 + .5 * excitement).toFixed(3));
+        piko.style.setProperty('--pupil-scale', (1 + .12 * excitement).toFixed(3));
+        piko.style.setProperty('--piko-scale', (1 + .08 * excitement).toFixed(3));
+        piko.style.setProperty('--brow-rise', `${(-4 * excitement).toFixed(2)}px`);
+        piko.style.setProperty('--highlight-opacity', Math.max(0, 1 - 2 * excitement).toFixed(3));
+        const gaze = 1 - .6 * excitement;
         for (const eye of eyes) {
           const rect = eye.getBoundingClientRect();
           const dx = pointer.x - (rect.left + rect.width / 2);
           const dy = pointer.y - (rect.top + rect.height / 2);
           const distance = Math.max(75, Math.hypot(dx, dy));
-          eye.style.setProperty('--look-x', `${(dx / distance * rect.width * .17).toFixed(2)}px`);
-          eye.style.setProperty('--look-y', `${(dy / distance * rect.height * .12).toFixed(2)}px`);
+          eye.style.setProperty('--look-x', `${(dx / distance * rect.width * .17 * gaze).toFixed(2)}px`);
+          eye.style.setProperty('--look-y', `${(dy / distance * rect.height * .12 * gaze).toFixed(2)}px`);
         }
       }
       window.addEventListener('pointermove', event => {
@@ -727,6 +758,14 @@
       }, { passive: true });
       window.addEventListener('blur', () => {
         pointer = null;
+        piko.classList.remove('is-twinkling');
+        piko.style.removeProperty('--excitement');
+        piko.style.removeProperty('--star-scale');
+        piko.style.removeProperty('--sparkle-scale');
+        piko.style.removeProperty('--pupil-scale');
+        piko.style.removeProperty('--piko-scale');
+        piko.style.removeProperty('--brow-rise');
+        piko.style.removeProperty('--highlight-opacity');
         for (const eye of eyes) {
           eye.style.setProperty('--look-x', '0px');
           eye.style.setProperty('--look-y', '0px');

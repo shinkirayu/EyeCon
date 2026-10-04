@@ -1620,7 +1620,7 @@
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
         const el = byId(state.selectedId);
         if(!el || el.locked || !can(el,'move')) return;
-        const step = e.shiftKey ? 10 : 1;
+        const step = e.shiftKey ? 32 : 8; // stays on the 8px grid
         if(e.key==='ArrowUp') el.y -= step;
         if(e.key==='ArrowDown') el.y += step;
         if(e.key==='ArrowLeft') el.x -= step;
@@ -1715,6 +1715,16 @@
     outer.appendChild(inner);
     container.appendChild(outer);
   }
+
+  // Only text size is typed; position/size/etc. snap to the 8px grid, so they
+  // change by dragging, arrow keys or the spinner, never free typing.
+  document.addEventListener('keydown', e => {
+    const t = e.target;
+    if(t.matches?.('#element-settings input[type="number"]:not(#f-size)') && !/^(Arrow|Tab|Escape|Enter)/.test(e.key)) e.preventDefault();
+  }, true);
+  ['paste','drop'].forEach(ev => document.addEventListener(ev, e => {
+    if(e.target.matches?.('#element-settings input[type="number"]:not(#f-size)')) e.preventDefault();
+  }, true));
 
   window.EC_EDITOR = {
     readVariant, setVariant, selectElement,

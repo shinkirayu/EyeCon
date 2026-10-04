@@ -7,12 +7,12 @@
   <symbol id="eye" viewBox="0 0 64 64"><path d="M4 32c8-13 18-20 28-20s20 7 28 20c-8 13-18 20-28 20S12 45 4 32z" fill="#DED5FA"/><circle cx="32" cy="32" r="13" fill="#A982E8"/><circle cx="32" cy="32" r="7" fill="#8C61D6"/><circle cx="38" cy="25" r="5" fill="#FFF5DE"/></symbol>
   <symbol id="undo" viewBox="0 0 64 64"><path d="M24 10 7 27l17 15V31c24-3 31 8 29 25 11-22-2-41-29-39z" fill="#2F7A70"/></symbol>
   <symbol id="redo" viewBox="0 0 64 64"><path d="m40 10 17 17-17 15V31C16 28 9 39 11 56 0 34 13 15 40 17z" fill="#2F7A70"/></symbol>
-  <symbol id="home" viewBox="0 0 64 64"><path d="M7 29 32 7l25 22v25a6 6 0 0 1-6 6H13a6 6 0 0 1-6-6z" fill="#A982E8"/><path d="M26 60V37a6 6 0 0 1 12 0v23" fill="#FFF5DE"/></symbol>
-  <symbol id="mail" viewBox="0 0 64 64"><rect x="5" y="14" width="54" height="38" rx="5" fill="#A982E8"/><path d="M7 17 32 38 57 17" fill="none" stroke="#DED5FA" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="m9 49 13-13m33 13L42 36" stroke="#DED5FA" stroke-width="5" stroke-linecap="round"/></symbol>
-  <symbol id="person" viewBox="0 0 64 64"><circle cx="32" cy="19" r="13" fill="#A982E8"/><path d="M6 58c0-16 10-26 26-26s26 10 26 26z" fill="#A982E8"/></symbol>
-  <symbol id="settings" viewBox="0 0 64 64"><path d="M28 3h8l3 8 7 3 8-4 6 7-5 8 2 7 8 4-2 9-9 1-4 6 2 9-8 4-6-7h-8l-6 7-8-4 2-9-4-6-9-1-2-9 8-4 2-7-5-8 6-7 8 4 7-3z" fill="#BFE4D9"/><circle cx="32" cy="34" r="10" fill="#FFF5DE"/></symbol>
-  <symbol id="shop" viewBox="0 0 64 64"><path d="M9 19h46l-4 36H13z" fill="#9DCCB8"/><path d="M7 15h50l3 15c-1 9-12 10-15 3-3 8-13 8-16 0-4 8-14 8-17 0-4 8-14 6-15-3z" fill="#BFE4D9"/><path d="M27 55V39h10v16" fill="#D7F0E2"/></symbol>
-  <symbol id="cart" viewBox="0 0 64 64"><path d="M7 12h8l6 31h29l7-23H18" fill="none" stroke="#A982E8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="27" cy="54" r="5" fill="#A982E8"/><circle cx="47" cy="54" r="5" fill="#A982E8"/></symbol>
+  <symbol id="home" viewBox="0 0 64 64"><image href="../sprites/home.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="mail" viewBox="0 0 64 64"><image href="../sprites/mail.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="person" viewBox="0 0 64 64"><image href="../sprites/user-profile.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="settings" viewBox="0 0 64 64"><image href="../sprites/settings.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="shop" viewBox="0 0 64 64"><image href="../sprites/shop.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="cart" viewBox="0 0 64 64"><image href="../sprites/cart.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="spark" viewBox="0 0 64 64"><path d="M32 4 38 25l21 7-21 7-6 21-7-21L4 32l21-7z" fill="#A982E8"/><circle cx="32" cy="32" r="5" fill="#FFF5DE"/></symbol>
   <symbol id="save" viewBox="0 0 64 64"><path d="M8 8h41l7 7v41H8z" fill="#A982E8"/><path d="M17 8h28v20H17zm1 32h28v16H18z" fill="#DED5FA"/><path d="M38 9v15" stroke="#A982E8" stroke-width="5"/></symbol>
 </svg>

@@ -52,7 +52,7 @@
 })();
 
 // The game's currency: a purple ¢ followed by the amount.
-window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><span class="money-icon" aria-hidden="true">¢</span>${n}</span>`;
+window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><img class="money-icon" src="assets/sprites/COINS.png" alt="" aria-hidden="true">${n}</span>`;
 
 // Scale the whole interface to the window. The UI is designed at 1920×1080
 // CSS px; smaller windows (e.g. a 1080p laptop at 125–150% Windows scaling,

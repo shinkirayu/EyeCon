@@ -320,7 +320,6 @@
 #screen-desktop #icon-mail #glyph-mail::after{content:none;}
 #screen-desktop #icon-mail .desktop-icon-badge{position:absolute;z-index:2;left:auto;right:-.5rem;top:0;transform:none;width:clamp(1.875rem,2.7vw,2.5rem);height:clamp(1.875rem,2.7vw,2.5rem);min-width:1.875rem;padding:0;border:.1875rem solid #fcf7ef;border-radius:50%;background:#c90037;color:#fff;font:700 clamp(1.25rem,1.8vw,1.75rem)/1 var(--font-display);display:flex;align-items:center;justify-content:center;margin:0;box-shadow:none;}
 /* Bounce the whole mail target so Piko's tracking vignette follows it. */
-#screen-desktop #icon-mail.tutorial-mail-pulse{animation:tutorialMailBounce .9s ease-in-out infinite;}
 #screen-desktop #icon-mail.tutorial-mail-pulse .desktop-icon-glyph{animation:none;}
 @keyframes tutorialMailBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-.625rem)}}
 .reduce-motion #screen-desktop #icon-mail.tutorial-mail-pulse{animation:none;}
@@ -753,7 +752,6 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 
 
 /* Temporarily keep the guide and its replay control out of the game. */
-.piko-hole,.piko-cursor,.piko-bubble,.settings-item:has(#set-replay-piko){display:none!important;}
 
 /* Commission editor controls follow the soft lavender settings reference. */
 #screen-editor .element-settings{border:0;background:#fbf8fc;box-shadow:0 .5rem 1.5rem #5f3c7920;padding:1rem;}
@@ -1981,3 +1979,59 @@ input:not([type]),input[type="text"],input[type="number"],input[type="search"],i
 /* Editor canvas: movable pieces show the move arrows; while dragging, the closed hand. */
 #editor-canvas .el.movable:not([data-locked]){cursor:url("../assets/sprites/cursor-move.png") 12 12, move;}
 body.eyecon-dragging, body.eyecon-dragging *{cursor:url("../assets/sprites/cursor-grabbing.png") 12 12, grabbing!important;}
+img.money-icon{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.15em;margin-right:.125em;object-fit:contain;}
+
+/* Piko sits above the Mail window (1500) and modals (2000) so its dim + spotlight show on top. */
+.piko-hole{z-index:2100;}
+.piko-cursor{z-index:2103;}
+.piko-bubble{z-index:2104;}
+
+/* Piko spotlight hugs the target; hand-sprite pointer; no transition lag. */
+.piko-hole{transition:opacity .2s ease;}
+.piko-cursor{width:3rem;height:3rem;font-size:0;}
+.piko-cursor img{width:100%;height:100%;image-rendering:pixelated;}
+/* Bigger desktop icons on large screens. */
+@media(min-width:901px) and (min-height:501px){
+  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:9rem!important;height:9rem!important;}
+  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:6rem!important;height:5.5rem!important;}
+}
+@media(min-width:901px) and (min-height:501px){
+  #screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:7rem!important;height:6.25rem!important;}
+}
+#screen-desktop .desktop-icon:hover,#screen-desktop .desktop-icon:focus-visible{transform:none;}
+/* Piko lifts a desktop icon above the full-screen dim: just the glyph, label and badge. */
+#screen-desktop .desktop-icon.piko-lift{position:relative;z-index:2;background:transparent!important;}
+.piko-lift-dim{position:fixed;inset:-100vmax;z-index:1;background:rgba(34,29,38,.62);pointer-events:none;}
+/* Dim fades in slowly before the highlight; Piko's cursor is hidden for now. */
+.piko-lift-dim{animation:pikoDimIn 1.2s ease both;}
+@keyframes pikoDimIn{from{opacity:0}to{opacity:1}}
+.piko-hole{transition:opacity 1.2s ease;}
+.piko-cursor{display:none!important;}
+/* Taskbar sits outside the desktop, so it gets its own matching dim. */
+#global-taskbar{position:relative;}
+body:has(.piko-lift-dim) #global-taskbar::after{content:'';position:absolute;inset:0;z-index:10;background:rgba(34,29,38,.62);animation:pikoDimIn 1.2s ease both;}
+/* No app clicks during Piko's intro; once Mail is lifted, only Mail works. */
+body.piko-intro :is(#screen-desktop .desktop-icon,#global-taskbar){pointer-events:none;}
+#screen-desktop .desktop-icons:has(.piko-lift) .desktop-icon:not(.piko-lift){pointer-events:none;}
+/* Attachment preview close: same icon as the mail close, sitting just outside the top-right corner. */
+#modal-preview .preview-close{top:-3.5rem;right:-3.5rem;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:.5rem;font-size:0;color:transparent;box-shadow:none;background:transparent url('../assets/icons/close-icon.svg') center/85% no-repeat;}
+#modal-preview .preview-close:hover,#modal-preview .preview-close:focus-visible{background-color:#b4b8bc33;}
+/* Piko pop-in: squash-and-stretch bounce. */
+.piko-bubble.piko-pop .piko-img{animation:pikoPopImg .55s cubic-bezier(.34,1.56,.64,1) both;transform-origin:50% 100%;}
+.piko-bubble.piko-pop .piko-panel{animation:pikoPopPanel .45s .08s cubic-bezier(.34,1.56,.64,1) both;transform-origin:100% 100%;}
+@keyframes pikoPopImg{0%{transform:translateY(60%) scale(.3,.3);opacity:0}55%{transform:translateY(-8%) scale(.9,1.15);opacity:1}75%{transform:scale(1.08,.92)}100%{transform:none}}
+@keyframes pikoPopPanel{0%{transform:scale(.2);opacity:0}100%{transform:none;opacity:1}}
+.reduce-motion .piko-bubble.piko-pop :is(.piko-img,.piko-panel){animation:none;}
+/* Tutorial: email is read-only for a moment after it opens. */
+body.piko-wait :is(#btn-close-mail,#mail-back-btn,#attachment-chip,#btn-accept-job,#mail-list){pointer-events:none;}
+/* Editor tour: canvas locked while Piko talks; problem dots pop in one by one; Submit look-only. */
+body.piko-tour-lock #editor-canvas{pointer-events:none;}
+body.piko-marks-hidden #screen-editor .el.needs-edit::after,#screen-editor .el.needs-edit.piko-mark-wait::after{display:none!important;}
+#screen-editor .el.needs-edit.piko-mark-pop:not(.selected)::after{animation:pikoMarkPop .45s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes pikoMarkPop{0%{transform:scale(0)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
+body.piko-no-submit #tool-save{pointer-events:none;}
+.piko-bubble.piko-left{left:clamp(.75rem,3vw,3rem);right:auto;flex-direction:row-reverse;}
+/* Piko points at an element without dimming: a soft pulsing glow. */
+#screen-editor .el.piko-glow{outline:3px solid #f5b83d;outline-offset:4px;animation:pikoGlow 1.2s ease-in-out infinite;}
+@keyframes pikoGlow{50%{outline-color:#ffe08a;outline-offset:8px;}}
+.reduce-motion #screen-editor .el.piko-glow{animation:none;}

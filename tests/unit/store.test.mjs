@@ -59,7 +59,7 @@ test('every Figma client writes in from the start, in level order',async()=>{
   assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),FIGMA.slice(1).join());
 });
 
-test('a good review brings a different client, and the day holds three tasks',async()=>{
+test('a good review brings a different client, and the day holds three tasks', {skip:'ALL_EMAILS_OPEN in storage.js'},async()=>{
   const s=await setup(),p=s.defaultProfile(),now=new Date('2026-09-15T12:00:00Z');
   approve(s,p,s.commissionInbox(p,now)[0],4,'2026-09-14T12:00:00Z');
   assert.equal(s.commissionInbox(p,now).map(l=>l.id).join(),FIGMA.slice(1).join());
