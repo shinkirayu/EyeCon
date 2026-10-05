@@ -8,7 +8,7 @@ const openClient = async (page, name) => {
 
 // Piko's tutorial covers the screen on a fresh save; only its own test keeps it.
 test.beforeEach(async ({ page }, info) => {
-  if(!/Piko/.test(info.title)) await page.addInitScript(()=>{ window.EC_NO_PIKO = true; });
+  if(!/Piko/.test(info.title)) await page.addInitScript(()=>{ window.EC_NO_PIKO = true; window.EC_ALL_JOBS = true; });
 });
 
 test('Piko welcomes the player on the first desktop visit', async ({ page }) => {
@@ -494,10 +494,11 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
   await page.goto('/');await beginFirstDay(page);
-  // A resizable element: Hay Buhay's first checkbox label.
-  await openClient(page,'Hay Buhay 3');
-  const button=page.locator('#editor-canvas .el[data-id="opt1"]');
-  await button.waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('opt1'));
+  // Any resizable element (Hay Buhay is text-only now, so use Cones).
+  await openClient(page,'Cones');
+  await page.locator('#editor-canvas .el').first().waitFor();
+  const id=await page.evaluate(()=>{ for(const el of EC_EDITOR.getElements()){ if(el.locked) continue; EC_EDITOR.selectElement(el.id); if(document.querySelector(`#editor-canvas .el[data-id="${el.id}"] .nw`)) return el.id; } });
+  const button=page.locator(`#editor-canvas .el[data-id="${id}"]`);
   const measure=()=>button.evaluate(el=>{
     const b=el.getBoundingClientRect(),n=el.querySelector('.nw').getBoundingClientRect(),s=el.querySelector('.se').getBoundingClientRect();
     return {left:Math.abs(n.x+n.width/2-b.x),top:Math.abs(n.y+n.height/2-b.y),right:Math.abs(s.x+s.width/2-b.right),bottom:Math.abs(s.y+s.height/2-b.bottom),handle:n.width,outline:getComputedStyle(el).outlineStyle};
@@ -792,6 +793,7 @@ test.skip('after the first job, new emails arrive a moment later and show a new 
 });
 
 test('Piko tours the first email and the workspace', async ({ page }) => {
+  test.setTimeout(90000);
   await page.setViewportSize({width:1600,height:900});
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
@@ -804,18 +806,29 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.waitForTimeout(1200); await page.locator('#btn-accept-job').click();
   await page.waitForTimeout(3000); 
   const bubble = page.locator('.piko-bubble'), next = async () => { await page.mouse.click(800,860); await page.waitForTimeout(700); };
-  await next(); await expect(bubble).toContainText('red dots');
+  await next(); await expect(bubble).toContainText('middle mouse');
+  await next(); await expect(bubble).toContainText('middle mouse'); // clicking can't skip it
+  const wrapBox = await page.locator('#editor-canvas-wrap').boundingBox();
+  await page.mouse.move(wrapBox.x + 300, wrapBox.y + 300); await page.mouse.down({button:'middle'});
+  for(let i=0;i<12;i++){ await page.mouse.move(wrapBox.x + 300 + i*4, wrapBox.y + 300); await page.waitForTimeout(120); }
+  await page.mouse.up({button:'middle'}); await page.waitForTimeout(400);
+  await expect(bubble).toContainText('zoom');
+  await page.mouse.wheel(0, -120); await page.waitForTimeout(800);
+  await expect(bubble).toContainText('red dots');
+  await next(); await expect(bubble).toContainText('eyeball');
   await next(); await expect(bubble).toContainText('together');
-  await next(); await expect(bubble).toContainText('Click it');
+  await next(); await expect(bubble).toContainText('Left click it');
   const about = page.locator('#editor-canvas .el[data-id="about"]');
   await expect(about).toHaveClass(/piko-glow/);
   await expect(page.locator('.piko-hole')).toHaveClass(/hidden/); // no dim over what to click
-  await about.click({force:true}); await page.waitForTimeout(1200);
+  await page.evaluate(()=>EC_EDITOR.selectElement('about')); await page.waitForTimeout(1200);
   await expect(bubble).toContainText('This panel');
   await next(); await expect(bubble).toContainText('drag About');
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');
   await next(); await expect(bubble).toContainText('task list');
+  await next(); await expect(bubble).toContainText('shows or hides the grid');
+  await next(); await expect(bubble).toContainText('grid size');
   await next(); await expect(bubble).toContainText('Submit');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
 });

@@ -18,9 +18,14 @@
     acceptGuide: "Seen enough? Click Accept to start the job.",
     workspace: {
       intro: "Welcome to your workspace! That's Mayonnaisegee's portfolio in the middle.",
+      pan: "First, the controls! Hold the middle mouse button or right click, then drag to move around the page. Try it!",
+      zoom: "Nice moves! Now scroll your mouse wheel to zoom in and out.",
       problems: "Spot the red dots? Each one marks something the client wants fixed.",
+      dotsLater: "Heads up: the dots only show on your first three jobs. From job 4 on, you'll have to eyeball what's wrong yourself!",
+      grid: "This button shows or hides the grid. Everything snaps to it, so lining up is easy.",
+      gridSettings: "And this one changes the grid size and how see-through it is.",
       together: "Let's fix one together so you get the feel of it.",
-      selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Click it.",
+      selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
       controls: "Got it! This panel shows what you picked. You'll use it more later.",
       dragAbout: "Now drag About up until it's level with Home and Contact. The arrow keys work too!",
@@ -33,6 +38,12 @@
       complete: "They love it! Hit Mark Completed to get paid for the job.",
       revise: "They want a few more fixes. Hit Back to Editor and give it another go!"
     },
+    nextMail: name => `Ooh, you got another email! ${name} needs your help next. Open it up!`,
+    basicsDone: [
+      "You did it! You've completed the basics: alignment, contrast and typography.",
+      "Every design you touch from now on will be easier to read for more people. That's what EyeCon is all about.",
+      "More clients are on the way. I'm proud of you, designer!"
+    ],
     compose: {
       type: "Now you write back to the client! Press any key on your keyboard and your reply types itself.",
       attach: "Great message! Now attach your updated design so they can see your fix.",
@@ -48,7 +59,7 @@
         ["Everything snaps to an 8px grid, so just drag or nudge. No typing needed. Watch for the pink guides!"]
       ],
       yappers: [
-        ["New skill: CONTRAST! It's how much the text color stands out from what's behind it.", '#editor-canvas'],
+        ["New skill: CONTRAST! It's how much the text color stands out from what's behind it."],
         ["Low contrast, like light gray on white, is really hard to read. Even more so on a phone in the sun, or with weaker eyesight."],
         ["We measure it as a ratio. Normal text needs at least 4.5:1."],
         ["Select some text, then move its color sliders. Darker text on a light background, or lighter text on a dark one.", '#element-settings'],
@@ -56,7 +67,7 @@
         ["Tip: you only need to change the color, not the layout. Go for it!"]
       ],
       haybuhay: [
-        ["Last basic: TYPOGRAPHY! That's how your text looks: size, weight and spacing.", '#editor-canvas'],
+        ["Last basic: TYPOGRAPHY! That's how your text looks: size, weight and spacing."],
         ["Tiny text makes people squint or zoom. For body text, 16px is the smallest you should go."],
         ["Bigger text for headings, smaller for details. That difference is called hierarchy, and it guides the eye."],
         ["Select a label and raise its Size. This is the one number you can type!", '#element-settings'],
@@ -111,6 +122,8 @@
   // onDone — same click-to-skip/click-to-advance behavior as PikoTalk.
   let saidAgain = false;
   let advanceAnywhere = () => {};
+  let lastPointerDown = 0;
+  document.addEventListener('pointerdown', () => { lastPointerDown = performance.now(); }, true);
   function say(line, opts){
     opts = opts || {};
     saidAgain = true;
@@ -146,20 +159,26 @@
     // Lines that lead somewhere advance on a click anywhere; the click is
     // swallowed so it can't also hit whatever is under it.
     document.removeEventListener('click', advanceAnywhere, true);
+    const shownAt = performance.now();
     advanceAnywhere = e => {
       if(bubble.classList.contains('hidden')) return;
+      // Ignore the release of a press that started before this line (e.g. the
+      // click that selected an element or finished a drag).
+      if(lastPointerDown < shownAt) return;
       e.preventDefault(); e.stopPropagation();
       bubble.onclick();
     };
     if(opts.onDone) setTimeout(() => document.addEventListener('click', advanceAnywhere, true));
     bubble.onclick = () => {
-      if(!opts.onDone) return; // an instruction: it stays until the player does it
+      if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
       document.removeEventListener('click', advanceAnywhere, true);
       if(typeTimer){ finishTyping(); return; }
       // If onDone chains another line, Piko stays up; otherwise he leaves.
       saidAgain = false;
       if(opts.onDone) opts.onDone();
-      if(!saidAgain) hideBubble();
+      // Wait a tick: async tours (await talk) say their next line in a
+      // microtask, so Piko should stay up instead of leaving and popping back.
+      setTimeout(() => { if(!saidAgain) hideBubble(); });
     };
   }
 

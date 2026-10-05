@@ -35,7 +35,8 @@
     let changed = false;
     all.forEach(level=>{
       if(m.arrivals[level.id] != null) return;
-      m.arrivals[level.id] = now; // all mail arrives at once for now (was staggered 4s + 6s each)
+      // First email is there right away; later ones land a moment later.
+      m.arrivals[level.id] = Object.keys(m.arrivals).length ? now + 2500 : now;
       changed = true;
     });
     if(changed) saveMailState(m);
@@ -232,7 +233,7 @@
     document.getElementById('mail-detail-reward').innerHTML = '';
     const btn = document.getElementById('btn-accept-job');
     btn.style.display = '';
-    btn.textContent = missionComplete ? 'Mark Completed' : window.EC_STORE.workday(window.EC_STORE.load()).submissions>=3 ? 'Finish workday' : 'Back to Editor';
+    btn.textContent = missionComplete ? 'Mark Completed' : window.EC_STORE.workday(window.EC_STORE.load()).submissions>=window.EC_STORE.dailyTaskLimit() ? 'Finish workday' : 'Back to Editor';
     btn.onclick = () => { window.EC_MODAL.hide('modal-mail-detail'); btn.onclick = null; replyMode = false; onContinue(); };
     window.EC_MODAL.show('modal-mail-detail');
   }
@@ -336,7 +337,11 @@
     clearInterval(revealTimer); revealTimer = null; // stop any leftover cascade from a previous compose
     revealTarget=0;
     activeLevel = level; pendingGradeResult = gradeResult;
-    document.getElementById('compose-to-name').textContent = level.clientName;
+    // Same header as a received email, but from you to the client.
+    document.getElementById('compose-avatar').innerHTML = level.avatarEmoji || '✉';
+    document.getElementById('compose-subject').textContent = 'Re: ' + emailSubject(level);
+    document.getElementById('compose-meta').innerHTML =
+      `<dd class="mail-detail-name">From: You <span>&lt;junior.designer@eyecon.studio&gt;</span></dd><dd class="mail-detail-to">To: ${esc(level.emailFrom || level.clientName)} <span>&lt;${emailAddress(level)}&gt;</span></dd>`;
 
     composeState = {
       fullText: myReplyText(level),
@@ -429,6 +434,12 @@
     });
     document.getElementById('compose-body').addEventListener('click', ()=>{ window.EC_SOUND.typeKey('a'); queueReveal(REVEAL_CHARS_PER_KEY); });
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);
+    // Typing works even if a stray click took focus off the message.
+    document.addEventListener('keydown', e=>{
+      const body = document.getElementById('compose-body');
+      if(document.getElementById('modal-compose').classList.contains('hidden') || document.activeElement === body) return;
+      if(e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') body.focus();
+    }, true);
 
     document.getElementById('btn-send-mail').addEventListener('click', ()=>{
       if(document.getElementById('btn-send-mail').disabled) return;

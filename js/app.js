@@ -120,18 +120,22 @@
   // pikoScript.tutorial, just driven by EC_PIKO instead of a static modal.
   function runPikoIntro(){
     const P = window.EC_PIKO, lines = P.SCRIPT.tutorial;
-    document.body.classList.add('piko-intro'); // apps locked while Piko talks
+    document.body.classList.add('piko-intro', 'piko-no-badge'); // apps locked while Piko talks; mail "arrives" later
     P.say(lines[0], { onDone: ()=>{
       P.say(lines[1], { onDone: ()=>{
         window.EC_SOUND.play('newMail');
         const mailIcon = document.getElementById('icon-mail');
         if(mailIcon) mailIcon.classList.add('tutorial-mail-pulse');
         announce('New email received.');
-        // Dim fades in together with the "you received an email" line.
-        document.body.classList.remove('piko-intro');
-        pikoStage = 'mail';
-        P.pointAt(mailIcon);
-        P.say(lines[2]);
+        // The red count pops in first; a beat later Piko points it out
+        // (the dim fades in together with his "you've got mail" line).
+        document.body.classList.remove('piko-no-badge');
+        setTimeout(()=>{
+          document.body.classList.remove('piko-intro');
+          pikoStage = 'mail';
+          P.pointAt(mailIcon);
+          P.say(lines[2]);
+        }, 400); // + Piko's own 0.6s pop-in delay ≈ 1s after the count appears
       }});
     }});
   }
@@ -170,6 +174,16 @@
     (async ()=>{
       body.classList.add('piko-tour-lock', 'piko-marks-hidden');
       await talk(W.intro);
+      // Learn by doing: these lines can't be clicked away, only done.
+      const wrap = document.getElementById('editor-canvas-wrap');
+      P.say(W.pan, { top:true });
+      let held = 0; // ~1s of actual panning, in 200ms ticks
+      await until(()=>(held += wrap.classList.contains('panning') ? 1 : 0) >= 5);
+      await new Promise(r => setTimeout(r, 2000)); // let them pan around a bit more
+      P.say(W.zoom, { top:true });
+      let zoomed = false; wrap.addEventListener('wheel', ()=>{ zoomed = true; }, { once:true });
+      await until(()=>zoomed);
+      await new Promise(r => setTimeout(r, 2000)); // let them play with zoom first
       const marks = [...document.querySelectorAll('#editor-canvas .el.needs-edit')];
       marks.forEach(m => m.classList.add('piko-mark-wait'));
       body.classList.remove('piko-marks-hidden');
@@ -178,7 +192,11 @@
         window.EC_SOUND.play('pikoLine');
         setTimeout(()=>m.classList.remove('piko-mark-pop'), 500);
       }, 300 + i * 350));
+      // Let every dot pop in first, then Piko talks about them.
+      P.hideBubble();
+      await new Promise(r => setTimeout(r, 300 + marks.length * 350 + 400));
       await talk(W.problems);
+      await talk(W.dotsLater);
       // Hands-on: fix "About" together.
       const practice = elDiv('about') && !goalsMet('about') ? 'about' : null;
       body.classList.remove('piko-tour-lock');
@@ -190,7 +208,12 @@
         await step('#element-settings', W.controls, { left:true });
         P.clearTarget(); glow(practice);
         P.say(W.dragAbout, { top:true });
-        await until(()=>goalsMet(practice));
+        // Praise only once it's lined up AND the mouse is let go.
+        let down = false;
+        const onDown = () => { down = true; }, onUp = () => { down = false; };
+        document.addEventListener('pointerdown', onDown, true); document.addEventListener('pointerup', onUp, true);
+        await until(()=>!down && goalsMet(practice));
+        document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('pointerup', onUp, true);
         glow(null);
         await talk(W.nice);
       } else {
@@ -200,6 +223,8 @@
         await step('#element-settings', W.controls, { left:true });
       }
       await step('#screen-editor .editor-side-rail:not(.editor-right-rail)', W.tasks);
+      await step('#tool-grid', W.grid);
+      await step('#tool-grid-settings', W.gridSettings);
       body.classList.add('piko-no-submit');
       await step('#tool-save', W.submit, { left:true });
       body.classList.remove('piko-no-submit');
@@ -220,16 +245,51 @@
       if(!pikoEnabled || modal.classList.contains('hidden') || profile.onboarding.compose) return;
       profile.onboarding.compose = true; save();
       const P = window.EC_PIKO, C = P.SCRIPT.compose, open = () => !modal.classList.contains('hidden');
+      // Only the step's own control is clickable; everything else (close,
+      // backdrop, taskbar, inbox) is frozen so the reply can't be abandoned.
+      const allow = (...els) => { document.querySelectorAll('.piko-allow').forEach(n => n.classList.remove('piko-allow')); els.forEach(n => n?.classList.add('piko-allow')); };
+      document.body.classList.add('piko-focus');
+      allow($('compose-body'));
       P.pointAt(modal.querySelector('.compose-card')); P.say(C.type, { top:true });
       await until(()=>!open() || !document.querySelector('#compose-body .ghost')?.textContent);
+      allow($('compose-attach-btn'), $('attach-popover'));
       if(open()){ P.pointAt($('compose-attach-btn')); P.say(C.attach, { top:true }); }
       await until(()=>!open() || !$('attach-popover').classList.contains('hidden'));
       if(open()) P.pointAt($('attach-option-edited')); // the file to pick
       await until(()=>!open() || !$('compose-attachment-chip').classList.contains('hidden'));
+      allow($('btn-send-mail'));
       if(open()){ P.pointAt($('btn-send-mail')); P.say(C.send, { top:true }); }
       await until(()=>!open());
+      allow(); document.body.classList.remove('piko-focus');
       P.clearTarget(); P.hideBubble();
+      // Sent: freeze the screen until the client's reply lands.
+      if(!profile.onboarding.reply) document.body.classList.add('piko-lock-all');
     }).observe(modal, { attributes:true, attributeFilter:['class'] });
+  }
+  // Jobs 2 and 3 of the tutorial: once the reward card is gone, Piko points
+  // at the new email; only that row works until it's opened.
+  function pikoNextMail(level){
+    profile.onboarding = profile.onboarding || {};
+    const seen = profile.onboarding.nextMail = profile.onboarding.nextMail || {};
+    if(!pikoEnabled || !(level.levelNumber > 1 && level.levelNumber <= 3) || seen[level.id]) return;
+    seen[level.id] = true; save();
+    const reward = document.getElementById('modal-reward');
+    const t = setInterval(()=>{
+      if(!reward.classList.contains('hidden')) return;
+      clearInterval(t);
+      setTimeout(()=>{
+        const row = document.querySelector(`#mail-list .mail-item[data-level-id="${level.id}"]`);
+        if(!row) return;
+        const P = window.EC_PIKO;
+        row.classList.add('piko-allow'); document.body.classList.add('piko-focus');
+        P.pointAt(row); P.say(P.SCRIPT.nextMail(level.clientName));
+        row.addEventListener('click', ()=>{
+          row.classList.remove('piko-allow');
+          P.clearTarget(); P.hideBubble();
+          setTimeout(()=>document.body.classList.remove('piko-focus'), 1500); // spam clicks can't close it
+        }, { once:true });
+      }, 800);
+    }, 200);
   }
   // Short Piko intro the first time each of the first three jobs opens.
   function runPikoLevelTips(level, done){
@@ -262,6 +322,8 @@
       const row = document.querySelector('#mail-list .mail-item');
       const level = window.EC_MAIL.arrivedInbox(profile)[0];
       if(row && level){
+        // Only this email works for now: no scrolling, no other rows.
+        row.classList.add('piko-target'); document.body.classList.add('piko-inbox');
         window.EC_PIKO.pointAt(row);
         window.EC_PIKO.say(window.EC_PIKO.SCRIPT.inboxGuide(level.clientName));
       }
@@ -272,31 +334,43 @@
   function initPikoGuideChain(){
     document.addEventListener('click', e=>{
       if(pikoStage === 'inbox' && e.target.closest('#mail-list .mail-item')){
+        document.body.classList.remove('piko-inbox');
+        document.querySelectorAll('.piko-target').forEach(n => n.classList.remove('piko-target'));
         window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
         pikoStage = 'attachment';
-        // Give the player ~2.5s to read the email before anything is clickable.
-        document.body.classList.add('piko-wait');
+        // Freeze everything (spam clicks can't close the email); after ~2.5s
+        // of reading, only the attachment works.
+        document.body.classList.add('piko-focus');
         setTimeout(()=>{
-          document.body.classList.remove('piko-wait');
           const chip = document.getElementById('attachment-chip');
+          chip?.classList.add('piko-allow');
           if(chip){ window.EC_PIKO.pointAt(chip); window.EC_PIKO.say(window.EC_PIKO.SCRIPT.previewGuide); }
         }, 2500);
         return;
       }
       if(['attachment','preview','accept'].includes(pikoStage) && e.target.closest('#btn-accept-job')){
         pikoStage = 'element';
+        document.body.classList.remove('piko-focus');
+        document.querySelectorAll('.piko-allow').forEach(n => n.classList.remove('piko-allow'));
         window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
         return;
       }
       if(pikoStage === 'attachment' && e.target.closest('#attachment-chip')){
         // Let the player look at the preview; the Accept hint waits until it closes.
         pikoStage = 'preview';
+        document.getElementById('attachment-chip').classList.remove('piko-allow');
+        document.getElementById('btn-close-preview').classList.add('piko-allow');
         window.EC_PIKO.clearTarget(); window.EC_PIKO.hideBubble();
         const modal = document.getElementById('modal-preview');
         const obs = new MutationObserver(()=>{
           if(!modal.classList.contains('hidden') || pikoStage !== 'preview') return;
           obs.disconnect();
+          document.getElementById('btn-close-preview').classList.remove('piko-allow');
           pikoStage = 'accept';
+          // Accept unlocks the moment Piko's "Click Accept" line is on screen.
+          const unlock = setInterval(()=>{
+            if(document.querySelector('.piko-bubble:not(.hidden)')){ clearInterval(unlock); document.getElementById('btn-accept-job').classList.add('piko-allow'); }
+          }, 50);
           window.EC_PIKO.pointAt(document.getElementById('btn-accept-job'));
           window.EC_PIKO.say(window.EC_PIKO.SCRIPT.acceptGuide, { top:true });
         });
@@ -423,6 +497,9 @@
   function miniDesktopBackgroundAction(){
     const popup = document.getElementById('monitor-app-popup');
     if(popup && !popup.classList.contains('hidden')){ closeMonitorAppPopup(); return; }
+    // Hide the mail count before the desktop even shows: on day one it
+    // only "arrives" after Piko's second line.
+    if(pikoEnabled && isFirstDay()) document.body.classList.add('piko-intro', 'piko-no-badge');
     showScreen('screen-desktop', startFirstDayGuide);
   }
 
@@ -472,6 +549,8 @@
       { tab:'accessibility', id:'uiScale', label:'UI Scale', desc:'Scales text and UI elements across the app.',
         tip:'Bigger values make everything larger and easier to read.', type:'slider', min:0.85, max:1.3, step:0.05, format:v=>Math.round(v*100)+'%' },
 
+      { tab:'gameplay', id:'panButton', label:'Pan the Canvas With', desc:'Which mouse button drags you around the design. Left click always selects and moves things.',
+        tip:'Scroll the mouse wheel to zoom.', type:'seg', options:[['both','Right or Middle'],['right','Right'],['middle','Middle']] },
       { tab:'gameplay', id:'timedMode', label:'Timed Challenge Mode', desc:'Adds a 5-minute countdown to each client project.',
         tip:'When time runs out, your current design is auto-submitted as-is.', type:'toggle' },
     ];
@@ -534,8 +613,8 @@
         <div class="settings-item-control"><button class="btn btn-accept btn-sm" id="set-replay-piko">Replay</button></div>
       </div></div>`;
       html += `<div class="settings-card settings-danger-card"><div class="settings-item">
-        <div class="settings-item-text"><div class="settings-item-label">Reset All Progress</div>
-        <div class="settings-item-desc">Erases XP, coins, inventory and completed levels. This cannot be undone.</div></div>
+        <div class="settings-item-text"><div class="settings-item-label">Reset Everything</div>
+        <div class="settings-item-desc">Starts the game over: progress, coins, mail, settings and Piko's tutorial. Level Maker edits are kept.</div></div>
         <div class="settings-item-control"><button class="btn btn-no btn-sm" id="set-reset-progress">Reset</button></div>
       </div></div>`;
       return html;
@@ -594,12 +673,7 @@
     function wireContentControls(){
       const content = document.getElementById('settings-content');
       const resetBtn = document.getElementById('set-reset-progress');
-      if(resetBtn) resetBtn.addEventListener('click', ()=>{
-        if(window.confirm('Reset all EyeCon progress? This cannot be undone.')){
-          profile = window.EC_STORE.defaultProfile();
-          save(); applySettings(); refreshHeader(); renderSettingsPanel();
-        }
-      });
+      if(resetBtn) resetBtn.addEventListener('click', resetEverything);
       const addSparksBtn = document.getElementById('set-add-sparks');
       if(addSparksBtn) addSparksBtn.addEventListener('click', ()=>{
         profile.currency += 99999;
@@ -1306,7 +1380,8 @@
       profile.onboarding.reply = true; save();
       setTimeout(()=>{
         const row = document.querySelector(`#mail-list .mail-item[data-level-id="${level.id}"]`);
-        if(row) window.EC_PIKO.pointAt(row);
+        document.body.classList.remove('piko-lock-all');
+        if(row){ row.classList.add('piko-target', 'piko-allow'); document.body.classList.add('piko-inbox', 'piko-focus'); window.EC_PIKO.pointAt(row); }
         window.EC_PIKO.say(window.EC_PIKO.SCRIPT.reply.arrived(level.clientName));
         pikoStage = 'reply';
       }, 450);
@@ -1324,10 +1399,18 @@
       pikoStage = null;
       const P = window.EC_PIKO;
       P.clearTarget(); P.hideBubble();
+      document.body.classList.remove('piko-inbox');
+      document.querySelectorAll('.piko-target').forEach(n => n.classList.remove('piko-target', 'piko-allow'));
+      document.body.classList.add('piko-focus'); // read first: only the button wakes up, with Piko
       setTimeout(()=>{
+        document.getElementById('btn-accept-job').classList.add('piko-allow');
         P.pointAt(document.getElementById('btn-accept-job'));
         P.say(missionComplete ? P.SCRIPT.reply.complete : P.SCRIPT.reply.revise, { top:true });
-        document.getElementById('btn-accept-job').addEventListener('click', ()=>{ P.clearTarget(); P.hideBubble(); }, { once:true });
+        document.getElementById('btn-accept-job').addEventListener('click', ()=>{
+          P.clearTarget(); P.hideBubble();
+          document.body.classList.remove('piko-focus');
+          document.getElementById('btn-accept-job').classList.remove('piko-allow');
+        }, { once:true });
       }, 2000); // a moment to read their message first
     }
     window.EC_MAIL.openClientReply(level, result, missionComplete, ()=>{
@@ -1344,9 +1427,17 @@
       renderCurrentFolder();
       if(outcome.missionComplete){
         showRewardPopup(level, result, outcome, window.EC_STORE.levelFromTotalXp(profile.totalXp).level > prevLevel);
+        // All three tutorial jobs done: Piko wraps up the basics.
+        const tutorialIds = window.EC_LEVELS.filter(l => l.levelNumber <= 3).map(l => l.id);
+        if(pikoEnabled && !profile.onboarding?.basics && tutorialIds.every(id => profile.completed.includes(id))){
+          profile.onboarding = profile.onboarding || {}; profile.onboarding.basics = true; save();
+          const P = window.EC_PIKO, lines = P.SCRIPT.basicsDone;
+          const say = i => i < lines.length && P.say(lines[i], { top:true, onDone: ()=>say(i + 1) });
+          setTimeout(()=>say(0), 1500);
+        }
         return;
       }
-      if(window.EC_STORE.workday(profile).submissions>=3){showDaySummary();return;}
+      if(window.EC_STORE.workday(profile).submissions>=window.EC_STORE.dailyTaskLimit()){showDaySummary();return;}
       showLoadingTransition((finishFade)=>{
         showScreen('screen-editor', ()=>{
           window.EC_EDITOR.open(level, elements);
@@ -1382,7 +1473,7 @@
 
   function showDaySummary(){
     const day=window.EC_STORE.workday(profile);
-    if(day.submissions<3 || profile.pendingClientReply || profile.readyReply)return;
+    if(day.submissions<window.EC_STORE.dailyTaskLimit() || profile.pendingClientReply || profile.readyReply)return;
     if(showDaySummary.animatedDay !== day.day){
       showDaySummary.animatedDay = day.day;
       playDayEndAnimation(day.day, showDaySummary);
@@ -1593,6 +1684,14 @@
     applySettings();
     requestAnimationFrame(positionStatsPopup);
   }
+  // Settings > Reset all: wipe every game save except Level Maker work, then start fresh.
+  function resetEverything(){
+    if(!window.confirm('Reset everything? Progress, mail, settings and the tutorial start over. Level Maker edits are kept.')) return;
+    const keep = ['eyecon_level_overrides', 'eyecon.level-maker.v1', 'eyecon.maker-grid'];
+    Object.keys(localStorage).filter(k => /^eyecon/.test(k) && !keep.includes(k)).forEach(k => localStorage.removeItem(k));
+    location.reload();
+  }
+  const PAN_NAMES = { both:'Right / Middle', right:'Right', middle:'Middle' };
   function quickSettingsList(){
     const slider = (key, name, min, step) => `<li class="profile-setting">
         <label for="qs-${key}">${name}</label>
@@ -1631,7 +1730,12 @@
         </div>
       </li>
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
+      ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${inEditor ? '' : editorRows}
+      <li class="profile-setting">
+        <span>Start over</span>
+        <div class="profile-control profile-control-wide"><button type="button" class="btn btn-no btn-sm" id="qs-reset">Reset all</button></div>
+      </li>
     </ul>`;
   }
   function bindQuickSettings(root){
@@ -1649,6 +1753,13 @@
     });
     root.querySelectorAll('[data-pick]').forEach(btn=>btn.addEventListener('click', ()=>{
       const key = btn.dataset.pick;
+      if(key === 'pan'){
+        const ids = Object.keys(PAN_NAMES), i = ids.indexOf(profile.settings.panButton || 'both');
+        profile.settings.panButton = ids[(i + Number(btn.dataset.step) + ids.length) % ids.length];
+        save();
+        btn.closest('.profile-picker').querySelector('output').textContent = PAN_NAMES[profile.settings.panButton];
+        return;
+      }
       if(key === 'keys'){
         const ids = Object.keys(window.EC_SOUND.KEY_PACKS);
         const i = ids.indexOf(window.EC_SOUND.getKeyPack());
@@ -1665,6 +1776,7 @@
       window.EC_EDITOR.setVariant(key, next);
       btn.closest('.profile-picker').querySelector('output').textContent = names[next];
     }));
+    root.querySelector('#qs-reset')?.addEventListener('click', resetEverything);
     root.querySelectorAll('[data-cvd-step]').forEach(btn=>btn.addEventListener('click', ()=>{
       const i = CVD_STEPS.indexOf(profile.settings.cvd || 'none');
       const next = CVD_STEPS[(i + Number(btn.dataset.cvdStep) + CVD_STEPS.length) % CVD_STEPS.length];
@@ -1922,6 +2034,7 @@
       showToast(`📧 New email from ${e.detail.clientName}`, 3200);
       refreshHeader();
       if(document.getElementById('screen-shell').classList.contains('active')) renderCurrentFolder();
+      pikoNextMail(e.detail);
     });
     document.getElementById('btn-reward-collect').addEventListener('click', ()=>{window.EC_MODAL.hide('modal-reward');showDaySummary();});
     window.EC_EDITOR.initToolbarOnce();

@@ -1524,6 +1524,8 @@ Nimbus Goods`,
 
   // Level 1 teaches spacing by moving things: no resizing or recoloring.
   LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
+  // Level 3 is text only: nothing moves, resizes or recolors.
+  LEVELS.filter(l=>l.id==='haybuhay-settings').forEach(l=>l.elements.forEach(el=>{ el.allow=['font']; }));
 
   // No bonus tasks for now: former bonus tasks count as required ones, so
   // every task on a page is needed and finishing them all earns 5 stars.

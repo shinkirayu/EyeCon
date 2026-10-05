@@ -441,7 +441,8 @@
         div.classList.add('goal-solved');
         setTimeout(()=>div.classList.remove('goal-solved'), 900);
       }
-      div.classList.toggle('needs-edit', !solved);
+      // Red dots are training wheels: only the first three jobs show them.
+      div.classList.toggle('needs-edit', !solved && (state.level.levelNumber || 99) <= 3);
     });
   }
 
@@ -729,10 +730,12 @@
     let html = '';
     const introHtmlLen = html.length;
 
-    if(el.text && unlocked('typography') && can(el,'resize')){
+    if(el.text && unlocked('typography') && (can(el,'resize') || can(el,'font'))){ // text-only levels allow font without resize
       html += `<details class="editor-setting-card" open><summary>Typography</summary>`;
-      html += `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
-        <label class="editor-unit-row"><span>Size</span><span class="editor-unit-input"><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><span>px</span></span></label>
+      const sizeOnly = el.allow && el.allow.includes('font'); // text-size-only levels
+      const sizeRow = `<label class="editor-unit-row"><span>Size</span><span class="editor-unit-input"><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><span>px</span></span></label>`;
+      html += sizeOnly ? sizeRow : `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
+        ${sizeRow}
         <label class="editor-unit-row"><span>Weight</span><span class="editor-unit-input"><select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select></span></label>`;
       html += `</details>`;
     }
@@ -1502,8 +1505,11 @@
     // Adjusts state.panX/panY directly (the same values the zoom transform
     // uses) rather than native scroll, so it composes cleanly with zooming.
     let panState = null;
+    // Which buttons pan: Settings > Gameplay > Pan the canvas with.
+    const panButtons = () => ({ middle:[1], right:[2] }[window.EC_STORE.load().settings?.panButton] || [1, 2]);
+    canvasWrap.addEventListener('contextmenu', e=>{ if(panButtons().includes(2)) e.preventDefault(); });
     canvasWrap.addEventListener('pointerdown', e=>{
-      if(e.button !== 1) return;
+      if(!panButtons().includes(e.button)) return;
       e.preventDefault();
       if(zoomAnimId){ cancelAnimationFrame(zoomAnimId); zoomAnimId = null; }
       panState = {
