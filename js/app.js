@@ -1012,6 +1012,18 @@
     returnShopPanel();
     tabs.replaceChildren();
     view.replaceChildren();
+    view.scrollTop=0;
+    view.classList.toggle('client-site-view', browserPage.kind==='site' && ['mayo','yappers','haybuhay'].includes(browserPage.project));
+    if(view.classList.contains('client-site-view')){
+      const project=window.EC_PROJECTS.find(p=>p.id===browserPage.project);
+      window.EC_CLIENT_SITES.render(view, project, profile, browserPage.route || 'home', route=>{
+        browserPage={kind:'site',project:project.id,route};
+        renderBrowser();
+        view.scrollTop=0;
+      });
+      address.textContent=`https://www.${slug(project.name)}.com/${browserPage.route==='home' ? '' : browserPage.route || ''}`;
+      return;
+    }
     if(browserPage.kind === 'store'){
       address.textContent = 'https://www.eyecon.store';
       const panel = document.getElementById('shop-panel');

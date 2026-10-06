@@ -14,6 +14,7 @@ const files = [
   'js/grading.js',
   'js/editor.js',
   'js/maker.js',
+  'js/client-sites.js',
   'js/piko.js',
   'js/cosmetics.js',
   'js/app.js'

@@ -1685,7 +1685,7 @@
 
   // ---------------- Static (non-interactive) renderer ----------------
   // Used for: attachment preview modal, before/after thumbnails, report screen.
-  function buildStaticInner(level, elements){
+  function buildStaticInner(level, elements, opts){
     const inner = document.createElement('div');
     inner.style.width = level.canvas.w+'px';
     inner.style.height = level.canvas.h+'px';
@@ -1710,6 +1710,7 @@
         d.style.padding = `0 ${el.padding!=null?el.padding:4}px`; d.textContent = el.text;
       }
       inner.appendChild(d);
+      if(opts && opts.onElement) opts.onElement(d, el);
     });
     return inner;
   }
@@ -1729,7 +1730,7 @@
     outer.style.borderRadius = '8px';
     outer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
     outer.style.background = level.canvas.bg;
-    const inner = buildStaticInner(level, elements);
+    const inner = buildStaticInner(level, elements, opts);
     inner.style.transform = `scale(${scale})`;
     inner.style.transformOrigin = '0 0';
     outer.appendChild(inner);

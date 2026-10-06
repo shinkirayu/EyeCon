@@ -713,7 +713,9 @@ test('profile settings list and the browser shows the store and client sites',as
   await page.getByRole('button',{name:'Open Browser app'}).click();
   await page.locator('.browser-bookmark').filter({hasText:'Mayonnaisegee'}).click();
   await expect(page.locator('#browser-address')).toContainText('mayonnaisegee');
-  await expect(page.locator('.browser-tab')).toHaveCount(1);
+  await expect(page.locator('.browser-tab')).toHaveCount(0);
+  await expect(page.locator('.client-original-layout')).toBeVisible();
+  await expect(page.locator('.client-original-layout').getByRole('button',{name:'About',exact:true})).toBeVisible();
   await page.locator('#browser-home-btn').click();
   await page.locator('.browser-bookmark').filter({hasText:'Store'}).click();
   await expect(page.locator('#browser-view #shop-panel')).toBeVisible();

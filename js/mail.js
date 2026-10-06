@@ -148,18 +148,37 @@
 
   // Client-voice reply: a short, personal note when approved; if the work
   // is sent back, the client lists what's still missing.
+  // What each client offers when they approve the job.
+  const THANK_YOU_GIFT = {
+    mayo: 'we would love to send you a signed art print',
+    yappers: 'we would be happy to give you a free year of Yappers Premium',
+    haybuhay: 'we would love to give you an early copy of Hay Buhay 3 before launch',
+    antoks: 'we would be happy to treat you to a meal at Antoks Manoks anytime',
+    cones: 'we would love to treat you to free ice cream at Cones anytime',
+    kolehiyo: 'we would be happy to invite you as a guest speaker at our next design talk',
+    oras: 'we would love to send you a BEAR ORAS watch',
+  };
   function buildClientReplyText(level, result, missionComplete){
     const stars = result.stars;
-    const starLine = '★'.repeat(stars) + '☆'.repeat(5 - stars) + `  (${stars}/5)`;
     const goals = result.feedback.filter(f => f.category === 'Goals');
     const relevant = t => goals.length ? goals.filter(f => f.type===t)
       : result.feedback.filter(f => f.type===t && !f.editorOnly && result.activeCategories.includes(f.category.toLowerCase()));
     const templates = level.replyTemplates || {};
-    const lines = [`Hi, ${level.clientName} here.`, ''];
     if(missionComplete){
-      lines.push(starLine, '', stars >= 5 ? (templates.great || 'This is exactly what I wanted, thank you!') : (templates.ok || 'This works well, thank you.'));
-      lines.push('', `— ${level.clientName}`);
-    } else {
+      // Warm thank-you note: what got better, then a small gift.
+      const tool = (level.tools || [])[0];
+      const better = tool === 'color' ? 'the text is clearer and easier to read'
+        : tool === 'typography' ? 'the text is so much easier to read'
+        : 'everything lines up neatly';
+      const custom = stars >= 5 ? templates.great : templates.ok;
+      return ['Good day,', '',
+        `Thank you so much for the revised ${(level.pageLabel || 'design').toLowerCase()}. It looks much better now and ${better}.`,
+        ...(custom ? ['', custom] : []), '',
+        `We truly appreciate your help and effort. As a small token of our gratitude, ${THANK_YOU_GIFT[level.project] || "we'll be recommending EyeCon to all our friends"}.`,
+        '', `— ${level.emailFrom || level.clientName}`].join('\n');
+    }
+    const lines = [`Hi, ${level.clientName} here.`, ''];
+    {
       lines.push(templates.bad || "A few things still aren't quite right.", 'Could you take another look? We would still love it if you could:', '');
       const bad = relevant('bad').filter(f => !f.bonus);
       (bad.length ? bad : [{title:'Give it a little more polish.'}]).forEach(f => lines.push(`• ${f.title}`));
