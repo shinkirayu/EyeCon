@@ -223,8 +223,19 @@
         await step('#element-settings', W.controls, { left:true });
       }
       await step('#screen-editor .editor-side-rail:not(.editor-right-rail)', W.tasks);
-      await step('#tool-grid', W.grid);
-      await step('#tool-grid-settings', W.gridSettings);
+      // Toolbar: the player clicks each tool to see what it does.
+      // After the click, the spotlight moves to what the tool changed.
+      const clickTool = async (id, ask, done, show) => {
+        const btn = document.getElementById(id);
+        let clicked = false; btn.addEventListener('click', ()=>{ clicked = true; }, { once:true });
+        P.pointAt(btn); P.say(ask, { top:true });
+        await until(()=>clicked);
+        P.pointAt(document.querySelector(show));
+        await talk(done);
+      };
+      await clickTool('tool-grid', W.grid, W.gridDone, '#editor-canvas-wrap'); // the visible canvas area, between the side bars
+      await clickTool('tool-grid-settings', W.gridSettings, W.gridSettingsDone, '#editor-canvas-wrap'); // panel sits on the canvas: light both
+      document.getElementById('grid-settings-panel').hidden = true;
       body.classList.add('piko-no-submit');
       await step('#tool-save', W.submit, { left:true });
       body.classList.remove('piko-no-submit');
@@ -1504,22 +1515,18 @@
   function showRewardPopup(level, result, outcome, leveledUp){
     const { currencyEarned, daily, newBadges, rewardBreakdown } = outcome;
     const stars = '★'.repeat(outcome.stars) + '☆'.repeat(5 - outcome.stars);
-    const lines = [
-      `<li><span>Client payment</span><b>${window.EC_MONEY(rewardBreakdown.base)}</b></li>`,
-      rewardBreakdown.starBonus ? `<li><span>Bonus stars</span><b>+${window.EC_MONEY(rewardBreakdown.starBonus)}</b></li>` : '',
-      daily.claimed ? `<li><span>🔥 Daily streak ${daily.streak}</span><b>+${window.EC_MONEY(daily.bonus)}</b></li>` : '',
-      `<li><span>Experience</span><b>+${result.xpAwarded} XP</b></li>`,
-    ].join('');
-    const extras = [
-      leveledUp ? `⭐ Level up! You are now Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}.` : '',
-      newBadges.length ? `🏅 New badge: ${newBadges.map(id=>window.EC_STORE.BADGES.find(b=>b.id===id).name).join(', ')}` : '',
-    ].filter(Boolean).map(t=>`<p>${t}</p>`).join('');
+    // Minimal card: who, stars, coins; XP / level / badge as small pills.
+    const pills = [
+      `+${result.xpAwarded} XP`,
+      leveledUp ? `⭐ Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}` : '',
+      ...newBadges.map(id=>'🏅 ' + window.EC_STORE.BADGES.find(b=>b.id===id).name),
+    ].filter(Boolean).map(t=>`<span>${t}</span>`).join('');
     const card = document.getElementById('reward-card-body');
-    card.innerHTML = `<div class="reward-stars" aria-label="${outcome.stars} out of 5 stars">${stars}</div>
-      <h2 id="reward-title">Task complete!</h2>
-      <p class="reward-sub">${level.clientName} · ${level.pageLabel}</p>
+    card.innerHTML = `<div class="reward-avatar avatar-circle" aria-hidden="true">${level.avatarEmoji || '✉'}</div>
+      <div class="reward-stars" aria-label="${outcome.stars} out of 5 stars">${stars}</div>
+      <h2 id="reward-title">Job done!</h2>
       <div class="reward-total">+${window.EC_MONEY(currencyEarned)}</div>
-      <ul class="reward-lines">${lines}</ul>${extras}`;
+      <div class="reward-pills">${pills}</div>`;
     const fx = document.getElementById('reward-confetti');
     fx.replaceChildren();
     const particles = profile.settings.particles;

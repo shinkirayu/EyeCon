@@ -234,6 +234,7 @@
   // ---------------- Open / build ----------------
   function open(level, savedElements){
     state.level = level;
+    document.getElementById('screen-editor').classList.toggle('show-hint', (level.levelNumber || 0) >= 4);
     state.focusGoal = null; // the suggested next task in the goal list
     state.elements = clone(savedElements || level.elements);
     state.elements.forEach(ensureDefaults);
@@ -329,6 +330,8 @@
     wrap.style.setProperty('--dot-step', step + 'px');
     wrap.style.setProperty('--dot-x', state.panX + 'px');
     wrap.style.setProperty('--dot-y', state.panY + 'px');
+    // Grid lines stay one screen pixel thick at any zoom (thinner ones vanish when zoomed out).
+    state.guideLayerEl?.style.setProperty('--grid-line', Math.max(1, 1 / scale) + 'px');
   }
 
   function updateZoomBadge(){
@@ -733,7 +736,7 @@
     if(el.text && unlocked('typography') && (can(el,'resize') || can(el,'font'))){ // text-only levels allow font without resize
       html += `<details class="editor-setting-card" open><summary>Typography</summary>`;
       const sizeOnly = el.allow && el.allow.includes('font'); // text-size-only levels
-      const sizeRow = `<label class="editor-unit-row"><span>Size</span><span class="editor-unit-input"><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><span>px</span></span></label>`;
+      const sizeRow = `<div class="editor-unit-row editor-font-size-row"><label for="f-size">Size</label><span class="editor-unit-input editor-size-stepper"><button type="button" data-size-step="-1" aria-label="Decrease font size">&lt;</button><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><button type="button" data-size-step="1" aria-label="Increase font size">&gt;</button></span><span class="editor-size-unit">px</span></div>`;
       html += sizeOnly ? sizeRow : `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
         ${sizeRow}
         <label class="editor-unit-row"><span>Weight</span><span class="editor-unit-input"><select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select></span></label>`;
@@ -798,6 +801,17 @@
     if(q('#f-font')) q('#f-font').addEventListener('change', e=>{ el.fontFamily = e.target.value; refreshElementDom(el); pushHistory(); refreshLiveOverlays(); });
     if(q('#f-size')) q('#f-size').addEventListener('input', e=>{ el.fontSize = Number(e.target.value)||el.fontSize; refreshElementDom(el); refreshContrastBadge(el); refreshLiveOverlays(); });
     if(q('#f-size')) q('#f-size').addEventListener('change', ()=>pushHistory());
+    fields.querySelectorAll('[data-size-step]').forEach(button=>{
+      button.addEventListener('click', ()=>{
+        const input=q('#f-size');
+        const previous=input.value;
+        if(Number(button.dataset.sizeStep)<0) input.stepDown();
+        else input.stepUp();
+        if(input.value===previous) return;
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+        input.dispatchEvent(new Event('change',{bubbles:true}));
+      });
+    });
     if(q('#f-weight')) q('#f-weight').addEventListener('change', e=>{
       el.fontWeight = e.target.value; refreshElementDom(el); refreshContrastBadge(el); pushHistory(); refreshLiveOverlays();
     });

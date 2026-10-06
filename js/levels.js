@@ -227,8 +227,8 @@ Lead Developer, Hay Buhay 3`,
         txt('rateVal','small','Default',1104,408,136,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:8}),
         txt('hz','small','Hz',1272,408,24,24,14,'#310032',{fontFamily:'Righteous',fontWeight:'400',z:8}),
         // Checkbox, label, and whether Figma shows it ticked.
-        ...[['opt1','Enable Full Screen Mode',656,400,688,400,true],['opt2','Enable Object Hiding',672,504,704,512,true],['opt3','Enable Reflections',672,552,704,560,false],
-            ['opt4','Enable Animation Smoothing',1016,504,1056,512,true],['opt5','Enable Advance Rendering',1016,552,1056,560,false]].flatMap(([id,t,bx,by,x,y,ticked])=>[
+        ...[['opt1','Full Screen Mode',656,400,688,400,true],['opt2','Object Hiding',672,504,704,512,true],['opt3','Reflections',672,552,704,560,false],
+            ['opt4','Animation Smoothing',1016,504,1056,512,true],['opt5','Advance Rendering',1016,552,1056,560,false]].flatMap(([id,t,bx,by,x,y,ticked])=>[
           shape(id+'box','decorative',bx,by,32,32,'#D9D9D9',{radius:8,z:7}),
           ...(ticked ? [img(id+'check','assets/levels/haybuhay/check.svg',bx-8,by-8,48,48,{bgSize:'70% auto',z:8})] : []),
           txt(id,'label',t,x,y,256,24,15,'#310032',{fontFamily:'Kumbh Sans',fontWeight:'700',z:7}),
@@ -252,7 +252,7 @@ Lead Developer, Hay Buhay 3`,
       goals:[
         // Only the labels the Level Maker marks as needed count (see data/levels/haybuhay-settings.json);
         // the locked ones are already at 16px and show the target size.
-        goal('Make the checkbox labels at least 16px, like "Enable Reflections".', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
+        goal('Make the checkbox labels at least 16px, like "Reflections".', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
           'Options players tick need to be readable, and matching sizes make them read as one list.',
           'Raise each small checkbox label to 16px.'),
         goal('Make the slider labels at least 16px, like "Visual Effects".', {minFont:16, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},

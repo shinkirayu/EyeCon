@@ -2036,8 +2036,8 @@ body.piko-no-submit #tool-save{pointer-events:none;}
 @keyframes pikoGlow{50%{outline-color:#ffe08a;outline-offset:8px;}}
 .reduce-motion #screen-editor .el.piko-glow{animation:none;}
 /* Reward line: label, coin and amount on one centred baseline. */
-.mail-detail-card .mail-detail-reward{display:flex;align-items:center;gap:.5rem;}
-.mail-detail-card .mail-detail-reward b{display:inline-flex;align-items:center;gap:.25rem;line-height:1;}
+.mail-detail-card .mail-detail-reward{display:flex;align-items:center;gap:.25rem;}
+.mail-detail-card .mail-detail-reward b{display:inline-flex;align-items:center;gap:.125rem;line-height:1;}
 .mail-detail-card .mail-detail-reward img.money-icon{vertical-align:middle;margin:0;}
 /* Mail and reply share one readable text style. */
 .mail-detail-card .mail-detail-body,.compose-body{font:400 1.5rem/1.55 var(--font-body);text-transform:none;}
@@ -2067,3 +2067,48 @@ body.piko-focus .piko-allow,body.piko-focus .piko-allow *,body.piko-focus .piko-
 }
 body.piko-no-badge #screen-desktop #icon-mail #desktop-inbox-badge{display:none;}
 #desktop-inbox-badge{animation:pikoMarkPop .45s cubic-bezier(.34,1.56,.64,1);}
+/* Desktop icons: same gap from the top as from the left, so the mail badge isn't clipped. */
+@media(min-width:901px) and (min-height:501px){
+  #screen-desktop .desktop-icons{top:2.5rem!important;left:2.5rem!important;}
+}
+/* Piko's top bubble sits below the editor's Submit button, not under it. */
+.piko-bubble.piko-top{top:6rem;}
+
+/* Piko's bubble keeps one size so it doesn't jump between lines. */
+.piko-panel{box-sizing:border-box;width:min(26rem,70vw);min-height:10rem;}
+/* Hint button (and its banner) from job 4 on. */
+#screen-editor.show-hint #tool-hint{display:inline-flex!important;}
+#screen-editor.show-hint #editor-hint-banner{display:block!important;}
+/* Bigger Piko, lifted off the taskbar. */
+.piko-bubble:not(.piko-top){bottom:9rem;}
+.piko-bubble{max-width:min(94vw,44rem);}
+.piko-img{width:clamp(8rem,18vw,13rem);}
+.piko-panel{width:min(30rem,72vw);min-height:12rem;padding:1.75rem 2rem 1.25rem;}
+.piko-name{font-size:1.125rem;}
+.piko-line{font-size:1.5rem;line-height:1.45;}
+@media(max-width:640px){.piko-line{font-size:1.125rem;}.piko-panel{min-height:8rem;}}
+/* Reward card: minimal, same cream/teal look as the mail windows. */
+#modal-reward .reward-card{width:min(24rem,90vw);padding:2rem 2rem 1.5rem;border:.1875rem solid #77b9af;border-radius:2rem;background:#fcf7ef;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.75rem;}
+#modal-reward #reward-card-body{display:flex;flex-direction:column;align-items:center;gap:.5rem;}
+#modal-reward .reward-avatar{width:5rem;height:5rem;border:.1875rem solid #9fcfe0;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:2.5rem;background:#fff;}
+#modal-reward .reward-avatar img{width:100%;height:100%;object-fit:cover;}
+#modal-reward .reward-stars{color:#f2b33d;font-size:1.75rem;letter-spacing:.125rem;line-height:1;}
+#modal-reward #reward-title{margin:0;font:800 2rem/1.1 var(--font-display);color:#3b172e;text-transform:none;}
+#modal-reward .reward-total{display:flex;align-items:center;gap:.25rem;font:800 2.75rem/1 var(--font-display);color:#5b2fa8;}
+#modal-reward .reward-total img.money-icon{width:2.25rem;height:2.25rem;}
+#modal-reward .reward-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;}
+#modal-reward .reward-pills span{padding:.25rem .75rem;border-radius:999px;background:#e2f2ed;color:#1f6b45;font:700 1rem var(--font-body);}
+#modal-reward #btn-reward-collect{margin-top:.5rem;padding:.5rem 2rem;border:2px solid #77b9af;border-radius:1.625rem;background:#94d9cf;color:#fff;font:700 1.75rem var(--font-display);text-transform:uppercase;box-shadow:.25rem .4375rem .5rem #bca68640;}
+/* Coin + number: one tight, centred unit everywhere. */
+.money{display:inline-flex;align-items:center;gap:.125em;white-space:nowrap;}
+.money img.money-icon{margin:0;vertical-align:0;}
+#modal-reward .reward-total{gap:.125em;}
+#modal-reward .reward-total img.money-icon{width:.9em;height:.9em;}
+#screen-editor .editor-font-size-row{grid-template-columns:minmax(0,1fr) auto auto;gap:.5rem;}
+#screen-editor .editor-size-stepper{height:3rem;}
+#screen-editor .editor-size-stepper button{display:grid;place-items:center;flex:0 0 2.75rem;width:2.75rem;min-height:2.75rem;padding:0;border:0;background:#edf8f3;color:#705b7d;font:700 1.5rem var(--font-body);cursor:pointer;}
+#screen-editor .editor-size-stepper button:hover{background:#c8e6da;}
+#screen-editor .editor-size-stepper button:focus-visible{outline:2px solid #705b7d;outline-offset:-3px;}
+#screen-editor .editor-size-stepper input{width:3rem;padding:0 .25rem;text-align:center;font-size:1.25rem;appearance:textfield;-moz-appearance:textfield;}
+#screen-editor .editor-size-stepper input::-webkit-inner-spin-button,#screen-editor .editor-size-stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+#screen-editor .editor-size-unit{color:#705b7d;font:700 1rem var(--font-body);}

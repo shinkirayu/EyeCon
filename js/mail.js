@@ -432,7 +432,6 @@
       window.EC_SOUND.typeKey(e.inputType === 'deleteContentBackward' ? 'Backspace' : e.inputType === 'insertParagraph' ? 'Enter' : e.data === ' ' ? ' ' : 'a');
       queueReveal(n * REVEAL_CHARS_PER_KEY);
     });
-    document.getElementById('compose-body').addEventListener('click', ()=>{ window.EC_SOUND.typeKey('a'); queueReveal(REVEAL_CHARS_PER_KEY); });
     document.getElementById('compose-attach-btn').addEventListener('click', toggleAttachPopover);
     // Typing works even if a stray click took focus off the message.
     document.addEventListener('keydown', e=>{

@@ -876,8 +876,8 @@ button{ font-family: inherit; }
 
 .guide-layer{ --grid-opacity: 0.35; }
 .guide-layer.show-grid{ background-image:
-  linear-gradient(rgba(80,150,220,var(--grid-opacity)) 1px, transparent 1px),
-  linear-gradient(90deg, rgba(80,150,220,var(--grid-opacity)) 1px, transparent 1px);
+  linear-gradient(rgba(80,150,220,var(--grid-opacity)) var(--grid-line,1px), transparent var(--grid-line,1px)),
+  linear-gradient(90deg, rgba(80,150,220,var(--grid-opacity)) var(--grid-line,1px), transparent var(--grid-line,1px));
 }
 
 .el{ position:absolute; cursor:url("../assets/sprites/cursor-move.png") 12 12, move; user-select:none; display:flex; }

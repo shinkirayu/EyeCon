@@ -2,7 +2,7 @@
   "name": "EyeCon — UI/UX Design Studio",
   "short_name": "EyeCon",
   "description": "Learn UI/UX design and accessibility principles by fixing flawed client posters.",
-  "start_url": "./index.html",
+  "start_url": "./play",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

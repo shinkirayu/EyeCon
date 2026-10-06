@@ -358,10 +358,10 @@ test('submission restores typing and attaching a reply before recording rewards'
   const send = page.getByRole('button', { name: 'Send', exact: true });
   await expect(send).toBeDisabled();
   expect(await page.evaluate(() => EC_STORE.load().history.length)).toBe(0);
-  await page.locator('#compose-body').click();
+  await page.keyboard.press('a'); // clicking no longer types; a key does
   await expect.poll(()=>page.locator('#compose-body .revealed').textContent()).toBe('Good d'); // 6 letters per press
-  await page.locator('#compose-body').click();
-  await page.locator('#compose-body').click();
+  await page.keyboard.press('a');
+  await page.keyboard.press('a');
   await expect.poll(async()=> (await page.locator('#compose-body .revealed').textContent()).length).toBe(18);
   await page.locator('#compose-body').focus();
   await page.keyboard.insertText('Typing my reply to the client. '.repeat(20));
@@ -415,9 +415,9 @@ test('marking an approved task complete pays out with a celebration', async ({ p
   await expect(page.locator('#mail-detail-body')).not.toContainText('What worked');
   expect(await page.evaluate(() => EC_STORE.load().currency)).toBe(before);
   await page.getByRole('button', { name: 'Mark Completed' }).click();
-  const reward = page.getByRole('dialog', { name: 'Task complete!' });
+  const reward = page.getByRole('dialog', { name: 'Job done!' });
   await expect(reward).toBeVisible();
-  await expect(reward).toContainText('Client payment');
+  await expect(reward).toContainText('XP');
   const after = await page.evaluate(() => EC_STORE.load().currency);
   expect(after).toBeGreaterThanOrEqual(before + 40);
   await page.getByRole('button', { name: 'Collect' }).click();
@@ -815,7 +815,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(bubble).toContainText('zoom');
   await page.mouse.wheel(0, -120); await page.waitForTimeout(800);
   await expect(bubble).toContainText('red dots');
-  await next(); await expect(bubble).toContainText('eyeball');
+  await next(); await expect(bubble).toContainText('Heads up');
   await next(); await expect(bubble).toContainText('together');
   await next(); await expect(bubble).toContainText('Left click it');
   const about = page.locator('#editor-canvas .el[data-id="about"]');
@@ -823,12 +823,14 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(page.locator('.piko-hole')).toHaveClass(/hidden/); // no dim over what to click
   await page.evaluate(()=>EC_EDITOR.selectElement('about')); await page.waitForTimeout(1200);
   await expect(bubble).toContainText('This panel');
-  await next(); await expect(bubble).toContainText('drag About');
+  await next(); await expect(bubble).toContainText('Drag it upwards');
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');
   await next(); await expect(bubble).toContainText('task list');
-  await next(); await expect(bubble).toContainText('shows or hides the grid');
-  await next(); await expect(bubble).toContainText('grid size');
+  await next(); await expect(bubble).toContainText('show or hide the grid');
+  await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
+  await next(); await expect(bubble).toContainText('click this one');
+  await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('grid size');
   await next(); await expect(bubble).toContainText('Submit');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
 });
