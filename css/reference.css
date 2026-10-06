@@ -2215,3 +2215,4 @@ body.piko-no-badge #screen-desktop #icon-mail #desktop-inbox-badge{display:none;
 @media(max-width:760px){.site-mayo .client-hero{grid-template-columns:1fr;}.site-yappers .client-hero,.site-yappers .client-contact,.site-yappers .client-section{margin:1rem;padding:1.5rem;}.site-yappers .client-hero-art{min-height:16rem;}.site-yappers .client-hero-art>img{height:18rem;}.site-mayo .client-nav{padding:1rem;}.site-mayo .client-hero>div:first-child,.site-mayo .client-contact>div:first-child{padding:0;}}
 .site-haybuhay .client-preferences,.site-haybuhay .client-card,.site-haybuhay .client-form,.site-haybuhay .client-detail{color:#310032;}
 .site-haybuhay .client-preferences p,.site-haybuhay .client-card h3,.site-haybuhay .client-form label,.site-haybuhay .client-form p,.site-haybuhay .client-detail h2,.site-haybuhay .client-detail p{color:#310032;}
+#screen-editor .editor-position-row .editor-size-stepper input{width:4.5rem;font-variant-numeric:tabular-nums;}

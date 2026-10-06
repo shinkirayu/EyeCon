@@ -755,8 +755,8 @@
 
     if(unlocked('position') && can(el,'move')){
       html += `<details class="editor-setting-card" open><summary>Position</summary>
-        <label class="editor-unit-row"><span>X</span><span class="editor-unit-input"><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/><span>px</span></span></label>
-        <label class="editor-unit-row"><span>Y</span><span class="editor-unit-input"><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/><span>px</span></span></label>
+        <div class="editor-unit-row editor-font-size-row editor-position-row"><label for="f-x">X</label><span class="editor-unit-input editor-size-stepper"><button type="button" data-size-step="-1" aria-label="Decrease X position">&lt;</button><input type="number" id="f-x" step="8" value="${Math.round(el.x)}" aria-label="X position"/><button type="button" data-size-step="1" aria-label="Increase X position">&gt;</button></span><span class="editor-size-unit">px</span></div>
+        <div class="editor-unit-row editor-font-size-row editor-position-row"><label for="f-y">Y</label><span class="editor-unit-input editor-size-stepper"><button type="button" data-size-step="-1" aria-label="Decrease Y position">&lt;</button><input type="number" id="f-y" step="8" value="${Math.round(el.y)}" aria-label="Y position"/><button type="button" data-size-step="1" aria-label="Increase Y position">&gt;</button></span><span class="editor-size-unit">px</span></div>
       </details>`;
     }
     if(unlocked('sizing') && can(el,'resize')){
@@ -803,7 +803,7 @@
     if(q('#f-size')) q('#f-size').addEventListener('change', ()=>pushHistory());
     fields.querySelectorAll('[data-size-step]').forEach(button=>{
       button.addEventListener('click', ()=>{
-        const input=q('#f-size');
+        const input=button.closest('.editor-size-stepper').querySelector('input');
         const previous=input.value;
         if(Number(button.dataset.sizeStep)<0) input.stepDown();
         else input.stepUp();
@@ -1456,6 +1456,11 @@
       panel.hidden = !willShow;
       if(willShow) hideMobileToolsSheet(); // so the grid/opacity change is visible on the canvas, not hidden behind the sheet
     });
+    // Clicking anywhere outside the grid settings popover closes it.
+    document.addEventListener('pointerdown', e=>{
+      const panel = document.getElementById('grid-settings-panel');
+      if(!panel.hidden && !e.target.closest('#grid-settings-panel, #tool-grid-settings')) panel.hidden = true;
+    }, true);
     document.getElementById('grid-size-slider').addEventListener('input', e=>{
       state.tools.gridSize = Number(e.target.value);
       document.getElementById('grid-size-readout').textContent = state.tools.gridSize;

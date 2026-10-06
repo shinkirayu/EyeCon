@@ -833,6 +833,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
   await next(); await expect(bubble).toContainText('click this one');
   await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('grid size');
-  await next(); await expect(bubble).toContainText('Submit');
+  await page.locator('#grid-opacity-slider').fill('0.6'); await page.waitForTimeout(1600);
+  await expect(bubble).toContainText('Submit');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
 });

@@ -234,8 +234,19 @@
         await talk(done);
       };
       await clickTool('tool-grid', W.grid, W.gridDone, '#editor-canvas-wrap'); // the visible canvas area, between the side bars
-      await clickTool('tool-grid-settings', W.gridSettings, W.gridSettingsDone, '#editor-canvas-wrap'); // panel sits on the canvas: light both
-      document.getElementById('grid-settings-panel').hidden = true;
+      // Grid settings: open it, try a slider, then a 1s beat to see the change.
+      {
+        const btn = document.getElementById('tool-grid-settings'), panel = document.getElementById('grid-settings-panel');
+        let clicked = false; btn.addEventListener('click', ()=>{ clicked = true; }, { once:true });
+        P.pointAt(btn); P.say(W.gridSettings, { top:true });
+        await until(()=>clicked);
+        let changed = false; panel.addEventListener('input', ()=>{ changed = true; }, { once:true });
+        P.pointAt(document.getElementById('editor-canvas-wrap')); // panel sits on the canvas: light both
+        P.say(W.gridSettingsDone, { top:true });
+        await until(()=>changed || panel.hidden);
+        await new Promise(r => setTimeout(r, 1000));
+        panel.hidden = true;
+      }
       body.classList.add('piko-no-submit');
       await step('#tool-save', W.submit, { left:true });
       body.classList.remove('piko-no-submit');

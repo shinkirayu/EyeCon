@@ -161,8 +161,11 @@
   // One section per screen: scale so a 1080-tall section fits the window
   // (or the width, if that's the tighter fit), centred, snapping between sections.
   const topbar = document.getElementById('topbar');
+  const lvh = document.body.appendChild(Object.assign(document.createElement('div'), { style:'position:absolute;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none' }));
   const fit = () => {
-    const z = Math.min(innerWidth / 1920, innerHeight / 1080);
+    // Use the *large* viewport height (browser bars hidden): innerHeight changes as
+    // mobile address bars slide in and out, which made the page rescale mid-scroll.
+    const z = Math.min(innerWidth / 1920, lvh.offsetHeight / 1080);
     stage.style.zoom = topbar.style.zoom = z;
     topbar.style.width = (innerWidth / z) + 'px'; // bar spans the whole window
   };

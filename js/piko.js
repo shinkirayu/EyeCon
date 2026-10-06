@@ -25,7 +25,7 @@
       grid: "Click this button to show or hide the grid.",
       gridDone: "See? Everything snaps to the grid, so lining things up is easy.",
       gridSettings: "Now click this one.",
-      gridSettingsDone: "Here you can change the grid size and how see-through it is.",
+      gridSettingsDone: "Here you can change the grid size and how see-through it is. Give a slider a try!",
       together: "Let's fix one together so you get the feel of it.",
       selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
