@@ -18,15 +18,15 @@
   .snap{width:1px;height:1px;}
   /* Sticky top bar (logo + section links), scaled like the stage. */
   .topbar{position:fixed;z-index:50;top:0;left:0;right:0;height:0;pointer-events:none;}
-  .topbar-in{position:relative;height:127px;} /* width = window width in design px (set in fit) */
-  .topbar-strip{left:0;top:0;width:100%;height:127px;background:#fff;}
-  .topbar-right{right:0;top:0;width:1920px;height:0;}
+  .topbar-in{position:relative;height:100px;} /* width = window width in design px (set in fit) */
+  .topbar-strip{left:0;top:0;width:100%;height:100px;background:#88e0e3;}
+  .topbar-right{right:0;top:0;width:1920px;height:0;transform:scale(.85);transform-origin:top right;}
   .topbar-right > *{position:absolute;}
   .topbar-in > *{position:absolute;margin:0;}
   .topbar-in a,.topbar-in .piko{pointer-events:auto;}
   .topbar-in a img,.topbar-in nav a{position:absolute;}
-  .topbar-in nav{left:0;top:0;width:1920px;height:127px;}
-  .stage [id]{scroll-margin-top:127px;}
+  .topbar-in nav{left:0;top:0;width:1920px;height:100px;}
+  .stage [id]{scroll-margin-top:100px;}
   body{cursor:url("assets/sprites/cursor-arrow.png") 2 2, default;}
   a{cursor:url("assets/sprites/cursor-point.png") 9 2, pointer;}
   .stage{position:relative;margin:0 auto;overflow:visible!important;width:1920px;height:5555px;overflow:hidden;background:#bfebe9;font-family:'Nunito',system-ui,sans-serif;}
@@ -37,18 +37,18 @@
   .label{font:700 40px/21px 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--red);width:572px;}
   .title{font:700 64px/1 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--ink);width:900px;}
   .body{font:700 40px/50px 'Nunito',sans-serif;color:var(--ink);}
-  .nav{top:43px;font:800 32px 'Nunito',sans-serif;color:var(--purple);text-decoration:none;white-space:nowrap;}
+  .nav{top:31px;font:800 28px 'Nunito',sans-serif;color:#fff;text-shadow:0 2px 3px #164d6080;text-decoration:none;white-space:nowrap;}
   .nav:hover,.nav:focus-visible{text-decoration:underline;}
-  .shot{width:823px;height:519px;border:3px solid #193e55;border-radius:30px;overflow:hidden;}
+  .shot{width:900px;height:568px;border:6px solid #55b6ca;border-radius:30px;overflow:hidden;}
   .shot img{position:absolute;}
-  .play-btn{left:124px;top:800px;width:414px;height:100px;border-radius:28px;background:#9b7bdc;border:5px solid #fff3d6;box-shadow:10px 10px 0 0 #7656b3;
-    display:flex;align-items:center;justify-content:center;font:800 48px/1 'Baloo 2',sans-serif;color:#fff3d6;text-decoration:none;text-shadow:0 3px 0 #5b3aa0;}
+  .play-btn{left:68px;top:780px;width:570px;height:128px;border-radius:34px;background:linear-gradient(135deg,#a17adf,#9671d3);border:8px solid #fff3d6;box-shadow:10px 14px 0 0 #7656b3;
+    display:flex;align-items:center;justify-content:center;font:800 64px/1 'Baloo 2',sans-serif;color:#fff3d6;text-decoration:none;text-shadow:0 5px 0 #7656b3;}
   .play-btn:hover{filter:brightness(1.08);}
   .play-btn:focus-visible,.play-corner:focus-visible{outline:4px solid #f9d985;outline-offset:6px;}
   /* PLAY! circle: the link is the circle, label centred on its visible part. */
-  .play-corner{left:1594.7px;top:-138px;width:449px;height:449px;border-radius:50%;background:#7555af;box-shadow:-6px 17px 0 #4a1373;text-decoration:none;
+  .play-corner{left:1594.7px;top:-138px;width:449px;height:449px;border-radius:50%;background:#9b7bdc;border:8px solid transparent;box-shadow:-6px 14px 0 #7656b3,-6px 14px 0 12px #fff3d6;text-decoration:none;box-sizing:border-box;
     transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s;transform-origin:36% 65%;}
-  .play-corner span{position:absolute;left:54px;top:204px;width:265px;transform:rotate(4.47deg);font:800 96px/118px 'Baloo 2',sans-serif;color:#fff;text-align:center;text-shadow:9px 9px 5.7px rgba(68,0,60,.25);}
+  .play-corner span{position:absolute;left:28px;top:200px;width:265px;transform:rotate(4.47deg);font:800 96px/118px 'Baloo 2',sans-serif;color:#fff3d6;text-align:center;text-shadow:0 5px 0 #5b3aa0;}
   .play-corner:hover,.play-corner:focus-visible{transform:scale(1.06) rotate(-2deg);filter:brightness(1.1);}
   .tablet{width:905px;padding:30px 18px 18px;border:4px solid #255e6b;border-radius:14px;background:#fffdf7;box-shadow:12px 14px 0 #255e6b33;}
   .tablet *{position:absolute;}
@@ -63,7 +63,7 @@
   .team-avatar img{width:100%;height:100%;object-fit:cover;}
   .team-cell h3{margin:0;font:800 32px/1.1 'Baloo 2',sans-serif;color:var(--ink);}
   .team-cell p{margin:4px 0 0;font:700 18px 'Baloo 2',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--red);}
-  .piko{left:1329px;top:34px;width:168px;height:147px;transform:rotate(-3deg) scale(var(--piko-scale,1));transition:transform .3s ease-out;}
+  .piko{left:1329px;top:34px;width:168px;height:147px;transform:scale(var(--piko-scale,1));transition:transform .3s ease-out;}
   .piko > *{position:absolute;}
   .piko>img{inset:0;width:100%;height:100%;object-fit:contain;clip-path:inset(0 0 87% 0);transform:translateY(var(--brow-rise,0px));transition:transform .3s ease-out;}
   .piko-eye{top:18%;width:49%;height:78%;overflow:hidden;border:5px solid #7555af;border-radius:50%;background:#fff;}
@@ -86,13 +86,13 @@
   <i class="topbar-strip" aria-hidden="true"></i>
   <!-- Right group (cloud, Piko, PLAY!) pinned to the window's right edge; logo + links to the left. -->
   <div class="topbar-right">
-    <img src="assets/landing/swoosh.svg" alt="" style="left:-56px;top:-166px;width:2124px;height:576px">
+    <img src="assets/landing/swoosh-nav.svg" alt="" style="left:-56px;top:-166px;width:2124px;height:576px">
     <img src="assets/landing/squiggle.svg" alt="" style="left:1278px;top:-468px;width:314px;height:289px">
     <a class="play-corner" data-play href="play" aria-label="Play EyeCon"><span>PLAY!</span></a>
     <!-- Piko watches the pointer and gets excited near the Play buttons (from the old overview). -->
     <span class="piko" role="img" aria-label="Piko watches your pointer"><img src="assets/sprites/piko.png" alt=""><span class="piko-eye left"><span class="piko-pupil"></span></span><span class="piko-eye right"><span class="piko-pupil"></span></span></span>
   </div>
-  <a href="#top" aria-label="EyeCon home"><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="left:24px;top:24px;width:256px;height:80px"></a>
+  <a href="#top" aria-label="EyeCon home"><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="left:24px;top:18px;width:205px;height:64px"></a>
   <nav aria-label="Sections">
     <a class="nav" href="#about" style="left:457px">About</a>
     <a class="nav" href="#trailer" style="left:614px">Trailer</a>
@@ -144,15 +144,16 @@
   <p class="body" style="left:206px;top:1812px;width:748px;transform:translateY(-50%)">EyeCon is an interactive 2D web-based simulation game for enhancing visual interface standards and accessibility literacy. You play as a junior UI designer who fixes broken interfaces for clients, from a personal portfolio to a mock-up of a Philippine government website.</p>
 
   <!-- Landing hero -->
+  <div aria-hidden="true" style="left:-3000px;top:0;width:7920px;height:1112px;background:radial-gradient(ellipse at 52% 45%,#c4f6df 0%,#a9eddf 50%,#91e2dc 100%)"></div>
   <img src="assets/landing/blob-right.svg" alt="" style="left:1203px;top:535px;width:865px;height:865px">
   <img src="assets/landing/blob-left.svg" alt="" style="left:-152px;top:-329px;width:743px;height:743px;transform:rotate(-0.21deg)">
 
 
-  <h1 style="left:125px;top:444px;font:800 104px/96px 'Baloo 2',sans-serif;letter-spacing:-4px;color:var(--ink);white-space:nowrap">Your design shift<br>starts here.</h1>
-  <p style="left:130px;top:664px;font:600 32px/46px 'Nunito',sans-serif;color:var(--ink);white-space:nowrap">Fix layouts. Make clients happy.<br>Build your design skills, one task at a time.</p>
+  <h1 style="left:64px;top:350px;font:800 120px/128px 'Baloo 2',sans-serif;letter-spacing:-5px;color:#0b4355;white-space:nowrap;text-shadow:0 5px 0 #0b43551a">Your design shift<br>starts here.</h1>
+  <p style="left:68px;top:638px;font:700 42px/54px 'Nunito',sans-serif;color:#164d60;white-space:nowrap">Fix layouts. Make clients happy.<br>Build your design skills, one task at a time.</p>
 
-  <div style="left:963px;top:406px;width:823px;height:519px;transform:rotate(3.36deg);box-shadow:10px 4px 0 5px var(--ink-2);border-radius:30px" class="shot"><img src="assets/landing/shot-back.png" alt="" style="left:-1.02%;top:0;width:138.95%;height:100%"></div>
-  <div style="left:963px;top:407px;width:823px;height:519px;transform:rotate(-4.43deg);box-shadow:0 10px 0 0 var(--ink-2)" class="shot"><img src="assets/landing/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:0;width:100%;height:100%;object-fit:cover"></div>
+  <div style="left:974px;top:294px;transform:rotate(3.36deg);box-shadow:10px 12px 0 5px #55b6ca" class="shot"><img src="assets/landing/shot-back.png" alt="" style="left:-1.02%;top:-2px;width:138.95%;height:calc(100% + 4px)"></div>
+  <div style="left:974px;top:294px;transform:rotate(-4.43deg);box-shadow:0 14px 0 0 #55b6ca" class="shot"><img src="assets/landing/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);object-fit:cover"><img src="assets/sprites/Mayonaisse.png" alt="" style="left:59%;top:47%;width:14%;height:23%;object-fit:cover;border:10px solid #7bc9df;border-radius:50%;box-shadow:4px 5px 0 #55b6ca"></div>
   <a class="play-btn" data-play href="play">PLAY EYECON!</a>
 </main>
 <script>

@@ -58,7 +58,7 @@
 
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function roundTo8(n){ return Math.max(8, Math.round(n/8)*8); }
-  const ZOOM_MIN = 0.25, ZOOM_MAX = 5; // 25% – 500%
+  const ZOOM_MIN = 0.97, ZOOM_MAX = 5; // 97% – 500% (no zooming far out for now)
   const ZOOM_EASE = 0.12;          // lower = smoother/slower glide, higher = snappier
   const ZOOM_WHEEL_SENSITIVITY = 0.00085; // lower = gentler zoom per wheel notch
 
@@ -309,6 +309,15 @@
     if(!canvas || !level) return;
     const base = baseFitScale(level.canvas.w, level.canvas.h);
     const scale = base * state.displayZoom;
+    // Keep the design in reach: it can slide at most PAN_SLACK px past the
+    // workspace edges, so panning can't get lost in empty space.
+    const wrap = document.getElementById('editor-canvas-wrap');
+    if(wrap){
+      const PAN_SLACK = 120;
+      const clamp = (pan, room, size) => Math.min(Math.max(pan, Math.min(room - size, 0) - PAN_SLACK), Math.max(room - size, 0) + PAN_SLACK);
+      state.panX = clamp(state.panX, wrap.clientWidth, level.canvas.w * scale);
+      state.panY = clamp(state.panY, wrap.clientHeight, level.canvas.h * scale);
+    }
     canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${scale})`;
     canvas.style.transformOrigin = '0 0';
     canvas.style.setProperty('--selection-unit', (1 / scale) + 'px');
