@@ -203,7 +203,7 @@
     const z = Math.min(innerWidth / 1920, lvh.offsetHeight / 1080) * PAGE_SCALE;
     stage.style.zoom = topbar.style.zoom = z;
     topbar.style.width = (innerWidth / z) + 'px'; // bar spans the whole window
-    stretchSections(lvh.offsetHeight / z);
+    // (Section stretching to the window height is off: it blew sections up on tall/narrow windows.)
   };
   fit(); addEventListener('resize', fit);
   // Production serves the game at /play; the local dev server still has it at index.html.
