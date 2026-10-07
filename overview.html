@@ -183,7 +183,10 @@
     // tall section can't leave a sliver of the next one on screen.
     const barH = topbar.getBoundingClientRect().height / (parseFloat(stage.style.zoom) || 1);
     const target = Math.max(viewH - barH + 4, ...SECTION_TOPS.map((t, i) => ends[i] - t));
-    const extras = SECTION_TOPS.map((t, i) => Math.max(0, target - (ends[i] - t)));
+    // Capped, so tall/narrow windows don't blow sections up into empty space.
+    const MAX_STRETCH = 260;
+    // The hero starts at the very top (the bar sits on it), so it gets the full window height.
+    const extras = SECTION_TOPS.map((t, i) => Math.min(MAX_STRETCH, Math.max(0, (i === 0 ? viewH + 24 : target) - (ends[i] - t))));
     const before = extras.map((_, i) => extras.slice(0, i).reduce((a, b) => a + b, 0));
     parts.forEach(n => {
       const top = +n.dataset.top, idx = Math.max(0, SECTION_TOPS.filter(t => top >= t - 40).length - 1), extra = extras[idx];
@@ -203,7 +206,7 @@
     const z = Math.min(innerWidth / 1920, lvh.offsetHeight / 1080) * PAGE_SCALE;
     stage.style.zoom = topbar.style.zoom = z;
     topbar.style.width = (innerWidth / z) + 'px'; // bar spans the whole window
-    // (Section stretching to the window height is off: it blew sections up on tall/narrow windows.)
+    stretchSections(lvh.offsetHeight / z);
   };
   fit(); addEventListener('resize', fit);
   // Production serves the game at /play; the local dev server still has it at index.html.
