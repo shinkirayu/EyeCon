@@ -26,7 +26,8 @@
   .topbar-in a,.topbar-in .piko{pointer-events:auto;}
   .topbar-in a img,.topbar-in nav a{position:absolute;}
   .topbar-in nav{left:0;top:0;width:1920px;height:100px;}
-  .stage [id]{scroll-margin-top:100px;}
+  .stage [id]{scroll-margin-top:170px;}
+  .stage div[id]{scroll-margin-top:127px;} /* section backgrounds: land flush under the bar, no strip of the section above */
   body{cursor:url("assets/sprites/cursor-arrow.png") 2 2, default;}
   a{cursor:url("assets/sprites/cursor-point.png") 9 2, pointer;}
   .stage{position:relative;margin:0 auto;overflow:visible!important;width:1920px;height:5555px;overflow:hidden;background:#bfebe9;font-family:'Nunito',system-ui,sans-serif;}
@@ -38,7 +39,7 @@
   .title{font:700 64px/1 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--ink);width:900px;}
   .body{font:700 40px/50px 'Nunito',sans-serif;color:var(--ink);}
   .nav{top:31px;font:800 28px 'Nunito',sans-serif;color:#fff;text-shadow:0 2px 3px #164d6080;text-decoration:none;white-space:nowrap;}
-  .nav:hover,.nav:focus-visible{text-decoration:underline;}
+  .nav:hover,.nav:focus-visible,.nav.current{text-decoration:underline;text-underline-offset:6px;}
   .shot{width:900px;height:568px;border:6px solid #55b6ca;border-radius:30px;overflow:hidden;}
   .shot img{position:absolute;}
   .play-btn{left:68px;top:780px;width:570px;height:128px;border-radius:34px;background:linear-gradient(135deg,#a17adf,#9671d3);border:8px solid #fff3d6;box-shadow:10px 14px 0 0 #7656b3;
@@ -50,7 +51,7 @@
     transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s;transform-origin:36% 65%;}
   .play-corner span{position:absolute;left:28px;top:200px;width:265px;transform:rotate(4.47deg);font:800 96px/118px 'Baloo 2',sans-serif;color:#fff3d6;text-align:center;text-shadow:0 5px 0 #5b3aa0;}
   .play-corner:hover,.play-corner:focus-visible{transform:scale(1.06) rotate(-2deg);filter:brightness(1.1);}
-  .tablet{width:905px;padding:30px 18px 18px;border:4px solid #255e6b;border-radius:14px;background:#fffdf7;box-shadow:12px 14px 0 #255e6b33;}
+  .tablet{width:1300px;padding:30px 18px 18px;border:4px solid #255e6b;border-radius:14px;background:#fffdf7;box-shadow:12px 14px 0 #255e6b33;}
   .tablet *{position:absolute;}
   .tablet-notch{top:11px;left:50%;width:56px;height:6px;margin-left:-28px;border-radius:3px;background:#255e6b;}
   .tablet-screen{position:relative;aspect-ratio:16/9;border:2px solid #255e6b;border-radius:4px;overflow:hidden;background:#fffdf7;}
@@ -111,10 +112,10 @@
   <h2 class="title center" style="left:960px;top:4815px">Meet the team</h2>
   <p class="center" style="left:960px;top:4920px;width:1000px;font:700 28px/40px 'Nunito',sans-serif;color:var(--ink)">Four friends who kept squinting at screens that should have been easy to read, so we built a game that teaches how to fix them.</p>
   <div class="team-grid">
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nica.png" alt="Nica" style="object-position:center 38%"></div><h3>Nica</h3><p>Proponent</p></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nadine.png" alt="Nadine" style="object-position:center 42%"></div><h3>Nadine</h3><p>Proponent</p></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/kryu.png" alt="Kryu" style="object-position:center 36%"></div><h3>Kryu</h3><p>Proponent</p></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/awi.png" alt="Awi" style="object-position:center 55%"></div><h3>Awi</h3><p>Proponent</p></div>
+    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nica.png" alt="Nica" style="object-position:center 38%"></div><h3>Nica</h3></div>
+    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nadine.png" alt="Nadine" style="object-position:center 42%"></div><h3>Nadine</h3></div>
+    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/kryu.png" alt="Kryu" style="object-position:center 36%"></div><h3>Kryu</h3></div>
+    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/awi.png" alt="Awi" style="object-position:center 55%"></div><h3>Awi</h3></div>
   </div>
 
   <!-- Objectives -->
@@ -129,18 +130,19 @@
   <!-- dots.png is white dots on black: screen-blending drops the black and keeps the dots. -->
   <div aria-hidden="true" style="left:-3000px;top:2230px;width:7920px;height:1165px;background:url(assets/landing/dots.png) 0 0/auto repeat;mix-blend-mode:screen;opacity:.6"></div>
   <!-- Tablet frame from the old overview's "YOUR SPACE" preview, holding the trailer. -->
-  <div class="tablet" style="left:507px;top:2664px">
+  <div class="tablet" style="left:310px;top:2420px">
     <span class="tablet-notch"></span>
     <div class="tablet-screen"><iframe src="https://drive.google.com/file/d/19Htw6h2TLCWGQ7D4TrogORyHoHsy7t5F/preview" title="EyeCon trailer" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe></div>
   </div>
-  <p class="label center" style="left:960px;top:2534.5px">Trailer</p>
+  <p class="label center" style="left:960px;top:2340px">Trailer</p>
 
   <!-- About -->
-  <img src="assets/landing/wave.svg" alt="" style="left:-4014px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img src="assets/landing/wave.svg" alt="" style="left:-2057px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img src="assets/landing/wave.svg" alt="" style="left:1857px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img src="assets/landing/wave.svg" alt="" style="left:3814px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
-  <img src="assets/landing/wave.svg" alt="" style="left:-100px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
+  <div class="fill-top" aria-hidden="true" style="left:-3000px;top:1100px;width:7920px;height:60px;background:#f9d985"></div>
+  <img class="sink" src="assets/landing/wave.svg" alt="" style="left:-4014px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:-2057px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:1857px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:3814px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
+  <img class="sink" src="assets/landing/wave.svg" alt="" style="left:-100px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
   <p id="about" class="label center" style="left:960px;top:1325.5px">About</p>
   <h2 class="title center" style="left:960px;top:1425.5px">So what is EyeCon?</h2>
-  <div aria-hidden="true" style="left:1246px;top:1411px;width:918px;height:1080px;overflow:hidden"><img src="assets/landing/duck.png" alt="" style="left:-53.05%;top:0;width:209.15%;height:100%"></div>
+  <div class="sink" aria-hidden="true" style="left:1246px;top:1411px;width:918px;height:1080px;overflow:hidden"><img src="assets/landing/duck.png" alt="" style="left:-53.05%;top:0;width:209.15%;height:100%"></div>
   <p class="body" style="left:206px;top:1812px;width:748px;transform:translateY(-50%)">EyeCon is an interactive 2D web-based simulation game for enhancing visual interface standards and accessibility literacy. You play as a junior UI designer who fixes broken interfaces for clients, from a personal portfolio to a mock-up of a Philippine government website.</p>
 
   <!-- Landing hero -->
@@ -163,12 +165,45 @@
   // (or the width, if that's the tighter fit), centred, snapping between sections.
   const topbar = document.getElementById('topbar');
   const lvh = document.body.appendChild(Object.assign(document.createElement('div'), { style:'position:absolute;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none' }));
+  // Each section is 1080 design-px tall; at a smaller scale the window shows more
+  // than that. Give every section the extra room (content stays centred in it),
+  // so only one section is on screen at a time.
+  const SECTION_TOPS = [0, 1133, 2230, 3395, 4475];
+  const SINK_DROP = 0.85; // About's waves + duck sit near the bottom of the stretched section
+  const CONTENT_DROP = 0.2; // share of the extra height above the content (0.5 = centred; lower = higher up)
+  // Positions may come from inline styles or classes (e.g. .play-btn), so read the computed top.
+  const parts = [...stage.children].filter(n => !isNaN(parseFloat(getComputedStyle(n).top)));
+  parts.forEach(n => { n.dataset.top = parseFloat(getComputedStyle(n).top); n.dataset.h = parseFloat(n.style.height) || ''; });
+  const baseH = parseFloat(getComputedStyle(stage).height);
+  // Every section becomes exactly one screen tall (minus the fixed bar), whatever
+  // its design height, so a nav jump always shows that one section and nothing else.
+  function stretchSections(viewH){
+    const ends = [...SECTION_TOPS.slice(1), baseH];
+    // Design px under the bar; never shorter than the tallest section, so a
+    // tall section can't leave a sliver of the next one on screen.
+    const barH = topbar.getBoundingClientRect().height / (parseFloat(stage.style.zoom) || 1);
+    const target = Math.max(viewH - barH + 4, ...SECTION_TOPS.map((t, i) => ends[i] - t));
+    const extras = SECTION_TOPS.map((t, i) => Math.max(0, target - (ends[i] - t)));
+    const before = extras.map((_, i) => extras.slice(0, i).reduce((a, b) => a + b, 0));
+    parts.forEach(n => {
+      const top = +n.dataset.top, idx = Math.max(0, SECTION_TOPS.filter(t => top >= t - 40).length - 1), extra = extras[idx];
+      const wide = n.tagName === 'DIV' && parseFloat(n.style.width) >= 1900 && n.dataset.h;
+      n.style.top = (top + before[idx] + (wide ? 0 : extra * (n.classList.contains('sink') ? SINK_DROP : CONTENT_DROP))) + 'px';
+      if(n.classList.contains('fill-top')) n.style.height = (extra * SINK_DROP + 60) + 'px';
+      else if(wide) n.style.height = (+n.dataset.h + extra) + 'px';
+    });
+    stage.style.height = (baseH + extras.reduce((a, b) => a + b, 0)) + 'px';
+  }
   const fit = () => {
     // Use the *large* viewport height (browser bars hidden): innerHeight changes as
     // mobile address bars slide in and out, which made the page rescale mid-scroll.
-    const z = Math.min(innerWidth / 1920, lvh.offsetHeight / 1080);
+    // Fit the whole 1920×1080 section in the window (shrinks on wide/short screens).
+    // Height uses the *large* viewport so mobile address bars don't rescale mid-scroll.
+    const PAGE_SCALE = 0.85; // a bit smaller than edge-to-edge; raise toward 1 for bigger
+    const z = Math.min(innerWidth / 1920, lvh.offsetHeight / 1080) * PAGE_SCALE;
     stage.style.zoom = topbar.style.zoom = z;
     topbar.style.width = (innerWidth / z) + 'px'; // bar spans the whole window
+    stretchSections(lvh.offsetHeight / z);
   };
   fit(); addEventListener('resize', fit);
   // Production serves the game at /play; the local dev server still has it at index.html.
@@ -198,6 +233,27 @@
       }
     }
     addEventListener('pointermove', e => { if(e.pointerType === 'touch') return; pointer = { x:e.clientX, y:e.clientY }; if(!frame) frame = requestAnimationFrame(look); }, { passive:true });
+  })();
+  // Nav links scroll so the section starts exactly under the bar (scroll-margin
+  // is unreliable inside the zoomed stage). Labels (About) keep a little room.
+  document.querySelectorAll('.topbar a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    // Land on the section's own top edge (About's label sits inside its section, so use its fill).
+    const el = a.getAttribute('href') === '#about' ? document.querySelector('.fill-top') : document.querySelector(a.getAttribute('href'));
+    if(!el) return;
+    e.preventDefault();
+    const bar = document.getElementById('topbar').getBoundingClientRect().height;
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY - bar + 2, behavior:'smooth' });
+  }));
+  // Underline the nav link for whichever section is in the middle of the screen.
+  (() => {
+    const links = [...document.querySelectorAll('.topbar .nav')];
+    const update = () => {
+      const mid = innerHeight / 2;
+      let cur = null;
+      links.forEach(a => { const sec = document.querySelector(a.getAttribute('href')); if(sec && sec.getBoundingClientRect().top <= mid) cur = a; });
+      links.forEach(a => a.classList.toggle('current', a === cur));
+    };
+    addEventListener('scroll', update, { passive:true }); addEventListener('resize', update); update();
   })();
   if(location.pathname.endsWith('overview.html')) document.querySelectorAll('[data-play]').forEach(a => a.href = 'index.html');
 </script>

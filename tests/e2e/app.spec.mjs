@@ -758,13 +758,13 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
   // A short end-of-day animation plays first, then the recap.
   await expect(page.locator('.day-end-scene')).toBeVisible();
   await page.screenshot({path:process.env.DAYEND_SHOT||'test-results/dayend.png'});
-  const summary=page.getByRole('dialog',{name:'Day 2 complete'});
+  const summary=page.getByRole('dialog',{name:'Day 2 done!'});
   await expect(summary).toBeVisible({timeout:8000});
   await expect(page.locator('.day-end-scene')).toHaveCount(0);
-  await expect(summary).toContainText('3 submissions');
+  await expect(summary).toContainText('/3 approved');
   await expect(summary).toContainText('120 XP');
   await expect(summary).toContainText('Brewbird');
-  await page.getByRole('button',{name:'Continue to next day'}).click();
+  await page.getByRole('button',{name:'Next day'}).click();
   await expect(summary).toBeHidden();
   await expect(page.locator('#taskbar-clock')).toContainText('Day 3');
   await expect(page.locator('#taskbar-clock')).toContainText('08:00');
@@ -820,6 +820,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(page.locator('.piko-hole')).toHaveClass(/hidden/); // no dim over what to click
   await page.evaluate(()=>EC_EDITOR.selectElement('about')); await page.waitForTimeout(1200);
   await expect(bubble).toContainText('This panel');
+  await next(); await expect(bubble).toContainText('lit up');
   await next(); await expect(bubble).toContainText('Drag it upwards');
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');

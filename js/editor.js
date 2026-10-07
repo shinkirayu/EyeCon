@@ -198,7 +198,7 @@
         if(goal.bonus) text.append(Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent:'BONUS'}));
         body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
         // The tip shows on the suggested task; the reason shows once a task is done.
-        if(isFocus(goal)) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
+        if(isFocus(goal) && goal.tip) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
         li.append(box, body);
         ul.append(li);
       });

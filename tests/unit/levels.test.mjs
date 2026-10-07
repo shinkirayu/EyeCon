@@ -28,7 +28,7 @@ test('every page is a real, solvable task with the tools unlocked by then',async
       const targets=G.goalIds(goal.check).map(id=>level.elements.find(e=>e.id===id));
       assert.ok(targets.every(Boolean), `${level.id}: "${goal.label}" points at a missing element`);
       assert.ok(targets.some(el=>!el.locked), `${level.id}: "${goal.label}" has nothing the player can edit`);
-      assert.ok(goal.label && goal.why && goal.tip, `${level.id}: goal needs label, why and tip`);
+      assert.ok(goal.label && goal.why && typeof goal.tip === 'string', `${level.id}: goal needs label, why and a tip (may be empty)`);
     }
     const start=G.checkGoals(level, level.elements);
     start.forEach(r=>assert.equal(r.met,false,`${level.id}: "${r.goal.label}" is already done at the start`));

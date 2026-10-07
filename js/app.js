@@ -207,6 +207,9 @@
         P.say(W.selectAbout, { top:true });
         await until(()=>elDiv(practice)?.classList.contains('selected'));
         await step('#element-settings', W.controls, { left:true });
+        // Selecting it also lit up its task on the left: point that out.
+        { const task = document.querySelector('#editor-mail-points .editor-goal.focus');
+          if(task){ task.scrollIntoView({ block:'nearest' }); await step('#editor-mail-points .editor-goal.focus', W.taskLit); } }
         P.clearTarget(); glow(practice);
         P.say(W.dragAbout, { top:true });
         // Praise only once it's lined up AND the mouse is let go.
@@ -1534,7 +1537,7 @@
     if(!modal){
       modal=document.createElement('div');modal.id='modal-workday';modal.className='modal-overlay hidden';
       modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','workday-title');
-      modal.innerHTML='<div class="modal-card workday-card"><div id="workday-summary"></div><button class="btn btn-accept" id="next-workday">Continue to next day</button></div>';
+      modal.innerHTML='<div class="modal-card workday-card"><div id="workday-summary"></div><button class="btn btn-accept" id="next-workday">Next day</button></div>';
       document.body.appendChild(modal);
       document.getElementById('next-workday').addEventListener('click',()=>{
         if(!window.EC_STORE.nextWorkday(profile))return;
@@ -1542,10 +1545,14 @@
       });
     }
     const summary=document.getElementById('workday-summary');
-    summary.innerHTML=`<h2 id="workday-title">Day ${day.day} complete</h2><p>5:00 PM · Your shift is over</p><div class="workday-totals"><span>${day.submissions} submissions</span><span>${day.reviews.filter(r=>r.approved).length} approved</span><span>${day.reviews.length} client reviews</span><span>${window.EC_MONEY(day.coins)} earned</span><span>+${day.xp} XP</span></div><ul class="workday-reviews"></ul>`;
+    // Minimal card like the reward popup: day, a few stat pills, one row per client.
+    const approved=day.reviews.filter(r=>r.approved).length;
+    summary.innerHTML=`<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2><p class="workday-sub">5:00 PM · Time to clock out</p>
+      <div class="workday-totals"><span>${approved}/${day.submissions} approved</span><span>+${window.EC_MONEY(day.coins)}</span><span>+${day.xp} XP</span></div><ul class="workday-reviews"></ul>`;
     day.reviews.forEach(review=>{
       const item=document.createElement('li');
-      item.textContent=`${review.name} · ${review.page || 'Website'} — ${'★'.repeat(review.stars)}${'☆'.repeat(5-review.stars)} · ${review.approved?'Approved':'Needs revision'} · +${review.reward} coins`;
+      item.innerHTML=`<b></b><span class="workday-stars">${'★'.repeat(review.stars)}${'☆'.repeat(5-review.stars)}</span>`;
+      item.querySelector('b').textContent=review.name;
       summary.querySelector('ul').appendChild(item);
     });
     window.EC_MODAL.show(modal);document.getElementById('next-workday').focus();
@@ -2107,7 +2114,11 @@
       },
       onSend: () => finishMissionSubmission(),
       // Admin Skip/Repeat changed the save: pick it up without reloading the page.
-      onDebugChange: saved => { profile = saved; refreshHeader(); renderCurrentFolder(); },
+      onDebugChange: saved => {
+        profile = saved; refreshHeader(); renderCurrentFolder(); updateClock();
+        // A skip can fill the day: at 5 PM, end it like a normal last job.
+        if(window.EC_STORE.workday(profile).submissions >= window.EC_STORE.dailyTaskLimit(profile)) showDaySummary();
+      },
       onOpenReply: level => openReadyReply(level)
     });
 

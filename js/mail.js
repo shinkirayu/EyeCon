@@ -32,21 +32,25 @@
   function arrivedInbox(profile){
     const all = window.EC_STORE.commissionInbox(profile);
     const m = mailState(), now = Date.now();
+    // Arrivals are per workday, so a job that opens on a new day lands as fresh
+    // mail (new-mail sound + toast) instead of already sitting in the inbox.
+    const day = window.EC_STORE.workday(profile).day;
+    const key = l => l.id + '@' + day;
     let changed = false;
     all.forEach(level=>{
-      if(m.arrivals[level.id] != null) return;
-      // First email is there right away; later ones land a moment later.
-      m.arrivals[level.id] = Object.keys(m.arrivals).length ? now + 2500 : now;
+      if(m.arrivals[key(level)] != null) return;
+      // The very first email of the game is there right away; every other one lands a moment later.
+      m.arrivals[key(level)] = Object.keys(m.arrivals).length ? now + 2500 : now;
       changed = true;
     });
     if(changed) saveMailState(m);
-    const pending = all.filter(l=>m.arrivals[l.id] > now);
+    const pending = all.filter(l=>m.arrivals[key(l)] > now);
     clearTimeout(arrivalTimer);
     if(pending.length){
-      const next = pending.reduce((a,b)=>m.arrivals[a.id] <= m.arrivals[b.id] ? a : b);
-      arrivalTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('ec-mail-arrived', {detail:next})), m.arrivals[next.id] - now + 50);
+      const next = pending.reduce((a,b)=>m.arrivals[key(a)] <= m.arrivals[key(b)] ? a : b);
+      arrivalTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('ec-mail-arrived', {detail:next})), m.arrivals[key(next)] - now + 50);
     }
-    return all.filter(l=>m.arrivals[l.id] <= now);
+    return all.filter(l=>m.arrivals[key(l)] <= now);
   }
   function markSeen(level){
     const m = mailState();
@@ -112,6 +116,10 @@
     p.history.unshift({ levelId:level.id, name:level.clientName, page:level.pageLabel, date:new Date().toISOString(), stars:5, missionComplete:true,
       quote:'(Skipped for debugging)', reply:`Hi, ${level.clientName} here.\n\n★★★★★  (5/5)\n\n(Skipped for debugging.)\n\n— ${level.clientName}` });
     if(p.readyReply && p.readyReply.levelId === level.id) delete p.readyReply;
+    // Counts like a finished job: uses a work slot (clock moves on) and shows in the day's reviews.
+    const shift = window.EC_STORE.workday(p);
+    shift.submissions++;
+    shift.reviews.push({ name:level.clientName, page:level.pageLabel, stars:5, approved:true, reward:0 });
   }
   function repeatLevel(p, level){
     p.completed = p.completed.filter(id => id !== level.id);

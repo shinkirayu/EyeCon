@@ -148,7 +148,8 @@
   function dailyTaskLimit(profile){
     if(!TUTORIAL_ONLY) return 3;
     profile = profile || load();
-    if(workday(profile).day > 1) return 3;
+    if(workday(profile).day === 2) return 3; // Antoks, Cones, Kolehiyo
+    if(workday(profile).day > 2) return 1;   // BEAR ORAS
     return tutorialDone(profile) ? 0 : Infinity;
   }
   function tutorialDone(profile){ return window.EC_LEVELS.filter(l => l.levelNumber <= 3).every(l => profile.completed.includes(l.id)); }
@@ -240,7 +241,11 @@
       const open = byNum.filter(l => !profile.completed.includes(l.id));
       if(!tutorialDone(profile)) return open.slice(0, 1);            // tutorial: next job only
       if(workday(profile).day === 1) return [];                      // day 1 is over
-      return open;                                                   // day 2+: jobs 4–7
+      // Day 2: job 4 first; once it's done, jobs 5 and 6 arrive together.
+      // Day 3+: job 7.
+      const day = workday(profile).day;
+      const today = open.filter(l => day === 2 ? l.levelNumber <= 6 : true);
+      return today[0]?.levelNumber === 4 ? today.slice(0, 1) : today;
     }
     const remaining = Math.max(0, dailyTaskLimit(profile) - tasksDoneToday(profile, date));
     const levels = window.EC_LEVELS;

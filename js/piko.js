@@ -29,6 +29,7 @@
       together: "Let's fix one together so you get the feel of it.",
       selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
+      taskLit: "See how a task lit up on the left? Selecting something shows exactly which task it belongs to.",
       controls: "Got it! This panel shows what you picked. You'll use it more later.",
       dragAbout: "Drag it upwards to make sure it's aligned with the \"Home\" and \"Contact\" line. The arrow keys work too!",
       nice: "Perfect! See how much tidier that menu row looks? That's alignment.",

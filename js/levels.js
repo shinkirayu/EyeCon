@@ -316,9 +316,9 @@ Gising sa Sarap!
         bonus('Space the menu links evenly.', {evenGapsX:['nav1','nav2','nav3','nav4']},
           'Even gaps keep the menu tidy and easy to scan.',
           'Group the links together and match the gaps between them.'),
-        bonus('Line up "Best Sellers" with the first card.', {sameX:['best','card1']},
-          'A shared left edge ties the label to the row it introduces.',
-          "Match the Best Sellers X to the first card's X."),
+        bonus('Center "Best Sellers" over the first card.', {sameCenterX:['best','card1']},
+          'Centering the label over the card ties it to the row it introduces.',
+          ''),
       ],
       replyTemplates:{
         great:'Ang ganda! Everything lines up perfectly now. Gising sa Sarap!',
@@ -1522,10 +1522,20 @@ Nimbus Goods`,
     LEVELS.forEach(level=>applyEdit(level, saved[level.id]));
   }catch(e){ /* No storage (tests) or bad data: keep the built-in levels. */ }
 
+  // Antoks: "Best Sellers" is centred over the first card, not left-aligned —
+  // also fixes saved Level Maker copies that still carry the old left-edge task.
+  LEVELS.filter(l=>l.id==='antoks-home').forEach(l=>l.goals.forEach(g=>{
+    const ids=g.check.sameX;
+    if(ids && ids.includes('best') && ids.includes('card1')){
+      g.check={sameCenterX:['best','card1']};
+      g.label='Center "Best Sellers" over the first card.';
+      g.tip='';
+    }
+  }));
   // Level 1 teaches spacing by moving things: no resizing or recoloring.
   LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
   // Level 3 is text only: nothing moves, resizes or recolors.
-  LEVELS.filter(l=>l.id==='haybuhay-settings').forEach(l=>l.elements.forEach(el=>{ el.allow=['font']; }));
+  LEVELS.filter(l=>l.id==='haybuhay-settings'||l.id==='kolehiyo-dashboard').forEach(l=>l.elements.forEach(el=>{ el.allow=['font']; })); // text size only (Hay Buhay, Kolehiyo)
 
   // No bonus tasks for now: former bonus tasks count as required ones, so
   // every task on a page is needed and finishing them all earns 5 stars.
