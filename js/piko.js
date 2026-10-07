@@ -42,9 +42,10 @@
     },
     nextMail: name => `Ooh, you got another email! ${name} needs your help next. Open it up!`,
     basicsDone: [
-      "You did it! You've completed the basics: alignment, contrast and typography.",
-      "Every design you touch from now on will be easier to read for more people. That's what EyeCon is all about.",
-      "More clients are on the way. I'm proud of you, designer!"
+      "You did it! You've finished the basics: alignment, contrast and typography.",
+      "Good job today! Every screen you fixed is now easier to read for somebody out there.",
+      "That's a wrap for your first shift. Go rest those eyes!",
+      "Tomorrow, four new clients are writing in. I'll see you then!"
     ],
     compose: {
       type: "To get your client's approval, send them an email. Press any key on your keyboard to start typing!",
@@ -73,7 +74,7 @@
       ],
       haybuhay: [
         ["Last basic: TYPOGRAPHY! That's how your text looks: size, weight and spacing."],
-        ["Tiny text makes people squint or zoom. For body text, 16px is the smallest you should go."],
+        ["Tiny text makes people squint or zoom. For this job, set the small text to exactly 16px."],
         ["Bigger text for headings, smaller for details. That difference is called hierarchy, and it guides the eye."],
         ["Select a label and raise its Size. This is the one number you can type!", '#element-settings'],
         ["Alignment, contrast and typography: those are the basics. After this, you're ready for real clients!"]
@@ -114,7 +115,8 @@
   let sayDelayTimer = null;
 
   function hideBubble(){
-    clearTimeout(sayDelayTimer);
+    clearTimeout(sayDelayTimer); clearTimeout(unlockTimer);
+    document.body.classList.remove('piko-line-pending');
     document.removeEventListener('click', advanceAnywhere, true);
     if(!dom) return;
     dom.bubble.classList.add('hidden');
@@ -127,6 +129,10 @@
   // onDone — same click-to-skip/click-to-advance behavior as PikoTalk.
   let saidAgain = false;
   let advanceAnywhere = () => {};
+  const CLICK_UNLOCK_MS = 400;
+  const DIM_FADE_MS = 1200; // matches the .piko-hole opacity transition
+  let dimDoneAt = 0;
+  let unlockTimer = null;
   let lastPointerDown = 0;
   document.addEventListener('pointerdown', () => { lastPointerDown = performance.now(); }, true);
   function say(line, opts){
@@ -137,6 +143,7 @@
     // Already on screen (chained lines): keep Piko up, no gap.
     if(!opts.now && !showing){
       ensureDom().bubble.classList.add('hidden');
+      document.body.classList.add('piko-line-pending'); // the highlighted control waits for this line
       sayDelayTimer = setTimeout(() => say(line, Object.assign({}, opts, { now:true })), LINE_DELAY_MS);
       return;
     }
@@ -149,6 +156,17 @@
       if(window.EC_SOUND && window.EC_SOUND.play) window.EC_SOUND.play('pikoPop');
     } else if(window.EC_SOUND && window.EC_SOUND.play) window.EC_SOUND.play('pikoLine');
     bubble.classList.remove('hidden');
+    // Clicks stay off for a short beat after the line appears, so a click
+    // aimed at the moment it pops in can't land on what it points to.
+    document.body.classList.add('piko-line-pending');
+    clearTimeout(unlockTimer);
+    // …and not before the dim overlay has finished fading in.
+    const unlock = () => {
+      const wait = dimDoneAt - Date.now();
+      if(wait > 0){ unlockTimer = setTimeout(unlock, wait); return; }
+      document.body.classList.remove('piko-line-pending');
+    };
+    unlockTimer = setTimeout(unlock, CLICK_UNLOCK_MS);
     clearInterval(typeTimer);
     caretEl.classList.remove('idle');
     let i = 0;
@@ -224,8 +242,12 @@
         clearInterval(placeRetryTimer); placeRetryTimer = null;
         place();
         cursor.classList.remove('hidden');
-        if(opts.dim !== false && !lift) hole.classList.remove('hidden'); else hole.classList.add('hidden');
+        if(opts.dim !== false && !lift){
+          if(hole.classList.contains('hidden')) dimDoneAt = Date.now() + DIM_FADE_MS; // overlay is fading in
+          hole.classList.remove('hidden');
+        } else hole.classList.add('hidden');
         currentTarget = el;
+        el.classList.add('piko-pointed');
       };
       const place = () => {
         r = el.getBoundingClientRect();
@@ -261,6 +283,7 @@
   function clearTarget(){
     const { cursor, hole } = ensureDom();
     clearInterval(placeRetryTimer); placeRetryTimer = null;
+    document.querySelectorAll('.piko-pointed').forEach(n => n.classList.remove('piko-pointed'));
     currentTarget = null;
     document.querySelectorAll('.piko-lift').forEach(n => n.classList.remove('piko-lift'));
     document.querySelectorAll('.piko-lift-dim').forEach(n => n.remove());

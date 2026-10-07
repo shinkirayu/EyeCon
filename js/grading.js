@@ -124,12 +124,14 @@
         el.x + el.w <= level.canvas.w - check.safeMargin && el.y + el.h <= level.canvas.h - check.safeMargin);
       case 'minW': return els.every(el => el.w >= check.minW);
       case 'minH': return els.every(el => el.h >= check.minH);
-      case 'minFont': return els.every(el => el.fontSize >= check.minFont);
+      case 'minFont': return els.every(el => el.fontSize === check.minFont); // for now: exactly the target size, not just at least
       case 'maxFont': return els.every(el => el.fontSize <= check.maxFont);
       case 'bigger': return els.length === 2 && els[0].fontSize > els[1].fontSize;
       // Several elements in one contrast goal must also share one exact color,
       // so the fix stays consistent (e.g. both input placeholders).
-      case 'contrast': return sameColor() && els.every(el => {
+      // Several pieces must read the same: equal ratios as shown (one decimal),
+      // not identical hex codes, so #777777 and #767676 (both 4.5:1) count.
+      case 'contrast': return new Set(els.map(el => window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)).toFixed(1))).size <= 1 && els.every(el => {
         const bold = Number(el.fontWeight) >= 700 || el.fontWeight === 'bold';
         return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass;
       });

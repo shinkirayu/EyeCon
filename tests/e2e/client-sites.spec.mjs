@@ -5,7 +5,7 @@ test('client websites fill the browser and support navigation and interactions',
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
     window.EC_NO_PIKO=true;
-    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings'],onboarding:{seen:true}}));
+    localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings'],onboarding:{seen:true},workday:{day:2,submissions:0,reviews:[],coins:0,xp:0}})); // tutorial done, so it's day 2
   });
   await page.goto('/');
   await page.getByRole('button',{name:'Open EyeCon',exact:true}).click();
@@ -30,10 +30,12 @@ test('client websites fill the browser and support navigation and interactions',
     await page.getByLabel('What’s on your mind?',{exact:true}).fill('Hello there!');
     await page.getByRole('button',{name:'Leave a note'}).click();
     await expect(page.locator('.client-form-status')).toContainText('Thanks, Alex!');
-    await nav.getByRole('button',{name:section,exact:true}).click();
-    await expect(page.locator('.client-saved-design > div')).toBeVisible();
-    await page.locator('.client-card').first().click();
-    await expect(page.locator('.client-detail')).toBeVisible();
+    if(name!=='Mayonnaisegee'){ // Mayonnaisegee's site has no Work page (Home, About, Contact only)
+      await nav.getByRole('button',{name:section,exact:true}).click();
+      await expect(page.locator('.client-saved-design > div')).toBeVisible();
+      await page.locator('.client-card').first().click();
+      await expect(page.locator('.client-detail')).toBeVisible();
+    }
     if(name==='Yappers.com'){
       await page.getByLabel('Your introduction',{exact:true}).fill('Hello flock!');
       await page.getByRole('button',{name:'Post introduction'}).click();

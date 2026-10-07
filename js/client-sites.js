@@ -49,7 +49,8 @@
     designObserver?.disconnect();
     const s=specs[project.id];
     const workLabel=project.id==='mayo'?'Work':project.id==='yappers'?'Community':'World';
-    const routes=[['home','Home'],[s.destination,workLabel],['about','About'],['contact','Contact']];
+    // Mayonnaisegee's site only has the three pages its portfolio header links to.
+    const routes=project.id==='mayo'?[['home','Home'],['about','About'],['contact','Contact']]:[['home','Home'],[s.destination,workLabel],['about','About'],['contact','Contact']];
     if(project.id==='haybuhay') routes.push(['settings','Settings']);
     host.innerHTML=`<article class="client-site site-${project.id}"><header class="client-nav"><button class="client-brand" data-route="home">${project.avatarEmoji}<span>${project.name}</span></button><nav aria-label="${project.name} navigation">${routes.map(([r,label])=>`<button data-route="${r}" ${route===r?'aria-current="page"':''}>${label}</button>`).join('')}</nav></header><main class="client-content"></main><footer class="client-footer"><span>${project.name} · A little space of our own.</span><button data-route="contact">Let’s talk ↗</button></footer></article>`;
     const main=host.querySelector('main');

@@ -5,12 +5,12 @@
   <symbol id="triangle" viewBox="0 0 64 64"><path d="M8 50V14a5 5 0 0 1 8-4l40 40a5 5 0 0 1-4 8H16a8 8 0 0 1-8-8zm13-2h18L21 30z" fill="#A982E8" fill-rule="evenodd"/></symbol>
   <symbol id="bulb" viewBox="0 0 64 64"><path d="M32 7a20 20 0 0 0-13 35c3 3 5 6 5 10h16c0-4 2-7 5-10A20 20 0 0 0 32 7z" fill="#BFE4D9"/><path d="M25 52h14v5a7 7 0 0 1-14 0z" fill="#A982E8"/><path d="M32 17a11 11 0 0 0-8 18" fill="none" stroke="#FFF5DE" stroke-width="5" stroke-linecap="round"/><g stroke="#BFE4D9" stroke-width="4" stroke-linecap="round"><path d="M32 1v3M8 12l3 3M56 12l-3 3M4 35h4M60 35h-4"/></g></symbol>
   <symbol id="eye" viewBox="0 0 64 64"><path d="M4 32c8-13 18-20 28-20s20 7 28 20c-8 13-18 20-28 20S12 45 4 32z" fill="#DED5FA"/><circle cx="32" cy="32" r="13" fill="#A982E8"/><circle cx="32" cy="32" r="7" fill="#8C61D6"/><circle cx="38" cy="25" r="5" fill="#FFF5DE"/></symbol>
-  <symbol id="undo" viewBox="0 0 64 64"><path d="M24 10 7 27l17 15V31c24-3 31 8 29 25 11-22-2-41-29-39z" fill="#2F7A70"/></symbol>
-  <symbol id="redo" viewBox="0 0 64 64"><path d="m40 10 17 17-17 15V31C16 28 9 39 11 56 0 34 13 15 40 17z" fill="#2F7A70"/></symbol>
+  <symbol id="undo" viewBox="0 0 64 64"><image href="../sprites/undo-teal.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="redo" viewBox="0 0 64 64"><image href="../sprites/redo-teal.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="home" viewBox="0 0 64 64"><image href="../sprites/home.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="mail" viewBox="0 0 64 64"><image href="../sprites/mail.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="person" viewBox="0 0 64 64"><image href="../sprites/user-profile.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
-  <symbol id="settings" viewBox="0 0 64 64"><image href="../sprites/settings.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="settings" viewBox="0 0 64 64"><image href="../sprites/settings-purple.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="shop" viewBox="0 0 64 64"><image href="../sprites/shop.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="cart" viewBox="0 0 64 64"><image href="../sprites/cart.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="spark" viewBox="0 0 64 64"><path d="M32 4 38 25l21 7-21 7-6 21-7-21L4 32l21-7z" fill="#A982E8"/><circle cx="32" cy="32" r="5" fill="#FFF5DE"/></symbol>

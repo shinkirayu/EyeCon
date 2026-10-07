@@ -143,19 +143,27 @@
   function projectOf(level){ return (window.EC_PROJECTS || []).find(p=>p.id===level.project) || { needsGood:0, pay:40 }; }
   function projectUnlocked(profile, project){ return goodFeedbackCount(profile) >= project.needsGood; }
   // Three submissions per workday, including revisions.
-  function dailyTaskLimit(){ return TUTORIAL_ONLY ? Infinity : 3; } // no day cap while only the tutorial exists
+  // Day 1 is the tutorial: no cap while it runs, and the day ends once its
+  // three jobs are done. From day 2 the usual three submissions a day.
+  function dailyTaskLimit(profile){
+    if(!TUTORIAL_ONLY) return 3;
+    profile = profile || load();
+    if(workday(profile).day > 1) return 3;
+    return tutorialDone(profile) ? 0 : Infinity;
+  }
+  function tutorialDone(profile){ return window.EC_LEVELS.filter(l => l.levelNumber <= 3).every(l => profile.completed.includes(l.id)); }
   function workday(profile){
     if(!profile.workday) profile.workday={day:1,submissions:0,reviews:[],coins:0,xp:0};
     return profile.workday;
   }
   function beginWorkSubmission(profile){
     const day=workday(profile);
-    if(day.submissions>=dailyTaskLimit() || profile.pendingClientReply || profile.readyReply)return false;
+    if(day.submissions>=dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return false;
     day.submissions++;save(profile);return true;
   }
   function nextWorkday(profile){
     const day=workday(profile);
-    if(day.submissions<dailyTaskLimit() || profile.pendingClientReply || profile.readyReply)return false;
+    if(day.submissions<dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return false;
     profile.workday={day:day.day+1,submissions:0,reviews:[],coins:0,xp:0};
     save(profile);return true;
   }
@@ -223,12 +231,16 @@
   function nextLockedProject(profile){
     return (window.EC_PROJECTS || []).find(p=>!projectUnlocked(profile, p));
   }
-  // ponytail: only the three tutorial jobs exist for now, one at a time in order; set false for the full game.
-  const TUTORIAL_ONLY = !window.EC_ALL_JOBS; // tests set EC_ALL_JOBS for the full game
+  // ponytail: the 7 Figma jobs only — day 1 is the tutorial (jobs 1–3, one at a time),
+  // then jobs 4–7 open from day 2. Set EC_ALL_JOBS (tests) for the full game.
+  const TUTORIAL_ONLY = !window.EC_ALL_JOBS;
   function commissionInbox(profile, date = new Date()){
     if(TUTORIAL_ONLY){
-      const next = window.EC_LEVELS.filter(l => l.levelNumber <= 3).sort((a,b) => a.levelNumber - b.levelNumber).find(l => !profile.completed.includes(l.id));
-      return next ? [next] : [];
+      const byNum = window.EC_LEVELS.filter(l => l.levelNumber <= 7).sort((a,b) => a.levelNumber - b.levelNumber);
+      const open = byNum.filter(l => !profile.completed.includes(l.id));
+      if(!tutorialDone(profile)) return open.slice(0, 1);            // tutorial: next job only
+      if(workday(profile).day === 1) return [];                      // day 1 is over
+      return open;                                                   // day 2+: jobs 4–7
     }
     const remaining = Math.max(0, dailyTaskLimit(profile) - tasksDoneToday(profile, date));
     const levels = window.EC_LEVELS;

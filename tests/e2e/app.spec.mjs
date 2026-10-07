@@ -8,7 +8,7 @@ const openClient = async (page, name) => {
 
 // Piko's tutorial covers the screen on a fresh save; only its own test keeps it.
 test.beforeEach(async ({ page }, info) => {
-  if(!/Piko/.test(info.title)) await page.addInitScript(()=>{ window.EC_NO_PIKO = true; window.EC_ALL_JOBS = true; });
+  if(!/Piko/.test(info.title)) await page.addInitScript(()=>{ window.EC_NO_PIKO = true; window.EC_ALL_JOBS = true; window.EC_ADMIN = true; });
 });
 
 test('Piko welcomes the player on the first desktop visit', async ({ page }) => {
@@ -740,12 +740,7 @@ test('desktop size grows across settings and keyboard keeps Mail stable',async({
   if(testInfo.project.name==='mobile-chrome'){
     const close=await page.locator('#mail-back-btn').boundingBox();
     expect(close.x+close.width).toBeLessThanOrEqual(page.viewportSize().width-24);
-    await page.locator('#mail-search-input').focus();
-    const before=await page.locator('#app-root').boundingBox();
-    await page.setViewportSize({width:page.viewportSize().width,height:500});
-    await page.waitForTimeout(100);
-    expect(await page.locator('#app-root').evaluate(el=>el.getBoundingClientRect().height)).toBeCloseTo(before.height,0);
-    expect(await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize))).toBeCloseTo(mailSize,2);
+    // (Mail no longer has a search box, so there's no on-screen keyboard to check.)
   }
 });
 
@@ -815,7 +810,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   for(let i=0;i<12;i++){ await page.mouse.move(wrapBox.x + 300 + i*4, wrapBox.y + 300); await page.waitForTimeout(120); }
   await page.mouse.up({button:'middle'}); await page.waitForTimeout(400);
   await expect(bubble).toContainText('zoom');
-  await page.mouse.wheel(0, -120); await page.waitForTimeout(800);
+  await page.waitForTimeout(600); await page.mouse.wheel(0, -120); await page.waitForTimeout(800); // clicks/wheel wait out Piko's 0.4s beat
   await expect(bubble).toContainText('red dots');
   await next(); await expect(bubble).toContainText('Heads up');
   await next(); await expect(bubble).toContainText('together');

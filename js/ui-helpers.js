@@ -149,7 +149,7 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><img class="
   // everything has loaded and the size has had a moment to settle.
   function reveal(){ document.documentElement.classList.remove('booting'); }
   window.addEventListener('load', () => { fit(); setTimeout(() => { fit(); requestAnimationFrame(reveal); }, 250); });
-  setTimeout(reveal, 4000); // never stay hidden if 'load' is slow
+  setTimeout(reveal, 20000); // wait for every asset; only give up on a very slow connection
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
   // Safari's address bar showing/hiding changes the visible area without a resize.
@@ -163,3 +163,11 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('touchmove', e => {
   if(e.touches.length > 1 && !e.target.closest('#editor-canvas-wrap, .maker-stage')) e.preventDefault();
 }, { passive:false });
+
+// The game is a fixed-size app: block the browser's page zoom (Ctrl/⌘ + wheel,
+// Ctrl/⌘ + plus/minus/0). Size is changed in Settings > Size instead. The
+// design canvases still handle their own wheel zoom before this runs.
+window.addEventListener('wheel', e => { if(e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive:false });
+window.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && ['+','=','-','_','0'].includes(e.key)) e.preventDefault();
+});

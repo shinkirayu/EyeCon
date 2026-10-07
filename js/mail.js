@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const TIER_LABEL = { novice:'NOVICE', intermediate:'INTERMEDIATE', advanced:'ADVANCED', expert:'EXPERT' };
+  const TIER_LABEL = { novice:'NOVICE', intermediate:'NOVICE', advanced:'INTERMEDIATE', expert:'ADVANCED' }; // shown one tier down for now
   let handlers = { onAccept:()=>{}, onSend:()=>{}, onOpenReply:()=>{} };
   let activeLevel = null;
   let pendingGradeResult = null;
@@ -104,7 +104,7 @@
   function debugButton(label, title, run){
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'mail-debug-btn'; b.textContent = label; b.title = title;
-    b.addEventListener('click', e => { e.stopPropagation(); const p = window.EC_STORE.load(); run(p); window.EC_STORE.save(p); location.reload(); });
+    b.addEventListener('click', e => { e.stopPropagation(); const p = window.EC_STORE.load(); run(p); window.EC_STORE.save(p); handlers.onDebugChange?.(p); });
     return b;
   }
   function skipLevel(p, level){

@@ -39,7 +39,7 @@
 <body>
   <!-- Startup loader: shown while the game is hidden until its size settles (see the inline script in <head>). -->
   <div class="app-loading-screen boot-loader" id="boot-loader" aria-live="polite">
-    <div class="loading-spinner"><span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span><span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span></div>
+    <img class="loading-eyes" src="assets/landing/loading-eyes.webp" alt="" />
     <div class="loading-label">Loading EyeCon…</div>
   </div>
 
@@ -209,13 +209,15 @@
   <section id="screen-shell" class="screen" aria-label="Eye Mail">
     <header class="mail-header">
       <button class="app-back-btn" id="mail-back-btn" aria-label="Close Eye Mail" title="Close Eye Mail">←</button>
-      <div class="mail-logo">
-        <div class="eyecon-logo small"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
-        <span>Eye Mail</span>
+      <div class="mail-logo mail-logo-stack">
+        <img src="assets/sprites/piko.png" alt="" />
+        <span>EyeMail</span>
       </div>
-      <div class="mail-search">
-        <span class="icon-search">🔍</span>
-        <input type="text" id="mail-search-input" placeholder="Search Mail" aria-label="Search Mail"/>
+      <!-- Career progress (replaces the old search bar): jobs done out of 7, current tier → next tier. -->
+      <div class="mail-search mail-progress" id="mail-progress">
+        <b id="mail-progress-from">Novice</b>
+        <div class="mail-progress-track" role="progressbar" aria-label="Jobs completed" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0"><i id="mail-progress-fill"></i></div>
+        <b id="mail-progress-to">Intermediate</b>
       </div>
       <div class="mail-header-right">
         <div class="xp-chip" id="xp-chip" title="Level & XP">Lv. <span id="hdr-level">1</span></div>
@@ -475,11 +477,7 @@
   <!-- Brief loading transition between "Accept" on a mail job and the
        editor actually opening — see showLoadingTransition in app.js. -->
   <div class="app-loading-screen hidden" id="app-loading-screen" aria-hidden="true">
-    <div class="loading-spinner">
-      <span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span>
-      <span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span>
-      <span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span>
-    </div>
+    <img class="loading-eyes" src="assets/landing/loading-eyes.webp" alt="" />
     <div class="loading-label">Opening your workspace…</div>
   </div>
 

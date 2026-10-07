@@ -1575,7 +1575,7 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 }
 /* Taskbar: Home, Profile and Settings on the left. */
 #global-taskbar #taskbar-profile,#global-taskbar #taskbar-settings{display:flex;align-items:center;justify-content:center;background:none;font-size:0;}
-#global-taskbar :is(#taskbar-profile,#taskbar-settings)[aria-expanded="true"] .game-taskbar-icon{filter:drop-shadow(0 0 .375rem #77b9af);}
+#global-taskbar #taskbar-profile[aria-expanded="true"] .game-taskbar-icon{filter:brightness(.78) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 2px 3px #3b172e33);} /* open: keep the white outline, darken the icon */
 /* Clock: big time, small day underneath. */
 #global-taskbar .taskbar-clock{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;color:#3f8a3a;}
 #global-taskbar .taskbar-clock .taskbar-time{height:auto;font:800 2rem/1 var(--font-display);}
@@ -2216,3 +2216,54 @@ body.piko-no-badge #screen-desktop #icon-mail #desktop-inbox-badge{display:none;
 .site-haybuhay .client-preferences,.site-haybuhay .client-card,.site-haybuhay .client-form,.site-haybuhay .client-detail{color:#310032;}
 .site-haybuhay .client-preferences p,.site-haybuhay .client-card h3,.site-haybuhay .client-form label,.site-haybuhay .client-form p,.site-haybuhay .client-detail h2,.site-haybuhay .client-detail p{color:#310032;}
 #screen-editor .editor-position-row .editor-size-stepper input{width:4.5rem;font-variant-numeric:tabular-nums;}
+/* Game UI isn't a document: no drag-to-select highlighting (typing fields still work). */
+body{-webkit-user-select:none;user-select:none;}
+input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;}
+/* Loading screens: Piko's spinning eyes instead of the dot spinner. */
+.app-loading-screen .loading-eyes{width:min(18rem,55vw);height:auto;}
+#boot-loader .loading-eyes{width:min(20rem,60vw);}
+/* EyeMail header: Piko stacked over the name; progress bar where search was. */
+/* Centred over the folder buttons (same 21rem column); Piko without brows. */
+#screen-shell .mail-logo-stack{width:21rem;display:flex;flex-direction:column;align-items:center;gap:.25rem;line-height:1;}
+#screen-shell .mail-logo-stack img{width:8.5rem;height:auto;clip-path:inset(15% 0 0 0);margin-top:-1.1rem;}
+#screen-shell .mail-logo-stack span{font:800 3.75rem/1 var(--font-display);color:#2f6f6d;}
+#screen-shell .mail-progress{display:flex;align-items:center;gap:1rem;padding:.75rem 1.5rem;background:#fcf7ef;border:.1875rem solid #a5d6cc;box-shadow:.375rem .4375rem 0 #d2d8d1;border-radius:1rem!important;} /* old search bar look, less rounded */
+#screen-shell .mail-progress b{font:800 1.5rem var(--font-display);color:#3b172e;white-space:nowrap;}
+#screen-shell .mail-progress-track{flex:1;height:2.5rem;border-radius:.5rem;background:#e3f1ec;overflow:hidden;}
+#screen-shell .mail-progress-track i{display:block;height:100%;width:0;border-radius:.5rem;transition:width .6s ease;background:#ffcf52;}
+/* Folder buttons sit centred in their column: same 3rem gap on the left and right. */
+#screen-shell .mail-body{gap:3rem!important;}
+#screen-shell .mail-logo-stack span{color:#7555af;} /* Piko purple */
+@media(min-width:901px){#screen-shell .mail-progress{left:27rem!important;right:6.5rem!important;width:auto!important;max-width:66rem;margin-inline:auto!important;}} /* centred over the mail list (same left/right edges) */
+/* Reward total: same ink colour as the profile's "Coins:" line (the + too). */
+#modal-reward .reward-total,#modal-reward .reward-total .money{color:#3b172e;}
+html.slider-dragging,html.slider-dragging *{cursor:none!important;}
+/* Mayonnaisegee About/Contact: same look as the fixed portfolio page —
+   white header with the big logo + Roboto Slab links, flat sky-blue page
+   with the portfolio's white/blue double stripes, no art piled behind text. */
+.site-mayo .client-nav{padding:1.5rem clamp(1.5rem,5.5vw,6.5rem);min-height:5.5rem;}
+.site-mayo .client-brand span{font-size:clamp(1.75rem,2.4vw,2.5rem);}
+.site-mayo .client-nav nav{gap:clamp(1rem,2vw,2rem);}
+.site-mayo .client-nav nav button{font-size:clamp(1.125rem,1.4vw,1.375rem);}
+.site-mayo .client-content{background:
+  linear-gradient(#fff 0 0) 0 1.25rem/100% .5rem no-repeat,
+  linear-gradient(#5d8fd6 0 0) 0 2rem/100% 2px no-repeat,
+  linear-gradient(#fff 0 0) 0 2.5rem/100% .5rem no-repeat,
+  var(--site-paper)!important;padding-top:4rem;}
+.site-mayo .client-hero>div:first-child,.site-mayo .client-contact>div:first-child{background:transparent;padding:0;}
+.site-mayo .client-hero-art{background:#d9efff url('../assets/levels/mayo/art-strips.png') center/cover;border:.375rem solid #fff;box-shadow:0 0 0 2px #5d8fd6;}
+.site-mayo .client-footer{background:#fff;border-top:0;}
+.site-mayo .client-hero-art>img{display:none;} /* the panel art already shows her; no doubled avatar */
+/* Admin tools (Settings > Admin tools): hidden for players. */
+html:not(.admin-tools) .mail-debug-btn,html:not(.admin-tools) #icon-maker,html:not(.admin-tools) .mini-desktop-icon[data-app="maker"]{display:none!important;}
+html:not(.admin-tools) .profile-settings-list .admin-only{display:none!important;} /* keyboard sound, editor layout/theme: admin only */
+.profile-settings-list .qs-reset{min-height:0;padding:.25rem .75rem;font-size:1rem;border-radius:.5rem;width:auto;}
+/* (stronger than the desktop-icon layout rule, which also uses !important) */
+html:not(.admin-tools) #screen-desktop .desktop-icons .desktop-icon#icon-maker,html:not(.admin-tools) #taskbar-open-apps [data-app="maker"]{display:none!important;}
+/* Piko: whatever he's pointing at only works once his line is on screen. */
+body.piko-line-pending *{pointer-events:none!important;} /* nothing reacts in the beat before a line appears */
+/* First-day tutorial: taskbar Home is off so the flow can't be broken. */
+body.piko-tutorial #taskbar-home{pointer-events:none;opacity:.5;}
+/* A tutorial "allowed" control (e.g. the attachment) still waits for Piko's
+   line — this must beat the .piko-allow rule, so it's more specific and later. */
+html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow *{pointer-events:none!important;}

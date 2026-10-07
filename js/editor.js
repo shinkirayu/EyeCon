@@ -58,7 +58,7 @@
 
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function roundTo8(n){ return Math.max(8, Math.round(n/8)*8); }
-  const ZOOM_MIN = 0.97, ZOOM_MAX = 5; // 97% – 500% (no zooming far out for now)
+  const ZOOM_MIN = matchMedia('(pointer:coarse)').matches ? 0.25 : 0.64, ZOOM_MAX = 5; // 64% – 500% (phones start at 30%, so they keep 25%)
   const ZOOM_EASE = 0.12;          // lower = smoother/slower glide, higher = snappier
   const ZOOM_WHEEL_SENSITIVITY = 0.00085; // lower = gentler zoom per wheel notch
 
@@ -135,10 +135,10 @@
       case 'safeMargin': return `edge ${Math.min(...els.map(e=>Math.min(e.x, e.y, state.level.canvas.w-e.x-e.w, state.level.canvas.h-e.y-e.h)))}px / ${check.safeMargin}`;
       case 'contrast': {
         const ratios = els.map(e=>window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)));
-        // Several elements: show each ratio, and flag when the colors don't match.
-        const differ = new Set(els.map(e=>e.color.toLowerCase())).size > 1;
-        const shown = els.length > 1 ? [...new Set(ratios.map(r=>r.toFixed(1)))].join(' · ') : ratios[0].toFixed(1);
-        return `${shown}:1 / 4.5${differ ? ' · colors differ' : ''}`;
+        // Several elements: show each ratio, and flag when they don't match.
+        const shownSet = [...new Set(ratios.map(r=>r.toFixed(1)))];
+        const shown = els.length > 1 ? shownSet.join(' · ') : ratios[0].toFixed(1);
+        return `${shown}:1 / 4.5${shownSet.length > 1 ? ' · ratios differ' : ''}`;
       }
       case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
       case 'centeredX': return `centre ${Math.round(els[0].x + els[0].w/2)} / ${state.level.canvas.w/2}`;
@@ -161,14 +161,15 @@
     }
     const G = window.EC_GRADING;
     const results = G.checkGoals(state.level, state.elements);
-    // Suggest one task at a time, in list order. When it's done, move on to the
-    // next unfinished one; an earlier task that breaks again doesn't pull it back.
-    const nextOpen = from => { for(let k = 0; k < results.length; k++){ const j = (from + k) % results.length; if(!results[j].met) return j; } return null; };
-    if(state.focusGoal == null || results[state.focusGoal]?.met) state.focusGoal = nextOpen(state.focusGoal == null ? 0 : state.focusGoal + 1);
+    // Selecting an element highlights the task(s) it belongs to (no default focus).
+    const sel = state.selectedId;
+    const isFocus = goal => !!sel && G.goalIds(goal.check).includes(sel);
+    // Tasks read top to bottom, in the order their elements sit on the page.
+    const topOf = goal => Math.min(...G.goalIds(goal.check).map(id => byId(id)?.y ?? Infinity));
     // Tasks grouped by skill, each section opening with its rule (a level can
     // reword it with level.categoryIntro), then a handoff checklist with one
     // line per skill that ticks when all of that skill's required tasks pass.
-    const sections = CATEGORY_ORDER.map(cat => ({ cat, items: results.map((r, i) => Object.assign({ i }, r)).filter(r => goalCategory(r.goal) === cat) }))
+    const sections = CATEGORY_ORDER.map(cat => ({ cat, items: results.map((r, i) => Object.assign({ i }, r)).filter(r => goalCategory(r.goal) === cat).sort((a, b) => topOf(a.goal) - topOf(b.goal)) }))
       .filter(sec => sec.items.length);
     const doneCount = results.filter(r => r.met).length;
     // Task progress lives in the client card at the top of the rail.
@@ -188,7 +189,7 @@
       const ul = document.createElement('ul');
       items.forEach(({goal, met, i}) => {
         const li = document.createElement('li');
-        li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '') + (i === state.focusGoal ? ' focus' : '');
+        li.className = 'editor-goal' + (met ? ' met' : '') + (goal.bonus ? ' bonus' : '') + (isFocus(goal) ? ' focus' : '');
         li.setAttribute('aria-label', `${met ? 'Done' : 'To do'}: ${goal.label}`);
         const box = Object.assign(document.createElement('span'), {className:'editor-goal-tick', textContent: met ? '✓' : ''});
         box.setAttribute('aria-hidden', 'true');
@@ -197,7 +198,7 @@
         if(goal.bonus) text.append(Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent:'BONUS'}));
         body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
         // The tip shows on the suggested task; the reason shows once a task is done.
-        if(i === state.focusGoal) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
+        if(isFocus(goal)) body.append(Object.assign(document.createElement('small'), {textContent:`Tip: ${goal.tip}`}));
         li.append(box, body);
         ul.append(li);
       });
@@ -207,6 +208,9 @@
     // Progress shows once (the client card); each task's tick shows the rest,
     // so the category badges carry no count and there is no separate checklist.
     list.replaceChildren(...cards);
+    // On a new selection, scroll the task list so its highlighted task is in view.
+    if(sel && sel !== state.scrolledToSel) list.querySelector('.editor-goal.focus')?.scrollIntoView({ block:'nearest', behavior:'smooth' });
+    state.scrolledToSel = sel;
   }
 
 
@@ -309,12 +313,11 @@
     if(!canvas || !level) return;
     const base = baseFitScale(level.canvas.w, level.canvas.h);
     const scale = base * state.displayZoom;
-    // Keep the design in reach: it can slide at most PAN_SLACK px past the
-    // workspace edges, so panning can't get lost in empty space.
+    // Keep the design in reach at any zoom: you can pan until any edge or
+    // corner of it reaches the middle of the workspace, but no further.
     const wrap = document.getElementById('editor-canvas-wrap');
     if(wrap){
-      const PAN_SLACK = 120;
-      const clamp = (pan, room, size) => Math.min(Math.max(pan, Math.min(room - size, 0) - PAN_SLACK), Math.max(room - size, 0) + PAN_SLACK);
+      const clamp = (pan, room, size) => Math.min(Math.max(pan, room / 2 - size), room / 2);
       state.panX = clamp(state.panX, wrap.clientWidth, level.canvas.w * scale);
       state.panY = clamp(state.panY, wrap.clientHeight, level.canvas.h * scale);
     }
@@ -602,7 +605,7 @@
     }
     clearHintHighlight();
     state.selectedId = id;
-    updateGoalMarkers();
+    updateLiveScore(); // re-highlights this element's tasks
     const el = byId(id);
     if(!el){ resetSettingsPlaceholder(); return; }
     const div = state.domNodes[id];
@@ -624,7 +627,7 @@
       if(prev) prev.classList.remove('selected');
     }
     state.selectedId = null;
-    updateGoalMarkers();
+    updateLiveScore();
     renderSpacing();
     resetSettingsPlaceholder();
   }
@@ -710,16 +713,16 @@
     const base=originalColor(el,key);
     const amount=sliderValues(el,key).sat;
     const {grey,vivid}=barColors(el,key);
-    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical" style="--sat-grey:${grey};--sat-vivid:${vivid}"><span>Text saturation <output>${amount}%</output></span><input type="range" class="editor-sat-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text saturation, grey at bottom and vivid at top"/></label>`;
-    return `<label class="editor-tone-field"><span>${label} saturation <output>${amount}%</output></span><div class="editor-tone-row"><input type="range" data-bar="${key}" class="editor-sat-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} saturation" style="--sat-grey:${grey};--sat-vivid:${vivid}"/></div><small>Grey <span>Vivid</span></small></label>`;
+    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical" style="--sat-grey:${grey};--sat-vivid:${vivid}"><span>Text saturation <output>${Math.round(amount)}%</output></span><input type="range" class="editor-sat-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text saturation, grey at bottom and vivid at top"/></label>`;
+    return `<label class="editor-tone-field"><span>${label} saturation <output>${Math.round(amount)}%</output></span><div class="editor-tone-row"><input type="range" data-bar="${key}" class="editor-sat-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="${label} saturation" style="--sat-grey:${grey};--sat-vivid:${vivid}"/></div><small>Grey <span>Vivid</span></small></label>`;
   }
   function toneControl(el,key,label,id){
     const base=originalColor(el,key);
     if(!hexColor(base))return '';
     const amount=sliderValues(el,key).tone;
     const top=barColors(el,key).top;
-    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${amount}%</output></span><input type="range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
-    return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${amount}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
+    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
+    return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${Math.round(amount)}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
   }
 
   function showSettings(el){
@@ -832,7 +835,7 @@
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
       el.colorTone=Number(e.target.value);
       el.color=mixColor(el,'color');refreshElementDom(el);refreshBars(el,'color',fields);
-      e.target.closest('.editor-tone-field').querySelector('output').textContent=el.colorTone+'%';
+      e.target.closest('.editor-tone-field').querySelector('output').textContent=Math.round(el.colorTone)+'%';
       e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.color;
       refreshContrastBadge(el);
     });
@@ -843,7 +846,7 @@
       input.addEventListener('input', e=>{
         el[key+'Sat']=Number(e.target.value);
         el[key]=mixColor(el,key);refreshElementDom(el);
-        e.target.closest('.editor-tone-field').querySelector('output').textContent=el[key+'Sat']+'%';
+        e.target.closest('.editor-tone-field').querySelector('output').textContent=Math.round(el[key+'Sat'])+'%';
         const swatch=q(key==='color'?'#f-color':'#f-bg')?.closest('.editor-tone-field').querySelector('.editor-tone-swatch');
         refreshBars(el,key,fields);
         if(swatch) swatch.style.background=el[key];
@@ -854,7 +857,7 @@
     if(q('#f-bg')) q('#f-bg').addEventListener('input', e=>{
       el.bgTone=Number(e.target.value);
       el.bg=mixColor(el,'bg');refreshElementDom(el);refreshBars(el,'bg',fields);
-      e.target.closest('.editor-tone-field').querySelector('output').textContent=el.bgTone+'%';
+      e.target.closest('.editor-tone-field').querySelector('output').textContent=Math.round(el.bgTone)+'%';
       e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.bg;
       refreshContrastBadge(el);
     });
@@ -1750,6 +1753,50 @@
     outer.appendChild(inner);
     container.appendChild(outer);
   }
+
+  // Colour sliders: dragging moves the value at 30% of the pointer's speed, so
+  // you can land on an exact ratio. A click without dragging still jumps there.
+  const SLIDER_DRAG_SPEED = 0.3;
+  document.addEventListener('pointerdown', e => {
+    const input = e.target.closest?.('#element-settings .editor-tone-field input[type=range]');
+    if(!input || e.button !== 0) return;
+    e.preventDefault();
+    input.focus();
+    const r = input.getBoundingClientRect(), vertical = r.height > r.width;
+    const min = +input.min, max = +input.max, len = vertical ? r.height : r.width;
+    const start = +input.value, x0 = e.clientX, y0 = e.clientY;
+    let moved = false, dx = 0, dy = 0;
+    const set = v => { input.value = Math.min(max, Math.max(min, v)); input.dispatchEvent(new Event('input', { bubbles:true })); };
+    const move = ev => {
+      dx = ev.clientX - x0; dy = ev.clientY - y0;
+      const d = vertical ? -dy : dx; // up / right raises the value
+      if(Math.abs(d) > 2 && !moved){ moved = true; document.documentElement.classList.add('slider-dragging'); } // hide the cursor while sliding
+      if(moved) set(start + d / len * (max - min) * SLIDER_DRAG_SPEED);
+    };
+    const up = ev => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+      document.documentElement.classList.remove('slider-dragging');
+      if(!moved){ // plain click: jump to that spot like a normal slider
+        const f = vertical ? (r.bottom - y0) / r.height : (x0 - r.left) / r.width;
+        set(min + Math.min(1, Math.max(0, f)) * (max - min));
+      }
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  }, true);
+
+  // Arrow keys on the colour sliders move exactly one colour shade per press
+  // (100/255 %), so no contrast value gets skipped; Page Up/Down jump 10 shades.
+  document.addEventListener('keydown', e => {
+    const input = e.target.closest?.('#element-settings .editor-tone-field input[type=range]');
+    const SHADE = 100 / 255;
+    const dir = { ArrowUp:SHADE, ArrowRight:SHADE, ArrowDown:-SHADE, ArrowLeft:-SHADE, PageUp:10*SHADE, PageDown:-10*SHADE }[e.key];
+    if(!input || !dir) return;
+    e.preventDefault();
+    input.value = Math.min(+input.max, Math.max(+input.min, +input.value + dir));
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    input.dispatchEvent(new Event('change', { bubbles:true }));
+  }, true);
 
   // Only text size is typed; position/size/etc. snap to the 8px grid, so they
   // change by dragging, arrow keys or the spinner, never free typing.

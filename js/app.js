@@ -120,7 +120,7 @@
   // pikoScript.tutorial, just driven by EC_PIKO instead of a static modal.
   function runPikoIntro(){
     const P = window.EC_PIKO, lines = P.SCRIPT.tutorial;
-    document.body.classList.add('piko-intro', 'piko-no-badge'); // apps locked while Piko talks; mail "arrives" later
+    document.body.classList.add('piko-intro', 'piko-no-badge', 'piko-tutorial'); // apps locked while Piko talks; mail "arrives" later; Home off for the whole first-day tour
     P.say(lines[0], { onDone: ()=>{
       P.say(lines[1], { onDone: ()=>{
         window.EC_SOUND.play('newMail');
@@ -130,6 +130,7 @@
         // The red count pops in first; a beat later Piko points it out
         // (the dim fades in together with his "you've got mail" line).
         document.body.classList.remove('piko-no-badge');
+        document.body.classList.add('piko-line-pending'); // Mail can't be opened until he says so
         setTimeout(()=>{
           document.body.classList.remove('piko-intro');
           pikoStage = 'mail';
@@ -253,6 +254,7 @@
       P.clearTarget();
       pikoStage = null;
       profile.onboarding.seen = true;
+      document.body.classList.remove('piko-tutorial');
       save();
       runPikoLevelTips(level, ()=>{});
     })();
@@ -340,6 +342,7 @@
     window.EC_PIKO.clearTarget();
     document.getElementById('icon-mail')?.classList.remove('tutorial-mail-pulse');
     pikoStage = 'inbox';
+    document.body.classList.add('piko-line-pending'); // no early clicks on the inbox before Piko speaks
     setTimeout(()=>{
       const row = document.querySelector('#mail-list .mail-item');
       const level = window.EC_MAIL.arrivedInbox(profile)[0];
@@ -348,7 +351,7 @@
         row.classList.add('piko-target'); document.body.classList.add('piko-inbox');
         window.EC_PIKO.pointAt(row);
         window.EC_PIKO.say(window.EC_PIKO.SCRIPT.inboxGuide(level.clientName));
-      }
+      } else document.body.classList.remove('piko-line-pending'); // nothing to point at: don't stay frozen
     }, 450);
   }
   // The rest of Piko's chain (attachment → accept → element → controls →
@@ -530,6 +533,8 @@
   // for the persisted profile.settings and for the Settings screen's draft
   // state, so toggling a control gives instant feedback before Apply commits it.
   function applySettingsObj(s){
+    // Admin tools: Skip/Repeat on emails + the Level Maker app (tests can force them on).
+    document.documentElement.classList.toggle('admin-tools', !!s.admin || !!window.EC_ADMIN);
     document.documentElement.setAttribute('data-theme', s.theme === 'hc' ? 'hc' : 'light');
     if(s.cvd && s.cvd !== 'none') document.documentElement.setAttribute('data-cvd', s.cvd);
     else document.documentElement.removeAttribute('data-cvd');
@@ -805,7 +810,17 @@
   }
 
   // ---------------- Mail folder switching (within the Mail app) ----------------
+  // Header progress: jobs done out of 7 (Novice 1–3, Intermediate 4–6, Advanced 7).
+  function renderMailProgress(){
+    const done = window.EC_LEVELS.filter(l => l.levelNumber <= 7 && profile.completed.includes(l.id)).length;
+    const tier = done < 6 ? ['Novice','Intermediate'] : ['Intermediate','Advanced'];
+    document.getElementById('mail-progress-from').textContent = tier[0];
+    document.getElementById('mail-progress-to').textContent = tier[1];
+    document.getElementById('mail-progress-fill').style.width = (done / 7 * 100) + '%';
+    document.querySelector('.mail-progress-track').setAttribute('aria-valuenow', done);
+  }
   function renderCurrentFolder(){
+    renderMailProgress();
     document.querySelectorAll('.side-btn').forEach(b=>b.classList.toggle('active', b.dataset.folder===currentFolder));
     if(currentFolder === 'inbox') window.EC_MAIL.renderInbox(profile);
     else window.EC_MAIL.renderCompleted(profile);
@@ -1466,12 +1481,14 @@
         if(pikoEnabled && !profile.onboarding?.basics && tutorialIds.every(id => profile.completed.includes(id))){
           profile.onboarding = profile.onboarding || {}; profile.onboarding.basics = true; save();
           const P = window.EC_PIKO, lines = P.SCRIPT.basicsDone;
-          const say = i => i < lines.length && P.say(lines[i], { top:true, onDone: ()=>say(i + 1) });
+          // After his wrap-up (and once the reward card is closed), the first day ends.
+          const endDay = () => { const t = setInterval(()=>{ if(!document.getElementById('modal-reward').classList.contains('hidden')) return; clearInterval(t); showDaySummary(); }, 200); };
+          const say = i => i < lines.length ? P.say(lines[i], { top:true, onDone: ()=>say(i + 1) }) : endDay();
           setTimeout(()=>say(0), 1500);
         }
         return;
       }
-      if(window.EC_STORE.workday(profile).submissions>=window.EC_STORE.dailyTaskLimit()){showDaySummary();return;}
+      if(window.EC_STORE.workday(profile).submissions>=window.EC_STORE.dailyTaskLimit(profile)){showDaySummary();return;}
       showLoadingTransition((finishFade)=>{
         showScreen('screen-editor', ()=>{
           window.EC_EDITOR.open(level, elements);
@@ -1507,7 +1524,7 @@
 
   function showDaySummary(){
     const day=window.EC_STORE.workday(profile);
-    if(day.submissions<window.EC_STORE.dailyTaskLimit() || profile.pendingClientReply || profile.readyReply)return;
+    if(day.submissions<window.EC_STORE.dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return;
     if(showDaySummary.animatedDay !== day.day){
       showDaySummary.animatedDay = day.day;
       playDayEndAnimation(day.day, showDaySummary);
@@ -1703,6 +1720,7 @@
   function setQuickSetting(key, value){
     const s = profile.settings;
     if(key === 'motion') s.reduceMotion = !!value;
+    else if(key === 'admin') s.admin = !!value;
     else if(key === 'cvd') s.cvd = value;
     else{
       s[key + 'Level'] = value;
@@ -1730,7 +1748,7 @@
       </li>`;
     const motion = !!profile.settings.reduceMotion;
     const cvd = profile.settings.cvd || 'none';
-    const picker = (key, label, value) => `<li class="profile-setting">
+    const picker = (key, label, value) => `<li class="profile-setting${['keys','layout','theme'].includes(key) ? ' admin-only' : ''}">
         <span id="qs-${key}-label">${label}</span>
         <div class="profile-control profile-picker" role="group" aria-labelledby="qs-${key}-label">
           <button type="button" data-pick="${key}" data-step="-1" aria-label="Previous ${label.toLowerCase()}">◀</button>
@@ -1763,8 +1781,12 @@
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${inEditor ? '' : editorRows}
       <li class="profile-setting">
+        <span id="qs-admin-label">Admin tools</span>
+        <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${!!profile.settings.admin}" aria-labelledby="qs-admin-label" data-setting="admin" title="Shows Skip/Repeat on emails and the Level Maker app"><span></span></button></div>
+      </li>
+      <li class="profile-setting">
         <span>Start over</span>
-        <div class="profile-control profile-control-wide"><button type="button" class="btn btn-no btn-sm" id="qs-reset">Reset all</button></div>
+        <div class="profile-control profile-control-wide"><button type="button" class="btn btn-no btn-sm qs-reset" id="qs-reset">Reset all</button></div>
       </li>
     </ul>`;
   }
@@ -1774,6 +1796,12 @@
       input.addEventListener('input', ()=>{ out.textContent = input.value + '%'; if(input.dataset.setting !== 'scale') setQuickSetting(input.dataset.setting, Number(input.value)); });
       // Size re-lays out the whole UI, so apply it once the slider is let go.
       input.addEventListener('change', ()=>setQuickSetting(input.dataset.setting, Number(input.value)));
+    });
+    const adminSw = root.querySelector('[data-setting="admin"]');
+    adminSw?.addEventListener('click', ()=>{
+      const on = adminSw.getAttribute('aria-checked') !== 'true';
+      adminSw.setAttribute('aria-checked', String(on));
+      setQuickSetting('admin', on);
     });
     const sw = root.querySelector('[data-setting="motion"]');
     sw.addEventListener('click', ()=>{
@@ -2050,12 +2078,6 @@
       btn.addEventListener('click', ()=>{ currentFolder = btn.dataset.folder; renderCurrentFolder(); });
     });
 
-    document.getElementById('mail-search-input').addEventListener('input', e=>{
-      const q = e.target.value.trim().toLowerCase();
-      document.querySelectorAll('#mail-list .mail-item').forEach(row=>{
-        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-      });
-    });
 
     window.EC_MAIL.initOnce();
     // A client's email lands a few seconds after the previous job, like real mail.
@@ -2084,6 +2106,8 @@
         });
       },
       onSend: () => finishMissionSubmission(),
+      // Admin Skip/Repeat changed the save: pick it up without reloading the page.
+      onDebugChange: saved => { profile = saved; refreshHeader(); renderCurrentFolder(); },
       onOpenReply: level => openReadyReply(level)
     });
 
