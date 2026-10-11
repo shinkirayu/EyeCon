@@ -4,6 +4,7 @@
 (function(){
 
   let profile = window.EC_STORE.load();
+  const escapeHtml = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
   let currentFolder = 'inbox';
   let pendingSubmission = null;
   let timerInterval = null;
@@ -72,6 +73,7 @@
   // wait for onShown rather than running right after showScreen() returns,
   // or it'll measure a still-display:none element and compute a bogus size.
   function showScreen(name, onShown, options={}){
+    if(name !== 'screen-editor' && document.getElementById('screen-editor')?.classList.contains('active')) endLevelSessionIfLeft();
     // Guarantee any content currently on loan to the monitor popup (see
     // openMonitorAppPopup) is back in its real screen before that screen
     // might be shown for real — otherwise it would appear empty. Instant,
@@ -121,7 +123,16 @@
   function runPikoIntro(){
     const P = window.EC_PIKO, lines = P.SCRIPT.tutorial;
     document.body.classList.add('piko-intro', 'piko-no-badge', 'piko-tutorial'); // apps locked while Piko talks; mail "arrives" later; Home off for the whole first-day tour
-    P.say(lines[0], { onDone: ()=>{
+    // Hello → ask the player's name (their display name) → carry on.
+    const afterName = next => {
+      if(profile.displayName) return next();
+      const googleName = (window.EC_DB?.client && !window.EC_DB.isGuest) ? (window.EC_DB.fullName || '').split(' ')[0] : '';
+      P.ask(P.SCRIPT.askName, { placeholder:'Your name', title:P.SCRIPT.askNameTitle, prefill:googleName }, name => {
+        profile.displayName = name; save();
+        P.say(P.SCRIPT.niceToMeet(name), { onDone: next });
+      });
+    };
+    P.say(lines[0], { onDone: ()=> afterName(()=>{
       P.say(lines[1], { onDone: ()=>{
         window.EC_SOUND.play('newMail');
         const mailIcon = document.getElementById('icon-mail');
@@ -138,11 +149,40 @@
           P.say(lines[2]);
         }, 400); // + Piko's own 0.6s pop-in delay ≈ 1s after the count appears
       }});
-    }});
+    })});
   }
   function startFirstDayGuide(){
     if(!pikoEnabled || !isFirstDay()) return;
+    // First visit: save with Google (any device) or play as a guest (this browser only).
+    const db = window.EC_DB;
+    let choice = null; try{ choice = localStorage.getItem('eyecon_auth_choice'); }catch(_){}
+    if(db?.online && db.isGuest && !choice){ showAuthChoice(runPikoIntro); return; }
     runPikoIntro();
+  }
+  function showAuthChoice(done){
+    const card = document.createElement('div');
+    card.className = 'piko-name-card auth-choice';
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'auth-title');
+    card.innerHTML = `<div class="piko-name-form"><img src="assets/sprites/piko.png" alt="" class="piko-name-face">
+      <h2 id="auth-title">Welcome to EyeCon Studio!</h2>
+      <p>Sign in to keep your progress on any device, or jump straight in.</p>
+      <button type="button" class="btn auth-google"><span aria-hidden="true">G</span> Sign in with Google</button>
+      <button type="button" class="btn btn-accept auth-guest">Continue as guest</button>
+      <small>Guest progress stays in this browser. You can link Google later in Settings.</small>
+      <p class="auth-error" role="alert" hidden></p></div>`;
+    const remember = v => { try{ localStorage.setItem('eyecon_auth_choice', v); }catch(_){} };
+    card.querySelector('.auth-guest').addEventListener('click', () => { remember('guest'); card.remove(); done(); });
+    card.querySelector('.auth-google').addEventListener('click', async e => {
+      e.currentTarget.disabled = true;
+      remember('google');
+      try{ await window.EC_DB.signInWithGoogle(); } // redirects to Google and back
+      catch(err){
+        const msg = card.querySelector('.auth-error'); msg.hidden = false;
+        msg.textContent = 'Google sign-in isn’t available right now. You can continue as a guest.';
+        e.currentTarget.disabled = false; remember('');
+      }
+    });
+    document.body.appendChild(card);
   }
   // Settings > Testing: re-runs Piko's whole guide chain from the desktop,
   // bypassing the isFirstDay() gate so it can be replayed on a save that's
@@ -1396,18 +1436,40 @@
     replyTimer=setTimeout(()=>{
       const level=window.EC_LEVELS.find(l=>l.id===waiting.levelId);
       if(!level){delete profile.pendingClientReply;save();return;}
-      pendingSubmission={level,result:waiting.result,elapsedMs:waiting.elapsedMs,elements:waiting.elements};
+      pendingSubmission={level,result:waiting.result,elapsedMs:waiting.elapsedMs,elements:waiting.elements,track:waiting.track};
       delete profile.pendingClientReply;
       deliverClientReply();
     },Math.max(0,waiting.dueAt-Date.now()));
   }
+  // ── Thesis analytics ── one session per editor visit of a level.
+  let levelSession = null;
+  function startLevelSession(level){
+    const attempt = profile.history.filter(h => h.levelId === level.id).length + 1; // 2+ = a "fix again" round
+    levelSession = { id: (crypto.randomUUID?.() || String(Date.now()) + Math.random()), levelId: level.id, opened: Date.now(), active0: window.EC_ACTIVE?.now() || 0, attempt, hints: 0, submitted: false };
+    window.EC_DB?.track('level_open', { session_id: levelSession.id, level_id: level.id, attempt });
+  }
+  const sessionTimes = () => ({ active_ms: (window.EC_ACTIVE?.now() || 0) - levelSession.active0, elapsed_ms: Date.now() - levelSession.opened });
+  function endLevelSessionIfLeft(){
+    // Pressing Submit leaves the editor for the mail app to write the reply: that's not abandoning.
+    if(!levelSession || levelSession.submitted || pendingSubmission?.level?.id === levelSession.levelId) return;
+    window.EC_DB?.track('level_leave', Object.assign({ session_id: levelSession.id, level_id: levelSession.levelId, attempt: levelSession.attempt, data:{ hints: levelSession.hints } }, sessionTimes()));
+    levelSession = null;
+  }
+  window.EC_TRACK_HINT = () => { if(levelSession){ levelSession.hints++; window.EC_DB?.track('hint', { session_id: levelSession.id, level_id: levelSession.levelId, attempt: levelSession.attempt }); } };
   function finishMissionSubmission(){
     if(!pendingSubmission) return;
     if(!window.EC_STORE.beginWorkSubmission(profile)){
       showToast('Your workday is complete or a client reply is still waiting.',2800);return;
     }
     const {level,result,elapsedMs}=pendingSubmission;
-    profile.pendingClientReply={levelId:level.id,result,elapsedMs,elements:window.EC_EDITOR.getElements(),dueAt:Date.now()+3000};
+    let track = null;
+    if(levelSession && levelSession.levelId === level.id){
+      levelSession.submitted = true;
+      const goals = result.mission ? { met: result.mission.met, total: result.mission.total } : {};
+      track = Object.assign({ session_id: levelSession.id, level_id: level.id, attempt: levelSession.attempt, stars: result.stars, data: Object.assign({ hints: levelSession.hints }, goals) }, sessionTimes());
+      window.EC_DB?.track('submit', track);
+    }
+    profile.pendingClientReply={levelId:level.id,result,elapsedMs,elements:window.EC_EDITOR.getElements(),dueAt:Date.now()+3000,track};
     pendingSubmission=null; save(); updateClock(); openMailApp();
     showToast('Reply sent! Your client is reviewing the attached design.',2800);
     scheduleClientReply();
@@ -1417,11 +1479,13 @@
   // banked when the player reads the reply and marks the task complete.
   function deliverClientReply(){
     if(!pendingSubmission) return;
-    const { level, result, elapsedMs, elements } = pendingSubmission;
+    const { level, result, elapsedMs, elements, track: pendingTrack } = pendingSubmission;
     pendingSubmission = null;
     window.EC_SOUND.play('newMail');
     const missionComplete = result.stars >= window.EC_STORE.REVISION_STAR_THRESHOLD && (!result.mission || result.mission.complete);
     profile.readyReply = { levelId: level.id, result, elapsedMs, missionComplete, elements };
+    // Analytics: the client's verdict for this attempt (approved, or "fix again").
+    if(pendingTrack) window.EC_DB?.track('reply', Object.assign({}, pendingTrack, { approved: missionComplete }));
     save();
     refreshHeader();
     openMailApp();
@@ -1472,6 +1536,8 @@
       // Keep the client's words so Completed mail can show the whole thread.
       profile.history[0].reply = window.EC_MAIL.buildClientReplyText(level, result, missionComplete);
       profile.history[0].elements = elements; // the design the player sent, shown in Completed mail
+      window.EC_DB?.logSubmission({ level, result, approved: outcome.missionComplete, reward: outcome.currencyEarned, xp: outcome.missionComplete ? result.xpAwarded : 0,
+        reply: profile.history[0].reply, quote: profile.history[0].quote, elements });
       profile.revisionDrafts=Object.assign({},profile.revisionDrafts,{[level.id]:elements});
       if(outcome.missionComplete) profile.designs = Object.assign({}, profile.designs, { [level.id]: elements });
       save();
@@ -1495,7 +1561,7 @@
       showLoadingTransition((finishFade)=>{
         showScreen('screen-editor', ()=>{
           window.EC_EDITOR.open(level, elements);
-          levelStartTime = Date.now();
+          levelStartTime = Date.now(); startLevelSession(level);
           startTimerIfNeeded();
           finishFade();
         });
@@ -1740,8 +1806,10 @@
     requestAnimationFrame(positionStatsPopup);
   }
   // Settings > Reset all: wipe every game save except Level Maker work, then start fresh.
-  function resetEverything(){
+  async function resetEverything(){
     if(!window.confirm('Reset everything? Progress, mail, settings and the tutorial start over. Level Maker edits are kept.')) return;
+    // Wipe the cloud save too, or it would be restored on reload. (Analytics history is kept.)
+    await window.EC_DB?.resetCloudSave?.();
     const keep = ['eyecon_level_overrides', 'eyecon.level-maker.v1', 'eyecon.maker-grid'];
     Object.keys(localStorage).filter(k => /^eyecon/.test(k) && !keep.includes(k)).forEach(k => localStorage.removeItem(k));
     location.reload();
@@ -1787,6 +1855,12 @@
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${inEditor ? '' : editorRows}
+      ${window.EC_DB?.online ? `<li class="profile-setting">
+        <span>Account</span>
+        <div class="profile-control profile-control-wide">${window.EC_DB.isGuest
+          ? '<button type="button" class="btn btn-accept btn-sm qs-reset" id="qs-google">Save with Google</button>'
+          : `<small>${escapeHtml(window.EC_DB.email || 'Google account')}</small>`}</div>
+      </li>` : ''}
       <li class="profile-setting">
         <span id="qs-admin-label">Admin tools</span>
         <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${!!profile.settings.admin}" aria-labelledby="qs-admin-label" data-setting="admin" title="Shows Skip/Repeat on emails and the Level Maker app"><span></span></button></div>
@@ -1842,6 +1916,7 @@
       btn.closest('.profile-picker').querySelector('output').textContent = names[next];
     }));
     root.querySelector('#qs-reset')?.addEventListener('click', resetEverything);
+    root.querySelector('#qs-google')?.addEventListener('click', () => window.EC_DB.signInWithGoogle().catch(() => showToast('Google sign-in isn’t available right now.', 3000)));
     root.querySelectorAll('[data-cvd-step]').forEach(btn=>btn.addEventListener('click', ()=>{
       const i = CVD_STEPS.indexOf(profile.settings.cvd || 'none');
       const next = CVD_STEPS[(i + Number(btn.dataset.cvdStep) + CVD_STEPS.length) % CVD_STEPS.length];
@@ -1865,7 +1940,7 @@
     const badges = Array.from({length:12},(_,i)=>`<span class="profile-badge-dot ${window.EC_STORE.BADGES[i] && unlocked.has(window.EC_STORE.BADGES[i].id)?'unlocked':''}"></span>`).join('');
     return `<section class="profile-quick-card">
       <img class="profile-quick-avatar" src="assets/icons/profile.svg" alt="" />
-      <h2>Hi, User!</h2>
+      <h2>Hi, ${escapeHtml(profile.displayName || 'Designer')}!</h2>
       <div class="profile-rating-row"><div class="profile-quick-stars" aria-label="${filledStars} out of 5 stars">${stars}</div><span class="profile-feedback-count" aria-label="${feedback.length} feedback">(${feedback.length})</span></div>
       ${profileQuoteMarkup()}
       <div class="profile-quick-strip">Coins: ${window.EC_MONEY(profile.currency || 0)}</div>
@@ -2104,7 +2179,7 @@
         showLoadingTransition((finishFade)=>{
           showScreen('screen-editor', ()=>{
             window.EC_EDITOR.open(level,profile.revisionDrafts?.[level.id]);
-            levelStartTime = Date.now();
+            levelStartTime = Date.now(); startLevelSession(level);
             startTimerIfNeeded();
             finishFade();
             if(pikoStage === 'element') runPikoWorkspaceTour(level);
@@ -2140,6 +2215,13 @@
     setInterval(()=>{const day=Math.floor(Date.now()/86400000);if(day!==inboxDay){inboxDay=day;refreshHeader();if(document.getElementById('screen-shell').classList.contains('active'))renderCurrentFolder();}},1000);
   }
 
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  // Wait for the cloud save to be restored (or for offline fallback) before starting.
+  const boot = () => (window.EC_DB?.ready || Promise.resolve()).then(() => {
+    profile = window.EC_STORE.load();
+    init();
+    if(window.EC_DB && !window.EC_DB.online && window.EC_DB.error !== 'not configured')
+      showToast('Playing offline: progress is saved on this device and will sync next time.', 4000);
+  });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();

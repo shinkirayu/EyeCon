@@ -148,7 +148,8 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><img class="
   // Reveal the game (hidden by the inline script in index.html) once
   // everything has loaded and the size has had a moment to settle.
   function reveal(){ document.documentElement.classList.remove('booting'); }
-  window.addEventListener('load', () => { fit(); setTimeout(() => { fit(); requestAnimationFrame(reveal); }, 250); });
+  // Reveal once assets have loaded AND the cloud save is restored.
+  window.addEventListener('load', () => { fit(); Promise.resolve(window.EC_DB?.ready).then(() => setTimeout(() => { fit(); requestAnimationFrame(reveal); }, 250)); });
   setTimeout(reveal, 20000); // wait for every asset; only give up on a very slow connection
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);

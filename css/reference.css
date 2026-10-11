@@ -2278,3 +2278,22 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #modal-workday .workday-reviews li{margin:0;display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;border:2px solid #c8e6da;border-radius:.75rem;background:#fff;font:700 1rem var(--font-body);color:#3b172e;}
 #modal-workday .workday-stars{color:#f2b33d;letter-spacing:.1em;}
 #modal-workday #next-workday{margin-top:.5rem;padding:.5rem 2rem;border:2px solid #77b9af;border-radius:1.625rem;background:#94d9cf;color:#fff;font:700 1.75rem var(--font-display);text-transform:uppercase;box-shadow:.25rem .4375rem .5rem #bca68640;}
+/* Piko's name question */
+.piko-ask{display:flex;gap:.5rem;margin-top:1rem;}
+.piko-ask input{flex:1;min-width:0;padding:.5rem .75rem;border:2px solid var(--teal,#2f7a70);border-radius:.75rem;font:700 1.25rem var(--font-body);color:#3b172e;background:#fff;}
+.piko-ask button{padding:.5rem 1.25rem;border:2px solid #77b9af;border-radius:.75rem;background:#94d9cf;color:#fff;font:700 1.25rem var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+/* Piko's name card + sign-in choice: same cream/teal card as the reward popup. */
+.piko-name-card{position:fixed;inset:0;z-index:2200;display:grid;place-items:center;background:#22182633;animation:pikoDimIn .3s ease both;}
+.piko-name-form{width:min(26rem,90vw);padding:2rem 2rem 1.5rem;border:.1875rem solid #77b9af;border-radius:2rem;background:#fcf7ef;box-shadow:0 1rem 2.5rem #18374540;display:flex;flex-direction:column;align-items:center;gap:.75rem;text-align:center;animation:pikoPopPanel .35s cubic-bezier(.34,1.56,.64,1) both;}
+.piko-name-face{width:6rem;height:auto;clip-path:inset(15% 0 0 0);margin-top:-1rem;}
+.piko-name-form h2{margin:0;font:800 1.75rem/1.15 var(--font-display);color:#3b172e;}
+.piko-name-form p{margin:0;font:600 1rem/1.4 var(--font-body);color:#5a6f6a;}
+.piko-name-form small{font:600 .875rem/1.4 var(--font-body);color:#6b6f7a;}
+.piko-name-form input{width:100%;box-sizing:border-box;padding:.75rem 1rem;border:2px solid #a5d6cc;border-radius:1rem;background:#fff;font:700 1.375rem var(--font-body);color:#3b172e;text-align:center;box-shadow:.25rem .3rem 0 #d2d8d1;}
+.piko-name-form input:focus-visible{outline:3px solid #7555af;outline-offset:2px;}
+.piko-name-form .btn{width:100%;padding:.625rem 1rem;border:2px solid #77b9af;border-radius:1.625rem;font:700 1.375rem var(--font-display);text-transform:uppercase;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+.piko-name-form .btn-accept{background:#94d9cf;color:#fff;box-shadow:.25rem .4375rem .5rem #bca68640;}
+.piko-name-form .auth-google{background:#fff;color:#3b172e;text-transform:none;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+.piko-name-form .auth-google span{display:grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:50%;background:#4285f4;color:#fff;font:800 1rem var(--font-body);}
+.piko-name-form .auth-error{color:#b02a5c;}
+#boot-loader{background:#8edbe6!important;}

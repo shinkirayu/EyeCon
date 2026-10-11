@@ -97,8 +97,10 @@
   }
 
   function save(profile){
+    profile.savedAt = new Date().toISOString();
     try{ localStorage.setItem(KEY, JSON.stringify(profile)); }
     catch(e){ console.warn('EyeCon: could not persist save data.', e); }
+    window.EC_DB?.queueSave(profile); // mirror to Supabase
   }
 
   function localDayKey(date){

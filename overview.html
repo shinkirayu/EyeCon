@@ -19,13 +19,13 @@
   /* Sticky top bar (logo + section links), scaled like the stage. */
   .topbar{position:fixed;z-index:50;top:0;left:0;right:0;height:0;pointer-events:none;}
   .topbar-in{position:relative;height:100px;} /* width = window width in design px (set in fit) */
-  .topbar-strip{left:0;top:0;width:100%;height:100px;background:#88e0e3;}
+  .topbar-strip{left:0;top:0;width:100%;height:108px;background:#8edbe6;}
   .topbar-right{right:0;top:0;width:1920px;height:0;transform:scale(.85);transform-origin:top right;}
   .topbar-right > *{position:absolute;}
   .topbar-in > *{position:absolute;margin:0;}
   .topbar-in a,.topbar-in .piko{pointer-events:auto;}
   .topbar-in a img,.topbar-in nav a{position:absolute;}
-  .topbar-in nav{left:0;top:0;width:1920px;height:100px;}
+  .topbar-in nav{left:0;top:0;width:1920px;height:108px;display:flex;align-items:center;gap:20px;padding-left:330px;box-sizing:border-box;}
   .stage [id]{scroll-margin-top:170px;}
   .stage div[id]{scroll-margin-top:127px;} /* section backgrounds: land flush under the bar, no strip of the section above */
   body{cursor:url("assets/sprites/cursor-arrow.png") 2 2, default;}
@@ -38,11 +38,15 @@
   .label{font:700 40px/21px 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--red);width:572px;}
   .title{font:700 64px/1 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--ink);width:900px;}
   .body{font:700 40px/50px 'Nunito',sans-serif;color:var(--ink);}
-  .nav{top:31px;font:800 28px 'Nunito',sans-serif;color:#fff;text-shadow:0 2px 3px #164d6080;text-decoration:none;white-space:nowrap;}
-  .nav:hover,.nav:focus-visible,.nav.current{text-decoration:underline;text-underline-offset:6px;}
+  .nav{position:static!important;padding:10px 28px;border-radius:999px;font:800 34px 'Nunito',sans-serif;color:#0b4355;text-decoration:none;white-space:nowrap;transition:background .15s,transform .15s;}
+  .nav:hover,.nav:focus-visible{background:color-mix(in srgb,var(--pill,#fff) 60%,transparent);transform:translateY(-2px);} /* a softer preview of that section's colour */
+  /* Section you're on: a pill in that section's own colour. */
+  .nav.current{background:var(--pill,#fff);box-shadow:0 3px 0 #0b435526;}
+  .nav[href="#about"]{--pill:#f9d985;} .nav[href="#trailer"]{--pill:#d8f3f1;}
+  .nav[href="#objectives"]{--pill:#fff2dd;} .nav[href="#team"]{--pill:#f8c5c5;}
   .shot{width:900px;height:568px;border:6px solid #55b6ca;border-radius:30px;overflow:hidden;}
   .shot img{position:absolute;}
-  .play-btn{left:68px;top:780px;width:570px;height:128px;border-radius:34px;background:linear-gradient(135deg,#a17adf,#9671d3);border:8px solid #fff3d6;box-shadow:10px 14px 0 0 #7656b3;
+  .play-btn{left:68px;top:780px;width:570px;height:128px;border-radius:34px;background:linear-gradient(135deg,#a17adf,#9671d3);border:0;box-shadow:10px 14px 0 0 #7656b3;
     display:flex;align-items:center;justify-content:center;font:800 64px/1 'Baloo 2',sans-serif;color:#fff3d6;text-decoration:none;text-shadow:0 5px 0 #7656b3;}
   .play-btn:hover{filter:brightness(1.08);}
   .play-btn:focus-visible,.play-corner:focus-visible{outline:4px solid #f9d985;outline-offset:6px;}
@@ -80,6 +84,39 @@
   .piko.is-twinkling .piko-pupil::before{animation:pikoEyeTwinkle 2.8s ease-in-out infinite;}
   @media (prefers-reduced-motion:reduce){.piko,.piko *,.piko::before,.piko::after{transition:none!important;animation:none!important;}}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  .shift-tag{padding:10px 22px;background:#f9d985;border:4px solid #173f58;border-radius:10px;box-shadow:6px 6px 0 #173f58;transform:rotate(-2deg);transform-origin:left center;font:800 32px/1 'Baloo 2',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#173f58;white-space:nowrap;}
+  /* Play transition: button pops, the navbar colour pours down over the page, the logo plays. */
+  /* ── Play transition ──
+     1. Page pieces drop away (fall + spin + fade, staggered).
+     2. The navbar pours down like jelly: wavy bottom edge, bouncy overshoot.
+     3. Bubbles float up, then the logo pops in with a squash-and-stretch. */
+  /* Page content stays as it is; the pour slides over it. Only the navbar pieces disappear. */
+  /* The navbar (with its PLAY! circle and Piko) stays put; the pouring colour covers it. */
+  /* …but its logo and links fade away on Play. */
+  .topbar-in > a[href="#top"], .topbar-in nav{transition:opacity .35s ease;}
+  body.leaving .topbar-in > a[href="#top"], body.leaving .topbar-in nav{opacity:0;pointer-events:none;}
+  .play-curtain{position:fixed;left:0;right:0;top:0;height:calc(var(--bar-h,80px) - 50px);z-index:45;background:#8edbe6;pointer-events:none;opacity:0;
+    display:flex;justify-content:center;align-items:center;overflow:visible;}
+  .play-curtain::after{content:'';position:absolute;left:0;right:0;top:100%;height:46px;
+    background:radial-gradient(circle at 50% 0,#8edbe6 22px,transparent 23px) 0 0/64px 46px repeat-x;animation:pcWave 1.2s linear infinite;}
+  @keyframes pcWave{to{background-position:64px 0}}
+  .play-curtain.on{opacity:1;pointer-events:auto;}
+  /* One smooth ease (no overshoot/bounce): slow start, glides, settles softly. */
+  .play-curtain.full{animation:pcPour 1.4s cubic-bezier(.65,0,.25,1) forwards;}
+  /* Starts tucked up under the navbar (wavy edge included) so it slides out from behind it. */
+  @keyframes pcPour{from{height:calc(var(--bar-h,80px) - 50px)}to{height:102vh}}
+  .play-curtain.full::after{animation:pcWave 1.2s linear infinite, pcWaveOut .5s 1.1s forwards;}
+  @keyframes pcWaveOut{to{opacity:0}}
+  .pc-bubble{position:absolute;bottom:-40px;border-radius:50%;background:#fff;opacity:.55;animation:pcBubble var(--t,2s) ease-in var(--d,0s) forwards;}
+  @keyframes pcBubble{to{transform:translate(var(--x,0),-120vh) scale(.4);opacity:0}}
+  .play-curtain img{position:relative;width:min(60vw,720px);height:auto;opacity:0;transform:scale(.2);}
+  .play-curtain.logo img{animation:pcLogo .7s cubic-bezier(.34,1.56,.64,1) forwards;}
+  @keyframes pcLogo{0%{opacity:0;transform:scale(.2) rotate(-8deg)}55%{opacity:1;transform:scale(1.12,.9) rotate(2deg)}80%{transform:scale(.96,1.05)}100%{opacity:1;transform:none}}
+  /* Piko's eyes do a happy grow-and-shrink "boing" and stay. */
+  /* Piko grows, then shrinks away; the PLAY! circle shrinks away just after. */
+  @keyframes pikoBoing{0%{transform:scale(1);opacity:1}35%{transform:scale(1.35);opacity:1}100%{transform:scale(0);opacity:0}}
+  .boing{animation:pikoBoing 1.4s ease-in-out forwards !important;}
+  body.leaving .play-corner,body.leaving .topbar .piko{opacity:0;transition:opacity .35s ease;pointer-events:none;} /* fades with the logo + links */
 </style>
 </head>
 <body>
@@ -93,12 +130,12 @@
     <!-- Piko watches the pointer and gets excited near the Play buttons (from the old overview). -->
     <span class="piko" role="img" aria-label="Piko watches your pointer"><img src="assets/sprites/piko.png" alt=""><span class="piko-eye left"><span class="piko-pupil"></span></span><span class="piko-eye right"><span class="piko-pupil"></span></span></span>
   </div>
-  <a href="#top" aria-label="EyeCon home"><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="left:24px;top:18px;width:205px;height:64px"></a>
+  <a href="#top" aria-label="EyeCon home"><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="left:28px;top:28px;width:166px;height:52px"></a>
   <nav aria-label="Sections">
-    <a class="nav" href="#about" style="left:457px">About</a>
-    <a class="nav" href="#trailer" style="left:614px">Trailer</a>
-    <a class="nav" href="#objectives" style="left:775px">Objectives</a>
-    <a class="nav" href="#team" style="left:996px">Team</a>
+    <a class="nav" href="#about">About</a>
+    <a class="nav" href="#trailer">Trailer</a>
+    <a class="nav" href="#objectives">Objectives</a>
+    <a class="nav" href="#team">Team</a>
   </nav>
 </div></header>
 <main class="stage" id="stage"><i id="top" style="top:0"></i>
@@ -151,6 +188,7 @@
   <img src="assets/landing/blob-left.svg" alt="" style="left:-152px;top:-329px;width:743px;height:743px;transform:rotate(-0.21deg)">
 
 
+  <p class="shift-tag" style="left:64px;top:270px">Ready to start your shift?</p>
   <h1 style="left:64px;top:350px;font:800 120px/128px 'Baloo 2',sans-serif;letter-spacing:-5px;color:#0b4355;white-space:nowrap;text-shadow:0 5px 0 #0b43551a">Your design shift<br>starts here.</h1>
   <p style="left:68px;top:638px;font:700 42px/54px 'Nunito',sans-serif;color:#164d60;white-space:nowrap">Fix layouts. Make clients happy.<br>Build your design skills, one task at a time.</p>
 
@@ -158,6 +196,7 @@
   <div style="left:974px;top:294px;transform:rotate(-4.43deg);box-shadow:0 14px 0 0 #55b6ca" class="shot"><img src="assets/landing/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);object-fit:cover"></div>
   <a class="play-btn" data-play href="play">PLAY EYECON!</a>
 </main>
+<div class="play-curtain" id="play-curtain" aria-hidden="true"><img alt="" data-src="assets/landing/eyecon-logo-anim.webp"></div>
 <script>
   // Lay the 1920px design out at window width.
   const stage = document.getElementById('stage');
@@ -257,6 +296,44 @@
       links.forEach(a => a.classList.toggle('current', a === cur));
     };
     addEventListener('scroll', update, { passive:true }); addEventListener('resize', update); update();
+  })();
+  // Play: pop the button, flood the screen with the navbar colour, play the logo, then go.
+  (() => {
+    const curtain = document.getElementById('play-curtain'), logo = curtain.querySelector('img');
+    const LOGO_MS = 5200; // length of eyecon-logo-anim
+    addEventListener('load', () => { const pre = new Image(); pre.src = logo.dataset.src; }); // warm it up
+    document.querySelectorAll('[data-play]').forEach(a => a.addEventListener('click', e => {
+      if(e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // new-tab clicks stay normal
+      e.preventDefault();
+      const go = () => { location.href = a.href; };
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches) return go();
+      // Pieces drop away with a little spin, staggered left to right
+      [...document.querySelectorAll('.stage > *')].forEach(n => {
+        const x = n.getBoundingClientRect().left / innerWidth;
+        n.style.setProperty('--d', (Math.max(0, x) * .25).toFixed(2) + 's');
+        n.style.setProperty('--r', ((Math.random() - .5) * 16).toFixed(1) + 'deg');
+      });
+      document.body.classList.add('leaving');
+      curtain.style.setProperty('--bar-h', document.getElementById('topbar').getBoundingClientRect().height + 'px');
+      setTimeout(() => {
+        curtain.classList.add('on');
+        requestAnimationFrame(() => requestAnimationFrame(() => curtain.classList.add('full')));
+      }, 450);
+      setTimeout(() => { // bubbles rise through the colour
+        for(let i = 0; i < 14; i++){
+          const b = document.createElement('i'), size = 12 + Math.random() * 34;
+          b.className = 'pc-bubble';
+          b.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;--x:${(Math.random() - .5) * 120}px;--t:${1.6 + Math.random()}s;--d:${Math.random() * .5}s`;
+          curtain.appendChild(b);
+        }
+      }, 1500);
+      setTimeout(() => {
+        logo.src = logo.dataset.src + '?t=' + Date.now(); // restart from the first frame
+        curtain.classList.add('logo');
+      }, 1850);
+      setTimeout(go, 1850 + LOGO_MS);
+    }));
+    addEventListener('pageshow', e => { if(e.persisted){ curtain.className = 'play-curtain'; curtain.querySelectorAll('.pc-bubble').forEach(n => n.remove()); document.body.classList.remove('leaving'); document.querySelectorAll('.boing').forEach(n => n.classList.remove('boing')); } }); // back button
   })();
   if(location.pathname.endsWith('overview.html')) document.querySelectorAll('[data-play]').forEach(a => a.href = 'index.html');
 </script>

@@ -13,7 +13,10 @@
       "Clients send us designs that are hard to read or use. We fix them so everyone can enjoy them.",
       "Oh, you've got mail! Click Mail to see your first job."
     ],
-    inboxGuide: clientName => `${clientName} needs a hand. Open their email to see the job.`,
+    askName: "What's your name?",
+    askNameTitle: "What should Piko call you?",
+    niceToMeet: "Nice to meet you, {name}! Let's get you settled in.",
+    inboxGuide: "{client} needs a hand. Open their email to see the job.",
     previewGuide: "They sent their design. Click the attachment to take a look.",
     acceptGuide: "Seen enough? Click Accept to start the job.",
     workspace: {
@@ -37,11 +40,11 @@
       submit: "Fix the rest, then hit Submit to send it to the client."
     },
     reply: {
-      arrived: name => `Ooh, ${name} wrote back! Open their reply to see what they think.`,
+      arrived: "Ooh, {client} wrote back! Open their reply to see what they think.",
       complete: "They love it! Hit Mark Completed to get paid for the job.",
       revise: "They want a few more fixes. Hit Back to Editor and give it another go!"
     },
-    nextMail: name => `Ooh, you got another email! ${name} needs your help next. Open it up!`,
+    nextMail: "Ooh, you got another email! {client} needs your help next. Open it up!",
     basicsDone: [
       "You did it! You've finished the basics: alignment, contrast and typography.",
       "Good job today! Every screen you fixed is now easier to read for somebody out there.",
@@ -82,6 +85,12 @@
       ]
     }
   };
+  // Editable from the admin page (EC_TEXT); lines with {placeholders} are filled when shown.
+  const fill = (t, vars) => t.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+  window.EC_TEXT?.bindObject('piko', SCRIPT, 'piko', 'Piko dialogue');
+  const TEMPLATED = { niceToMeet:'name', inboxGuide:'client', nextMail:'client' };
+  Object.entries(TEMPLATED).forEach(([k, v]) => { const tpl = () => window.EC_TEXT ? window.EC_TEXT.t('piko.' + k) : k; SCRIPT[k] = x => fill(tpl(), { [v]: x }); });
+  SCRIPT.reply.arrived = x => fill(window.EC_TEXT ? window.EC_TEXT.t('piko.reply.arrived') : '', { client: x });
 
   const MS_PER_CHAR = 52;
   const SFX_EVERY_N_CHARS = 2;
@@ -301,5 +310,34 @@
     }
   }
 
-  window.EC_PIKO = { SCRIPT, say, hideBubble, pointAt, clearTarget };
+  // Piko asks a question: his line shows, then a game-style card pops up with
+  // a text field + OK. Calls onAnswer(text). `prefill` seeds the field.
+  function ask(line, { placeholder = '', maxLength = 24, prefill = '', title = '' } = {}, onAnswer){
+    say(line, { top:false });
+    const { bubble } = ensureDom();
+    const waitForBubble = setInterval(() => {
+      if(bubble.classList.contains('hidden')) return;
+      clearInterval(waitForBubble);
+      const card = document.createElement('div');
+      card.className = 'piko-name-card';
+      card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-label', title || line);
+      card.innerHTML = `<form class="piko-name-form"><img src="assets/sprites/piko.png" alt="" class="piko-name-face"><h2></h2>
+        <input type="text" required autocomplete="nickname" aria-label="Your name"><button type="submit" class="btn btn-accept">OK</button></form>`;
+      card.querySelector('h2').textContent = title || line;
+      const form = card.querySelector('form'), input = card.querySelector('input');
+      input.placeholder = placeholder; input.maxLength = maxLength; input.value = prefill;
+      form.addEventListener('click', e => e.stopPropagation());
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const value = input.value.replace(/\s+/g, ' ').trim();
+        if(!value){ input.focus(); return; }
+        card.remove(); hideBubble();
+        onAnswer(value);
+      });
+      document.body.appendChild(card);
+      setTimeout(() => input.focus(), 50);
+    }, 50);
+  }
+
+  window.EC_PIKO = { SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
 })();

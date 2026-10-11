@@ -10,6 +10,7 @@ await mkdir(outputDir, { recursive: true });
 await Promise.all([
   cp('overview.html', `${outputDir}/index.html`),
   cp('index.html', `${outputDir}/play.html`),
+  cp('admin.html', `${outputDir}/admin.html`),
   ...files.map(file => cp(file, `${outputDir}/${file}`)),
   ...directories.map(directory => cp(directory, `${outputDir}/${directory}`, { recursive: true }))
 ]);

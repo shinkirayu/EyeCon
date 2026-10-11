@@ -38,10 +38,8 @@
 </head>
 <body>
   <!-- Startup loader: shown while the game is hidden until its size settles (see the inline script in <head>). -->
-  <div class="app-loading-screen boot-loader" id="boot-loader" aria-live="polite">
-    <img class="loading-eyes" src="assets/landing/loading-eyes.webp" alt="" />
-    <div class="loading-label">Loading EyeCon…</div>
-  </div>
+  <!-- Plain colour (same as the landing page's Play transition) so the hand-off is seamless. -->
+  <div class="app-loading-screen boot-loader" id="boot-loader" role="status" aria-label="Loading EyeCon"></div>
 
 <div id="a11y-announcer" aria-live="polite" class="sr-only"></div>
 
@@ -598,6 +596,10 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/text.js"></script>
+<script src="js/db.js"></script>
 <script src="js/wcag.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/ui-helpers.js"></script>

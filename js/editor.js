@@ -1321,6 +1321,7 @@
   }
 
   function showHint(){
+    window.EC_TRACK_HINT?.();
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
     const bad = unlockedFeedback(result.feedback, state.level.levelNumber, result.activeCategories).find(f=>f.type==='bad');
     if(!bad){

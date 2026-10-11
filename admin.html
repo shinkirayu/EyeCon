@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EyeCon Admin</title>
+<link rel="icon" type="image/png" href="assets/sprites/piko.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f0eb; --card:#fcf7ef; --line:#c8e6da; --teal:#2f7a70; --ink:#3b172e; --ink-2:#5a6f6a; --muted:#7b8a86;
+    --bar:#7555af; --bar-soft:#e7e1f4; --grid:#e3ece8; --good:#1f6b45; --good-bg:#e0f5e8; --bad:#b02a5c; --bad-bg:#fde8ef;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#1d1a22; --card:#27232d; --line:#3a4a46; --teal:#7fd0c3; --ink:#f3ecf2; --ink-2:#c5cfcc; --muted:#9aa7a3;
+      --bar:#b49af0; --bar-soft:#3a3248; --grid:#34313b; --good:#8fe0ae; --good-bg:#21392c; --bad:#ff9cc0; --bad-bg:#3d2230; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:600 16px/1.45 'Nunito',system-ui,sans-serif;}
+  header{display:flex;align-items:center;gap:16px;padding:16px 24px;background:var(--card);border-bottom:2px solid var(--line);}
+  header img{height:40px}
+  header h1{margin:0;font:800 24px 'Baloo 2',sans-serif;color:var(--teal);flex:1}
+  header small{color:var(--ink-2)}
+  main{max-width:1200px;margin:0 auto;padding:24px 16px 64px;display:grid;gap:24px}
+  .card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px 24px}
+  h2{margin:0 0 4px;font:800 22px 'Baloo 2',sans-serif}
+  .sub{margin:0 0 16px;color:var(--ink-2);font-size:15px}
+  button,.btn{font:800 16px 'Baloo 2',sans-serif;padding:8px 18px;border-radius:999px;border:2px solid #77b9af;background:#94d9cf;color:#183745;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ink)}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--bar);outline-offset:2px}
+  /* Login */
+  .login{max-width:380px;margin:10vh auto;text-align:center;display:grid;gap:12px}
+  .login img{width:96px;margin:0 auto;clip-path:inset(15% 0 0 0)}
+  .login input{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:14px;background:#fff;color:#3b172e;font:700 16px 'Nunito',sans-serif}
+  .err{color:var(--bad);min-height:1.4em;margin:0}
+  /* Stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+  .tile{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px 18px}
+  .tile b{display:block;font:800 34px/1.1 'Baloo 2',sans-serif;color:var(--ink)}
+  .tile span{color:var(--ink-2);font-size:14px}
+  /* Bar charts: one hue (single series → no legend; the title names it) */
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+  .bars{display:grid;gap:10px}
+  .bar-row{display:grid;grid-template-columns:150px 1fr 56px;align-items:center;gap:10px;font-size:14px}
+  .bar-row .name{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-track{position:relative;height:18px;border-left:2px solid var(--grid)}
+  .bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px;transition:filter .15s}
+  .bar-row:hover .bar-fill{filter:brightness(1.12)}
+  .bar-row .val{color:var(--ink);font-weight:800;text-align:right}
+  .empty{color:var(--muted);font-style:italic}
+  /* Daily activity columns */
+  .cols{display:flex;align-items:flex-end;gap:2px;height:160px;border-bottom:2px solid var(--grid);padding-top:8px}
+  .col{flex:1;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px;position:relative}
+  .col:hover{filter:brightness(1.12)}
+  .col-axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:4px}
+  /* Tooltip */
+  #tip{position:fixed;pointer-events:none;z-index:10;background:#183745;color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .1s;max-width:260px}
+  /* Table */
+  .table-wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  th{font:800 13px 'Nunito',sans-serif;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+  th[aria-sort] ::after{content:''}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:800;font-size:13px}
+  .pill.hard{background:var(--bad-bg);color:var(--bad)}
+  .pill.easy{background:var(--good-bg);color:var(--good)}
+  .row-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
+  .picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .picker button{background:transparent;color:var(--ink);padding:6px 14px;font-size:15px}
+  .picker button[aria-pressed="true"]{background:var(--bar);border-color:var(--bar);color:#fff}
+  .tiles.small .tile b{font-size:28px}
+  .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin:16px 0}
+  .dist-row{grid-template-columns:110px 1fr 56px}
+  tr.clickable{cursor:pointer} tr.clickable:hover td{background:var(--bar-soft)}
+  .tabs{display:flex;gap:8px;margin-right:auto}
+  .tabs button{background:transparent;color:var(--ink);padding:6px 16px}
+  .tabs button[aria-current]{background:var(--bar);border-color:var(--bar);color:#fff}
+  header h1{flex:none}
+  .text-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .text-tools input[type=search]{flex:1;min-width:200px;padding:8px 14px;border:2px solid var(--line);border-radius:999px;background:#fff;color:#3b172e;font:700 15px 'Nunito',sans-serif}
+  .text-item{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--grid)}
+  .text-item:first-child{border-top:0}
+  .text-item header{all:unset;grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+  .text-item code{font-size:12px;color:var(--muted)}
+  .text-item .note{color:var(--ink-2);font-size:14px}
+  .text-item textarea{width:100%;min-height:84px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:#3b172e;font:600 15px/1.45 'Nunito',sans-serif;resize:vertical}
+  .text-item textarea:focus-visible{outline:3px solid var(--bar);outline-offset:1px}
+  .text-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .text-actions button{font-size:14px;padding:4px 14px}
+  .badge{font:800 12px 'Nunito',sans-serif;padding:2px 10px;border-radius:999px;background:var(--grid);color:var(--ink-2)}
+  .badge.draft{background:#fde9b8;color:#7a4b00}
+  .badge.live{background:var(--good-bg);color:var(--good)}
+  .ph{background:#ede4fb;color:#5b2fa8;border-radius:4px;padding:0 3px;font-weight:800}
+  /* Previews in the game's own styles */
+  .pv-piko{display:flex;align-items:flex-end;gap:10px}
+  .pv-piko .pv-panel{flex:1;background:#fcf7ef;border:3px solid #2f7a70;border-radius:16px;padding:10px 14px;color:#3b172e;font:700 15px/1.4 'Nunito',sans-serif}
+  .pv-piko .pv-panel b{display:block;font:800 12px 'Baloo 2',sans-serif;letter-spacing:.1em;color:#2f7a70}
+  .pv-piko img{width:56px;clip-path:inset(15% 0 0 0)}
+  .pv-mail{background:#fcf7ef;border:2px solid #77b9af;border-radius:14px;padding:12px 14px;color:#3b172e;font:600 14px/1.5 'Nunito',sans-serif;white-space:pre-line;max-height:240px;overflow:auto}
+  .pv-task{background:#fff;border:2px solid #e3ece8;border-left:6px solid #2f7a70;border-radius:12px;padding:10px 12px;color:#3b172e;font:700 15px/1.4 'Nunito',sans-serif}
+  .publish-bar{position:sticky;bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;margin-top:16px;border-radius:999px;background:var(--card);border:2px solid var(--bar);box-shadow:0 6px 18px #0002}
+  @media (max-width:760px){.text-item{grid-template-columns:1fr}}
+  .loading{text-align:center;color:var(--ink-2);padding:40px}
+  @media (max-width:600px){.bar-row{grid-template-columns:100px 1fr 48px}header{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
+<main id="app"><p class="loading">Loading…</p></main>
+<div id="tip" role="tooltip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/text.js"></script>
+<script src="js/level-edits.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/piko.js"></script>
+<script src="js/mail.js"></script>
+<script>
+(() => {
+  const cfg = window.EC_SUPABASE;
+  const sb = window.supabase.createClient(cfg.url, cfg.publishableKey, { auth:{ storageKey:'eyecon-admin-auth' } }); // separate from the player session
+  const app = document.getElementById('app');
+  const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  // Admins sign in with a username; Supabase needs an email, so map it.
+  const toEmail = u => u.includes('@') ? u : `${u.trim().toLowerCase()}@admins.eyecon.local`;
+  const levelName = id => { const l = (window.EC_LEVELS || []).find(l => l.id === id); return l ? `${l.levelNumber}. ${l.clientName}` : id; };
+  const levelNum = id => (window.EC_LEVELS || []).find(l => l.id === id)?.levelNumber ?? 99;
+
+  // ── Tooltip ──
+  const tip = document.getElementById('tip');
+  document.addEventListener('pointermove', e => {
+    const t = e.target.closest('[data-tip]');
+    if(!t){ tip.style.opacity = 0; return; }
+    tip.textContent = t.dataset.tip; tip.style.opacity = 1;
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+  });
+
+  function showLogin(message = ''){
+    app.innerHTML = `<form class="card login" id="login"><img src="assets/sprites/piko.png" alt=""><h2>Admin sign-in</h2>
+      <input name="u" autocomplete="username" placeholder="Username" required aria-label="Username">
+      <input name="p" type="password" autocomplete="current-password" placeholder="Password" required aria-label="Password">
+      <button type="submit">Sign in</button><p class="err" role="alert">${esc(message)}</p></form>`;
+    document.getElementById('login').addEventListener('submit', async e => {
+      e.preventDefault();
+      const f = e.target, btn = f.querySelector('button'); btn.disabled = true;
+      const { error } = await sb.auth.signInWithPassword({ email: toEmail(f.u.value), password: f.p.value });
+      btn.disabled = false;
+      if(error) return f.querySelector('.err').textContent = 'Wrong username or password.';
+      boot();
+    });
+  }
+
+  async function boot(){
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return showLogin();
+    const { data:username } = await sb.rpc('my_admin_username');
+    if(!username){ await sb.auth.signOut(); return showLogin('This account is not an admin.'); }
+    document.getElementById('who').textContent = `Signed in as ${username}`;
+    const out = document.getElementById('signout'); out.hidden = false;
+    out.onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    const tabs = document.getElementById('tabs'); tabs.hidden = false;
+    tabs.onclick = e => { const b = e.target.closest('[data-tab]'); if(!b) return; tabs.querySelectorAll('button').forEach(x => x.toggleAttribute('aria-current', x === b)); b.dataset.tab === 'text' ? showText() : boot(); };
+    if(tabs.querySelector('[aria-current]')?.dataset.tab === 'text') return showText();
+    app.innerHTML = '<p class="loading">Loading statistics…</p>';
+    const [ov, lv, daily] = await Promise.all([sb.rpc('admin_overview'), sb.rpc('admin_level_stats'), sb.rpc('admin_daily_activity')]);
+    const err = ov.error || lv.error || daily.error;
+    if(err){ app.innerHTML = `<div class="card"><h2>Couldn’t load statistics</h2><p class="err">${esc(err.message)}</p><p class="sub">Have the migrations 0002 and 0003 been run in the Supabase SQL editor?</p><button id="retry">Retry</button></div>`; document.getElementById('retry').onclick = boot; return; }
+    render(ov.data?.[0] || {}, (lv.data || []).sort((a, b) => levelNum(a.level_id) - levelNum(b.level_id)), daily.data || []);
+  }
+
+  // Horizontal bars: one hue, value labelled at the end, hover for details.
+  function bars(rows, value, fmt, detail){
+    const vals = rows.map(value).filter(v => v != null && !isNaN(v));
+    if(!vals.length) return '<p class="empty">No data yet.</p>';
+    const max = Math.max(...vals) || 1;
+    return `<div class="bars">${rows.map(r => {
+      const v = value(r);
+      return `<div class="bar-row" data-tip="${esc(detail(r))}"><span class="name">${esc(levelName(r.level_id))}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${v == null ? 0 : v / max * 100}%"></div></div><span class="val">${v == null ? '–' : fmt(v)}</span></div>`;
+    }).join('')}</div>`;
+  }
+
+  function render(o, levels, daily){
+    const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+    const firstTryRate = r => pct(+r.first_try_approved, +r.approved_players);
+    // Struggle score: more resubmits and more time → harder. Ranked within this data set.
+    const ranked = [...levels].filter(r => r.avg_submissions != null)
+      .sort((a, b) => (+b.avg_resubmits - +a.avg_resubmits) || (+b.median_active_min - +a.median_active_min));
+    const hard = new Set(ranked.slice(0, 2).map(r => r.level_id)), easy = new Set(ranked.slice(-2).map(r => r.level_id));
+    const totalFirst = levels.reduce((s, r) => s + +r.first_try_approved, 0), totalOk = levels.reduce((s, r) => s + +r.approved_players, 0);
+
+    const tiles = [
+      [o.players ?? 0, 'Players'],
+      [o.google_players ?? 0, 'Signed in with Google'],
+      [o.active_7d ?? 0, 'Active in the last 7 days'],
+      [o.submissions ?? 0, 'Submissions'],
+      [pct(totalFirst, totalOk) == null ? '–' : pct(totalFirst, totalOk) + '%', 'Approved on the first try'],
+      [o.total_active_hours ?? 0, 'Active hours played'],
+    ];
+    const maxDay = Math.max(1, ...daily.map(d => +d.submissions));
+
+    app.innerHTML = `
+      <section class="tiles" aria-label="Overview">${tiles.map(([v, l]) => `<div class="tile"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</section>
+
+      <section class="charts">
+        <div class="card"><h2>“Fix again” rounds per player</h2><p class="sub">Average resubmits before approval. Higher = players struggled.</p>
+          ${bars(levels, r => r.avg_resubmits == null ? null : +r.avg_resubmits, v => v.toFixed(2), r => `${levelName(r.level_id)}: ${r.avg_resubmits ?? '–'} resubmits on average, ${r.avg_submissions ?? '–'} submissions`)}</div>
+        <div class="card"><h2>Time to approval</h2><p class="sub">Median active minutes until the client approved.</p>
+          ${bars(levels, r => r.median_active_min == null ? null : +r.median_active_min, v => v.toFixed(1) + 'm', r => `${levelName(r.level_id)}: median ${r.median_active_min ?? '–'} active minutes, ${r.approved_players} players approved`)}</div>
+        <div class="card"><h2>Solved on the first try</h2><p class="sub">Share of approved players who passed on their first submission.</p>
+          ${bars(levels, firstTryRate, v => v + '%', r => `${levelName(r.level_id)}: ${r.first_try_approved} of ${r.approved_players} approved players passed first try`)}</div>
+        <div class="card"><h2>Hints per player</h2><p class="sub">Average hint button uses.</p>
+          ${bars(levels, r => r.avg_hints == null ? null : +r.avg_hints, v => v.toFixed(2), r => `${levelName(r.level_id)}: ${r.avg_hints ?? 0} hints per player`)}</div>
+      </section>
+
+      <section class="card"><h2>Daily submissions</h2><p class="sub">Last 30 days.</p>
+        ${daily.length ? `<div class="cols">${daily.map(d => `<div class="col" style="height:${+d.submissions / maxDay * 100}%" data-tip="${esc(d.day)}: ${d.submissions} submissions by ${d.players} players"></div>`).join('')}</div>
+        <div class="col-axis"><span>${esc(daily[0].day)}</span><span>${esc(daily[daily.length - 1].day)}</span></div>` : '<p class="empty">No submissions yet.</p>'}
+      </section>
+
+      <section class="card"><h2>All levels</h2><p class="sub">Full numbers per level. Click a column to sort. The two hardest and easiest levels are tagged.</p>
+        <div class="row-actions"><button id="csv">Download CSV</button><button class="ghost" id="refresh">Refresh</button></div>
+        <div class="table-wrap"><table id="tbl"><thead><tr>
+          <th data-k="name">Level</th><th data-k="players">Opened</th><th data-k="approved_players">Approved</th><th data-k="first_try_approved">First try</th>
+          <th data-k="avg_submissions">Avg sends</th><th data-k="avg_resubmits">Avg resubmits</th><th data-k="median_active_min">Median min</th>
+          <th data-k="avg_hints">Hints</th><th data-k="abandoned">Abandoned</th><th data-k="avg_first_stars">1st stars</th><th>Verdict</th>
+        </tr></thead><tbody></tbody></table></div>
+        ${levels.length ? '' : '<p class="empty">No play data yet. Numbers appear once players open and submit levels.</p>'}
+      </section>
+
+      <section class="card" id="detail"><h2>Level details</h2><p class="sub">Pick a level to see each player: how long they took, how many times they resent it, and how it ended.</p>
+        <div class="picker" role="group" aria-label="Level">${(window.EC_LEVELS || []).filter(l => l.levelNumber <= 7).sort((a, b) => a.levelNumber - b.levelNumber)
+          .map(l => `<button type="button" data-level="${esc(l.id)}" aria-pressed="false">${esc(l.levelNumber + '. ' + l.clientName)}</button>`).join('')}</div>
+        <div id="detail-body"><p class="empty">Choose a level above, or click a row in the table.</p></div>
+      </section>`;
+
+    let sortKey = 'num', dir = 1;
+    const rows = levels.map(r => Object.assign({ name: levelName(r.level_id), num: levelNum(r.level_id) }, r));
+    const drawTable = () => {
+      const s = [...rows].sort((a, b) => { const x = a[sortKey], y = b[sortKey]; return (typeof x === 'string' ? x.localeCompare(y) : (+x || 0) - (+y || 0)) * dir; });
+      document.querySelector('#tbl tbody').innerHTML = s.map(r => `<tr class="clickable" data-level="${esc(r.level_id)}" title="Show players for this level"><td>${esc(r.name)}</td><td>${r.players}</td><td>${r.approved_players}</td><td>${r.first_try_approved}</td>
+        <td>${r.avg_submissions ?? '–'}</td><td>${r.avg_resubmits ?? '–'}</td><td>${r.median_active_min ?? '–'}</td><td>${r.avg_hints ?? 0}</td><td>${r.abandoned}</td><td>${r.avg_first_stars ?? '–'}</td>
+        <td>${hard.has(r.level_id) ? '<span class="pill hard">Struggled</span>' : easy.has(r.level_id) ? '<span class="pill easy">Easy</span>' : ''}</td></tr>`).join('');
+    };
+    document.querySelectorAll('#tbl th[data-k]').forEach(th => th.addEventListener('click', () => {
+      dir = sortKey === th.dataset.k ? -dir : 1; sortKey = th.dataset.k; drawTable();
+    }));
+    drawTable();
+    document.querySelector('#tbl tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-level]'); if(tr){ showDetail(tr.dataset.level); document.getElementById('detail').scrollIntoView({ behavior:'smooth' }); } });
+    document.querySelectorAll('.picker button').forEach(b => b.addEventListener('click', () => showDetail(b.dataset.level)));
+    document.getElementById('refresh').onclick = boot;
+    document.getElementById('csv').onclick = () => {
+      const cols = ['level_id','name','players','approved_players','first_try_approved','avg_submissions','avg_resubmits','median_active_min','avg_hints','abandoned','avg_first_stars'];
+      const csv = [cols.join(','), ...rows.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','))].join('\n');
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type:'text/csv' })), download: `eyecon-level-stats-${new Date().toISOString().slice(0,10)}.csv` });
+      a.click(); URL.revokeObjectURL(a.href);
+    };
+  }
+
+  // ── One level, one row per player ──
+  async function showDetail(levelId){
+    document.querySelectorAll('.picker button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.level === levelId)));
+    const body = document.getElementById('detail-body');
+    body.innerHTML = '<p class="loading">Loading players…</p>';
+    const { data, error } = await sb.rpc('admin_level_detail', { p_level: levelId });
+    if(error){ body.innerHTML = `<p class="err">${esc(error.message)}</p><p class="sub">Has migration 0004 been run?</p>`; return; }
+    const rows = data || [];
+    if(!rows.length){ body.innerHTML = '<p class="empty">Nobody has opened this level yet.</p>'; return; }
+    const done = rows.filter(r => r.approved), sent = rows.filter(r => +r.submissions > 0);
+    const median = a => { const v = a.filter(x => x != null).map(Number).sort((x, y) => x - y); if(!v.length) return null; const m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
+    const avg = a => a.length ? a.reduce((t, x) => t + Number(x || 0), 0) / a.length : null;
+    const medMin = median(done.map(r => r.active_min));
+    const tiles = [
+      [rows.length, 'Players who opened it'],
+      [done.length, 'Got it approved'],
+      [done.length ? Math.round(done.filter(r => r.approved_attempt === 1).length / done.length * 100) + '%' : '–', 'Approved on the first try'],
+      [medMin == null ? '–' : medMin.toFixed(1) + ' min', 'Median active time to finish'],
+      [sent.length ? avg(sent.map(r => r.resubmits)).toFixed(2) : '–', 'Average resubmits'],
+      [rows.reduce((t, r) => t + +r.abandoned, 0), 'Times left without sending'],
+    ];
+    const tries = [['1st try', r => r.approved_attempt === 1], ['2nd try', r => r.approved_attempt === 2], ['3rd try', r => r.approved_attempt === 3], ['4+ tries', r => r.approved_attempt >= 4], ['Not yet', r => !r.approved]]
+      .map(([label, f]) => ({ label, n: rows.filter(f).length }));
+    const bins = [['Under 2 min', 0, 2], ['2–5 min', 2, 5], ['5–10 min', 5, 10], ['10–20 min', 10, 20], ['20+ min', 20, Infinity]]
+      .map(([label, lo, hi]) => ({ label, n: done.filter(r => +r.active_min >= lo && +r.active_min < hi).length }));
+    const dist = items => { const max = Math.max(1, ...items.map(i => i.n)); return `<div class="bars">${items.map(i =>
+      `<div class="bar-row dist-row" data-tip="${esc(i.label)}: ${i.n} player${i.n === 1 ? '' : 's'}"><span class="name">${esc(i.label)}</span><div class="bar-track"><div class="bar-fill" style="width:${i.n / max * 100}%"></div></div><span class="val">${i.n}</span></div>`).join('')}</div>`; };
+    const cols = [['player_name','Player'],['opened_at','Opened'],['submissions','Sends'],['resubmits','Resubmits'],['approved','Result'],['approved_attempt','Approved on'],['active_min','Active min'],['elapsed_min','Total min'],['hints','Hints'],['abandoned','Left'],['first_stars','1st stars'],['best_stars','Best stars']];
+    const cell = (r, k) => k === 'opened_at' ? esc(r[k] ? new Date(r[k]).toLocaleString() : '–')
+      : k === 'approved' ? (r.approved ? '<span class="pill easy">Approved</span>' : +r.submissions ? '<span class="pill hard">Fix again</span>' : '<span class="pill">Not sent</span>')
+      : k === 'approved_attempt' ? (r[k] ? `try ${r[k]}` : '–') : esc(r[k] ?? '–');
+    body.innerHTML = `<section class="tiles small">${tiles.map(([v, l]) => `<div class="tile"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</section>
+      <div class="detail-grid">
+        <div><h2>When it got approved</h2><p class="sub">Players by the submission that passed.</p>${dist(tries)}</div>
+        <div><h2>How long it took</h2><p class="sub">Active minutes until approval (approved players only).</p>${done.length ? dist(bins) : '<p class="empty">No approvals yet.</p>'}</div>
+      </div>
+      <div class="row-actions"><button id="detail-csv">Download CSV</button></div>
+      <div class="table-wrap"><table><thead><tr>${cols.map(([, h]) => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${cols.map(([k]) => `<td>${cell(r, k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    document.getElementById('detail-csv').onclick = () => {
+      const csv = [cols.map(c => c[0]).join(','), ...rows.map(r => cols.map(([k]) => JSON.stringify(r[k] ?? '')).join(','))].join('\n');
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type:'text/csv' })), download: `eyecon-${levelId}-players.csv` });
+      a.click(); URL.revokeObjectURL(a.href);
+    };
+  }
+
+  // ───────────── Dialogue & text editor ─────────────
+  const AREAS = [['piko','Piko'],['emails','Emails'],['tasks','Tasks'],['feedback','Feedback'],['onboarding','Onboarding'],['ui','Other']];
+  const SAMPLE = { name:'Alex', client:'Mayonnaisegee', page:'portfolio', better:'everything lines up neatly', gift:'we would love to send you a signed art print' };
+  const fillSample = t => esc(t).replace(/\{(\w+)\}/g, (m, k) => `<span class="ph" title="{${k}}">${esc(SAMPLE[k] ?? '{' + k + '}')}</span>`).replace(/\\n/g, '\n');
+  let textRows = {}, textArea = 'piko', textQuery = '';
+
+  async function showText(){
+    app.innerHTML = '<p class="loading">Loading text…</p>';
+    const { data, error } = await sb.from('content_text').select('key, value, draft, updated_at');
+    if(error){ app.innerHTML = `<div class="card"><h2>Couldn’t load text</h2><p class="err">${esc(error.message)}</p></div>`; return; }
+    textRows = Object.fromEntries((data || []).map(r => [r.key, r]));
+    drawText();
+  }
+
+  function preview(key, area, text){
+    if(area === 'piko' || area === 'onboarding') return `<div class="pv-piko"><div class="pv-panel"><b>PIKO</b>${fillSample(text)}</div><img src="assets/sprites/piko.png" alt=""></div>`;
+    if(area === 'tasks') return `<div class="pv-task">${fillSample(text)}</div>`;
+    return `<div class="pv-mail">${fillSample(text)}</div>`;
+  }
+
+  function drawText(){
+    const D = window.EC_TEXT.defaults;
+    const keys = Object.keys(D).filter(k => D[k].area === textArea && (!textQuery || (k + ' ' + D[k].value + ' ' + (textRows[k]?.value || '') + ' ' + (D[k].note || '')).toLowerCase().includes(textQuery)));
+    const drafts = Object.values(textRows).filter(r => r.draft != null).length;
+    const missing = Object.keys(D).filter(k => !textRows[k]).length;
+    app.innerHTML = `<section class="card">
+      <h2>Dialogue &amp; text</h2><p class="sub">Edit what players read. <b>Save draft</b> keeps a change private; <b>Publish</b> sends every draft to the game (players see it next time they load). Words in {braces} are filled in automatically, e.g. {name} is the player's name.</p>
+      ${missing ? `<p class="sub">⚠ ${missing} built-in lines aren't in the database yet. <button id="import">Import built-in text</button></p>` : ''}
+      <div class="text-tools"><div class="picker" role="group" aria-label="Area" style="margin:0">${AREAS.map(([a, l]) => `<button type="button" data-area="${a}" aria-pressed="${a === textArea}">${l} (${Object.values(D).filter(d => d.area === a).length})</button>`).join('')}</div>
+        <input type="search" id="tq" placeholder="Search text…" value="${esc(textQuery)}" aria-label="Search text"></div>
+      <div id="items">${keys.length ? keys.map(k => {
+        const row = textRows[k], current = row?.draft ?? row?.value ?? D[k].value;
+        const badge = row?.draft != null ? '<span class="badge draft">Draft</span>' : row ? '<span class="badge live">Published</span>' : '<span class="badge">Built-in</span>';
+        return `<article class="text-item" data-key="${esc(k)}"><header><b>${esc(D[k].note || k)}</b>${badge}<code>${esc(k)}</code></header>
+          <div><textarea aria-label="${esc(k)}">${esc(current.replace(/\\n/g, '\n'))}</textarea>
+            <div class="text-actions"><button class="save">Save draft</button>${row?.draft != null ? '<button class="ghost discard">Discard draft</button>' : ''}${(row?.value ?? D[k].value) !== D[k].value ? '<button class="ghost reset">Reset to built-in</button>' : ''}</div></div>
+          <div class="pv">${preview(k, D[k].area, current)}</div></article>`;
+      }).join('') : '<p class="empty">Nothing here.</p>'}</div>
+      <div class="publish-bar"><span>${drafts ? `<b>${drafts}</b> unpublished draft${drafts === 1 ? '' : 's'}` : 'Everything is published.'}</span><button id="publish" ${drafts ? '' : 'disabled'}>Publish ${drafts || ''}</button></div>
+    </section>`;
+
+    app.querySelectorAll('[data-area]').forEach(b => b.onclick = () => { textArea = b.dataset.area; drawText(); });
+    const tq = document.getElementById('tq');
+    tq.oninput = () => { textQuery = tq.value.trim().toLowerCase(); const pos = tq.selectionStart; drawText(); const n = document.getElementById('tq'); n.focus(); n.setSelectionRange(pos, pos); };
+    document.getElementById('import')?.addEventListener('click', importDefaults);
+    document.getElementById('publish').onclick = async () => {
+      const { data:n, error } = await sb.rpc('admin_publish_text');
+      if(error) return alert(error.message);
+      alert(`Published ${n} change${n === 1 ? '' : 's'}.`); showText();
+    };
+    app.querySelectorAll('.text-item').forEach(item => {
+      const key = item.dataset.key, ta = item.querySelector('textarea'), D0 = D[key];
+      ta.oninput = () => { item.querySelector('.pv').innerHTML = preview(key, D0.area, ta.value); };
+      const upsert = async fields => {
+        const row = textRows[key];
+        const { error } = await sb.from('content_text').upsert(Object.assign({ key, area: D0.area, note: D0.note, value: row?.value ?? D0.value }, fields));
+        if(error) return alert(error.message);
+        showText();
+      };
+      item.querySelector('.save').onclick = () => upsert({ draft: ta.value.replace(/\r?\n/g, '\n') });
+      item.querySelector('.discard')?.addEventListener('click', () => upsert({ draft: null }));
+      item.querySelector('.reset')?.addEventListener('click', () => upsert({ draft: D0.value }));
+    });
+  }
+
+  // One-time: copy every built-in line into Supabase so it can be edited.
+  async function importDefaults(){
+    const D = window.EC_TEXT.defaults;
+    const rows = Object.keys(D).filter(k => !textRows[k]).map(k => ({ key:k, area:D[k].area, note:D[k].note, value:D[k].value }));
+    for(let i = 0; i < rows.length; i += 200){
+      const { error } = await sb.from('content_text').upsert(rows.slice(i, i + 200), { onConflict:'key', ignoreDuplicates:true });
+      if(error) return alert(error.message);
+    }
+    showText();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

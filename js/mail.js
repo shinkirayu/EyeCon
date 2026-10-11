@@ -166,6 +166,24 @@
     kolehiyo: 'we would be happy to invite you as a guest speaker at our next design talk',
     oras: 'we would love to send you a BEAR ORAS watch',
   };
+  // All of the client/player email wording is editable from the admin page.
+  const T = window.EC_TEXT;
+  T.bindObject('mail.gift', THANK_YOU_GIFT, 'emails', 'Gift offered in the approval email');
+  [['mail.approved.greeting', 'Good day,'],
+   ['mail.approved.thanks', 'Thank you so much for the revised {page}. It looks much better now and {better}.'],
+   ['mail.approved.better.color', 'the text is clearer and easier to read'],
+   ['mail.approved.better.typography', 'the text is so much easier to read'],
+   ['mail.approved.better.position', 'everything lines up neatly'],
+   ['mail.approved.gift', 'We truly appreciate your help and effort. As a small token of our gratitude, {gift}.'],
+   ['mail.approved.giftDefault', "we'll be recommending EyeCon to all our friends"],
+  ].forEach(([k, v]) => T.register(k, v, 'emails', 'Client approval email'));
+  [['mail.revise.greeting', 'Hi, {client} here.'],
+   ['mail.revise.notYet', "A few things still aren't quite right."],
+   ['mail.revise.ask', 'Could you take another look? We would still love it if you could:'],
+   ['mail.revise.fallback', 'Give it a little more polish.'],
+   ['mail.revise.closing', 'Send us an updated version when you can. Thanks!'],
+  ].forEach(([k, v]) => T.register(k, v, 'feedback', '“Fix again” email'));
+  T.register('mail.myReply', 'Good day, {client} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon', 'emails', 'The reply the player types out');
   function buildClientReplyText(level, result, missionComplete){
     const stars = result.stars;
     const goals = result.feedback.filter(f => f.category === 'Goals');
@@ -175,22 +193,20 @@
     if(missionComplete){
       // Warm thank-you note: what got better, then a small gift.
       const tool = (level.tools || [])[0];
-      const better = tool === 'color' ? 'the text is clearer and easier to read'
-        : tool === 'typography' ? 'the text is so much easier to read'
-        : 'everything lines up neatly';
+      const better = T.t('mail.approved.better.' + (tool === 'color' || tool === 'typography' ? tool : 'position'));
       const custom = stars >= 5 ? templates.great : templates.ok;
-      return ['Good day,', '',
-        `Thank you so much for the revised ${(level.pageLabel || 'design').toLowerCase()}. It looks much better now and ${better}.`,
+      return [T.t('mail.approved.greeting'), '',
+        T.t('mail.approved.thanks', { page:(level.pageLabel || 'design').toLowerCase(), better }),
         ...(custom ? ['', custom] : []), '',
-        `We truly appreciate your help and effort. As a small token of our gratitude, ${THANK_YOU_GIFT[level.project] || "we'll be recommending EyeCon to all our friends"}.`,
+        T.t('mail.approved.gift', { gift: THANK_YOU_GIFT[level.project] || T.t('mail.approved.giftDefault') }),
         '', `— ${level.emailFrom || level.clientName}`].join('\n');
     }
-    const lines = [`Hi, ${level.clientName} here.`, ''];
+    const lines = [T.t('mail.revise.greeting', { client: level.clientName }), ''];
     {
-      lines.push(templates.bad || "A few things still aren't quite right.", 'Could you take another look? We would still love it if you could:', '');
+      lines.push(templates.bad || T.t('mail.revise.notYet'), T.t('mail.revise.ask'), '');
       const bad = relevant('bad').filter(f => !f.bonus);
-      (bad.length ? bad : [{title:'Give it a little more polish.'}]).forEach(f => lines.push(`• ${f.title}`));
-      lines.push('', 'Send us an updated version when you can. Thanks!', '', `— ${level.clientName}`);
+      (bad.length ? bad : [{title:T.t('mail.revise.fallback')}]).forEach(f => lines.push(`• ${f.title}`));
+      lines.push('', T.t('mail.revise.closing'), '', `— ${level.clientName}`);
     }
     return lines.join('\n');
   }
@@ -217,7 +233,7 @@
 
   // The reply the player types out (same text every time).
   function myReplyText(level){
-    return `Good day, ${level.clientName} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon`;
+    return T.t('mail.myReply', { client: level.clientName });
   }
   // Completed mail: the whole conversation, newest first, so the approval
   // sits on top and scrolling down goes back to the original request.

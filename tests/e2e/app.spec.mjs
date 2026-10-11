@@ -8,6 +8,7 @@ const openClient = async (page, name) => {
 
 // Piko's tutorial covers the screen on a fresh save; only its own test keeps it.
 test.beforeEach(async ({ page }, info) => {
+  await page.addInitScript(()=>{ window.EC_NO_DB = true; }); // never touch the real Supabase project
   if(!/Piko/.test(info.title)) await page.addInitScript(()=>{ window.EC_NO_PIKO = true; window.EC_ALL_JOBS = true; window.EC_ADMIN = true; });
 });
 
@@ -17,6 +18,11 @@ test('Piko welcomes the player on the first desktop visit', async ({ page }) => 
   const bubble = page.locator('.piko-bubble');
   await expect(bubble).toBeVisible();
   await expect(bubble).toContainText('Piko');
+  // Piko asks for a name, which becomes the profile's display name.
+  await page.waitForTimeout(900); await bubble.locator('.piko-panel').click();
+  await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
+  await expect(bubble).toContainText('Nice to meet you, Alex!');
+  expect(await page.evaluate(() => EC_STORE.load().displayName)).toBe('Alex');
 });
 
 async function beginFirstDay(page) {
@@ -795,6 +801,8 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   const say = async () => { await page.waitForTimeout(900); await page.locator('.piko-panel').click(); };
+  await say(); await page.waitForTimeout(900);
+  await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
   await say(); await say(); await page.waitForTimeout(900);
   await page.locator('#icon-mail').click();
   await page.waitForTimeout(900); await page.locator('#mail-list .mail-item').first().click();

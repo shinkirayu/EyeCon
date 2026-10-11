@@ -4,7 +4,7 @@ test('client websites fill the browser and support navigation and interactions',
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
-    window.EC_NO_PIKO=true;
+    window.EC_NO_PIKO=true; window.EC_NO_DB=true;
     localStorage.setItem('eyecon_profile_v1',JSON.stringify({completed:['mayo-portfolio','yappers-login','haybuhay-settings'],onboarding:{seen:true},workday:{day:2,submissions:0,reviews:[],coins:0,xp:0}})); // tutorial done, so it's day 2
   });
   await page.goto('/');
