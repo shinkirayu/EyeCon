@@ -2263,7 +2263,7 @@ html:not(.admin-tools) #screen-desktop .desktop-icons .desktop-icon#icon-maker,h
 /* Piko: whatever he's pointing at only works once his line is on screen. */
 body.piko-line-pending *{pointer-events:none!important;} /* nothing reacts in the beat before a line appears */
 /* First-day tutorial: taskbar Home is off so the flow can't be broken. */
-body.piko-tutorial #taskbar-home{pointer-events:none;opacity:.5;}
+body.piko-tutorial #taskbar-home{pointer-events:none;}
 /* A tutorial "allowed" control (e.g. the attachment) still waits for Piko's
    line — this must beat the .piko-allow rule, so it's more specific and later. */
 html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow *{pointer-events:none!important;}
@@ -2324,3 +2324,14 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 .ms-err{margin:0;color:#b02a5c;font-weight:700;}
 .ms-err:empty{display:none;}
 .ms-actions{display:flex;justify-content:flex-end;gap:.5rem;}
+
+/* Editor: quick controls popover */
+.tool-q{font:800 1.25rem/1 var(--font-display);color:#528f91;}
+.controls-pop{width:min(26rem,92vw);padding:1.25rem 1.5rem;border:.1875rem solid #77b9af;border-radius:1.5rem;background:#fcf7ef;color:#3b172e;box-shadow:0 .5rem 0 #0000001a;}
+.controls-pop::backdrop{background:#0003;}
+.controls-pop h2{margin:0 0 .75rem;font:800 1.5rem var(--font-display);}
+.controls-pop dl{display:grid;grid-template-columns:auto 1fr;gap:.5rem 1rem;margin:0 0 1rem;font:600 .9375rem var(--font-body);}
+.controls-pop dt{font-weight:800;color:#2f6f73;}
+.controls-pop dd{margin:0;}
+.controls-pop kbd{font:inherit;padding:0 .3rem;border:1px solid #a5d6cc;border-radius:.3rem;background:#fff;}
+.controls-pop .btn{display:block;margin-left:auto;}

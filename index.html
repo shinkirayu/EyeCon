@@ -324,6 +324,7 @@
         <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#spark"/></svg></button>
         <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Rulers and spacing" aria-label="Rulers and spacing" aria-pressed="false"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="#b6e1da" stroke="#528f91"/><path d="M6 6v6m4-6v4m4-4v6m4-6v4" stroke="#528f91" stroke-width="2"/></svg></button>
         <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#bulb"/></svg></button>
+        <button class="tool-btn" id="tool-controls" popovertarget="controls-pop" title="Quick controls" aria-label="Quick controls"><span class="tool-q" aria-hidden="true">?</span></button>
         <button class="tool-btn hidden" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
         <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#triangle"/></svg></button>
         <span class="tool-pill-divider" aria-hidden="true"></span>
@@ -525,6 +526,23 @@
       <button class="preview-close" id="btn-close-preview" aria-label="Close preview">✕</button>
       <div id="preview-stage-mount"></div>
     </div>
+  </div>
+
+  <!-- Quick controls run-down (editor "?" button) -->
+  <div id="controls-pop" popover class="controls-pop" role="dialog" aria-labelledby="controls-title">
+    <h2 id="controls-title">Quick controls</h2>
+    <dl>
+      <dt>Click</dt><dd>Select an element</dd>
+      <dt>Drag</dt><dd>Move it (snaps to the 8px grid)</dd>
+      <dt>Arrow keys</dt><dd>Nudge 8px · <kbd>Shift</kbd> for 32px</dd>
+      <dt>Esc</dt><dd>Deselect</dd>
+      <dt>Ctrl + Z / Ctrl + Y</dt><dd>Undo / Redo</dd>
+      <dt>Scroll wheel</dt><dd>Zoom in and out</dd>
+      <dt>Middle / right drag</dt><dd>Pan around the canvas</dd>
+      <dt>Hold the eye</dt><dd>Compare with the original</dd>
+      <dt>Bulb</dt><dd>Get a hint</dd>
+    </dl>
+    <button type="button" class="btn btn-accept" popovertarget="controls-pop" popovertargetaction="hide">Got it</button>
   </div>
 
   <!-- SAVE/SUBMIT CONFIRM -->
