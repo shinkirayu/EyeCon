@@ -220,12 +220,36 @@
   .fun-more summary::before{content:'▸ ';color:var(--bar)}
   .fun-more[open] summary::before{content:'▾ '}
   .fun-more[open] summary{margin-bottom:12px}
+  /* Level reviews */
+  .rv-split{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+  .rv-list{display:grid;gap:8px;position:sticky;top:12px}
+  .rv-item{all:unset;cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:10px 12px;border:2px solid var(--line);border-radius:16px;background:var(--bg)}
+  .rv-item[aria-pressed="true"]{border-color:var(--bar);background:var(--bar-soft)}
+  .rv-item b{display:block;font:800 15px 'Baloo 2',sans-serif;color:var(--ink)}
+  .rv-item small{color:var(--ink-2)}
+  .rv-ava{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#fff;border:2px solid var(--line);font-size:22px}
+  .rv-ava img{width:100%;height:100%;object-fit:cover}
+  .rv-status{font:800 11px 'Nunito',sans-serif;padding:2px 8px;border-radius:999px;margin-left:4px;vertical-align:middle}
+  .st-submitted{background:#fde9b8;color:#7a4b00}.st-published{background:var(--good-bg);color:var(--good)}.st-draft{background:var(--grid);color:var(--ink-2)}.st-archived{background:var(--bad-bg);color:var(--bad)}
+  .rv-canvas{position:relative;width:100%;border-radius:14px;overflow:hidden;border:2px solid var(--line);background:#fff}
+  .rv-canvas > div{position:absolute;inset:0;transform-origin:0 0}
+  .rv-mail{display:grid;gap:8px;padding:16px 18px;border:2px solid #77b9af;border-radius:18px;background:#fcf7ef;color:#3b172e}
+  .rv-mail header{all:unset;display:flex;gap:12px;align-items:center}
+  .rv-mail h4{margin:0;font:800 18px 'Baloo 2',sans-serif}
+  .rv-mail p{margin:0;white-space:pre-line;font:600 15px/1.5 'Nunito',sans-serif}
+  .rv-mail small{color:#5a6f6a}
+  .rv-meta{display:flex;flex-wrap:wrap;gap:8px}
+  .rv-meta span{padding:4px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-weight:800;font-size:13px}
+  .rv-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .rv-actions textarea{flex:1 1 100%;min-height:60px;padding:8px 12px;border:2px solid var(--line);border-radius:12px;font:600 14px 'Nunito',sans-serif;color:#3b172e;background:#fff}
+  button.danger{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+  @media (max-width:800px){.rv-split{grid-template-columns:1fr}.rv-list{position:static}}
   .loading{text-align:center;color:var(--ink-2);padding:40px}
   @media (max-width:600px){.bar-row{grid-template-columns:100px 1fr 48px}header{flex-wrap:wrap}}
 </style>
 </head>
 <body>
-<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
+<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button><button data-tab="reviews">Level reviews</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
 <main id="app"><p class="loading">Loading…</p></main>
 <div id="tip" role="tooltip"></div>
 
@@ -281,8 +305,9 @@
     const out = document.getElementById('signout'); out.hidden = false;
     out.onclick = async () => { await sb.auth.signOut(); location.reload(); };
     const tabs = document.getElementById('tabs'); tabs.hidden = false;
-    tabs.onclick = e => { const b = e.target.closest('[data-tab]'); if(!b) return; tabs.querySelectorAll('button').forEach(x => x.toggleAttribute('aria-current', x === b)); b.dataset.tab === 'text' ? showText() : boot(); };
+    tabs.onclick = e => { const b = e.target.closest('[data-tab]'); if(!b) return; tabs.querySelectorAll('button').forEach(x => x.toggleAttribute('aria-current', x === b)); b.dataset.tab === 'text' ? showText() : b.dataset.tab === 'reviews' ? showReviews() : boot(); };
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'text') return showText();
+    if(tabs.querySelector('[aria-current]')?.dataset.tab === 'reviews') return showReviews();
     app.innerHTML = '<p class="loading">Loading statistics…</p>';
     const [ov, lv, daily] = await Promise.all([sb.rpc('admin_overview'), sb.rpc('admin_level_stats'), sb.rpc('admin_daily_activity')]);
     const err = ov.error || lv.error || daily.error;
@@ -505,6 +530,59 @@
       item.querySelector('.discard')?.addEventListener('click', () => upsert({ draft: null }));
       item.querySelector('.reset')?.addEventListener('click', () => upsert({ draft: D0.value }));
     });
+  }
+
+  // ───────────── Level reviews: player-made levels waiting for approval ─────────────
+  let rvFilter = 'submitted', rvSel = null, rvRows = [];
+  async function showReviews(){
+    app.innerHTML = '<p class="loading">Loading levels…</p>';
+    const { data, error } = await sb.from('levels').select('id, title, status, data, owner_id, review_note, created_at, updated_at').not('owner_id', 'is', null).order('updated_at', { ascending:false });
+    if(error){ app.innerHTML = `<div class="card"><h2>Couldn’t load levels</h2><p class="err">${esc(error.message)}</p></div>`; return; }
+    rvRows = data || []; drawReviews();
+  }
+  const ava = d => d.avatar ? `<img src="${esc(d.avatar)}" alt="">` : '✉';
+  function canvasHtml(d){
+    const c = d.canvas || { w:960, h:640, bg:'#fff' };
+    const els = (d.elements || []).filter(e => !e.hidden).sort((a, b) => (a.z || 0) - (b.z || 0)).map(e => {
+      const st = `position:absolute;left:${e.x}px;top:${e.y}px;width:${e.w}px;height:${e.h}px;border-radius:${e.shape === 'circle' ? '50%' : (e.radius || 0) + 'px'};background:${e.type === 'text' ? 'transparent' : esc(e.bg || 'transparent')};color:${esc(e.color || '#3b172e')};font:${e.fontWeight || 400} ${e.fontSize || 16}px ${esc(e.fontFamily || 'Arial')},sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:pre-wrap;text-align:center;${e.shape === 'triangle' ? 'clip-path:polygon(50% 0,100% 100%,0 100%);' : ''}`;
+      return `<div style="${st}">${e.type === 'image' && e.src ? `<img src="${esc(e.src)}" alt="" style="width:100%;height:100%;object-fit:cover">` : esc(e.text || '')}</div>`;
+    }).join('');
+    return `<div class="rv-canvas" style="aspect-ratio:${c.w}/${c.h}"><div data-w="${c.w}" style="width:${c.w}px;height:${c.h}px;background:${esc(c.bg || '#fff')}">${els}</div></div>`;
+  }
+  function drawReviews(){
+    const counts = s => rvRows.filter(r => s === 'all' || r.status === s).length;
+    const list = rvRows.filter(r => rvFilter === 'all' || r.status === rvFilter);
+    if(!list.find(r => r.id === rvSel)) rvSel = list[0]?.id || null;
+    const sel = list.find(r => r.id === rvSel), d = sel?.data || {};
+    const FILTERS = [['submitted', 'Waiting'], ['published', 'Released'], ['draft', 'Sent back / drafts'], ['archived', 'Unpublished'], ['all', 'All']];
+    app.innerHTML = `<section class="card">
+      <div class="tx-head"><h2>Level reviews</h2><p class="sub">Levels made by players in the Level Maker. Nothing reaches other players until you release it.</p></div>
+      <div class="tx-toolbar"><div class="seg" role="group" aria-label="Filter">${FILTERS.map(([k, l]) => `<button data-rvf="${k}" aria-pressed="${k === rvFilter}">${l} <span>${counts(k)}</span></button>`).join('')}</div><button class="ghost" id="rv-refresh">Refresh</button></div>
+      ${list.length ? `<div class="rv-split"><nav class="rv-list" aria-label="Levels">${list.map(r => `<button class="rv-item" data-rv="${esc(r.id)}" aria-pressed="${r.id === rvSel}"><span class="rv-ava">${ava(r.data || {})}</span>
+          <span><b>${esc(r.data?.clientName || r.title)}</b><small>${esc(r.data?.pageLabel || '')} · ${new Date(r.updated_at).toLocaleDateString()}</small><span class="rv-status st-${r.status}">${r.status}</span></span></button>`).join('')}</nav>
+        <div class="tx-main" style="display:grid;gap:16px">
+          <div class="tx-mainhead" style="max-width:none;margin:0"><div><h3>${esc(d.clientName || sel.title)} · ${esc(d.pageLabel || '')}</h3><p class="sub" style="margin:0">By ${esc(d.submittedBy || 'a player')} · updated ${new Date(sel.updated_at).toLocaleString()}</p></div><span class="rv-status st-${sel.status}">${sel.status}</span></div>
+          <div class="rv-mail"><header><span class="rv-ava" style="width:56px;height:56px">${ava(d)}</span><div><h4>${esc(d.emailSubject || '(no subject)')}</h4><small>From ${esc(d.clientName || '?')} · To: You</small></div></header><p>${esc(d.emailBody || '(no email text)')}</p></div>
+          <div><h3 style="margin:0 0 8px">The design players will fix</h3>${canvasHtml(d)}</div>
+          <div class="rv-meta"><span>${(d.elements || []).length} elements</span><span>${(d.hiddenTargets || []).length} targets</span><span>${(d.elements || []).filter(e => e.type === 'image').length} pictures</span><span>${d.canvas ? d.canvas.w + '×' + d.canvas.h : ''}</span></div>
+          ${sel.review_note ? `<p class="sub">Last note to the maker: “${esc(sel.review_note)}”</p>` : ''}
+          <div class="rv-actions"><textarea id="rv-note" placeholder="Note to the maker (sent back with the level)…"></textarea>
+            ${sel.status !== 'published' ? '<button id="rv-publish">✓ Release to players</button>' : '<button class="ghost" id="rv-archive">Unpublish</button>'}
+            <button class="ghost" id="rv-back">Send back with note</button><button class="danger" id="rv-delete">Delete</button></div>
+        </div></div>` : `<p class="empty" style="text-align:center">Nothing here right now.</p>`}
+    </section>`;
+    app.querySelectorAll('[data-rvf]').forEach(b => b.onclick = () => { rvFilter = b.dataset.rvf; drawReviews(); });
+    app.querySelectorAll('[data-rv]').forEach(b => b.onclick = () => { rvSel = b.dataset.rv; drawReviews(); });
+    document.getElementById('rv-refresh').onclick = showReviews;
+    // Scale the stored canvas to the panel width.
+    app.querySelectorAll('.rv-canvas > div').forEach(c => { c.style.transform = `scale(${c.parentElement.clientWidth / +c.dataset.w})`; });
+    if(!sel) return;
+    const setStatus = async (status, note) => { const { error } = await sb.rpc('admin_set_level_status', { p_level: sel.id, p_status: status, p_note: note || null }); if(error) return alert(error.message); showReviews(); };
+    const note = () => document.getElementById('rv-note').value.trim();
+    document.getElementById('rv-publish')?.addEventListener('click', () => setStatus('published', note()));
+    document.getElementById('rv-archive')?.addEventListener('click', () => setStatus('archived', note()));
+    document.getElementById('rv-back').onclick = () => { if(!note()) return alert('Write a note so the maker knows what to change.'); setStatus('draft', note()); };
+    document.getElementById('rv-delete').onclick = async () => { if(!confirm('Delete this level for good?')) return; const { error } = await sb.from('levels').delete().eq('id', sel.id); if(error) return alert(error.message); showReviews(); };
   }
 
   // ───────────── Emails / Tasks / Feedback: grouped by client ─────────────

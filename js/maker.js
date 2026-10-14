@@ -471,7 +471,66 @@
     if(action==='needed')els.forEach(x=>{x.gameLocked=false;});
     renderCanvas();renderLayers();renderProperties();persist();record();
   }
+  // ── Submit for review ──
+  // Asks for the client details players will see, uploads any pictures to
+  // Supabase Storage (level-assets/<user id>/…), and saves the level as
+  // `submitted`. An admin reviews it before anyone else can play it.
+  async function uploadImage(sb, uid, dataUrl, name){
+    if(!/^data:image\//.test(dataUrl)) return dataUrl; // already a URL
+    const blob = await (await fetch(dataUrl)).blob();
+    const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    const path = `${uid}/${Date.now()}-${name}.${ext}`;
+    const { error } = await sb.storage.from('level-assets').upload(path, blob, { contentType: blob.type });
+    if(error) throw error;
+    return sb.storage.from('level-assets').getPublicUrl(path).data.publicUrl;
+  }
+  function openSubmit(){
+    const db = window.EC_DB;
+    if(!db?.online){ alert('Submitting needs an internet connection (Supabase). Try again when online.'); return; }
+    const card = document.createElement('div');
+    card.className = 'modal-overlay maker-submit';
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'ms-title');
+    card.innerHTML = `<form class="modal-card ms-card">
+      <h2 id="ms-title">Submit level for review</h2>
+      <p class="ms-sub">An admin checks it before it’s released to players.</p>
+      <div class="ms-row"><label class="ms-ava"><img alt="" hidden><span>Client picture</span><input type="file" accept="image/*" hidden></label>
+        <div class="ms-col"><label>Client name<input name="client" required maxlength="40" placeholder="e.g. Sunny Bakery"></label>
+        <label>Page<input name="page" required maxlength="40" placeholder="e.g. Homepage"></label></div></div>
+      <label>Email subject<input name="subject" required maxlength="100" placeholder="Our homepage looks messy, can you help?"></label>
+      <label>Email to the player<textarea name="body" required rows="5" maxlength="2000" placeholder="Good day,&#10;&#10;Tell the player what’s wrong and what you need…"></textarea></label>
+      <p class="ms-note">${state.elements.length} elements · ${state.targets.length} target${state.targets.length === 1 ? '' : 's'}${state.elements.some(e => e.type === 'image' && e.src) ? ' · pictures will be uploaded' : ''}</p>
+      <p class="ms-err" role="alert"></p>
+      <div class="ms-actions"><button type="button" class="btn" data-cancel>Cancel</button><button type="submit" class="btn btn-accept">Submit</button></div></form>`;
+    let avatar = '';
+    const ava = card.querySelector('.ms-ava'), avaImg = ava.querySelector('img');
+    ava.querySelector('input').onchange = e => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = () => { avatar = String(r.result); avaImg.src = avatar; avaImg.hidden = false; ava.querySelector('span').hidden = true; }; r.readAsDataURL(f); };
+    card.querySelector('[data-cancel]').onclick = () => card.remove();
+    card.querySelector('form').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target, btn = f.querySelector('[type=submit]'), err = f.querySelector('.ms-err');
+      btn.disabled = true; btn.textContent = 'Uploading…'; err.textContent = '';
+      try{
+        const sb = db.client, uid = db.userId;
+        const elements = [];
+        for(const el of state.elements) elements.push(el.type === 'image' && el.src ? Object.assign({}, el, { src: await uploadImage(sb, uid, el.src, el.id) }) : Object.assign({}, el));
+        const avatarUrl = avatar ? await uploadImage(sb, uid, avatar, 'avatar') : '';
+        const data = { format:'eyecon-level-maker-v1', canvas:{ ...state.canvas }, elements, hiddenTargets: state.targets.map(t => ({ ...t })),
+          clientName: f.client.value.trim(), pageLabel: f.page.value.trim(), avatar: avatarUrl,
+          emailSubject: f.subject.value.trim(), emailBody: f.body.value.trim(), submittedBy: db.email || 'guest' };
+        const { data:row, error } = await sb.from('levels').insert({ owner_id: uid, status:'draft', title: state.title || data.clientName, data }).select('id').single();
+        if(error) throw error;
+        const { error:e2 } = await sb.from('levels').update({ status:'submitted' }).eq('id', row.id);
+        if(e2) throw e2;
+        card.querySelector('.ms-card').innerHTML = `<h2>Sent for review ✓</h2><p class="ms-sub">An admin will check it soon. Thanks for making a level!</p><div class="ms-actions"><button type="button" class="btn btn-accept" data-cancel>Close</button></div>`;
+        card.querySelector('[data-cancel]').onclick = () => card.remove();
+      }catch(x){ err.textContent = 'Couldn’t submit: ' + (x.message || x); btn.disabled = false; btn.textContent = 'Submit'; }
+    };
+    document.body.appendChild(card);
+    card.querySelector('[name=client]').focus();
+  }
+
   function init(){
+    $('maker-submit')?.addEventListener('click', openSubmit);
     load();
     $('maker-properties-fields').addEventListener('click',e=>{const b=e.target.closest('[data-maker-multi]');if(b)multiAction(b.dataset.makerMulti);});
     initGrid();
