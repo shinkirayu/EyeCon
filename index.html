@@ -8,6 +8,7 @@
    layout from the very first paint (same formula as fitPhoneViewport in
    js/ui-helpers.js), and the game stays hidden until its size has settled. */
 (function(){
+  if(/[?&]piko-preview\b/.test(location.search)){ window.EC_PREVIEW = true; window.EC_NO_DB = true; }
   document.documentElement.classList.add('booting');
   var s = Math.min(screen.width, screen.height), l = Math.max(screen.width, screen.height);
   if(matchMedia('(pointer:coarse)').matches && (screen.orientation ? screen.orientation.type.indexOf('landscape') === 0 : screen.width > screen.height) && s < 600){
@@ -288,11 +289,6 @@
     <div class="typescale-popover" id="typescale-panel" hidden></div>
     <div class="typescale-popover grid-settings-popover" id="grid-settings-panel" hidden>
       <h4>Grid Settings</h4>
-      <div class="field-group">
-        <label>Grid Size (<span id="grid-size-readout">8</span>px)</label>
-        <input type="range" id="grid-size-slider" min="8" max="64" step="8" value="8"/>
-        <div class="field-hint">Locked to multiples of 8px</div>
-      </div>
       <div class="field-group">
         <label>Grid Opacity (<span id="grid-opacity-readout">35</span>%)</label>
         <input type="range" id="grid-opacity-slider" min="0" max="1" step="0.05" value="0.35"/>

@@ -1474,12 +1474,6 @@
       const panel = document.getElementById('grid-settings-panel');
       if(!panel.hidden && !e.target.closest('#grid-settings-panel, #tool-grid-settings')) panel.hidden = true;
     }, true);
-    document.getElementById('grid-size-slider').addEventListener('input', e=>{
-      state.tools.gridSize = Number(e.target.value);
-      document.getElementById('grid-size-readout').textContent = state.tools.gridSize;
-      if(!state.tools.gridVisible){ state.tools.gridVisible = true; updateToolButtonStates(); }
-      else updateGridBackground();
-    });
     document.getElementById('grid-opacity-slider').addEventListener('input', e=>{
       state.tools.gridOpacity = Number(e.target.value);
       document.getElementById('grid-opacity-readout').textContent = Math.round(state.tools.gridOpacity*100);

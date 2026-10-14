@@ -836,8 +836,53 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await next(); await expect(bubble).toContainText('show or hide the grid');
   await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
   await next(); await expect(bubble).toContainText('click this one');
-  await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('grid size');
+  await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('see-through');
   await page.locator('#grid-opacity-slider').fill('0.6'); await page.waitForTimeout(1600);
   await expect(bubble).toContainText('Submit');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
+});
+
+test('Piko plays admin-added lines before and after a line', async ({ page }) => {
+  // Published text from the admin editor, served without touching the real database.
+  await page.addInitScript(() => {
+    window.EC_NO_DB = true;
+    const load = () => window.EC_TEXT?.load([
+      { key:'piko.tutorial.0#extra', value: JSON.stringify({ after:['Added after the hello, {name}!'] }) },
+      { key:'piko.tutorial.2#extra', value: JSON.stringify({ before:['Added before the mail line.'], after:['Added after opening Mail.'] }) },
+    ]);
+    document.addEventListener('DOMContentLoaded', load);
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  const bubble = page.locator('.piko-bubble'), next = async () => { await page.waitForTimeout(1200); await bubble.locator('.piko-panel').click(); };
+  await page.waitForTimeout(900); await expect(bubble).toContainText("Hi, I'm Piko");
+  await next(); await expect(bubble).toContainText('Added after the hello, Designer!');
+  await next(); await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
+  await next(); await next(); // nice to meet you → clients line
+  await page.waitForTimeout(1500); await expect(bubble).toContainText('Added before the mail line.');
+  await next(); await expect(bubble).toContainText("you've got mail");
+  // A line added after an action plays once the player has done it.
+  await page.waitForTimeout(1500); await page.locator('#icon-mail').click();
+  await page.waitForTimeout(1500); await expect(bubble).toContainText('Added after opening Mail.');
+  await next(); await expect(bubble).toContainText('needs a hand');
+});
+
+test('Piko lines can be re-read with back and forward', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  const bubble = page.locator('.piko-bubble'), text = bubble.locator('.piko-text');
+  await page.waitForTimeout(1200);
+  await expect(bubble.locator('.piko-hint')).toHaveText('Click anywhere to continue');
+  await page.mouse.click(400, 400); await page.waitForTimeout(1200); // → name card
+  await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
+  await page.waitForTimeout(1500); await expect(text).toContainText('Nice to meet you, Alex');
+  await page.getByRole('button', { name: 'Previous line' }).click();
+  await expect(text).toContainText("What's your name?");
+  await page.getByRole('button', { name: 'Previous line' }).click();
+  await expect(text).toContainText("Hi, I'm Piko");
+  await expect(bubble.locator('.piko-hint')).toContainText('Earlier line');
+  await page.getByRole('button', { name: 'Next line' }).click();
+  await page.getByRole('button', { name: 'Next line' }).click();
+  await expect(text).toContainText('Nice to meet you, Alex');
+  await page.screenshot({ path: process.env.PIKO_NAV_SHOT || 'test-results/piko-nav.png' });
 });

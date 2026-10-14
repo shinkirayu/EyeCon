@@ -8,7 +8,8 @@
 (function(){
   const defaults = {};   // key -> { value, area, note }
   const published = {};  // key -> value from Supabase
-  const bindings = [];   // { key, apply(value) } for text living inside game objects
+  const bindings = [];
+  const shown = new Map(); // filled text -> key   // { key, apply(value) } for text living inside game objects
 
   const fill = (text, vars) => vars ? String(text).replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? vars[k] : m) : text;
 
@@ -21,7 +22,22 @@
     // Current text for a key (published edit, else the default), with {placeholders} filled.
     t(key, vars){
       const v = key in published ? published[key] : defaults[key]?.value;
-      return fill(v ?? key, vars);
+      const out = fill(v ?? key, vars);
+      shown.set(out, key); // so Piko can tell which line a filled-in string came from
+      return out;
+    },
+    // Admin-added lines around a dialogue line: { before:[], after:[], skip:false }.
+    // Stored as JSON under "<key>#extra" (draft/publish like any other text).
+    extras(key){
+      const raw = published[key + '#extra'];
+      try{ const x = raw ? JSON.parse(raw) : {}; return { before: x.before || [], after: x.after || [], skip: !!x.skip }; }
+      catch(_){ return { before:[], after:[], skip:false }; }
+    },
+    // Which key is this exact string? (current published/default value, or a recent t() result)
+    keyFor(text){
+      if(shown.has(text)) return shown.get(text);
+      for(const k in defaults){ if((k in published ? published[k] : defaults[k].value) === text) return k; }
+      return null;
     },
     // Text stored inside a game object (e.g. Piko's SCRIPT): registers each string leaf
     // and rewrites it in place whenever published text arrives.

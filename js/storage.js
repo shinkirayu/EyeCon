@@ -97,6 +97,7 @@
   }
 
   function save(profile){
+    if(window.EC_PREVIEW) return; // admin preview never touches a real save
     profile.savedAt = new Date().toISOString();
     try{ localStorage.setItem(KEY, JSON.stringify(profile)); }
     catch(e){ console.warn('EyeCon: could not persist save data.', e); }

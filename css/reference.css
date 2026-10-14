@@ -2297,3 +2297,15 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 .piko-name-form .auth-google span{display:grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:50%;background:#4285f4;color:#fff;font:800 1rem var(--font-body);}
 .piko-name-form .auth-error{color:#b02a5c;}
 #boot-loader{background:#8edbe6!important;}
+
+/* Piko: re-read earlier lines with ‹ ›, and a "click anywhere" hint. */
+.piko-foot{display:flex;align-items:center;gap:.5rem;margin-top:.75rem;min-height:2rem;}
+.piko-hint{flex:1;text-align:center;font:600 .9375rem var(--font-body);color:#6b6f7a;}
+.piko-hint:not(:empty)::after{content:' ▸';display:inline-block;margin-left:.25rem;animation:pikoHintNudge 1.2s ease-in-out infinite;}
+.piko-reviewing .piko-hint::after{content:'';}
+@keyframes pikoHintNudge{50%{transform:translateX(.25rem);opacity:.5}}
+.piko-nav{width:2rem;height:2rem;flex:none;display:grid;place-items:center;padding:0;border:2px solid #77b9af;border-radius:50%;background:#fff;color:#2f7a70;font:800 1.25rem/1 var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+.piko-nav:disabled{opacity:.3;cursor:default;}
+.piko-nav[hidden]{visibility:hidden;display:grid;}
+.piko-reviewing .piko-line{opacity:.75;}
+.reduce-motion .piko-hint::after{animation:none;}

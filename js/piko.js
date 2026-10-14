@@ -28,7 +28,7 @@
       grid: "Click this button to show or hide the grid.",
       gridDone: "See? Everything snaps to the grid, so lining things up is easy.",
       gridSettings: "Now click this one.",
-      gridSettingsDone: "Here you can change the grid size and how see-through it is. Give a slider a try!",
+      gridSettingsDone: "Here you can change how see-through the grid is. Give the slider a try!",
       together: "Let's fix one together so you get the feel of it.",
       selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
@@ -108,17 +108,41 @@
     const cursor = document.createElement('div'); cursor.className = 'piko-cursor hidden'; cursor.innerHTML = '<img src="assets/sprites/cursor-point.png" alt="">';
     const bubble = document.createElement('div'); bubble.className = 'piko-bubble hidden';
     bubble.innerHTML =
-      '<div class="piko-panel"><p class="piko-name">PIKO</p><h4 class="piko-line"><span class="piko-text"></span><span class="piko-caret">|</span></h4></div>' +
+      '<div class="piko-panel"><p class="piko-name">PIKO</p><h4 class="piko-line"><span class="piko-text"></span><span class="piko-caret">|</span></h4>' +
+      '<div class="piko-foot"><button type="button" class="piko-nav prev" aria-label="Previous line">‹</button><span class="piko-hint"></span><button type="button" class="piko-nav next" aria-label="Next line">›</button></div></div>' +
       '<img class="piko-img" src="assets/sprites/piko.png" alt="Piko, the EyeCon guide, waves hello." />';
     document.body.appendChild(hole);
     document.body.appendChild(cursor);
     document.body.appendChild(bubble);
-    dom = { hole, cursor, bubble, textEl: bubble.querySelector('.piko-text'), caretEl: bubble.querySelector('.piko-caret') };
+    dom = { hole, cursor, bubble, textEl: bubble.querySelector('.piko-text'), caretEl: bubble.querySelector('.piko-caret'),
+      hint: bubble.querySelector('.piko-hint'), prev: bubble.querySelector('.prev'), next: bubble.querySelector('.next') };
+    // ‹ › re-read earlier lines of this conversation; › on the newest line advances it.
+    dom.prev.addEventListener('click', e => { e.stopPropagation(); if(view > 0){ view--; showView(); } });
+    dom.next.addEventListener('click', e => { e.stopPropagation(); if(view < history.length - 1){ view++; showView(); } else if(latestCanAdvance) bubble.onclick?.(); });
+    addEventListener('keydown', e => {
+      if(bubble.classList.contains('hidden') || e.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+      if(e.key === 'ArrowLeft'){ dom.prev.click(); e.preventDefault(); }
+      if(e.key === 'ArrowRight'){ dom.next.click(); e.preventDefault(); }
+    });
     return dom;
   }
 
   let typeTimer = null;
   let currentTarget = null;
+  // Lines shown since Piko last appeared, for ‹ › re-reading.
+  let history = [], view = -1, latestCanAdvance = false;
+  window.EC_TEXT?.register('piko.ui.continue', 'Click anywhere to continue', 'ui', 'Hint under Piko’s line');
+  window.EC_TEXT?.register('piko.ui.back', 'Earlier line · click to return', 'ui', 'Hint while re-reading an earlier line');
+  const hintText = k => window.EC_TEXT ? window.EC_TEXT.t(k) : '';
+  function showView(){
+    const { textEl, hint, prev, next } = dom, latest = view === history.length - 1;
+    textEl.textContent = history[view];
+    dom.bubble.classList.toggle('piko-reviewing', !latest);
+    hint.textContent = !latest ? hintText('piko.ui.back') : latestCanAdvance ? hintText('piko.ui.continue') : '';
+    prev.disabled = view <= 0;
+    next.disabled = latest && !latestCanAdvance;
+    prev.hidden = next.hidden = history.length < 2 && !latestCanAdvance;
+  }
 
   // Pause before each Piko line so beats don't land back to back.
   const LINE_DELAY_MS = 600;
@@ -128,7 +152,7 @@
     clearTimeout(sayDelayTimer); clearTimeout(unlockTimer);
     document.body.classList.remove('piko-line-pending');
     document.removeEventListener('click', advanceAnywhere, true);
-    if(!dom) return;
+    if(!dom) return; // (history kept: ‹ can re-read lines from before the last action too)
     dom.bubble.classList.add('hidden');
     clearInterval(typeTimer);
     typeTimer = null;
@@ -138,6 +162,7 @@
   // skips straight to the full line, clicking again (once complete) calls
   // onDone — same click-to-skip/click-to-advance behavior as PikoTalk.
   let saidAgain = false;
+  let pendingAfter = [];
   let advanceAnywhere = () => {};
   const CLICK_UNLOCK_MS = 400;
   const DIM_FADE_MS = 1200; // matches the .piko-hole opacity transition
@@ -145,7 +170,38 @@
   let unlockTimer = null;
   let lastPointerDown = 0;
   document.addEventListener('pointerdown', () => { lastPointerDown = performance.now(); }, true);
+  // Admin-added lines: play any lines added before this one, the line itself
+  // (unless skipped), then lines added after it, before the game continues.
   function say(line, opts){
+    opts = opts || {};
+    if(opts._x) return sayOne(line, opts);
+    if(pendingAfter.length){ // lines added after the previous action line
+      const q = pendingAfter; pendingAfter = [];
+      const rest = Object.assign({}, opts); delete rest.onDone;
+      const step = i => i < q.length ? sayOne(q[i], Object.assign({}, rest, { _x:true, onDone: () => step(i + 1) })) : say(line, opts);
+      return step(0);
+    }
+    const T = window.EC_TEXT, key = T && T.keyFor(line), x = key && T.extras(key);
+    if(!x || (!x.before.length && !x.after.length && !x.skip)) return sayOne(line, opts);
+    const finish = opts.onDone;
+    const name = (window.EC_STORE && window.EC_STORE.load().displayName) || 'Designer';
+    const fillName = t => String(t).replace(/\{name\}/g, name);
+    const queue = x.before.map(t => ({ t: fillName(t) }));
+    if(!(x.skip && finish)) queue.push({ t: line, main: true }); // only talk lines can be skipped
+    if(finish) queue.push(...x.after.map(t => ({ t: fillName(t) })));
+    else pendingAfter = x.after.map(fillName); // action line: these play once the player has done it
+    const rest = Object.assign({}, opts); delete rest.onDone; delete rest.now;
+    const step = i => {
+      const q = queue[i];
+      if(!q){ if(finish) finish(); return; }
+      const o = Object.assign({}, i === 0 ? opts : rest, { _x: true });
+      if(q.main && !finish){ delete o.onDone; return sayOne(q.t, o); } // action line: stays up until the player acts
+      o.onDone = () => step(i + 1);
+      sayOne(q.t, o);
+    };
+    step(0);
+  }
+  function sayOne(line, opts){
     opts = opts || {};
     saidAgain = true;
     clearTimeout(sayDelayTimer);
@@ -154,7 +210,7 @@
     if(!opts.now && !showing){
       ensureDom().bubble.classList.add('hidden');
       document.body.classList.add('piko-line-pending'); // the highlighted control waits for this line
-      sayDelayTimer = setTimeout(() => say(line, Object.assign({}, opts, { now:true })), LINE_DELAY_MS);
+      sayDelayTimer = setTimeout(() => sayOne(line, Object.assign({}, opts, { now:true })), LINE_DELAY_MS);
       return;
     }
     const { textEl, caretEl, bubble } = ensureDom();
@@ -189,6 +245,8 @@
       caretEl.classList.add('idle');
     }
     finishTyping(); // ponytail: typewriter off for now; restore the setInterval reveal to bring it back
+    history.push(full); if(history.length > 30) history.shift(); view = history.length - 1; latestCanAdvance = !!opts.onDone;
+    showView();
     // Lines that lead somewhere advance on a click anywhere; the click is
     // swallowed so it can't also hit whatever is under it.
     document.removeEventListener('click', advanceAnywhere, true);
@@ -198,11 +256,13 @@
       // Ignore the release of a press that started before this line (e.g. the
       // click that selected an element or finished a drag).
       if(lastPointerDown < shownAt) return;
+      if(e.target.closest?.('.piko-nav')) return; // ‹ › handle themselves
       e.preventDefault(); e.stopPropagation();
       bubble.onclick();
     };
     if(opts.onDone) setTimeout(() => document.addEventListener('click', advanceAnywhere, true));
     bubble.onclick = () => {
+      if(view < history.length - 1){ view = history.length - 1; showView(); return; } // re-reading: a click jumps back to the current line
       if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
       document.removeEventListener('click', advanceAnywhere, true);
       if(typeTimer){ finishTyping(); return; }

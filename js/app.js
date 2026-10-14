@@ -2050,6 +2050,49 @@
   }
 
   // ---------------- Bootstrap ----------------
+  // ── Admin dialogue preview ──
+  // The admin page loads the real game in an iframe (?piko-preview) and posts
+  // { scene, text, target, … }; this shows that exact screen with Piko's line
+  // and highlight, so the preview is 1:1 with what players see.
+  function setupPikoPreview(){
+    const P = window.EC_PIKO;
+    const levelById = id => window.EC_LEVELS.find(l => l.id === id) || window.EC_LEVELS.find(l => l.levelNumber === 1);
+    const L1 = levelById('mayo-portfolio');
+    let current = null;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const closeModals = () => document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => window.EC_MODAL.hide(m.id));
+    async function go(scene){
+      if(scene === current) return;
+      current = scene; closeModals();
+      if(scene === 'desktop'){ showScreen('screen-desktop'); return wait(400); }
+      if(scene === 'mail'){ openMailApp(); return wait(500); }
+      if(scene === 'mail-detail'){ openMailApp(); await wait(400); window.EC_MAIL.openMailDetail(L1); return wait(400); }
+      if(scene === 'compose'){
+        showScreen('screen-editor', () => window.EC_EDITOR.open(L1)); await wait(500);
+        openMailApp(); await wait(300); window.EC_MAIL.openCompose(L1, { stars:5, score:100, feedback:[], activeCategories:[] }); return wait(400);
+      }
+      if(scene.startsWith('editor:')){ showScreen('screen-editor', () => window.EC_EDITOR.open(levelById(scene.slice(7)))); return wait(700); }
+    }
+    let token = 0;
+    addEventListener('message', async e => {
+      const m = e.data;
+      if(!m || m.type !== 'piko-preview') return;
+      const my = ++token;
+      const sceneChanged = (m.scene || 'desktop') !== current;
+      await go(m.scene || 'desktop');
+      if(my !== token) return;
+      P.clearTarget();
+      if(sceneChanged || m.card) P.hideBubble(); // same screen: Piko stays up and just changes his line
+      document.querySelectorAll('.piko-name-card').forEach(n => n.remove());
+      const el = m.target && document.querySelector(m.target);
+      if(el) P.pointAt(el, { delay: 0 });
+      if(m.card){ P.ask(m.text, { title: m.card, placeholder: 'Your name' }, () => {}); return; }
+      P.say(m.text, { now: true, _x: true, top: !!m.top || /^editor|compose/.test(m.scene || ''), left: !!m.left, onDone: m.talk ? () => {} : undefined });
+    });
+    showScreen('screen-desktop');
+    parent.postMessage({ type: 'piko-preview-ready' }, '*');
+  }
+
   function init(){
     applySettings(); // also applies cosmetics (wallpaper/theme/icons/cursor/decor/particles)
     refreshHeader();
@@ -2219,6 +2262,7 @@
   const boot = () => (window.EC_DB?.ready || Promise.resolve()).then(() => {
     profile = window.EC_STORE.load();
     init();
+    if(window.EC_PREVIEW) setupPikoPreview();
     if(window.EC_DB && !window.EC_DB.online && window.EC_DB.error !== 'not configured')
       showToast('Playing offline: progress is saved on this device and will sync next time.', 4000);
   });
