@@ -30,7 +30,7 @@
   .stage div[id]{scroll-margin-top:127px;} /* section backgrounds: land flush under the bar, no strip of the section above */
   body{cursor:url("assets/sprites/cursor-arrow.png") 2 2, default;}
   a{cursor:url("assets/sprites/cursor-point.png") 9 2, pointer;}
-  .stage{position:relative;margin:0 auto;overflow:visible!important;width:1920px;height:5555px;overflow:hidden;background:#bfebe9;font-family:'Nunito',system-ui,sans-serif;}
+  .stage{position:relative;margin:0 auto;overflow:visible!important;width:1920px;height:6635px;overflow:hidden;background:#bfebe9;font-family:'Nunito',system-ui,sans-serif;}
   .stage > *{position:absolute;margin:0;}
   .stage > div > img{position:absolute;}
   .stage img{display:block;max-width:none;}
@@ -38,7 +38,7 @@
   .label{font:700 40px/21px 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--red);width:572px;}
   .title{font:700 64px/1 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:var(--ink);width:900px;}
   .body{font:700 40px/50px 'Nunito',sans-serif;color:var(--ink);}
-  .nav{position:static!important;padding:10px 28px;border-radius:999px;font:800 34px 'Nunito',sans-serif;color:#0b4355;text-decoration:none;white-space:nowrap;transition:background .15s,transform .15s;}
+  .nav{position:static!important;padding:10px 28px;border-radius:999px;font:800 34px 'Nunito',sans-serif;color:#4d0d74;text-decoration:none;white-space:nowrap;transition:background .15s,transform .15s;}
   .nav:hover,.nav:focus-visible{background:color-mix(in srgb,var(--pill,#fff) 60%,transparent);transform:translateY(-2px);} /* a softer preview of that section's colour */
   /* Section you're on: a pill in that section's own colour. */
   .nav.current{background:var(--pill,#fff);box-shadow:0 3px 0 #0b435526;}
@@ -46,8 +46,8 @@
   .nav[href="#objectives"]{--pill:#fff2dd;} .nav[href="#team"]{--pill:#f8c5c5;}
   .shot{width:900px;height:568px;border:6px solid #55b6ca;border-radius:30px;overflow:hidden;}
   .shot img{position:absolute;}
-  .play-btn{left:68px;top:780px;width:570px;height:128px;border-radius:34px;background:linear-gradient(135deg,#a17adf,#9671d3);border:0;box-shadow:10px 14px 0 0 #7656b3;
-    display:flex;align-items:center;justify-content:center;font:800 64px/1 'Baloo 2',sans-serif;color:#fff3d6;text-decoration:none;text-shadow:0 5px 0 #7656b3;}
+  .play-btn{left:124px;top:790px;width:414px;height:100px;border-radius:24px;background:#7656b3;border:0;box-shadow:8px 8px 2px 0 #123b54;
+    display:flex;align-items:center;justify-content:center;font:800 48px/.95 'Baloo 2',sans-serif;color:#fff;text-decoration:none;text-shadow:9px 8px 5.7px rgba(68,0,60,.25);}
   .play-btn:hover{filter:brightness(1.08);}
   .play-btn:focus-visible,.play-corner:focus-visible{outline:4px solid #f9d985;outline-offset:6px;}
   /* PLAY! circle: the link is the circle, label centred on its visible part. */
@@ -84,6 +84,18 @@
   .piko.is-twinkling .piko-pupil::before{animation:pikoEyeTwinkle 2.8s ease-in-out infinite;}
   @media (prefers-reduced-motion:reduce){.piko,.piko *,.piko::before,.piko::after{transition:none!important;animation:none!important;}}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  /* Final-update sections (Figma) */
+  .title.big{font-size:118px;line-height:1;width:1200px;color:#123b54}
+  .label{text-shadow:3px 6px 4px #fff1ab}
+  .bg-word{font:700 96px/1 'Baloo 2',sans-serif;letter-spacing:3.08px;text-transform:uppercase;color:#123b542b;white-space:nowrap;pointer-events:none}
+  .team-card{width:400px;padding:36px 20px 32px;border:3px solid #255e6b;border-radius:14px;box-shadow:8px 10px 0 #255e6b55;text-align:center}
+  .team-card > *{position:static!important}
+  .team-card .team-avatar{width:170px;height:170px;margin:0 auto 18px}
+  .team-card h3{margin:0;font:800 40px/1.1 'Baloo 2',sans-serif;color:#123b54}
+  .trailer-card{z-index:1;width:1142px;height:662px;padding:22px;box-sizing:border-box;background:#fffdf7;border:3px solid #193e55;border-radius:30px;box-shadow:0 10px 0 #173f58}
+  .trailer-card iframe{position:static!important;width:100%;height:100%;border:0;border-radius:16px}
+  .cta-eye{display:block}
+  .art > img{position:absolute}
   .shift-tag{padding:10px 22px;background:#f9d985;border:4px solid #173f58;border-radius:10px;box-shadow:6px 6px 0 #173f58;transform:rotate(-2deg);transform-origin:left center;font:800 32px/1 'Baloo 2',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#173f58;white-space:nowrap;}
   /* Play transition: button pops, the navbar colour pours down over the page, the logo plays. */
   /* ── Play transition ──
@@ -139,61 +151,70 @@
   </nav>
 </div></header>
 <main class="stage" id="stage"><i id="top" style="top:0"></i>
-  <!-- Section snap points -->
-  <i class="snap" style="top:0"></i><i class="snap" style="top:1133px"></i><i class="snap" style="top:2230px"></i><i class="snap" style="top:3395px"></i><i class="snap" style="top:4475px"></i>
-  <!-- Team -->
+  <!-- Built from Figma "Eyecon-1" > Website > Frame 1 (final update). -->
+  <i class="snap" style="top:0"></i><i class="snap" style="top:1133px"></i><i class="snap" style="top:2230px"></i><i class="snap" style="top:3395px"></i><i class="snap" style="top:4475px"></i><i class="snap" style="top:5555px"></i>
+
+  <!-- ===== Ready to clock in (closing CTA) ===== -->
+  <div id="cta" style="left:-3000px;top:5555px;width:7920px;height:1080px;background:linear-gradient(to top,#123b54 183px,#bfebe9 183px)"></div>
+  <div class="grow" aria-hidden="true" style="left:57px;top:5753px;width:1806px;height:699px;background:#123b54;border:1px solid #feedad;border-radius:500px 500px 0 0"></div>
+  <p class="spread center" style="left:960px;top:5858px;font:700 40px/28px 'Nunito',sans-serif;color:#e34c70;text-shadow:0 4px 4px #00000040;white-space:nowrap">Are you</p>
+  <h2 class="spread center" style="left:960px;top:6003px;font:800 168px/144px 'Baloo 2',sans-serif;letter-spacing:-5.95px;text-transform:uppercase;color:#fffdf7;white-space:nowrap">Ready to C<span style="color:#f9d985">lock</span> <span style="color:#f9d985">in</span>?!</h2>
+  <p class="spread center" style="left:960px;top:6118px;font:400 19px/28.5px 'Nunito',sans-serif;color:#e4f4ee;white-space:nowrap">Your inbox already has a client waiting. Let's see if<br>you can fix their UI!</p>
+  <div class="spread cta-eye" aria-hidden="true" style="left:811px;top:6161px;width:298px;height:298px"><img src="assets/landing/v2/foresight.png" alt="" style="inset:0;width:100%;height:100%;object-fit:cover"></div>
+  <p class="to-bottom" style="left:420px;top:6517px;width:1080px;padding-top:32px;border-top:2px dashed #75a4a9;font:400 13px/19.5px 'Nunito',sans-serif;color:#c4dddf"><b style="color:#fff">EyeCon</b> — a thesis project on gamified UI/UX accessibility training, De La Salle Lipa.<br>Built with WCAG 2.2 (Level AA) and the 8-Point Grid System as its technical foundation.</p>
+
+  <!-- ===== Team ===== -->
   <div id="team" style="left:-3000px;top:4475px;width:7920px;height:1080px;background:#f8c5c5"></div>
+  <span class="bg-word spread" aria-hidden="true" style="left:1872px;top:5128px;transform:translate(-50%,-50%) rotate(10deg)">AMAZING!</span><span class="bg-word spread" aria-hidden="true" style="left:254px;top:5420px;transform:translate(-50%,-50%) rotate(-4deg)">GOATS</span><span class="bg-word spread" aria-hidden="true" style="left:385px;top:4871px;transform:translate(-50%,-50%) rotate(-4deg)">Lyn from las vegas</span><span class="bg-word spread" aria-hidden="true" style="left:253px;top:4586px;transform:translate(-50%,-50%) rotate(5.03deg)">Wa da helly?</span><span class="bg-word spread" aria-hidden="true" style="left:592px;top:5265px;transform:translate(-50%,-50%) rotate(5.03deg)">gng</span><span class="bg-word spread" aria-hidden="true" style="left:1574px;top:5426px;transform:translate(-50%,-50%) rotate(-4deg)">rADIANT</span><span class="bg-word spread" aria-hidden="true" style="left:1071px;top:5128px;transform:translate(-50%,-50%) rotate(2.2deg)">WAAAAWW</span><span class="bg-word spread" aria-hidden="true" style="left:1026px;top:5419px;transform:translate(-50%,-50%) rotate(-7.9deg)">₍₍⚞(˶˃ ꒳ ˂˶)⚟⁾⁾</span><span class="bg-word spread" aria-hidden="true" style="left:1673px;top:4594px;transform:translate(-50%,-50%) rotate(2.2deg)">slayyyy</span><span class="bg-word spread" aria-hidden="true" style="left:1654px;top:4827px;transform:translate(-50%,-50%) rotate(-12.28deg)">Chat!</span>
+  <p class="label center" style="left:967px;top:4614px">Team</p>
+  <h2 class="title big center" style="left:967px;top:4725px">Who we are</h2>
+  <p class="center" style="left:960px;top:4916px;font:700 32px/30px 'Nunito',sans-serif;color:#315c69;white-space:nowrap">The GOATS work together, flock together.</p>
+  <div class="team-card" style="left:133px;top:4838px;background:#fffdf7;transform:rotate(-3deg)"><div class="team-avatar"><img src="assets/sprites/team/nica.png" alt="Nica" style="object-position:center 38%"></div><h3>Nica</h3></div><div class="team-card" style="left:466px;top:5090px;background:#fff3c9;transform:rotate(-3deg)"><div class="team-avatar"><img src="assets/sprites/team/nadine.png" alt="Nadine" style="object-position:center 42%"></div><h3>Nadine</h3></div><div class="team-card" style="left:1022px;top:5090px;background:#def2eb;transform:rotate(3deg)"><div class="team-avatar"><img src="assets/sprites/team/kryu.png" alt="Kryu" style="object-position:center 36%"></div><h3>Kryu</h3></div><div class="team-card" style="left:1393px;top:4838px;background:#e7e4fc;transform:rotate(3deg)"><div class="team-avatar"><img src="assets/sprites/team/awi.png" alt="Awi" style="object-position:center 55%"></div><h3>Awi</h3></div>
 
-  <!-- Meet the team (from the old overview) -->
-  <p class="label center" style="left:960px;top:4686px">About us</p>
-  <h2 class="title center" style="left:960px;top:4815px">Meet the team</h2>
-  <p class="center" style="left:960px;top:4920px;width:1000px;font:700 28px/40px 'Nunito',sans-serif;color:var(--ink)">Four friends who kept squinting at screens that should have been easy to read, so we built a game that teaches how to fix them.</p>
-  <div class="team-grid">
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nica.png" alt="Nica" style="object-position:center 38%"></div><h3>Nica</h3></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/nadine.png" alt="Nadine" style="object-position:center 42%"></div><h3>Nadine</h3></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/kryu.png" alt="Kryu" style="object-position:center 36%"></div><h3>Kryu</h3></div>
-    <div class="team-cell"><div class="team-avatar"><img src="assets/sprites/team/awi.png" alt="Awi" style="object-position:center 55%"></div><h3>Awi</h3></div>
-  </div>
-
-  <!-- Objectives -->
+  <!-- ===== Objectives ===== -->
   <div id="objectives" style="left:-3000px;top:3395px;width:7920px;height:1080px;background:#fff2dd"></div>
-  <p class="label center" style="left:960px;top:3606.5px">Objectives</p>
-  <h2 class="title center" style="left:960px;top:3735.5px">Why we made it</h2>
-  <img src="assets/landing/antoks.png" alt="" style="left:-24px;top:4006px;width:616px;height:554px;transform:rotate(-2deg)">
-  <p class="body" style="left:780px;top:4076px;width:916px;font-size:32px;text-align:right;transform:translateY(-50%)">Most people never notice user interface design. They rarely think about where a button sits or what color a line of text is. Yet these small choices decide whether a website can actually meet a person's needs. While EyeCon does not cover every WCAG 2.2 guideline, it introduces the core principles of alignment, contrast, and typography as a foundation for inclusive interfaces. And that's where good design starts.</p>
+  <div class="wide" aria-hidden="true" style="left:-997px;top:3394px;width:1964px;height:1081px;background:url(assets/landing/v2/lines-objectives.png) 0 0/100% 100% no-repeat"></div>
+  <p class="label center" style="left:967px;top:3548px">Objectives</p>
+  <h2 class="title big center" style="left:967px;top:3649px">Why we made it</h2>
+  <img src="assets/landing/v2/antoks.png" alt="" style="left:-24px;top:4006px;width:616px;height:554px;transform:rotate(-2deg)">
+  <p class="body" style="left:780px;top:3996px;width:916px;font-size:32px;text-align:right;transform:translateY(-50%)">Most people never notice user interface design. They rarely think about where a button sits or what color a line of text is. Yet these small choices decide whether a website can actually meet a person's needs. While EyeCon does not cover every WCAG 2.2 guideline, it introduces the core principles of alignment, contrast, and typography as a foundation for inclusive interfaces. And that's where good design starts.</p>
 
-  <!-- Trailer -->
+  <!-- ===== Trailer ===== -->
   <div id="trailer" style="left:-3000px;top:2230px;width:7920px;height:1165px;background:#bfebe9"></div>
-  <!-- dots.png is white dots on black: screen-blending drops the black and keeps the dots. -->
-  <div aria-hidden="true" style="left:-3000px;top:2230px;width:7920px;height:1165px;background:url(assets/landing/dots.png) 0 0/auto repeat;mix-blend-mode:screen;opacity:.6"></div>
-  <!-- Tablet frame from the old overview's "YOUR SPACE" preview, holding the trailer. -->
-  <div class="tablet" style="left:310px;top:2420px">
-    <span class="tablet-notch"></span>
-    <div class="tablet-screen"><iframe src="https://drive.google.com/file/d/19Htw6h2TLCWGQ7D4TrogORyHoHsy7t5F/preview" title="EyeCon trailer" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+  <p class="label center" style="left:967px;top:2435px;z-index:1">Trailer</p>
+  <div class="trailer-card" style="left:389px;top:2559px"><iframe src="https://drive.google.com/file/d/19Htw6h2TLCWGQ7D4TrogORyHoHsy7t5F/preview" title="EyeCon trailer" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+
+  <!-- ===== About ===== -->
+  <div id="about" style="left:-3000px;top:1133px;width:7920px;height:1097px"></div>
+  <!-- Yellow wave, plus Figma's two circles clipped to the About band (no straight cut on wide screens). -->
+  <div aria-hidden="true" style="left:-3000px;top:2230px;width:7920px;height:1165px;background:radial-gradient(circle,#fff 6px,transparent 6.5px) 0 0/44px 44px,radial-gradient(circle,#fff 6px,transparent 6.5px) 22px 22px/44px 44px"></div>
+  <!-- Dots under the About wave's bottom edge, so the halftone reaches up to the wave. -->
+  <div class="wide" aria-hidden="true" style="left:-3000px;top:1950px;width:7920px;height:280px;background:radial-gradient(circle,#fff 6px,transparent 6.5px) 0 0/44px 44px,radial-gradient(circle,#fff 6px,transparent 6.5px) 22px 22px/44px 44px;background-position:0 100%,22px calc(100% + 22px)"></div>
+  <img src="assets/landing/v2/wave.svg" alt="" aria-hidden="true" style="left:-82.55px;top:1133px;width:2045.5px;height:1201.6px;transform:rotate(179.79deg)">
+  <img src="assets/landing/v2/wave.svg" alt="" aria-hidden="true" style="left:-3932px;top:1133px;width:2045.5px;height:1201.6px;transform:rotate(179.79deg)">
+  <img src="assets/landing/v2/wave.svg" alt="" aria-hidden="true" style="left:-2007px;top:1133px;width:2045.5px;height:1201.6px;transform:rotate(179.79deg)">
+  <img src="assets/landing/v2/wave.svg" alt="" aria-hidden="true" style="left:1843px;top:1133px;width:2045.5px;height:1201.6px;transform:rotate(179.79deg)">
+  <img src="assets/landing/v2/wave.svg" alt="" aria-hidden="true" style="left:3768px;top:1133px;width:2045.5px;height:1201.6px;transform:rotate(179.79deg)">
+  <div class="art" aria-hidden="true" style="left:-3000px;top:1133px;width:7920px;height:1180px;overflow:hidden">
+    <img src="assets/landing/v2/about-c1.svg" alt="" style="left:2500px;top:-420px;width:1119px;height:1119px">
+    <img src="assets/landing/v2/about-c2.svg" alt="" style="left:3946px;top:652px;width:918px;height:918px">
   </div>
-  <p class="label center" style="left:960px;top:2340px">Trailer</p>
+  <p class="label center" style="left:957px;top:1273px;text-shadow:3px 6px 4px #fff1ab">About</p>
+  <h2 class="title big center" style="left:960px;top:1378px;width:1360px">So what is EyeCon?</h2>
+  <img src="assets/landing/v2/duck.png" alt="" style="left:1246px;top:1411px;width:918px;height:1080px;object-fit:cover;object-position:41% 0">
+  <p class="body" style="left:181px;top:1669px;width:748px;font-size:40px;line-height:60px;text-align:left;transform:translateY(-50%)"><span style="font-size:64px">EyeCon</span> is an interactive 2D web-based simulation game for enhancing visual interface standards and accessibility literacy.</p>
+  <p class="body" style="left:180px;top:1932px;width:751px;font-size:40px;line-height:60px;text-align:left;transform:translateY(-50%)">You play as a junior UI designer who fixes broken interfaces for clients, from a personal portfolio to a mock-up of a Philippine government website.</p>
 
-  <!-- About -->
-  <div class="fill-top" aria-hidden="true" style="left:-3000px;top:1100px;width:7920px;height:60px;background:#f9d985"></div>
-  <img class="sink" src="assets/landing/wave.svg" alt="" style="left:-4014px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:-2057px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:1857px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)"><img class="sink" src="assets/landing/wave.svg" alt="" style="left:3814px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
-  <img class="sink" src="assets/landing/wave.svg" alt="" style="left:-100px;top:1108px;width:2077px;height:1219px;transform:rotate(179.79deg)">
-  <p id="about" class="label center" style="left:960px;top:1325.5px">About</p>
-  <h2 class="title center" style="left:960px;top:1425.5px">So what is EyeCon?</h2>
-  <div class="sink" aria-hidden="true" style="left:1246px;top:1411px;width:918px;height:1080px;overflow:hidden"><img src="assets/landing/duck.png" alt="" style="left:-53.05%;top:0;width:209.15%;height:100%"></div>
-  <p class="body" style="left:206px;top:1812px;width:748px;transform:translateY(-50%)">EyeCon is an interactive 2D web-based simulation game for enhancing visual interface standards and accessibility literacy. You play as a junior UI designer who fixes broken interfaces for clients, from a personal portfolio to a mock-up of a Philippine government website.</p>
-
-  <!-- Landing hero -->
-  <div aria-hidden="true" style="left:-3000px;top:0;width:7920px;height:1112px;background:radial-gradient(ellipse at 52% 45%,#c4f6df 0%,#a9eddf 50%,#91e2dc 100%)"></div>
-  <img src="assets/landing/blob-right.svg" alt="" style="left:1203px;top:535px;width:865px;height:865px">
-  <img src="assets/landing/blob-left.svg" alt="" style="left:-152px;top:-329px;width:743px;height:743px;transform:rotate(-0.21deg)">
-
-
-  <p class="shift-tag" style="left:64px;top:270px">Ready to start your shift?</p>
-  <h1 style="left:64px;top:350px;font:800 120px/128px 'Baloo 2',sans-serif;letter-spacing:-5px;color:#0b4355;white-space:nowrap;text-shadow:0 5px 0 #0b43551a">Your design shift<br>starts here.</h1>
-  <p style="left:68px;top:638px;font:700 42px/54px 'Nunito',sans-serif;color:#164d60;white-space:nowrap">Fix layouts. Make clients happy.<br>Build your design skills, one task at a time.</p>
-
-  <div style="left:974px;top:294px;transform:rotate(3.36deg);box-shadow:10px 12px 0 5px #55b6ca" class="shot"><img src="assets/landing/shot-back.png" alt="" style="left:-1.02%;top:-2px;width:138.95%;height:calc(100% + 4px)"></div>
-  <div style="left:974px;top:294px;transform:rotate(-4.43deg);box-shadow:0 14px 0 0 #55b6ca" class="shot"><img src="assets/landing/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);object-fit:cover"></div>
+  <!-- ===== Landing hero ===== -->
+  <div aria-hidden="true" style="left:-3000px;top:0;width:7920px;height:1133px;background:#bfebe9"></div>
+  <img src="assets/landing/v2/hero-ring.svg" alt="" style="left:1080px;top:257px;width:1058px;height:1058px">
+  <img src="assets/landing/v2/hero-ring2.svg" alt="" style="left:-152px;top:-332px;width:743px;height:743px;transform:rotate(-0.21deg)">
+  <p class="shift-tag" style="left:124px;top:268px;font-size:24px;padding:8px 14px;border-width:3px;border-radius:6px;box-shadow:4px 4px 0 #173f58">Ready to start your shift?</p>
+  <h1 style="left:125px;top:328px;font:800 116px/104.4px 'Baloo 2',sans-serif;letter-spacing:-7.54px;color:#123b54;white-space:nowrap">Welcome to<br>your studio.</h1>
+  <p style="left:121px;top:532px;font:800 116px/104.4px 'Baloo 2',sans-serif;letter-spacing:-7.54px;color:#e34c70;text-shadow:4px 5px 0 #fff1ab;white-space:nowrap;transform:rotate(-3deg);transform-origin:center">Time to clock in!</p>
+  <p style="left:130px;top:657px;font:700 24px/33px 'Nunito',sans-serif;color:#123b54;white-space:nowrap">There's mail in your inbox and a client waiting for a fix.<br>Pick up a commission, try your ideas,<br>and make the screen work for everyone.</p>
+  <div class="shot" style="left:963px;top:340px;transform:rotate(3.36deg);box-shadow:10px 4px 0 5px #173f58"><img src="assets/landing/v2/shot-back.png" alt="" style="left:-1.02%;top:0;width:138.95%;height:100%"></div>
+  <div class="shot" style="left:963px;top:340px;transform:rotate(-4.43deg);box-shadow:0 10px 0 0 #173f58"><img src="assets/landing/v2/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:0;width:100%;height:100%;object-fit:cover"></div>
   <a class="play-btn" data-play href="play">PLAY EYECON!</a>
 </main>
 <div class="play-curtain" id="play-curtain" aria-hidden="true"><img alt="" data-src="assets/landing/eyecon-logo-anim.webp"></div>
@@ -207,7 +228,7 @@
   // Each section is 1080 design-px tall; at a smaller scale the window shows more
   // than that. Give every section the extra room (content stays centred in it),
   // so only one section is on screen at a time.
-  const SECTION_TOPS = [0, 1133, 2230, 3395, 4475];
+  const SECTION_TOPS = [0, 1133, 2230, 3395, 4475, 5555];
   const SINK_DROP = 0.85; // About's waves + duck sit near the bottom of the stretched section
   const CONTENT_DROP = 0.2; // share of the extra height above the content (0.5 = centred; lower = higher up)
   // Positions may come from inline styles or classes (e.g. .play-btn), so read the computed top.
@@ -229,8 +250,9 @@
     const before = extras.map((_, i) => extras.slice(0, i).reduce((a, b) => a + b, 0));
     parts.forEach(n => {
       const top = +n.dataset.top, idx = Math.max(0, SECTION_TOPS.filter(t => top >= t - 40).length - 1), extra = extras[idx];
-      const wide = n.tagName === 'DIV' && parseFloat(n.style.width) >= 1900 && n.dataset.h;
-      n.style.top = (top + before[idx] + (wide ? 0 : extra * (n.classList.contains('sink') ? SINK_DROP : CONTENT_DROP))) + 'px';
+      const wide = n.tagName === 'DIV' && (parseFloat(n.style.width) >= 1900 || n.classList.contains('wide')) && n.dataset.h && !n.classList.contains('art');
+      n.style.top = (top + before[idx] + (wide ? 0 : extra * (n.classList.contains('to-bottom') ? 1 : n.classList.contains('spread') ? (top - SECTION_TOPS[idx]) / (ends[idx] - SECTION_TOPS[idx]) : n.classList.contains('sink') ? SINK_DROP : CONTENT_DROP))) + 'px';
+      if(n.classList.contains('grow')) n.style.height = (+n.dataset.h + extra * (1 - CONTENT_DROP)) + 'px';
       if(n.classList.contains('fill-top')) n.style.height = (extra * SINK_DROP + 60) + 'px';
       else if(wide) n.style.height = (+n.dataset.h + extra) + 'px';
     });
@@ -280,7 +302,7 @@
   // is unreliable inside the zoomed stage). Labels (About) keep a little room.
   document.querySelectorAll('.topbar a[href^="#"]').forEach(a => a.addEventListener('click', e => {
     // Land on the section's own top edge (About's label sits inside its section, so use its fill).
-    const el = a.getAttribute('href') === '#about' ? document.querySelector('.fill-top') : document.querySelector(a.getAttribute('href'));
+    const el = document.querySelector(a.getAttribute('href'));
     if(!el) return;
     e.preventDefault();
     const bar = document.getElementById('topbar').getBoundingClientRect().height;
