@@ -61,7 +61,6 @@
   function defaultSettings(){
     return {
       theme: 'default',   // 'default' | 'hc'
-      cvd: 'none',         // none|protanopia|deuteranopia|tritanopia
       uiScale: 1,
       reduceMotion:false,
       timedMode:false,

@@ -308,14 +308,17 @@
     </div>
 
     <div class="editor-main">
+    <img class="editor-brand" src="assets/sprites/logo-eyecon.png" alt="EyeCon">
+    <h2 class="editor-heading">Editing</h2>
+    <div class="editor-piko-say" id="editor-piko-say" role="status" aria-live="polite" hidden></div>
+    <button type="button" class="editor-piko" id="editor-piko" title="Ask Piko for a hint" aria-label="Ask Piko for a hint"><img src="assets/sprites/piko.png" alt=""></button>
     <div class="editor-topbar">
       <!-- Left zone: identity + history -->
       <div class="editor-topbar-zone zone-identity">
         <div class="edit-mode-chip">📌 <span class="btn-label">Edit Mode</span></div>
       </div>
 
-      <!-- Center zone: view aids, grouped into one pill so they read as
-           "one toolset" rather than four separate decisions -->
+      <!-- Canvas toolbar: grid | undo redo | zoom | before/after + hint -->
       <div class="editor-tools-center tool-pill">
         <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid"/></svg></button>
         <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg></button>
@@ -323,25 +326,23 @@
         <button class="tool-btn toggle-btn hidden" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#magnet"/></svg></button>
         <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#spark"/></svg></button>
         <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Rulers and spacing" aria-label="Rulers and spacing" aria-pressed="false"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="#b6e1da" stroke="#528f91"/><path d="M6 6v6m4-6v4m4-4v6m4-6v4" stroke="#528f91" stroke-width="2"/></svg></button>
-        <button class="tool-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#bulb"/></svg></button>
-        <button class="tool-btn" id="tool-controls" popovertarget="controls-pop" title="Quick controls" aria-label="Quick controls"><span class="tool-q" aria-hidden="true">?</span></button>
         <button class="tool-btn hidden" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
         <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#triangle"/></svg></button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <div class="editor-tools-left">
+          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#undo"/></svg><span class="btn-label">Undo</span></button>
+          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#redo"/></svg><span class="btn-label">Redo</span></button>
+        </div>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <div class="editor-zoom-controls" aria-label="Canvas zoom controls">
           <button type="button" id="editor-zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
           <output id="editor-zoom-label" aria-live="polite">100%</output>
           <button type="button" id="editor-zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
         </div>
-        <div class="editor-tools-left">
-          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#undo"/></svg><span class="btn-label">Undo</span></button>
-          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#redo"/></svg><span class="btn-label">Redo</span></button>
-        </div>
-      </div>
-
-      <!-- Right zone: output actions -->
-      <div class="editor-topbar-zone zone-output editor-tools-right">
-        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
+        <span class="tool-pill-divider" aria-hidden="true"></span>
+        <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="#b6e1da" stroke="#2f6f73" stroke-width="2"/><path d="M12 3v18" stroke="#2f6f73" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="#2f6f73" stroke-width="2"/><path d="M10.5 12h3" stroke="#2f6f73" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+        <button class="tool-btn tool-hint-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#bulb"/></svg></button>
+        <button class="tool-btn" id="tool-controls" popovertarget="controls-pop" title="Quick controls" aria-label="Quick controls"><span class="tool-q" aria-hidden="true">?</span></button>
       </div>
     </div>
     <button class="tool-btn btn-save editor-save-corner" id="tool-save" title="Submit for handoff" aria-label="Submit for handoff"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#save"/></svg><span class="editor-save-label">Submit</span></button>

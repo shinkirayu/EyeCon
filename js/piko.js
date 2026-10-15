@@ -32,11 +32,11 @@
       together: "Let's fix one together so you get the feel of it.",
       selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
-      taskLit: "See how a task lit up on the left? Selecting something shows exactly which task it belongs to.",
+      taskLit: "See how its task lit up? Selecting something shows exactly which task it belongs to.",
       controls: "Got it! This panel shows what you picked. You'll use it more later.",
       dragAbout: "Drag it upwards to make sure it's aligned with the \"Home\" and \"Contact\" line. The arrow keys work too!",
       nice: "Perfect! See how much tidier that menu row looks? That's alignment.",
-      tasks: "Your task list keeps score. That one just ticked off!",
+      tasks: "Your task progress keeps score. That one just ticked off!",
       submit: "Fix the rest, then hit Submit to send it to the client."
     },
     reply: {
@@ -127,6 +127,38 @@
     return dom;
   }
 
+  // Piko lines may bold words with **double stars** (admin editor, Ctrl+B). Old
+  // lines used "fake bold" Unicode letters (𝗣𝗶𝗸𝗼); those become real bold text too.
+  // Little control icons in the game's style (cream, dark-purple outline, lilac
+  // highlight on the button you use), dropped in after the words that name them.
+  const mouseIcon = (...parts) => {
+    // The button(s) to use are filled bright purple; the rest stay cream.
+    const on = p => parts.includes(p) ? '#7c3aed' : '#ffffff';
+    return `<svg class="piko-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="${on('left')}"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="${on('right')}"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20" stroke="#4d0d74" stroke-width="2"/><path d="M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="${on('middle')}" stroke="#4d0d74" stroke-width="1.8"/></svg>`;
+  };
+  const key = k => `<svg class="piko-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="3" fill="#fff3d6" stroke="#4d0d74" stroke-width="1.6"/><path d="${k}" fill="#7656b3"/></svg>`;
+  const ARROWS = `<span class="piko-keys">${key('M7 4l3 4H4z')}${key('M4 5h6l-3 4z')}${key('M4 7l4-3v6z')}${key('M10 7L6 4v6z')}</span>`;
+  const CONTROL_ICONS = [
+    [/(middle or right mouse button|middle mouse button or right click)/gi, () => mouseIcon('middle', 'right')],
+    [/(middle mouse button|middle-click|middle click)/gi, () => mouseIcon('middle')],
+    [/(right mouse button|right-click|right click)/gi, () => mouseIcon('right')],
+    [/(left mouse button|left-click|left click)/gi, () => mouseIcon('left')],
+    [/(mouse wheel|scroll wheel)/gi, () => mouseIcon('middle')],
+    [/(arrow keys)/gi, () => ARROWS],
+  ];
+  function richText(t){
+    // Any line (including admin-added ones) can say {name}: fill it with the player's name.
+    const name = window.EC_STORE?.load?.().displayName;
+    if(name) t = String(t).replace(/\{name\}/g, name);
+    const esc = String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    let html = esc
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/(?:[\u{1D400}-\u{1D7FF}](?:[\s'’.,!?-]*[\u{1D400}-\u{1D7FF}])*)+/gu, m => '<b>' + m.normalize('NFKC') + '</b>');
+    // One pass over all rules so a phrase only gets one icon.
+    const all = new RegExp(CONTROL_ICONS.map(([re]) => re.source).join('|'), 'gi');
+    html = html.replace(all, m => m + ' ' + CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m))[1]());
+    return html;
+  }
   let typeTimer = null;
   let currentTarget = null;
   // Lines shown since Piko last appeared, for ‹ › re-reading.
@@ -136,7 +168,7 @@
   const hintText = k => window.EC_TEXT ? window.EC_TEXT.t(k) : '';
   function showView(){
     const { textEl, hint, prev, next } = dom, latest = view === history.length - 1;
-    textEl.textContent = history[view];
+    textEl.innerHTML = richText(history[view]);
     dom.bubble.classList.toggle('piko-reviewing', !latest);
     hint.textContent = !latest ? hintText('piko.ui.back') : latestCanAdvance ? hintText('piko.ui.continue') : '';
     prev.disabled = view <= 0;
@@ -239,7 +271,7 @@
     const full = line;
     textEl.textContent = '';
     function finishTyping(){
-      textEl.textContent = full;
+      textEl.innerHTML = richText(full);
       clearInterval(typeTimer);
       typeTimer = null;
       caretEl.classList.add('idle');

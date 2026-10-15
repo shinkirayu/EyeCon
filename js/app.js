@@ -244,14 +244,16 @@
       if(practice){
         await talk(W.together);
         P.clearTarget(); glow(practice);
-        P.say(W.selectAbout, { top:true });
+        P.say(W.selectAbout, { left:true }); // bottom-left: keeps the page's top menu row clear
         await until(()=>elDiv(practice)?.classList.contains('selected'));
         await step('#element-settings', W.controls, { left:true });
         // Selecting it also lit up its task on the left: point that out.
-        { const task = document.querySelector('#editor-mail-points .editor-goal.focus');
-          if(task){ task.scrollIntoView({ block:'nearest' }); await step('#editor-mail-points .editor-goal.focus', W.taskLit); } }
+        // (desktop: the task pops up in Piko's corner card; phones: it lights up in the list)
+        { const say = document.getElementById('editor-piko-say'), task = document.querySelector('#editor-mail-points .editor-goal.focus');
+          if(say && !say.hidden && say.offsetParent) await step('#editor-piko-say', W.taskLit, { left:true });
+          else if(task){ task.scrollIntoView({ block:'nearest' }); await step('#editor-mail-points .editor-goal.focus', W.taskLit); } }
         P.clearTarget(); glow(practice);
-        P.say(W.dragAbout, { top:true });
+        P.say(W.dragAbout, { left:true });
         // Praise only once it's lined up AND the mouse is let go.
         let down = false;
         const onDown = () => { down = true; }, onUp = () => { down = false; };
@@ -266,7 +268,7 @@
         await until(()=>document.querySelector('#editor-canvas .el.selected'));
         await step('#element-settings', W.controls, { left:true });
       }
-      await step('#screen-editor .editor-side-rail:not(.editor-right-rail)', W.tasks);
+      await step(document.querySelector('#editor-mail-points')?.offsetParent ? '#screen-editor .editor-side-rail:not(.editor-right-rail)' : '#editor-task-progress', W.tasks, { left:true });
       // Toolbar: the player clicks each tool to see what it does.
       // After the click, the spotlight moves to what the tool changed.
       const clickTool = async (id, ask, done, show) => {
@@ -579,9 +581,7 @@
     // Admin tools: Skip/Repeat on emails + the Level Maker app (tests can force them on).
     document.documentElement.classList.toggle('admin-tools', !!s.admin || !!window.EC_ADMIN);
     document.documentElement.setAttribute('data-theme', s.theme === 'hc' ? 'hc' : 'light');
-    if(s.cvd && s.cvd !== 'none') document.documentElement.setAttribute('data-cvd', s.cvd);
-    else document.documentElement.removeAttribute('data-cvd');
-    document.documentElement.style.setProperty('--ui-scale', s.uiScale || 1);
+    document.documentElement.style.setProperty('--ui-scale', 1); // Size is fixed at the default (50%)
     if(window.EC_FIT) window.EC_FIT(); // Size is capped to what the screen can hold
     document.body.classList.toggle('reduce-motion', !!s.reduceMotion);
     window.EC_SOUND.setEnabled(!!s.soundEnabled);
@@ -611,13 +611,8 @@
 
       { tab:'accessibility', id:'theme', label:'High Contrast Mode', desc:'Maximizes contrast across every screen.',
         tip:'Swaps the palette for a WCAG AAA-contrast black-and-white theme.', type:'toggle', on:'hc', off:'default' },
-      { tab:'accessibility', id:'cvd', label:'Colorblind-Friendly Palette', desc:'Remaps the reds/greens used for pass/fail states.',
-        tip:'Adjusts feedback colors (correct / incorrect, tags) for common color-vision differences.', type:'select',
-        options:[['none','Default'],['protanopia','Protanopia'],['deuteranopia','Deuteranopia'],['tritanopia','Tritanopia']] },
       { tab:'accessibility', id:'reduceMotion', label:'Reduce Motion', desc:'Turns off animations, transitions and drifting particles.',
         tip:'For motion sensitivity — disables screen transitions, pop-ins and background effects app-wide.', type:'toggle' },
-      { tab:'accessibility', id:'uiScale', label:'UI Scale', desc:'Scales text and UI elements across the app.',
-        tip:'Bigger values make everything larger and easier to read.', type:'slider', min:0.85, max:1.3, step:0.05, format:v=>Math.round(v*100)+'%' },
 
       { tab:'gameplay', id:'panButton', label:'Pan the Canvas With', desc:'Which mouse button drags you around the design. Left click always selects and moves things.',
         tip:'Scroll the mouse wheel to zoom.', type:'seg', options:[['both','Right or Middle'],['right','Right'],['middle','Middle']] },
@@ -1611,16 +1606,8 @@
       });
     }
     const summary=document.getElementById('workday-summary');
-    // Minimal card like the reward popup: day, a few stat pills, one row per client.
-    const approved=day.reviews.filter(r=>r.approved).length;
-    summary.innerHTML=`<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2><p class="workday-sub">5:00 PM · Time to clock out</p>
-      <div class="workday-totals"><span>${approved}/${day.submissions} approved</span><span>+${window.EC_MONEY(day.coins)}</span><span>+${day.xp} XP</span></div><ul class="workday-reviews"></ul>`;
-    day.reviews.forEach(review=>{
-      const item=document.createElement('li');
-      item.innerHTML=`<b></b><span class="workday-stars">${'★'.repeat(review.stars)}${'☆'.repeat(5-review.stars)}</span>`;
-      item.querySelector('b').textContent=review.name;
-      summary.querySelector('ul').appendChild(item);
-    });
+    // Just the day wrap-up: no totals or per-client list.
+    summary.innerHTML=`<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2>`;
     window.EC_MODAL.show(modal);document.getElementById('next-workday').focus();
   }
 
@@ -1628,18 +1615,20 @@
   function showRewardPopup(level, result, outcome, leveledUp){
     const { currencyEarned, daily, newBadges, rewardBreakdown } = outcome;
     const stars = '★'.repeat(outcome.stars) + '☆'.repeat(5 - outcome.stars);
-    // Minimal card: who, stars, coins; XP / level / badge as small pills.
-    const pills = [
-      `+${result.xpAwarded} XP`,
-      leveledUp ? `⭐ Level ${window.EC_STORE.levelFromTotalXp(profile.totalXp).level}` : '',
-      ...newBadges.map(id=>'🏅 ' + window.EC_STORE.BADGES.find(b=>b.id===id).name),
-    ].filter(Boolean).map(t=>`<span>${t}</span>`).join('');
+    // Card: client, "Job done!", the fee, then XP with this level's progress bar.
+    const lv = window.EC_STORE.levelFromTotalXp(profile.totalXp);
+    const pct = n => Math.max(0, Math.min(100, n / lv.xpForNext * 100)).toFixed(1);
+    const after = pct(lv.xpIntoLevel), before = leveledUp ? 0 : pct(lv.xpIntoLevel - result.xpAwarded);
+    const badges = newBadges.map(id=>`<span>🏅 ${window.EC_STORE.BADGES.find(b=>b.id===id).name}</span>`).join('');
     const card = document.getElementById('reward-card-body');
     card.innerHTML = `<div class="reward-avatar avatar-circle" aria-hidden="true">${level.avatarEmoji || '✉'}</div>
-      <div class="reward-stars" aria-label="${outcome.stars} out of 5 stars">${stars}</div>
+      <p class="reward-client"></p>
       <h2 id="reward-title">Job done!</h2>
-      <div class="reward-total">+${window.EC_MONEY(currencyEarned)}</div>
-      <div class="reward-pills">${pills}</div>`;
+      <div class="reward-fee"><div class="reward-total">${window.EC_MONEY(currencyEarned).replace(/>(\d[\d,]*)<\/span>$/, '>+$1</span>')}</div><small>Service fee</small></div>
+      <div class="reward-xp"><b>+${result.xpAwarded} XP</b><span class="reward-lvl${leveledUp ? ' up' : ''}">${leveledUp ? '↑ LEVEL UP! ' : ''}Level ${lv.level}</span></div>
+      <div class="reward-bar" role="img" aria-label="${lv.xpIntoLevel} of ${lv.xpForNext} XP to the next level" style="--a:${before}%;--b:${after}%"></div>
+      ${badges ? `<div class="reward-pills">${badges}</div>` : ''}`;
+    card.querySelector('.reward-client').textContent = level.clientName || '';
     const fx = document.getElementById('reward-confetti');
     fx.replaceChildren();
     const particles = profile.settings.particles;
@@ -1671,7 +1660,7 @@
       timerEl = document.createElement('div');
       timerEl.id = 'editor-timer';
       timerEl.className = 'tool-btn';
-      document.querySelector('.editor-tools-right').insertBefore(timerEl, document.getElementById('tool-save'));
+      document.querySelector('#screen-editor .tool-pill').appendChild(timerEl);
     }
     const tick = ()=>{
       const m = Math.floor(remaining/60), sec = remaining%60;
@@ -1775,12 +1764,8 @@
   // anchored immediately above whichever taskbar button opened it.
   let taskbarStatsBorrowed = null;
   // Settings list inside the profile card (opened with its Settings button):
-  // sliders for sound, music and size, an on/off switch for reduced motion,
-  // and ◀ ▶ arrows to pick a colorblind mode. 50% is the default for the
-  // sliders and matches the original volume and look.
-  const SCALE_FOR = { 25:0.8, 50:1, 75:1.2, 100:1.4 };
-  const CVD_STEPS = ['none','protanopia','deuteranopia','tritanopia'];
-  const CVD_NAMES = { none:'Off', protanopia:'Red-blind', deuteranopia:'Green-blind', tritanopia:'Blue-blind' };
+  // sliders for sound and music and an on/off switch for reduced motion.
+  // 50% is the default for the sliders and matches the original volume.
   function quickLevel(key){
     const v = profile.settings[key + 'Level'];
     return v == null ? 50 : v;
@@ -1794,12 +1779,10 @@
     const s = profile.settings;
     if(key === 'motion') s.reduceMotion = !!value;
     else if(key === 'admin') s.admin = !!value;
-    else if(key === 'cvd') s.cvd = value;
     else{
       s[key + 'Level'] = value;
       if(key === 'sfx'){ s.soundEnabled = value > 0; s.soundVolume = value/100 * 1.2; }
       if(key === 'music'){ s.musicEnabled = value > 0; s.musicVolume = value/100 * 0.56; }
-      if(key === 'scale'){ s.uiScale = SCALE_FOR[value]; }
     }
     save();
     applySettings();
@@ -1822,7 +1805,6 @@
         <output for="qs-${key}">${quickLevel(key)}%</output>
       </li>`;
     const motion = !!profile.settings.reduceMotion;
-    const cvd = profile.settings.cvd || 'none';
     const picker = (key, label, value) => `<li class="profile-setting${['keys','layout','theme'].includes(key) ? ' admin-only' : ''}">
         <span id="qs-${key}-label">${label}</span>
         <div class="profile-control profile-picker" role="group" aria-labelledby="qs-${key}-label">
@@ -1839,18 +1821,9 @@
       ${inEditor ? editorRows : ''}
       ${slider('sfx','Sound',0,5)}
       ${slider('music','Music',0,5)}
-      ${slider('scale','Size',25,25)}
       <li class="profile-setting">
         <span id="qs-motion-label">Reduce motion</span>
         <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${motion}" aria-labelledby="qs-motion-label" data-setting="motion"><span></span></button></div>
-      </li>
-      <li class="profile-setting">
-        <span id="qs-cvd-label">Colorblind</span>
-        <div class="profile-control profile-picker" role="group" aria-labelledby="qs-cvd-label">
-          <button type="button" data-cvd-step="-1" aria-label="Previous colorblind mode">◀</button>
-          <output aria-live="polite">${CVD_NAMES[cvd]}</output>
-          <button type="button" data-cvd-step="1" aria-label="Next colorblind mode">▶</button>
-        </div>
       </li>
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
@@ -1917,12 +1890,6 @@
     }));
     root.querySelector('#qs-reset')?.addEventListener('click', resetEverything);
     root.querySelector('#qs-google')?.addEventListener('click', () => window.EC_DB.signInWithGoogle().catch(() => showToast('Google sign-in isn’t available right now.', 3000)));
-    root.querySelectorAll('[data-cvd-step]').forEach(btn=>btn.addEventListener('click', ()=>{
-      const i = CVD_STEPS.indexOf(profile.settings.cvd || 'none');
-      const next = CVD_STEPS[(i + Number(btn.dataset.cvdStep) + CVD_STEPS.length) % CVD_STEPS.length];
-      setQuickSetting('cvd', next);
-      btn.closest('.profile-picker').querySelector('output').textContent = CVD_NAMES[next];
-    }));
   }
 
   // The newest client quote for the profile card.

@@ -108,6 +108,12 @@
   const CATEGORY_OF = { contrast:'Contrast', sameColor:'Contrast', minFont:'Typography', maxFont:'Typography', bigger:'Typography' };
   const goalCategory = goal => CATEGORY_OF[window.EC_GRADING.goalKind(goal.check)] || 'Alignment';
   const CATEGORY_ICON = { Alignment:'📐', Contrast:'🎨', Typography:'🔤' };
+  // Bold the key bits of a task: numbers/measurements and the rule words.
+  const TASK_KEYWORDS = /(\d[\d.]*(?:[–-]\d+)?(?::1|px)?|same contrast ratio|its row|same [XY]|same (?:line|row|size|gap|height|left edge|left margin|right margin)|one (?:line|row|left edge|right-hand column)|evenly|even(?: out)?|equal padding|readable|easy to read|bigger|largest|at least|exactly|center(?: of the page)?|right-align|line up|darken)/gi;
+  function emphasize(text){
+    const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    return esc(text).replace(TASK_KEYWORDS, '<b>$1</b>');
+  }
   // A short live reading for a goal ("x 64 · 96 · 40", "2.1:1 / 4.5") so
   // players see exactly how far off they are.
   function goalMeasure(goal){
@@ -194,7 +200,7 @@
         const box = Object.assign(document.createElement('span'), {className:'editor-goal-tick', textContent: met ? '✓' : ''});
         box.setAttribute('aria-hidden', 'true');
         const body = document.createElement('div');
-        const text = Object.assign(document.createElement('p'), {textContent: goal.label});
+        const text = Object.assign(document.createElement('p'), {innerHTML: emphasize(goal.label)});
         if(goal.bonus) text.append(Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent:'BONUS'}));
         body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
         // The tip shows on the suggested task; the reason shows once a task is done.
@@ -211,6 +217,51 @@
     // On a new selection, scroll the task list so its highlighted task is in view.
     if(sel && sel !== state.scrolledToSel) list.querySelector('.editor-goal.focus')?.scrollIntoView({ block:'nearest', behavior:'smooth' });
     state.scrolledToSel = sel;
+    pikoSayTask(sel ? results.filter(r => isFocus(r.goal)) : null);
+    markTaskElements(sel ? results.filter(r => isFocus(r.goal)) : []);
+  }
+
+  // Selecting any element of a task outlines every element in that task: green
+  // once that element is fine on its own (e.g. its own contrast passes), red
+  // while it still needs work. Relational checks (same Y, even gaps…) only turn
+  // green when the whole task passes.
+  const PER_ELEMENT = new Set(['contrast','minFont','maxFont','minH','minW','align','safeMargin','wraps']);
+  function markTaskElements(items){
+    if(!state.canvasEl) return;
+    state.canvasEl.querySelectorAll('.task-red,.task-green').forEach(n => n.classList.remove('task-red','task-green'));
+    const G = window.EC_GRADING, ok = {};
+    items.forEach(({goal, met}) => {
+      const kind = G.goalKind(goal.check), ids = G.goalIds(goal.check);
+      ids.forEach(id => {
+        let good = met;
+        if(!good && PER_ELEMENT.has(kind) && ids.length > 1){
+          const check = Array.isArray(goal.check[kind]) ? {...goal.check, [kind]:[id]} : {...goal.check, ids:[id]};
+          good = G.checkGoals({...state.level, goals:[{...goal, check}]}, state.elements)[0].met;
+        }
+        ok[id] = (ok[id] ?? true) && good;
+      });
+    });
+    Object.entries(ok).forEach(([id, good]) => state.canvasEl.querySelector(`.el[data-id="${id}"]`)?.classList.add(good ? 'task-green' : 'task-red'));
+  }
+
+  // Studio layout: Piko (bottom-right) reads out the task(s) for the selected element.
+  function pikoSayTask(items){
+    const say = document.getElementById('editor-piko-say');
+    if(!say) return;
+    if(!items){ say.hidden = true; return; }
+    say.replaceChildren(...(items.length ? items.map(({goal, met}) => {
+      // Same look as a task card: tick circle, the task, its red measure chip, the tip.
+      const p = document.createElement('div');
+      p.className = 'piko-task' + (met ? ' met' : '');
+      const tick = Object.assign(document.createElement('span'), {className:'editor-goal-tick', textContent: met ? '✓' : ''});
+      const body = document.createElement('div');
+      body.append(Object.assign(document.createElement('p'), {innerHTML: emphasize(goal.label)}),
+        Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
+      if(!met && goal.tip) body.append(Object.assign(document.createElement('small'), {textContent: goal.tip}));
+      p.append(tick, body);
+      return p;
+    }) : [Object.assign(document.createElement('p'), {textContent:'Nothing to fix on this one. Try another element!'})]));
+    say.hidden = false;
   }
 
 
@@ -647,23 +698,55 @@
     document.getElementById('f-reset-icon').classList.add('hidden');
   }
 
+  // Plain colour name for the client's original hue ("gold", "blue"…), used in Piko's tips.
+  function colorName(hex){
+    const {h,s}=hsvOf(hex), deg=h*60;
+    if(s<0.12) return 'grey';
+    return deg<15||deg>=345?'red':deg<40?'orange':deg<65?'gold':deg<160?'green':deg<195?'teal':deg<255?'blue':deg<290?'purple':'pink';
+  }
   function contrastBadgeHtml(el){
     if(!el.text || !el.color) return '';
     const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
     const bold = Number(el.fontWeight) >= 700;
     const res = window.WCAG.passesWCAG(el.color, bg, el.fontSize, bold, 'AA');
-    return `<div class="editor-contrast-card" aria-label="Color contrast comparison">
-      <div class="editor-contrast-label">Text color</div>
-      <div class="editor-contrast-color"><span class="editor-contrast-swatch" style="background:${el.color}"></span><code>${el.color.toUpperCase()}</code></div>
-      <div class="editor-contrast-label">Against background</div>
-      <div class="editor-contrast-color"><span class="editor-contrast-swatch" style="background:${bg}"></span><code>${String(bg).toUpperCase()}</code></div>
-      <div class="editor-contrast-label">Contrast value</div>
-      <div class="contrast-badge ${res.pass?'pass':'fail'}">
-        <span class="contrast-ratio">${res.ratio.toFixed(1)}:1</span>
-        <span class="contrast-check">${res.pass?'✓':'✕'}</span>
+    const zone = contrastZone(res.ratio);
+    const base = originalColor(el,'color'), name = hexColor(base) ? colorName(base) : 'colour';
+    // Drifted off the client's hue (only possible with free colour entry): readable but off-brand.
+    const offHue = hexColor(base) && hexColor(el.color) && hsvOf(base).s > .12 && hsvOf(el.color).s > .12
+      && Math.min(Math.abs(hsvOf(base).h - hsvOf(el.color).h), 6 - Math.abs(hsvOf(base).h - hsvOf(el.color).h)) * 60 > 25;
+    const close = !res.pass && res.ratio >= res.required - 1.5;
+    const tone = !res.pass ? 'fail' : zone.id === 'harsh' || offHue ? 'warn' : 'pass';
+    const sub = !res.pass ? (close ? 'Almost there' : 'Too light to read') : `Zone: ${zone.name}`;
+    const piko = !res.pass ? (close ? `Almost! Slide a bit darker and keep it ${name}.` : `Too faint to read. Slide down toward a darker ${name}.`)
+      : zone.id === 'harsh' ? 'Black on white passes, but it’s harsh on screens. Try a deep shade of the client’s color instead.'
+      : offHue ? `Readable, but that isn't the client's ${name}. Slide back to the ${name} zone for the full fee.`
+      : zone.id === 'great' ? `Nice! Easy to read and still the client's ${name}.`
+      : 'Passes! A little darker makes it even easier to read.';
+    const chip = (label, c) => `<div class="cz-chip"><small>${label}</small><span><i style="background:${c}"></i><code>${String(c).toUpperCase()}</code></span></div>`;
+    const fill = res.pass ? 100 : Math.min(100, res.ratio / res.required * 100);
+    return `<div class="editor-contrast-card cz zone-${zone.id}" aria-label="Color contrast">
+      <div class="cz-chips">${chip('Text color', el.color)}${chip('Against background', bg)}</div>
+      <div class="cz-box ${tone}">
+        <small class="cz-label">Contrast</small>
+        <div class="cz-row"><b class="cz-ratio">${res.ratio.toFixed(1)}:1</b>
+          <div class="cz-verdict"><span><i aria-hidden="true">${res.pass ? '✓' : '✕'}</i>${res.pass ? 'Passes AA' : 'Fails AA'}</span><small>${sub}</small></div></div>
+        <div class="cz-bar"><i style="width:${fill.toFixed(1)}%"></i></div>
       </div>
-      <div class="contrast-note">${res.pass?'Passes AA':'Needs '+res.required+':1'}</div>
+      <div class="cz-piko ${tone}"><small>Piko</small><p>${piko}</p></div>
     </div>`;
+  }
+
+  // Comfort zones on top of WCAG's minimum (the 15:1 "too harsh" line is a comfort
+  // guideline, not a WCAG rule): fail · large text only · AA · great · too harsh.
+  function contrastZone(r){
+    return r < 3 ? {id:'fail', name:'fail'} : r < 4.5 ? {id:'large', name:'large text only'}
+      : r < 7 ? {id:'aa', name:'passes AA'} : r <= 15 ? {id:'great', name:'great'} : {id:'harsh', name:'too harsh'};
+  }
+  // Marker position on the zone bar: each band gets an equal 20% slice.
+  function zoneX(r){
+    const stops = [1, 3, 4.5, 7, 15, 21];
+    const i = Math.min(4, stops.findIndex((v, k) => r < stops[k + 1]) < 0 ? 4 : stops.findIndex((v, k) => r < stops[k + 1]));
+    return Math.min(100, (i + (r - stops[i]) / (stops[i + 1] - stops[i])) * 20).toFixed(1);
   }
 
   const hexColor = value => /^#[0-9a-f]{6}$/i.test(value||'');
@@ -721,7 +804,17 @@
     if(!hexColor(base))return '';
     const amount=sliderValues(el,key).tone;
     const top=barColors(el,key).top;
-    if(key==='color') return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
+    if(key==='color'){
+      // Where on the bar the text first passes AA (brightness search at the current saturation).
+      const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
+      const {h,sat} = sliderValues(el,key), bold = Number(el.fontWeight) >= 700;
+      const passAt = t => window.WCAG.passesWCAG(hsvHex(h,sat/100,t/100), bg, el.fontSize, bold, 'AA').pass;
+      let lo = 0, hi = 100, aa = null;
+      if(passAt(0)){ for(let i=0;i<20;i++){ const m=(lo+hi)/2; if(passAt(m)) lo=m; else hi=m; } aa = lo; }
+      const need = window.WCAG.passesWCAG('#000000', bg, el.fontSize, bold, 'AA').required;
+      const mark = aa == null ? '' : `<span class="cz-aa" style="bottom:${aa}%">AA ${need}:1</span>`;
+      return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span>${mark}<span class="cz-darkest">Darkest ${colorName(base)}</span><small>Light <span>Dark</span></small></label>`;
+    }
     return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${Math.round(amount)}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
   }
 
@@ -1416,6 +1509,12 @@
     const right = screen.querySelector('.editor-right-rail');
     const target = v.layout === 'double' ? right : left;
     target.appendChild(document.getElementById('element-settings'));
+    // Desktop "double": the client card sits above Design tools on the right and
+    // the task list floats over the canvas (see .editor-studio in reference.css).
+    const card = screen.querySelector('.editor-rail-card');
+    const studio = v.layout === 'double' && matchMedia('(min-width: 901px)').matches;
+    screen.classList.toggle('editor-studio', studio);
+    (studio ? right : left).prepend(card);
     // The canvas area changes size, so re-center the design in it.
     if(state.level) requestAnimationFrame(()=>{ centerCanvas(); applyCanvasTransform(); });
   }
@@ -1428,6 +1527,9 @@
 
   function initToolbarOnce(){
     applyVariant(readVariant());
+    matchMedia('(min-width: 901px)').addEventListener('change', ()=>applyVariant(readVariant()));
+    // Piko stays in the corner while editing; clicking him asks for a hint.
+    document.getElementById('editor-piko')?.addEventListener('click', ()=>document.getElementById('tool-hint').click());
 
     document.getElementById('hint-pill-dismiss').addEventListener('click', ()=>{
       document.getElementById('editor-hint-banner').classList.add('hidden');
@@ -1649,6 +1751,19 @@
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
       if(typing) return;
+      // Colour (contrast) tasks: with a text element selected that can't be moved,
+      // ↑/↓ slide its brightness bar (Shift = bigger steps), so ↑ is lighter.
+      const tone = document.getElementById('f-color');
+      if(state.selectedId && tone && ['ArrowUp','ArrowDown'].includes(e.key)){
+        const el = byId(state.selectedId), tools = state.level.tools;
+        if(el && !(can(el,'move') && (!tools || tools.includes('position')))){
+          tone.value = Math.min(100, Math.max(0, +tone.value + (e.key === 'ArrowUp' ? 1 : -1) * (e.shiftKey ? 10 : 1)));
+          tone.dispatchEvent(new Event('input', { bubbles:true }));
+          tone.dispatchEvent(new Event('change', { bubbles:true }));
+          e.preventDefault();
+          return;
+        }
+      }
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
         const el = byId(state.selectedId);
         if(!el || el.locked || !can(el,'move')) return;
@@ -1710,16 +1825,21 @@
       d.style.borderRadius = (el.radius||0)+'px';
       d.style.clipPath = shapeClip(el.shape);
       d.style.whiteSpace = 'pre-line';
+      // Same box model and text styling as the live canvas (createElementDom), so
+      // "before" and previews line up pixel-for-pixel with the editor.
+      d.style.boxSizing = 'border-box';
+      d.style.display = 'flex';
       d.style.opacity = el.opacity != null ? el.opacity : 1;
-      if(el.border && el.border.width>0) d.style.border = `${el.border.width}px ${el.border.style} ${el.border.color}`;
-      if(el.shadow && el.shadow.enabled) d.style.boxShadow = `0px 4px ${el.shadow.blur}px ${el.shadow.color}`;
+      if(el.border) d.style.border = borderCss(el);
+      d.style.boxShadow = shadowCss(el);
       if(el.bg) d.style.background = el.bg;
       paintImage(d, el);
       if(el.text){
-        d.style.display = 'flex'; d.style.alignItems='center'; d.style.justifyContent = textAlignToFlex(el.align);
+        d.style.alignItems='center'; d.style.justifyContent = textAlignToFlex(el.align); d.style.textAlign = el.align;
         d.style.fontFamily = `'${el.fontFamily}', sans-serif`;
         d.style.fontSize = el.fontSize+'px'; d.style.fontWeight = el.fontWeight; d.style.color = el.color;
-        d.style.padding = `0 ${el.padding!=null?el.padding:4}px`; d.textContent = el.text;
+        d.style.lineHeight = '1.15';
+        d.style.padding = `0 ${el.padding}px`; d.textContent = el.text; // same (possibly empty) padding as the live element
       }
       inner.appendChild(d);
       if(opts && opts.onElement) opts.onElement(d, el);

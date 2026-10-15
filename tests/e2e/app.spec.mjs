@@ -342,7 +342,7 @@ test('the canvas fills its workspace without a mission strip or resizing for set
     const before=await readGeometry();
     // Two sidebars (brief left, tools right) share the width with the canvas.
     expect(before.workspace).toBeGreaterThan(.5);
-    expect(before.fill).toBeGreaterThan(.85);
+    expect(before.fill, `fill at ${width}x${height}`).toBeGreaterThan(.85);
     await expect(page.locator('#element-settings')).toBeVisible();
     const after=await readGeometry();
     expect(after.width).toBeCloseTo(before.width,0);
@@ -557,8 +557,11 @@ test('design tools stay open and use the app typography',async({page})=>{
   await expect(page.locator('#editor-mail-points')).toContainText('Space the three social icons');
   const mailBox=await mail.boundingBox();
   const settingsBox=await inspector.boundingBox();
-  // Desktop: brief on the left, Design tools above Layers on the right (phones stack them).
-  if(page.viewportSize().width>900) expect(mailBox.x+mailBox.width).toBeLessThanOrEqual(settingsBox.x);
+  // Desktop: the client card sits right above Design tools in the right column.
+  if(page.viewportSize().width>900){
+    expect(Math.abs(mailBox.x-settingsBox.x)).toBeLessThan(2);
+    expect(mailBox.y+mailBox.height).toBeLessThanOrEqual(settingsBox.y);
+  }
 });
 
 test.skip('the first day starts with one email showing difficulty and reward',async({page})=>{
@@ -637,16 +640,22 @@ test('goal elements show markers until solved, and moving them back un-solves',a
     expect(await cta.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('dashed');
   }
   if(page.viewportSize().width>900){
-    await expect(page.locator('#screen-editor .editor-mode-corner')).toBeVisible();
-    const [left,stage,right]=await Promise.all([
-      page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)').boundingBox(),
+    // Canvas on the left, client card + Design tools on the right, Piko in the
+    // corner reading out the selected element's task (no separate task list).
+    await expect(page.locator('#screen-editor .editor-heading')).toHaveText('Editing');
+    await expect(page.locator('#editor-piko')).toBeVisible();
+    await expect(page.locator('#editor-mail-points')).toBeHidden();
+    const [stage,right]=await Promise.all([
       page.locator('#editor-canvas-wrap').boundingBox(),
       page.locator('#screen-editor .editor-right-rail').boundingBox()
     ]);
-    expect(left.x+left.width).toBeLessThan(stage.x);
     expect(stage.x+stage.width).toBeLessThan(right.x);
-    expect(left.height).toBeGreaterThan(stage.height*.8);
-    expect(right.height).toBeGreaterThan(stage.height*.8);
+    // The right panel stops above Piko so he never covers Design tools.
+    const piko=await page.locator('#editor-piko').boundingBox();
+    expect(right.y+right.height).toBeLessThanOrEqual(piko.y+1);
+    await expect(page.locator('#editor-piko-say')).toBeHidden();
+    await page.evaluate(()=>EC_EDITOR.selectElement('about'));
+    await expect(page.locator('#editor-piko-say')).toContainText('Line up "About"');
   }
   // Line "About" up with Home and Contact.
   for(const [id,field,v] of [['about','y',40]]){
@@ -676,22 +685,18 @@ test('two-bar editor panels have fixed widths',async({page})=>{
   await beginFirstDay(page);
   await page.getByRole('listitem').first().click();
   await page.getByRole('button',{name:'Accept'}).click();
-  const label=page.locator('#screen-editor .editor-mode-corner .editor-mode-tab');
-  await expect(label).toBeVisible();
-  expect(await label.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThan(20);
-  const [noteBox,topStripHeight]=await Promise.all([
-    page.locator('#screen-editor .editor-mode-corner').boundingBox(),
-    page.locator('#screen-editor').evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--editor-topbar-h'))*parseFloat(getComputedStyle(document.documentElement).fontSize))
-  ]);
-  // The Edit Mode tag sits inside the top strip with a margin, not full-bleed.
-  expect(noteBox.height).toBeLessThan(topStripHeight);
-  expect(noteBox.y).toBeGreaterThan(0);
-  await expect(page.locator('#screen-editor .editor-mode-corner p')).toBeHidden();
+  // Top bar: EyeCon logo on the left, "Editing" in the middle (no Edit Mode sticker).
+  await expect(page.locator('#screen-editor .editor-brand')).toBeVisible();
+  await expect(page.locator('#screen-editor .editor-heading')).toBeVisible();
+  await expect(page.locator('#screen-editor .editor-mode-corner')).toBeHidden();
+  const topStripHeight=await page.locator('#screen-editor').evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--editor-topbar-h'))*parseFloat(getComputedStyle(document.documentElement).fontSize));
+  const brand=await page.locator('#screen-editor .editor-brand').boundingBox();
+  expect(brand.y+brand.height).toBeLessThan(topStripHeight);
   // Side panels have fixed widths: no drag handles.
   await expect(page.locator('.editor-rail-resizer')).toHaveCount(0);
-  const panel=await page.locator('#screen-editor .editor-side-rail:not(.editor-right-rail)').boundingBox();
+  const panel=await page.locator('#screen-editor .editor-right-rail').boundingBox();
   const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
-  expect(Math.abs(panel.width/rem-22)).toBeLessThan(1);
+  expect(Math.abs(panel.width/rem-20)).toBeLessThan(1);
 });
 
 test('profile settings list and the browser shows the store and client sites',async({page})=>{
@@ -709,12 +714,11 @@ test('profile settings list and the browser shows the store and client sites',as
   await page.getByRole('slider',{name:'Sound',exact:true}).fill('25');
   await page.getByRole('slider',{name:'Music',exact:true}).fill('0');
   await page.getByRole('switch',{name:'Reduce motion'}).click();
-  await page.getByRole('button',{name:'Next colorblind mode'}).click();
-  await page.getByRole('button',{name:'Next colorblind mode'}).click();
   const saved=await page.evaluate(()=>EC_STORE.load().settings);
-  expect([saved.sfxLevel,saved.musicEnabled,saved.reduceMotion,saved.cvd]).toEqual([25,false,true,'deuteranopia']);
-  await page.getByRole('button',{name:'Previous colorblind mode'}).click();
-  await expect(page.locator('[aria-labelledby="qs-cvd-label"] output')).toHaveText('Red-blind');
+  expect([saved.sfxLevel,saved.musicEnabled,saved.reduceMotion]).toEqual([25,false,true]);
+  // No Size slider and no colorblind mode for players.
+  await expect(page.getByRole('slider',{name:'Size'})).toHaveCount(0);
+  await expect(page.locator('#taskbar-stats-popup')).not.toContainText('Colorblind');
   await page.locator('#taskbar-stats-popup-close').click();
   await page.getByRole('button',{name:'Open Browser app'}).click();
   await page.locator('.browser-bookmark').filter({hasText:'Mayonnaisegee'}).click();
@@ -767,9 +771,9 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
   const summary=page.getByRole('dialog',{name:'Day 2 done!'});
   await expect(summary).toBeVisible({timeout:8000});
   await expect(page.locator('.day-end-scene')).toHaveCount(0);
-  await expect(summary).toContainText('/3 approved');
-  await expect(summary).toContainText('120 XP');
-  await expect(summary).toContainText('Brewbird');
+  // Just "Day N done!" and Next day: no totals or client list.
+  await expect(summary).not.toContainText('approved');
+  await expect(summary).not.toContainText('Brewbird');
   await page.getByRole('button',{name:'Next day'}).click();
   await expect(summary).toBeHidden();
   await expect(page.locator('#taskbar-clock')).toContainText('Day 3');
@@ -832,7 +836,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await next(); await expect(bubble).toContainText('Drag it upwards');
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');
-  await next(); await expect(bubble).toContainText('task list');
+  await next(); await expect(bubble).toContainText('keeps score');
   await next(); await expect(bubble).toContainText('show or hide the grid');
   await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
   await next(); await expect(bubble).toContainText('click this one');
@@ -881,8 +885,11 @@ test('Piko lines can be re-read with back and forward', async ({ page }) => {
   await page.getByRole('button', { name: 'Previous line' }).click();
   await expect(text).toContainText("Hi, I'm Piko");
   await expect(bubble.locator('.piko-hint')).toContainText('Earlier line');
-  await page.getByRole('button', { name: 'Next line' }).click();
-  await page.getByRole('button', { name: 'Next line' }).click();
+  // No › button: a click anywhere (or →) goes back to the newest line.
+  await expect(page.getByRole('button', { name: 'Next line' })).toBeHidden();
+  await page.keyboard.press('ArrowRight');
+  await expect(text).toContainText("What's your name?");
+  await page.mouse.click(400, 400);
   await expect(text).toContainText('Nice to meet you, Alex');
   await page.screenshot({ path: process.env.PIKO_NAV_SHOT || 'test-results/piko-nav.png' });
 });

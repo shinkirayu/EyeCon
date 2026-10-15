@@ -490,7 +490,7 @@
     const missing = Object.keys(D).filter(k => !textRows[k]).length;
     app.innerHTML = `<section class="card">
       <div class="tx-head"><h2>Dialogue &amp; text</h2>
-        <p class="sub">Edit what players read. <b>Save draft</b> keeps it private, <b>Publish</b> sends drafts to the game. <code>{name}</code>-style words are filled in automatically.</p>
+        <p class="sub">Edit what players read. <b>Save draft</b> keeps it private, <b>Publish</b> sends drafts to the game. <code>{name}</code>-style words are filled in automatically. Select words and press <kbd>Ctrl</kbd>+<kbd>B</kbd> to make them <b>bold</b> (shows as <code>**word**</code>).</p>
         ${missing ? `<p class="tx-notice">⚠ ${missing} built-in line${missing === 1 ? '' : 's'} not in the database yet <button id="import">Import</button></p>` : ''}</div>
       <div class="tx-toolbar">
         <div class="seg" role="group" aria-label="Area">${AREAS.filter(([a]) => Object.values(D).some(d => d.area === a)).map(([a, l]) => `<button type="button" data-area="${a}" aria-pressed="${a === textArea}">${l} <span>${Object.values(D).filter(d => d.area === a).length}</span></button>`).join('')}</div>
@@ -745,6 +745,15 @@
 
   boot();
 })();
+  // Ctrl+B in any dialogue box wraps the selection in **…**, which Piko shows in bold.
+  document.addEventListener('keydown', e => {
+    const t = e.target;
+    if(!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'b' || t.tagName !== 'TEXTAREA') return;
+    e.preventDefault();
+    const { selectionStart:a, selectionEnd:b, value:v } = t;
+    t.setRangeText('**' + v.slice(a, b) + '**', a, b, 'end');
+    t.dispatchEvent(new Event('input', { bubbles:true }));
+  });
 </script>
 </body>
 </html>

@@ -56,9 +56,6 @@
   --shadow-lg: 0 0 0 2px #000;
 }
 
-:root[data-cvd="protanopia"]{ --coral:#c9a227; --coral-dark:#a3831c; --danger:#8a6d00; --success:#2f6fb0; }
-:root[data-cvd="deuteranopia"]{ --coral:#c9862b; --coral-dark:#a36a20; --danger:#8a6600; --success:#2f6fb0; }
-:root[data-cvd="tritanopia"]{ --teal:#4f8ab8; --teal-dark:#2e5f8c; --coral:#e0607a; }
 
 .hidden{ display:none !important; }
 *{ box-sizing: border-box; }

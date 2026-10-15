@@ -1130,7 +1130,7 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .profile-picker output{flex:1;min-width:0;text-align:center;}
 .profile-setting{grid-template-columns:8rem 1fr 3.5rem;}
 .profile-setting > label,.profile-setting > span:first-child{white-space:nowrap;}
-/* The colorblind picker spans the control and value columns so names fit on one line. */
+/* Pickers span the control and value columns so names fit on one line. */
 .profile-picker{grid-column:2 / 4;}
 .profile-picker output{white-space:nowrap;}
 /* Reduce motion switch: no On/Off text, centered across control + value columns. */
@@ -2234,7 +2234,7 @@ input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-sel
 /* Folder buttons sit centred in their column: same 3rem gap on the left and right. */
 #screen-shell .mail-body{gap:3rem!important;}
 #screen-shell .mail-logo-stack span{color:#7555af;} /* Piko purple */
-@media(min-width:901px){#screen-shell .mail-progress{left:27rem!important;right:6.5rem!important;width:auto!important;max-width:66rem;margin-inline:auto!important;}} /* centred over the mail list (same left/right edges) */
+@media(min-width:901px){#screen-shell .mail-progress{left:27rem!important;right:6.5rem!important;width:auto!important;max-width:none!important;margin-inline:0!important;}} /* centred over the mail list (same left/right edges) */
 /* Reward total: same ink colour as the profile's "Coins:" line (the + too). */
 #modal-reward .reward-total,#modal-reward .reward-total .money{color:#3b172e;}
 html.slider-dragging,html.slider-dragging *{cursor:none!important;}
@@ -2335,3 +2335,202 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 .controls-pop dd{margin:0;}
 .controls-pop kbd{font:inherit;padding:0 .3rem;border:1px solid #a5d6cc;border-radius:.3rem;background:#fff;}
 .controls-pop .btn{display:block;margin-left:auto;}
+
+/* Studio layout (desktop, default "double"): logo + "Editing" in the top bar,
+   canvas on the left, client card above Design tools on the right, tasks
+   floating in the canvas corner, Piko always in the bottom-right corner. */
+.editor-brand,.editor-heading,.editor-piko{display:none;}
+@media(min-width:901px){
+  #screen-editor.editor-studio[data-layout][data-ed-theme]{--studio-right:var(--editor-right-panel,var(--tools-rail));}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-main{padding-left:1rem;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-mode-corner{display:none;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-brand{display:block;position:absolute;z-index:85;left:1.5rem;top:calc((var(--editor-topbar-h) - 2.75rem) / 2);height:2.75rem;width:auto;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-heading{display:block;position:absolute;z-index:85;margin:0;left:calc((100% - var(--studio-right) - 1rem) / 2);top:calc(var(--editor-topbar-h) / 2);transform:translate(-50%,-50%);font:800 1.75rem var(--font-display);color:#5b3f4f;pointer-events:none;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-topbar{left:calc((100% - var(--studio-right) - 1rem) / 2);max-width:calc(100% - var(--studio-right) - 4rem);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail{display:flex;flex-direction:column;gap:1rem;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail .editor-rail-card{flex:0 0 auto;max-height:none;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail .element-settings{flex:1 1 auto;min-height:0;}
+  /* Task list: a floating card in the canvas's bottom-right corner. */
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-side-rail:not(.editor-right-rail){top:auto!important;left:auto!important;right:calc(var(--studio-right) + 3.5rem)!important;bottom:3rem!important;width:19rem;max-height:42%;overflow:auto;z-index:70;padding:.5rem;border-radius:1rem;background:#ffffffe6;box-shadow:0 .5rem 1.5rem #12334426;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{display:block;position:absolute;z-index:90;right:1.5rem;bottom:1.25rem;width:6.5rem;height:6.5rem;padding:0;border:0;background:none;cursor:inherit;transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .25rem .25rem #3b172e33);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko:hover,#screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko:focus-visible{transform:scale(1.08) rotate(-4deg);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko:focus-visible{outline:3px solid #77b9af;outline-offset:4px;border-radius:50%;}
+  /* While Piko is talking, his speech bubble already shows him. */
+  body:has(.piko-bubble:not(.hidden)) #screen-editor .editor-piko{visibility:hidden;}
+}
+/* Canvas toolbar order: grid | undo redo | zoom | before/after + hint (yellow). */
+#screen-editor .tool-pill .tool-hint-btn{background:#f9d985;}
+#screen-editor .tool-pill .tool-hint-btn:hover{background:#f6cd63;}
+#screen-editor .tool-pill .tool-hint-btn .game-tool-icon{filter:none;opacity:1;}
+#screen-editor .tool-pill #tool-preview{display:inline-flex!important;}
+/* Mail detail: header, body, a divider, then the attachment card on the left
+   and the reward centred over Accept on the right. */
+#modal-mail-detail .modal-card.mail-detail-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:1.5rem;}
+#modal-mail-detail .mail-detail-card .mail-detail-head{grid-row:1;grid-column:1 / -1;}
+#modal-mail-detail .mail-detail-card .mail-detail-body{grid-row:2;grid-column:1 / -1;padding-bottom:1rem;border-bottom:2px solid #b2ddd3;}
+#modal-mail-detail .mail-detail-card .mail-detail-actions{display:contents!important;}
+#modal-mail-detail .mail-detail-card .mail-detail-attachment{grid-row:3 / span 2;grid-column:1;margin:1rem 0 0;}
+#modal-mail-detail .mail-detail-card .mail-detail-reward{grid-row:3;grid-column:2;justify-self:center;margin:1rem 0 .5rem;padding:0;border:0;background:none;box-shadow:none;}
+#modal-mail-detail .mail-detail-card #btn-accept-job{grid-row:4;grid-column:2;margin:0;}
+
+/* Reward card: avatar, client, "Job done!", fee box, XP row + bar, Collect. */
+#modal-reward #reward-card-body{width:100%;align-items:stretch;}
+#modal-reward .reward-avatar{align-self:center;width:8rem;height:8rem;border:.25rem solid #9fd5e3;font-size:4rem;}
+#modal-reward .reward-avatar img{width:100%;height:100%;object-fit:cover;}
+#modal-reward .reward-client{margin:.5rem 0 0;font:800 .875rem var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:#3b172e;}
+#modal-reward .reward-card h2{margin:0;font:800 3rem/1 var(--font-display);text-transform:none;color:#3b172e;}
+#modal-reward .reward-fee{margin:.5rem 0;padding:.75rem 1rem .5rem;border:.1875rem solid #f2d27a;border-radius:1.25rem;background:#fff2cf;}
+#modal-reward .reward-fee .reward-total{margin:0;font:800 2.75rem/1 var(--font-display);}
+#modal-reward .reward-fee .money{display:inline-flex;align-items:center;gap:.5rem;}
+#modal-reward .reward-fee .money-icon{width:2.75rem;height:2.75rem;}
+#modal-reward .reward-fee small{display:block;margin-top:.25rem;font:800 .75rem var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:#3b172e;}
+#modal-reward .reward-xp{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-top:.25rem;font:800 1rem var(--font-body);color:#123b54;}
+#modal-reward .reward-lvl{padding:.25rem .75rem;border:2px solid #77b9af;border-radius:999px;background:#e3f4f1;font-size:.875rem;}
+#modal-reward .reward-lvl.up{background:#d3f2df;border-color:#4caf7d;}
+#modal-reward .reward-bar{height:1rem;border:2px solid #77b9af;border-radius:999px;background:linear-gradient(90deg,#3e9b86 var(--a),#8ee09b var(--a) var(--b),#e3f4f1 var(--b));}
+#modal-reward .reward-pills{justify-content:center;}
+#modal-mail-detail .mail-detail-attachment .attachment-card{zoom:.8;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{font-size:20px;} /* 16px after the .8 zoom */
+/* Reward on the right above the divider; attachment + a bigger Accept below it. */
+#modal-mail-detail .mail-detail-card .mail-detail-body{padding-bottom:0;border-bottom:0;}
+#modal-mail-detail .mail-detail-card .mail-detail-reward{grid-row:3;grid-column:1 / -1;justify-self:end;margin:1rem 0;}
+#modal-mail-detail .modal-card.mail-detail-card::after{content:'';grid-row:4;grid-column:1 / -1;border-top:2px solid #b2ddd3;}
+#modal-mail-detail .mail-detail-card .mail-detail-attachment{grid-row:5;margin:1rem 0 0;}
+#modal-mail-detail .mail-detail-card #btn-accept-job{grid-row:5;align-self:center;margin-top:1rem;min-width:16rem;min-height:5.5rem;font-size:2.5rem;}
+#modal-reward .reward-fee .reward-total{display:flex;justify-content:center;}
+#modal-mail-detail .mail-detail-card .mail-detail-reward{grid-column:2;justify-self:center;}
+#modal-mail-detail .mail-detail-attachment .attachment-card{display:flex!important;flex-direction:row!important;align-items:center;gap:1rem;padding-right:1.25rem;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{display:flex;align-items:center;gap:.5rem;}
+#modal-mail-detail .mail-detail-attachment .attachment-card{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;}
+#modal-mail-detail .mail-detail-attachment .attachment-thumb{border-radius:.75rem;overflow:hidden;box-shadow:0 .25rem .75rem #3b172e26;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{background:none!important;padding:0!important;}
+#modal-mail-detail .mail-detail-attachment,#modal-mail-detail .mail-detail-attachment .attachment-card{width:auto!important;max-width:none!important;overflow:visible!important;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{white-space:nowrap;overflow:visible!important;text-overflow:clip!important;max-width:none!important;flex:none;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{font-size:20px!important;}
+#modal-mail-detail .mail-detail-attachment .attachment-thumb{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;}
+#modal-mail-detail .mail-detail-attachment .attachment-card:is(:hover,:focus-visible) .attachment-thumb{transform:translateY(-4px) rotate(-1.5deg);box-shadow:0 .75rem 1.25rem #3b172e33;}
+#modal-mail-detail .mail-detail-attachment .attachment-card:is(:hover,:focus-visible) .attachment-name{text-decoration:underline;text-underline-offset:4px;}
+/* Workspace loading screen: big eyes and label. */
+.app-loading-screen .loading-eyes{width:min(32rem,70vw)!important;}
+.app-loading-screen .loading-label{font-size:2.5rem!important;}
+
+/* Studio layout: bigger Piko with breathing room; the task list lives in his speech bubble. */
+.editor-piko-say{display:none;}
+@media(min-width:901px){
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{width:9rem;height:9rem;right:2.5rem;bottom:2.5rem;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-side-rail:not(.editor-right-rail){display:none!important;}
+  #screen-editor.editor-studio .editor-piko-say:not([hidden]){display:grid;gap:.5rem;position:absolute;z-index:91;right:12rem;bottom:6rem;width:min(22rem,40vw);padding:1rem 1.25rem;border:3px solid #77b9af;border-radius:1.25rem 1.25rem .25rem 1.25rem;background:#fff;color:#3b172e;box-shadow:0 .5rem 1.5rem #12334426;font:700 1.125rem/1.35 var(--font-body);animation:piko-say-pop .3s cubic-bezier(.34,1.56,.64,1);}
+  #screen-editor.editor-studio .editor-piko-say::before{content:'PIKO';font:800 .8rem var(--font-display);letter-spacing:.1em;color:#7656b3;}
+  #screen-editor.editor-studio .editor-piko-say p{margin:0;}
+  #screen-editor.editor-studio .editor-piko-say p.met{color:#2f7d5b;}
+  #screen-editor.editor-studio .editor-piko-say small{display:block;margin-top:.25rem;font-weight:600;font-size:.95rem;color:#5a6f6a;}
+  @keyframes piko-say-pop{from{transform:scale(.85) translateY(.5rem);opacity:0}}
+}
+@media(min-width:901px){
+  #screen-editor.editor-studio .editor-piko-say::before{text-align:center;}
+  #screen-editor.editor-studio .editor-piko-say .piko-task{display:grid;grid-template-columns:auto 1fr;gap:.75rem;align-items:start;margin:0;padding:.75rem;border:2px solid #e9d9d9;border-left:4px solid #e53b42;border-radius:.75rem;background:#fff;list-style:none;}
+  #screen-editor.editor-studio .editor-piko-say .piko-task.met{border-left-color:#3e9b86;}
+  #screen-editor.editor-studio .editor-piko-say .editor-goal-tick{display:grid;place-items:center;width:1.4rem;height:1.4rem;border:2px solid #3b172e;border-radius:50%;font-size:.9rem;}
+  #screen-editor.editor-studio .editor-piko-say .piko-task.met .editor-goal-tick{background:#3e9b86;border-color:#3e9b86;color:#fff;}
+  #screen-editor.editor-studio .editor-piko-say .piko-task p{margin:0 0 .4rem;}
+  #screen-editor.editor-studio .editor-piko-say .editor-goal-measure{display:inline-block;padding:.1rem .5rem;border-radius:.375rem;background:#fde8ea;color:#c4283d;font:600 .85rem ui-monospace,Consolas,monospace;}
+  #screen-editor.editor-studio .editor-piko-say .piko-task.met .editor-goal-measure{background:#dff3ea;color:#2f7d5b;}
+}
+/* Elements of the selected element's task(s): red = still to fix, green = fine. */
+#editor-canvas .el.task-red{--task-c:#e53b42;}
+#editor-canvas .el.task-green{--task-c:#3e9b86;}
+/* The selection box itself turns red/green at twice its thickness; the task's
+   other elements get the same box (no second rectangle). */
+#editor-canvas .el.selected:is(.task-red,.task-green)::after{border-color:var(--task-c);border-width:calc(3 * var(--selection-unit,1px));}
+#editor-canvas .el:is(.task-red,.task-green):not(.selected){outline:calc(3 * var(--selection-unit,1px)) solid var(--task-c)!important;outline-offset:0;}
+.editor-goal p b,.piko-task p b{font-weight:900;color:#3b172e;}
+#screen-editor .editor-goal p,#screen-editor .piko-task p{font-weight:600;}
+@media(min-width:901px){
+  /* Piko centred under the right panel; his bubble sits just left of him. */
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{right:calc(1rem + (var(--studio-right) - 9rem) / 2);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko-say:not([hidden]){right:calc(1rem + (var(--studio-right) - 9rem) / 2 + 9.5rem);}
+}
+/* Inbox count on the corner of the Inbox box; unread dot first in each row, bigger. */
+#screen-shell .mail-sidebar .side-btn{position:relative;}
+#screen-shell .mail-sidebar .side-btn .badge-count{position:absolute!important;left:auto!important;top:0!important;right:0!important;transform:translate(35%,-35%)!important;width:2.75rem!important;height:2.75rem!important;min-width:2.75rem!important;display:grid;place-items:center;border:3px solid #fff!important;font-size:1.5rem!important;z-index:2;}
+#screen-shell .mail-sidebar .side-btn .badge-count.hidden{display:none!important;}
+#screen-shell .mail-item .unread-dot{order:-1;width:1.75rem!important;height:1.75rem!important;margin:0 .25rem 0 0!important;}
+#screen-shell .mail-sidebar .side-btn .side-icon{position:static!important;}
+#screen-shell .mail-sidebar,#screen-shell .mail-sidebar .side-btn{overflow:visible!important;}
+#screen-shell .mail-sidebar .side-btn .badge-count{transform:translate(30%,-30%)!important;}
+@media(min-width:901px){
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{width:13rem;height:13rem;bottom:2rem;right:calc(1rem + (var(--studio-right) - 13rem) / 2);}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko-say:not([hidden]){right:calc(1rem + (var(--studio-right) - 13rem) / 2 + 13.5rem);bottom:8rem;}
+}
+/* Mail folders: big icon on top, label underneath. */
+@media(min-width:901px){
+  #screen-shell .mail-sidebar .side-btn{flex-direction:column!important;justify-content:center;gap:.5rem!important;text-align:center;}
+  #screen-shell .mail-sidebar .side-btn .side-icon{font-size:5.5rem!important;width:1em;height:1em;}
+  #screen-shell .mail-sidebar .side-btn .folder-label{font-size:2.25rem!important;}
+}
+#screen-shell .mail-sidebar .side-btn .badge-count{width:3.5rem!important;height:3.5rem!important;min-width:3.5rem!important;font-size:2rem!important;}
+/* Selected folder: darker fill and an outline so it stands out. */
+#screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{background:#b9a0d6!important;}
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#f5c94d!important;}
+
+/* Task keywords: clearly heavier and marker-highlighted so they guide the player. */
+#screen-editor .editor-goal p,#screen-editor .piko-task p{font-weight:500!important;}
+#screen-editor .editor-goal p b,#screen-editor .piko-task p b{font-weight:700!important;}
+/* Contrast comfort zones: red fail · orange large only · green AA · deep green great · amber too harsh. */
+#screen-editor .contrast-zones{position:relative;grid-column:1 / -1;height:.75rem;margin:.25rem 0;border-radius:999px;background:linear-gradient(90deg,#d9414f 0 20%,#f08a2c 20% 40%,#5cc28a 40% 60%,#2f8f5b 60% 80%,#e0a526 80%);}
+#screen-editor .contrast-zones i{position:absolute;top:50%;width:1.1rem;height:1.1rem;border:3px solid #fff;border-radius:50%;background:#3b172e;transform:translate(-50%,-50%);box-shadow:0 1px 3px #0005;}
+#screen-editor .contrast-note{grid-column:1 / -1;}
+#screen-editor .zone-harsh .contrast-badge .contrast-ratio{color:#c27c00;}
+#screen-editor .zone-harsh .contrast-badge .contrast-check{background:#e0a526;}
+#screen-editor .zone-large .contrast-badge .contrast-ratio{color:#d26a12;}
+#screen-editor .contrast-tip{grid-column:1 / -1;margin:0;padding:.5rem .75rem;border-radius:.75rem;background:#fff4d6;color:#7a4b00;font:700 .9rem/1.35 var(--font-body);}
+@media(min-width:901px){#screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail{bottom:16rem!important;}}
+/* Contrast workbench (mockup): one brightness bar with the AA mark, colour chips beside
+   it, then a big contrast box and Piko's tip across the full width. */
+#screen-editor .editor-contrast-workbench{grid-template-columns:7rem minmax(0,1fr)!important;gap:1rem 1rem;}
+#screen-editor .editor-contrast-workbench > label:has(.editor-sat-range){display:none;}
+#screen-editor .editor-contrast-workbench > .editor-bright-bar{grid-column:1;grid-row:1;position:relative;min-height:15rem;}
+#screen-editor .editor-contrast-workbench #f-contrast,#screen-editor .editor-contrast-workbench .editor-contrast-card.cz{display:contents;}
+#screen-editor .cz-chips{grid-column:2;grid-row:1;display:grid;gap:1rem;align-content:start;}
+#screen-editor .cz-chip small,#screen-editor .cz-label,#screen-editor .cz-piko small{display:block;font:800 .8rem var(--font-body);letter-spacing:.12em;text-transform:uppercase;}
+#screen-editor .cz-chip small{color:#2f6f73;margin-bottom:.35rem;}
+#screen-editor .cz-chip > span{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border:2px solid #e4d8ca;border-radius:.75rem;background:#fff;}
+#screen-editor .cz-chip i{width:1.1rem;height:1.1rem;border:2px solid #123b54;border-radius:.25rem;}
+#screen-editor .cz-chip code{font:800 1rem var(--font-body);color:#123b54;}
+#screen-editor .cz-aa{position:absolute;left:2.6rem;transform:translateY(50%);font:800 .8rem var(--font-body);color:#123b54;white-space:nowrap;pointer-events:none;}
+#screen-editor .cz-aa::before{content:'▸ ';font-size:.6rem;}
+#screen-editor .cz-darkest{position:absolute;left:2.6rem;bottom:-.25rem;font:700 .8rem var(--font-body);color:#5a5266;white-space:nowrap;}
+#screen-editor .cz-box,#screen-editor .cz-piko{grid-column:1 / -1;border:3px solid;border-radius:1rem;}
+#screen-editor .cz-box{padding:.75rem 1rem;}
+#screen-editor .cz-row{display:flex;align-items:center;gap:1rem;}
+#screen-editor .cz-ratio{font:800 2.75rem/1 var(--font-display);}
+#screen-editor .cz-verdict span{display:flex;align-items:center;gap:.4rem;font:800 1.1rem var(--font-body);}
+#screen-editor .cz-verdict i{display:grid;place-items:center;width:1.5rem;height:1.5rem;border-radius:50%;color:#fff;font-style:normal;font-size:.9rem;}
+#screen-editor .cz-verdict small{font:700 .95rem var(--font-body);color:#3b172e;}
+#screen-editor .cz-bar{height:.75rem;margin-top:.6rem;border:2px solid;border-radius:999px;background:#fff;overflow:hidden;}
+#screen-editor .cz-bar i{display:block;height:100%;}
+#screen-editor .cz-box.fail{border-color:#d0213f;background:#fde6ea;color:#a3142f;}
+#screen-editor .cz-box.fail .cz-verdict i,#screen-editor .cz-box.fail .cz-bar i{background:#d0213f;}
+#screen-editor .cz-box.pass{border-color:#237a4b;background:#e2f5e9;color:#1d6a40;}
+#screen-editor .cz-box.pass .cz-verdict i,#screen-editor .cz-box.pass .cz-bar i{background:#237a4b;}
+#screen-editor .cz-box.warn{border-color:#c98a12;background:#fff3d6;color:#8a5a00;}
+#screen-editor .cz-box.warn .cz-verdict i,#screen-editor .cz-box.warn .cz-bar i{background:#c98a12;}
+#screen-editor .cz-piko{padding:.6rem 1rem;background:#fff;}
+#screen-editor .cz-piko small{color:#2f6f73;}
+#screen-editor .cz-piko p{margin:.25rem 0 0;font:700 1rem/1.4 var(--font-body);color:#3b172e;}
+#screen-editor .cz-piko.fail{border-color:#f0a4b2;}#screen-editor .cz-piko.pass{border-color:#8fd0aa;}#screen-editor .cz-piko.warn{border-color:#f0c56b;}
+#screen-editor .editor-contrast-card.cz .contrast-zones,#screen-editor .editor-contrast-card.cz .contrast-tip{display:none;}
+#screen-editor .editor-contrast-workbench > .editor-bright-bar{justify-self:start;width:2.5rem;overflow:visible;}
+#screen-editor .cz-aa,#screen-editor .cz-darkest{left:3.1rem;}
+#screen-editor .cz-aa,#screen-editor .cz-darkest{display:none;}
+/* Piko bubble footer: no › (a click anywhere continues), a plain darker ‹, hint in the bottom-right. */
+.piko-nav.next{display:none!important;}
+.piko-nav.prev{border:0;background:none;color:#3b172e;font-size:1.75rem;}
+.piko-nav.prev:disabled{opacity:.25;}
+.piko-hint{text-align:right;}
+.piko-line b{font-weight:800;}
+.piko-ico{display:inline-block;height:2.2em;width:auto;vertical-align:-.65em;margin:0 .1em;}
+.piko-keys{display:inline-flex;gap:.1em;vertical-align:-.25em;}.piko-keys .piko-ico{height:1.1em;}
+/* During the tutorial the talking Piko is the one in the speech bubble; the corner eyes step aside. */
+body.piko-tutorial #screen-editor .editor-piko{visibility:hidden;}
