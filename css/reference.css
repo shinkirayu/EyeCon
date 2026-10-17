@@ -2012,7 +2012,20 @@ img.money-icon{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.15
 body:has(.piko-lift-dim) #global-taskbar::after{content:'';position:absolute;inset:0;z-index:10;background:rgba(34,29,38,.62);animation:pikoDimIn 1.2s ease both;}
 /* No app clicks during Piko's intro; once Mail is lifted, only Mail works. */
 body.piko-intro :is(#screen-desktop .desktop-icon,#global-taskbar){pointer-events:none;}
-#screen-desktop .desktop-icons:has(.piko-lift) .desktop-icon:not(.piko-lift){pointer-events:none;}
+#screen-desktop .desktop-icons:has(.piko-lift:not(.piko-leaving)) .desktop-icon:not(.piko-lift){pointer-events:none;}
+/* Highlighted target: white outline that pulses out and back in. */
+.piko-hole::after,#screen-desktop .desktop-icon.piko-lift::after,#screen-desktop #icon-mail.piko-lift #glyph-mail::after{content:'';position:absolute;inset:0;border-radius:inherit;outline:.3125rem solid #fff;outline-offset:0;pointer-events:none;animation:pikoOutlinePulse 1.2s ease-in-out infinite;}
+/* Lifted icons have no hole to fade with, so the outline fades in/out with the dim. */
+#screen-desktop .desktop-icon.piko-lift::after,#screen-desktop #icon-mail.piko-lift #glyph-mail::after{border-radius:.875rem;animation:pikoOutlinePulse 1.2s ease-in-out infinite,pikoDimIn 1.2s ease both;}
+#screen-desktop .desktop-icon.piko-lift.piko-leaving::after,#screen-desktop #icon-mail.piko-lift.piko-leaving #glyph-mail::after{animation:pikoOutlinePulse 1.2s ease-in-out infinite,pikoDimOut 1.2s ease both;}
+/* Mail: hug the tile drawn in desktop-mail.svg (rect 6–142 × 3–121 of 150×132), not the whole button. */
+#screen-desktop #icon-mail.piko-lift::after{content:none;}
+#screen-desktop #icon-mail.piko-lift #glyph-mail{position:relative;}
+#screen-desktop #icon-mail.piko-lift #glyph-mail::after{inset:2.27% 5.33% 8.33% 4%;border-radius:23.5%/27%;}
+.piko-lift-dim.piko-leaving,body:has(.piko-lift-dim.piko-leaving) #global-taskbar::after{animation:pikoDimOut 1.2s ease both;}
+@keyframes pikoDimOut{from{opacity:1}to{opacity:0}}
+@keyframes pikoOutlinePulse{0%,100%{outline-offset:0}50%{outline-offset:.375rem}}
+.reduce-motion .piko-hole::after,.reduce-motion #screen-desktop .desktop-icon.piko-lift::after,.reduce-motion #screen-desktop #icon-mail.piko-lift #glyph-mail::after{animation:none;}
 /* Attachment preview close: same icon as the mail close, sitting just outside the top-right corner. */
 #modal-preview .preview-close{top:-3.5rem;right:-3.5rem;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:.5rem;font-size:0;color:transparent;box-shadow:none;background:transparent url('../assets/icons/close-icon.svg') center/85% no-repeat;}
 #modal-preview .preview-close:hover,#modal-preview .preview-close:focus-visible{background-color:#b4b8bc33;}
@@ -2055,9 +2068,14 @@ body.piko-inbox #mail-list .mail-item:not(.piko-target),body.piko-inbox #mail-li
 /* Tutorial: waiting for the client's reply, nothing is clickable. */
 body.piko-lock-all *{pointer-events:none!important;}
 body.piko-no-accept #btn-accept-job{pointer-events:none;}
+body.piko-mail-wait #mail-list{pointer-events:none;}
+/* Grouped task progress, e.g. "(1/2)". */
+#screen-editor .editor-goal-count{font-weight:800;color:#2f6f73;white-space:nowrap;}
 /* Send matches Accept exactly. */
 #modal-compose .compose-card .btn-send{min-width:0;padding:.5rem 1rem;border:2px solid #77b9af;border-radius:1.625rem;background:#94d9cf;color:#fff;font:700 clamp(1.625rem,2.5vw,2.875rem) var(--font-display);text-transform:uppercase;box-shadow:.25rem .4375rem .5rem #bca68640;}
 #modal-compose .compose-card .btn-send:disabled{background:#94d9cf;border-color:#77b9af;opacity:.5;box-shadow:none;}
+/* Same size as Accept in the mail detail. */
+#modal-compose .compose-card .btn-send{min-width:16rem;min-height:5.5rem;font-size:2.5rem;}
 /* Tutorial focus: only the current step's control (and Piko) take clicks. */
 body.piko-focus *{pointer-events:none!important;}
 body.piko-focus .piko-allow,body.piko-focus .piko-allow *,body.piko-focus .piko-bubble,body.piko-focus .piko-bubble *{pointer-events:auto!important;}
@@ -2498,9 +2516,6 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #screen-editor .cz-chip > span{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border:2px solid #e4d8ca;border-radius:.75rem;background:#fff;}
 #screen-editor .cz-chip i{width:1.1rem;height:1.1rem;border:2px solid #123b54;border-radius:.25rem;}
 #screen-editor .cz-chip code{font:800 1rem var(--font-body);color:#123b54;}
-#screen-editor .cz-aa{position:absolute;left:2.6rem;transform:translateY(50%);font:800 .8rem var(--font-body);color:#123b54;white-space:nowrap;pointer-events:none;}
-#screen-editor .cz-aa::before{content:'▸ ';font-size:.6rem;}
-#screen-editor .cz-darkest{position:absolute;left:2.6rem;bottom:-.25rem;font:700 .8rem var(--font-body);color:#5a5266;white-space:nowrap;}
 #screen-editor .cz-box,#screen-editor .cz-piko{grid-column:1 / -1;border:3px solid;border-radius:1rem;}
 #screen-editor .cz-box{padding:.75rem 1rem;}
 #screen-editor .cz-row{display:flex;align-items:center;gap:1rem;}
@@ -2522,8 +2537,20 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #screen-editor .cz-piko.fail{border-color:#f0a4b2;}#screen-editor .cz-piko.pass{border-color:#8fd0aa;}#screen-editor .cz-piko.warn{border-color:#f0c56b;}
 #screen-editor .editor-contrast-card.cz .contrast-zones,#screen-editor .editor-contrast-card.cz .contrast-tip{display:none;}
 #screen-editor .editor-contrast-workbench > .editor-bright-bar{justify-self:start;width:2.5rem;overflow:visible;}
-#screen-editor .cz-aa,#screen-editor .cz-darkest{left:3.1rem;}
-#screen-editor .cz-aa,#screen-editor .cz-darkest{display:none;}
+/* Compact: the whole colour panel fits without scrolling. */
+#screen-editor .editor-contrast-workbench{grid-template-columns:2.5rem minmax(0,1fr)!important;gap:.5rem .75rem;}
+#screen-editor .editor-contrast-workbench > .editor-bright-bar{min-height:0;}
+#screen-editor .editor-contrast-workbench .editor-tone-vertical input[type=range]{height:8.5rem;}
+#screen-editor .cz-chips{gap:.4rem;}
+#screen-editor .cz-chip small{margin-bottom:.2rem;font-size:.7rem;}
+#screen-editor .cz-chip > span{padding:.3rem .6rem;}
+#screen-editor .cz-chip code{font-size:.9rem;}
+#screen-editor .cz-box{padding:.5rem .75rem;}
+#screen-editor .cz-ratio{font-size:2rem;}
+#screen-editor .cz-verdict span{font-size:1rem;}
+#screen-editor .cz-verdict small{font-size:.85rem;}
+#screen-editor .cz-bar{height:.5rem;margin-top:.4rem;}
+#screen-editor .cz-piko{display:none;} /* Piko's tip box hidden for now: keeps the panel short */
 /* Piko bubble footer: no › (a click anywhere continues), a plain darker ‹, hint in the bottom-right. */
 .piko-nav.next{display:none!important;}
 .piko-nav.prev{border:0;background:none;color:#3b172e;font-size:1.75rem;}
@@ -2532,5 +2559,6 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 .piko-line b{font-weight:800;}
 .piko-ico{display:inline-block;height:2.2em;width:auto;vertical-align:-.65em;margin:0 .1em;}
 .piko-keys{display:inline-flex;gap:.1em;vertical-align:-.25em;}.piko-keys .piko-ico{height:1.1em;}
+.piko-ico.piko-arrows{height:1.6em;vertical-align:-.45em;}
 /* During the tutorial the talking Piko is the one in the speech bubble; the corner eyes step aside. */
 body.piko-tutorial #screen-editor .editor-piko{visibility:hidden;}

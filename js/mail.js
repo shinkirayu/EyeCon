@@ -29,6 +29,7 @@
   }
   function saveMailState(m){ try{ localStorage.setItem(MAIL_KEY, JSON.stringify(m)); }catch(e){} }
   let arrivalTimer = null;
+  let holdArrivals = false; // Piko's Completed tour: the next email waits until it's done
   function arrivedInbox(profile){
     const all = window.EC_STORE.commissionInbox(profile);
     const m = mailState(), now = Date.now();
@@ -38,7 +39,7 @@
     const key = l => l.id + '@' + day;
     let changed = false;
     all.forEach(level=>{
-      if(m.arrivals[key(level)] != null) return;
+      if(m.arrivals[key(level)] != null || holdArrivals) return;
       // The very first email of the game is there right away; every other one lands a moment later.
       m.arrivals[key(level)] = Object.keys(m.arrivals).length ? now + 2500 : now;
       changed = true;
@@ -324,11 +325,10 @@
   function openPreview(level, elements){
     window.EC_MODAL.show('modal-preview');
     const mount = document.getElementById('preview-stage-mount');
-    // Fill as much of the viewport as comfortably fits (minus a small margin
-    // for the modal's own padding/close button) so the whole design reads
-    // clearly without needing to zoom in.
-    const maxSize = Math.max(420, Math.min(window.innerWidth - 70, window.innerHeight - 70, 1300));
-    window.EC_EDITOR.renderStatic(mount, level, elements || level.elements, { maxSize });
+    // Fill as much of the viewport as fits (fit the screen's rectangle, not a
+    // square, so wide designs use the full width), leaving room for the close button.
+    const fitW = Math.max(420, window.innerWidth - 160), fitH = Math.max(320, window.innerHeight - 140);
+    window.EC_EDITOR.renderStatic(mount, level, elements || level.elements, { fitW, fitH });
   }
 
   // ---------------- Compose: typewriter reveal + attach file ----------------
@@ -491,7 +491,7 @@
   }
 
   window.EC_MAIL = {
-    renderInbox, renderCompleted, arrivedInbox, openMailDetail, buildClientReplyText, openCompose, openClientReply,
+    renderInbox, renderCompleted, arrivedInbox, holdArrivals: on => { holdArrivals = !!on; }, openMailDetail, buildClientReplyText, openCompose, openClientReply,
     setHandlers: h => handlers = Object.assign(handlers, h),
     initOnce,
   };

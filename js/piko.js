@@ -37,12 +37,23 @@
       dragAbout: "Drag it upwards to make sure it's aligned with the \"Home\" and \"Contact\" line. The arrow keys work too!",
       nice: "Perfect! See how much tidier that menu row looks? That's alignment.",
       tasks: "Your task progress keeps score. That one just ticked off!",
-      submit: "Fix the rest, then hit Submit to send it to the client."
+      submit: "Fix the rest, then hit Submit to send it to the client.",
+      compare: "All tasks done! Press and hold this button to compare your design with the original.",
+      submitNow: "See the difference? Now hit Submit to send it to the client."
     },
     reply: {
       arrived: "Ooh, {client} wrote back! Open their reply to see what they think.",
       complete: "They love it! Hit Mark Completed to get paid for the job.",
       revise: "They want a few more fixes. Hit Back to Editor and give it another go!"
+    },
+    shop: {
+      browser: "Great job! Let's take a little break. Open the Browser.",
+      store: "This is the EyeCon Store. Spend the coins you earn on things for your desk!",
+      browse: "Have a look around! Close the store or go Home when you're done."
+    },
+    completed: {
+      tab: "Finished jobs go to Completed. Click it to take a look!",
+      open: "This is the history of your chats with each client. Open it to read it again, then close it when you're done."
     },
     nextMail: "Ooh, you got another email! {client} needs your help next. Open it up!",
     basicsDone: [
@@ -71,6 +82,7 @@
         ["We measure it as a ratio. Normal text needs at least 4.5:1."],
         ["Select some text, then move its color sliders. Darker text on a light background, or lighter text on a dark one.", '#element-settings'],
         ["Watch the ratio badge in the panel. A green check means it passes."],
+        ["Heads up: some elements are grouped. Fix every element in the group, and only then will the task be done."],
         ["Tip: you only need to change the color, not the layout. Go for it!"]
       ],
       antoks: [
@@ -136,8 +148,9 @@
     const on = p => parts.includes(p) ? '#7c3aed' : '#ffffff';
     return `<svg class="piko-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="${on('left')}"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="${on('right')}"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20" stroke="#4d0d74" stroke-width="2"/><path d="M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="${on('middle')}" stroke="#4d0d74" stroke-width="1.8"/></svg>`;
   };
-  const key = k => `<svg class="piko-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="3" fill="#fff3d6" stroke="#4d0d74" stroke-width="1.6"/><path d="${k}" fill="#7656b3"/></svg>`;
-  const ARROWS = `<span class="piko-keys">${key('M7 4l3 4H4z')}${key('M4 5h6l-3 4z')}${key('M4 7l4-3v6z')}${key('M10 7L6 4v6z')}</span>`;
+  // Compact arrow cluster, keyboard layout: ▲ on top, ◀ ▼ ▶ underneath.
+  const arrowKey = (x, y, d) => `<g transform="translate(${x} ${y})"><rect x="1" y="1" width="12" height="12" rx="3" fill="#fff3d6" stroke="#4d0d74" stroke-width="1.6"/><path d="${d}" fill="#7656b3"/></g>`;
+  const ARROWS = `<svg class="piko-ico piko-arrows" viewBox="0 0 42 28" aria-hidden="true">${arrowKey(14,0,'M7 4l3 4H4z')}${arrowKey(0,14,'M4 7l4-3v6z')}${arrowKey(14,14,'M4 5h6l-3 4z')}${arrowKey(28,14,'M10 7L6 4v6z')}</svg>`;
   const CONTROL_ICONS = [
     [/(middle or right mouse button|middle mouse button or right click)/gi, () => mouseIcon('middle', 'right')],
     [/(middle mouse button|middle-click|middle click)/gi, () => mouseIcon('middle')],
@@ -148,8 +161,9 @@
   ];
   function richText(t){
     // Any line (including admin-added ones) can say {name}: fill it with the player's name.
-    const name = window.EC_STORE?.load?.().displayName;
-    if(name) t = String(t).replace(/\{name\}/g, name);
+    // (No name yet, e.g. the admin preview: "Designer", like the home screen greeting.)
+    const name = window.EC_STORE?.load?.().displayName || 'Designer';
+    t = String(t).replace(/\{name\}/g, name);
     const esc = String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     let html = esc
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
@@ -308,6 +322,13 @@
   }
 
   let placeRetryTimer = null;
+  let liftLeaveTimer = null;
+
+  function finishLiftLeave(){
+    clearTimeout(liftLeaveTimer); liftLeaveTimer = null;
+    document.querySelectorAll('.piko-lift.piko-leaving').forEach(n => n.classList.remove('piko-lift', 'piko-leaving'));
+    document.querySelectorAll('.piko-lift-dim.piko-leaving').forEach(n => n.remove());
+  }
 
   // Points the floating cursor + spotlight hole at a live DOM element.
   // `delay` (ms) waits before measuring/showing — needed right after a
@@ -326,6 +347,7 @@
       // The icon lives inside low z-index stacking contexts, so a body-level
       // dim can never sit under it. Put a dim right beside it instead.
       if(lift){
+        finishLiftLeave(); // a new lift replaces any still fading out
         el.classList.add('piko-lift');
         const dim = document.createElement('div'); dim.className = 'piko-lift-dim';
         el.parentElement.insertBefore(dim, el);
@@ -387,8 +409,10 @@
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     document.querySelectorAll('.piko-pointed').forEach(n => n.classList.remove('piko-pointed'));
     currentTarget = null;
-    document.querySelectorAll('.piko-lift').forEach(n => n.classList.remove('piko-lift'));
-    document.querySelectorAll('.piko-lift-dim').forEach(n => n.remove());
+    // Fade the lifted icon's dim + outline out instead of dropping them.
+    document.querySelectorAll('.piko-lift:not(.piko-leaving), .piko-lift-dim:not(.piko-leaving)').forEach(n => n.classList.add('piko-leaving'));
+    clearTimeout(liftLeaveTimer);
+    liftLeaveTimer = setTimeout(finishLiftLeave, DIM_FADE_MS);
     cursor.classList.add('hidden');
     hole.classList.add('hidden');
     if(cursor._reposition){

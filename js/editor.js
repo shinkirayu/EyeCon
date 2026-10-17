@@ -201,6 +201,8 @@
         box.setAttribute('aria-hidden', 'true');
         const body = document.createElement('div');
         const text = Object.assign(document.createElement('p'), {innerHTML: emphasize(goal.label)});
+        const count = groupCount(goal, met);
+        if(count) text.append(' ', Object.assign(document.createElement('span'), {className:'editor-goal-count', textContent:count}));
         if(goal.bonus) text.append(Object.assign(document.createElement('span'), {className:'editor-goal-badge', textContent:'BONUS'}));
         body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
         // The tip shows on the suggested task; the reason shows once a task is done.
@@ -226,20 +228,27 @@
   // while it still needs work. Relational checks (same Y, even gaps…) only turn
   // green when the whole task passes.
   const PER_ELEMENT = new Set(['contrast','minFont','maxFont','minH','minW','align','safeMargin','wraps']);
+  // Is this one element of a task fine on its own? (relational checks: only when the whole task is met)
+  function elementOk(goal, met, id){
+    const G = window.EC_GRADING, kind = G.goalKind(goal.check), ids = G.goalIds(goal.check);
+    if(met || !PER_ELEMENT.has(kind) || ids.length < 2) return met;
+    const check = Array.isArray(goal.check[kind]) ? {...goal.check, [kind]:[id]} : {...goal.check, ids:[id]};
+    return G.checkGoals({...state.level, goals:[{...goal, check}]}, state.elements)[0].met;
+  }
+  // Grouped per-element tasks show progress like "(1/2)"; others show nothing.
+  function groupCount(goal, met){
+    const G = window.EC_GRADING, ids = G.goalIds(goal.check);
+    if(ids.length < 2 || !PER_ELEMENT.has(G.goalKind(goal.check))) return '';
+    // Each piece can pass while the group still isn't done (contrast groups must also match): never show full until met.
+    const done = ids.filter(id => elementOk(goal, met, id)).length;
+    return `(${met ? ids.length : Math.min(done, ids.length - 1)}/${ids.length})`;
+  }
   function markTaskElements(items){
     if(!state.canvasEl) return;
     state.canvasEl.querySelectorAll('.task-red,.task-green').forEach(n => n.classList.remove('task-red','task-green'));
     const G = window.EC_GRADING, ok = {};
     items.forEach(({goal, met}) => {
-      const kind = G.goalKind(goal.check), ids = G.goalIds(goal.check);
-      ids.forEach(id => {
-        let good = met;
-        if(!good && PER_ELEMENT.has(kind) && ids.length > 1){
-          const check = Array.isArray(goal.check[kind]) ? {...goal.check, [kind]:[id]} : {...goal.check, ids:[id]};
-          good = G.checkGoals({...state.level, goals:[{...goal, check}]}, state.elements)[0].met;
-        }
-        ok[id] = (ok[id] ?? true) && good;
-      });
+      G.goalIds(goal.check).forEach(id => { ok[id] = (ok[id] ?? true) && elementOk(goal, met, id); });
     });
     Object.entries(ok).forEach(([id, good]) => state.canvasEl.querySelector(`.el[data-id="${id}"]`)?.classList.add(good ? 'task-green' : 'task-red'));
   }
@@ -255,8 +264,10 @@
       p.className = 'piko-task' + (met ? ' met' : '');
       const tick = Object.assign(document.createElement('span'), {className:'editor-goal-tick', textContent: met ? '✓' : ''});
       const body = document.createElement('div');
-      body.append(Object.assign(document.createElement('p'), {innerHTML: emphasize(goal.label)}),
-        Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
+      const text = Object.assign(document.createElement('p'), {innerHTML: emphasize(goal.label)});
+      const count = groupCount(goal, met);
+      if(count) text.append(' ', Object.assign(document.createElement('span'), {className:'editor-goal-count', textContent:count}));
+      body.append(text, Object.assign(document.createElement('span'), {className:'editor-goal-measure', textContent: goalMeasure(goal)}));
       if(!met && goal.tip) body.append(Object.assign(document.createElement('small'), {textContent: goal.tip}));
       p.append(tick, body);
       return p;
@@ -417,6 +428,52 @@
     const scale = base * state.displayZoom;
     state.panX = (wrap.clientWidth - level.canvas.w*scale) / 2;
     state.panY = (wrap.clientHeight - level.canvas.h*scale) / 2;
+  }
+
+  // Smoothly pans so an element sits in the middle of the workspace (current zoom).
+  function focusElement(id, ms = 600){
+    const el = state.elements.find(e => e.id === id);
+    const wrap = document.getElementById('editor-canvas-wrap');
+    if(!el || !wrap || !state.level) return Promise.resolve();
+    const scale = baseFitScale(state.level.canvas.w, state.level.canvas.h) * state.displayZoom;
+    const fromX = state.panX, fromY = state.panY;
+    const toX = wrap.clientWidth / 2 - (el.x + el.w / 2) * scale;
+    const toY = wrap.clientHeight / 2 - (el.y + el.h / 2) * scale;
+    const start = performance.now();
+    return new Promise(done => {
+      const frame = now => {
+        const t = Math.min(1, (now - start) / ms), ease = 1 - Math.pow(1 - t, 3);
+        state.panX = fromX + (toX - fromX) * ease;
+        state.panY = fromY + (toY - fromY) * ease;
+        applyCanvasTransform();
+        if(t < 1) requestAnimationFrame(frame); else done();
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // Smoothly zooms out to the whole design, centered, with the grid off (for comparing).
+  function showWholeDesign(ms = 600){
+    const wrap = document.getElementById('editor-canvas-wrap');
+    if(state.tools.gridVisible){ state.tools.gridVisible = false; updateToolButtonStates(); }
+    if(!wrap || !state.level) return Promise.resolve();
+    cancelAnimationFrame(zoomAnimId); zoomAnchor = null;
+    const base = baseFitScale(state.level.canvas.w, state.level.canvas.h);
+    const from = { z: state.displayZoom, x: state.panX, y: state.panY };
+    const to = { z: 1, x: (wrap.clientWidth - state.level.canvas.w * base) / 2, y: (wrap.clientHeight - state.level.canvas.h * base) / 2 };
+    state.zoom = 1;
+    const start = performance.now();
+    return new Promise(done => {
+      const frame = now => {
+        const t = Math.min(1, (now - start) / ms), e = 1 - Math.pow(1 - t, 3);
+        state.displayZoom = from.z + (to.z - from.z) * e;
+        state.panX = from.x + (to.x - from.x) * e;
+        state.panY = from.y + (to.y - from.y) * e;
+        applyCanvasTransform();
+        if(t < 1) requestAnimationFrame(frame); else done();
+      };
+      requestAnimationFrame(frame);
+    });
   }
 
   let zoomAnimId = null;
@@ -805,15 +862,7 @@
     const amount=sliderValues(el,key).tone;
     const top=barColors(el,key).top;
     if(key==='color'){
-      // Where on the bar the text first passes AA (brightness search at the current saturation).
-      const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
-      const {h,sat} = sliderValues(el,key), bold = Number(el.fontWeight) >= 700;
-      const passAt = t => window.WCAG.passesWCAG(hsvHex(h,sat/100,t/100), bg, el.fontSize, bold, 'AA').pass;
-      let lo = 0, hi = 100, aa = null;
-      if(passAt(0)){ for(let i=0;i<20;i++){ const m=(lo+hi)/2; if(passAt(m)) lo=m; else hi=m; } aa = lo; }
-      const need = window.WCAG.passesWCAG('#000000', bg, el.fontSize, bold, 'AA').required;
-      const mark = aa == null ? '' : `<span class="cz-aa" style="bottom:${aa}%">AA ${need}:1</span>`;
-      return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span>${mark}<span class="cz-darkest">Darkest ${colorName(base)}</span><small>Light <span>Dark</span></small></label>`;
+      return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
     }
     return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${Math.round(amount)}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
   }
@@ -1764,6 +1813,19 @@
           return;
         }
       }
+      // Typography tasks: same idea, ←/→ step the font size down/up by 1px (Shift = 4px).
+      const size = document.getElementById('f-size');
+      if(state.selectedId && size && !size.disabled && ['ArrowLeft','ArrowRight'].includes(e.key)){
+        const el = byId(state.selectedId), tools = state.level.tools;
+        if(el && !(can(el,'move') && (!tools || tools.includes('position')))){
+          const min = size.min !== '' ? +size.min : 1, max = size.max !== '' ? +size.max : 400;
+          size.value = Math.min(max, Math.max(min, (+size.value || el.fontSize) + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 4 : 1)));
+          size.dispatchEvent(new Event('input', { bubbles:true }));
+          size.dispatchEvent(new Event('change', { bubbles:true }));
+          e.preventDefault();
+          return;
+        }
+      }
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
         const el = byId(state.selectedId);
         if(!el || el.locked || !can(el,'move')) return;
@@ -1924,7 +1986,7 @@
   }, true));
 
   window.EC_EDITOR = {
-    readVariant, setVariant, selectElement,
+    readVariant, setVariant, selectElement, focusElement, showWholeDesign,
     open, undo, redo,
     setOnSubmit: fn => state.onSubmit = fn,
     getElements: () => state.elements,

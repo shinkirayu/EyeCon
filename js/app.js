@@ -156,7 +156,8 @@
     // First visit: save with Google (any device) or play as a guest (this browser only).
     const db = window.EC_DB;
     let choice = null; try{ choice = localStorage.getItem('eyecon_auth_choice'); }catch(_){}
-    if(db?.online && db.isGuest && !choice){ showAuthChoice(runPikoIntro); return; }
+    const AUTH_CHOICE = false; // Google sign-in hidden for now: everyone plays as a guest
+    if(AUTH_CHOICE && db?.online && db.isGuest && !choice){ showAuthChoice(runPikoIntro); return; }
     runPikoIntro();
   }
   function showAuthChoice(done){
@@ -243,9 +244,23 @@
       body.classList.remove('piko-tour-lock');
       if(practice){
         await talk(W.together);
-        P.clearTarget(); glow(practice);
-        P.say(W.selectAbout, { left:true }); // bottom-left: keeps the page's top menu row clear
-        await until(()=>elDiv(practice)?.classList.contains('selected'));
+        // selectAbout + its admin-added lines: the intro lines light up the
+        // navigation bar; the last line centers "About", lights it and waits for the click.
+        const extra = window.EC_TEXT?.extras('piko.workspace.selectAbout') || { after:[] };
+        const lines = [W.selectAbout, ...extra.after];
+        const selected = () => elDiv(practice)?.classList.contains('selected');
+        for(const line of lines.slice(0, -1)){
+          if(selected()) break;
+          P.pointAt(elDiv('nav'));
+          await talk(line, { left:true, _x:true });
+        }
+        if(!selected()){
+          P.clearTarget();
+          await window.EC_EDITOR.focusElement(practice);
+          glow(practice); P.pointAt(elDiv(practice));
+          P.say(lines[lines.length - 1], { left:true, _x:true }); // bottom-left: keeps the page's top menu row clear
+          await until(selected);
+        }
         await step('#element-settings', W.controls, { left:true });
         // Selecting it also lit up its task on the left: point that out.
         // (desktop: the task pops up in Piko's corner card; phones: it lights up in the list)
@@ -301,7 +316,34 @@
       profile.onboarding.seen = true;
       document.body.classList.remove('piko-tutorial');
       save();
-      runPikoLevelTips(level, ()=>{});
+      runPikoLevelTips(level, ()=>pikoCompareGuide(level));
+    })();
+  }
+  // First job, once every task is done: hold before/after to compare, then Submit.
+  function pikoCompareGuide(level){
+    const P = window.EC_PIKO, W = P.SCRIPT.workspace;
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const here = () => window.EC_EDITOR.getLevel() === level && document.getElementById('screen-editor').classList.contains('active');
+    const allDone = () => window.EC_GRADING.checkGoals(level, window.EC_EDITOR.getElements()).every(r => r.met);
+    (async ()=>{
+      await until(()=>!here() || allDone());
+      if(!here()) return; // submitted or left before finishing: nothing to show
+      await window.EC_EDITOR.showWholeDesign(); // whole page in view, grid off, so the change is easy to see
+      const btn = document.getElementById('tool-preview'), save = document.getElementById('tool-save');
+      let held = false, released = false;
+      const onDown = () => { held = true; };
+      const onUp = () => { if(held) released = true; };
+      btn.addEventListener('pointerdown', onDown); btn.addEventListener('keydown', onDown);
+      document.addEventListener('pointerup', onUp); btn.addEventListener('keyup', onUp);
+      P.pointAt(btn); P.say(W.compare, { top:true });
+      await until(()=>released || !here());
+      btn.removeEventListener('pointerdown', onDown); btn.removeEventListener('keydown', onDown);
+      document.removeEventListener('pointerup', onUp); btn.removeEventListener('keyup', onUp);
+      if(!here()){ P.clearTarget(); P.hideBubble(); return; }
+      P.pointAt(save); P.say(W.submitNow, { left:true });
+      let sent = false; save.addEventListener('click', ()=>{ sent = true; }, { once:true });
+      await until(()=>sent || !here());
+      P.clearTarget(); P.hideBubble();
     })();
   }
   // First reply to a client: type it out, attach the edited design, send.
@@ -342,23 +384,109 @@
     const seen = profile.onboarding.nextMail = profile.onboarding.nextMail || {};
     if(!pikoEnabled || !(level.levelNumber > 1 && level.levelNumber <= 3) || seen[level.id]) return;
     seen[level.id] = true; save();
-    const reward = document.getElementById('modal-reward');
-    const t = setInterval(()=>{
-      if(!reward.classList.contains('hidden')) return;
-      clearInterval(t);
-      setTimeout(()=>{
-        const row = document.querySelector(`#mail-list .mail-item[data-level-id="${level.id}"]`);
-        if(!row) return;
-        const P = window.EC_PIKO;
-        row.classList.add('piko-allow'); document.body.classList.add('piko-focus');
-        P.pointAt(row); P.say(P.SCRIPT.nextMail(level.clientName));
-        row.addEventListener('click', ()=>{
-          row.classList.remove('piko-allow');
+    document.body.classList.add('piko-mail-wait'); // no opening it before Piko points at it
+    const P = window.EC_PIKO;
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const active = id => document.getElementById(id).classList.contains('active');
+    (async ()=>{
+      await until(()=>document.getElementById('modal-reward').classList.contains('hidden'));
+      await new Promise(r => setTimeout(r, 800));
+      await until(()=>active('screen-desktop') || active('screen-shell')); // e.g. still in the Browser: wait for Home or Mail
+      let line = P.SCRIPT.nextMail(level.clientName);
+      // On the home screen (after the Shop tour): light Mail first, then the email.
+      if(active('screen-desktop')){
+        P.pointAt(document.getElementById('icon-mail')); P.say(line, { top:true });
+        await until(()=>active('screen-shell'));
+        P.clearTarget(); P.hideBubble();
+        await new Promise(r => setTimeout(r, 600));
+        line = P.SCRIPT.inboxGuide(level.clientName);
+      }
+      const row = document.querySelector(`#mail-list .mail-item[data-level-id="${level.id}"]`);
+      document.body.classList.remove('piko-mail-wait');
+      if(!row) return;
+      row.classList.add('piko-allow'); document.body.classList.add('piko-focus');
+      P.pointAt(row); P.say(line);
+      row.addEventListener('click', ()=>{
+        row.classList.remove('piko-allow');
+        P.clearTarget(); P.hideBubble();
+        setTimeout(()=>document.body.classList.remove('piko-focus'), 1500); // spam clicks can't close it
+      }, { once:true });
+    })();
+  }
+  // After the second job's reward: home screen → Browser → EyeCon Store, then
+  // free browsing. Leaving the store (or going home) sends the third email.
+  function pikoShopTour(){
+    const P = window.EC_PIKO, S = P.SCRIPT.shop, body = document.body;
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const active = id => document.getElementById(id).classList.contains('active');
+    const inStore = () => active('screen-browser') && document.getElementById('shop-panel')?.parentNode?.id === 'browser-view';
+    (async ()=>{
+      await until(()=>document.getElementById('modal-reward').classList.contains('hidden'));
+      window.EC_MODAL.hide('modal-mail-detail');
+      showScreen('screen-desktop');
+      await new Promise(r => setTimeout(r, 800));
+      P.pointAt(document.getElementById('icon-browser')); P.say(S.browser, { top:true });
+      await until(()=>active('screen-browser'));
+      P.clearTarget(); P.hideBubble();
+      await new Promise(r => setTimeout(r, 600));
+      if(!inStore()){
+        const store = document.querySelector('#browser-view .browser-bookmark');
+        if(store){
+          body.classList.add('piko-focus'); store.classList.add('piko-allow');
+          P.pointAt(store); P.say(S.store, { top:true });
+          await until(()=>inStore() || !active('screen-browser'));
+          store.classList.remove('piko-allow'); body.classList.remove('piko-focus');
           P.clearTarget(); P.hideBubble();
-          setTimeout(()=>document.body.classList.remove('piko-focus'), 1500); // spam clicks can't close it
-        }, { once:true });
-      }, 800);
-    }, 200);
+        }
+      }
+      if(inStore()){
+        await new Promise(r => setTimeout(r, 400));
+        P.say(S.browse, { top:true, onDone: ()=>P.hideBubble() });
+        await until(()=>!inStore());
+      }
+      P.clearTarget(); P.hideBubble();
+      profile.onboarding = profile.onboarding || {}; profile.onboarding.shopTour = true; save();
+      // Now the third client's email lands (pikoNextMail points the way to it).
+      window.EC_MAIL.holdArrivals(false);
+      refreshHeader();
+      if(active('screen-shell')) renderCurrentFolder();
+    })();
+  }
+  // After the first job's reward: Piko lights the Completed folder, the player
+  // opens that job's chat history and closes it, then the next email arrives.
+  function pikoCompletedTour(){
+    const P = window.EC_PIKO, C = P.SCRIPT.completed, body = document.body;
+    const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+    const hidden = id => document.getElementById(id).classList.contains('hidden');
+    const allow = el => { document.querySelectorAll('.piko-allow').forEach(n => n.classList.remove('piko-allow')); el?.classList.add('piko-allow'); };
+    (async ()=>{
+      await until(()=>hidden('modal-reward'));
+      await new Promise(r => setTimeout(r, 800));
+      const tab = document.querySelector('.side-btn[data-folder="completed"]');
+      if(tab && currentFolder !== 'completed'){
+        let clicked = false; tab.addEventListener('click', ()=>{ clicked = true; }, { once:true });
+        body.classList.add('piko-focus'); allow(tab);
+        P.pointAt(tab); P.say(C.tab, { top:true });
+        await until(()=>clicked);
+      }
+      const row = document.querySelector('#mail-list .mail-item.completed');
+      if(row){
+        body.classList.add('piko-focus'); allow(row);
+        P.pointAt(row); P.say(C.open, { top:true });
+        await until(()=>!hidden('modal-mail-detail'));
+        // Reading: everything works again so the history can be closed.
+        allow(null); body.classList.remove('piko-focus');
+        P.clearTarget(); P.hideBubble();
+        await until(()=>hidden('modal-mail-detail'));
+      }
+      allow(null); body.classList.remove('piko-focus');
+      P.clearTarget(); P.hideBubble();
+      profile.onboarding = profile.onboarding || {}; profile.onboarding.completedTour = true; save();
+      // Now the next client's email lands (pikoNextMail points at it).
+      window.EC_MAIL.holdArrivals(false);
+      currentFolder = 'inbox';
+      renderCurrentFolder(); refreshHeader();
+    })();
   }
   // Short Piko intro the first time each of the first three jobs opens.
   function runPikoLevelTips(level, done){
@@ -1528,6 +1656,11 @@
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
       const outcome = window.EC_STORE.recordSubmission(profile, level, result, elapsedMs || 0);
+      // First job done: show Completed before the next client's email arrives.
+      const completedTour = pikoEnabled && outcome.missionComplete && level.levelNumber === 1 && !profile.onboarding?.completedTour;
+      // Second job done: show the Browser + Shop before the third email arrives.
+      const shopTour = pikoEnabled && outcome.missionComplete && level.levelNumber === 2 && !profile.onboarding?.shopTour;
+      if(completedTour || shopTour) window.EC_MAIL.holdArrivals(true);
       // Keep the client's words so Completed mail can show the whole thread.
       profile.history[0].reply = window.EC_MAIL.buildClientReplyText(level, result, missionComplete);
       profile.history[0].elements = elements; // the design the player sent, shown in Completed mail
@@ -1540,6 +1673,8 @@
       renderCurrentFolder();
       if(outcome.missionComplete){
         showRewardPopup(level, result, outcome, window.EC_STORE.levelFromTotalXp(profile.totalXp).level > prevLevel);
+        if(completedTour) pikoCompletedTour();
+        if(shopTour) pikoShopTour();
         // All three tutorial jobs done: Piko wraps up the basics.
         const tutorialIds = window.EC_LEVELS.filter(l => l.levelNumber <= 3).map(l => l.id);
         if(pikoEnabled && !profile.onboarding?.basics && tutorialIds.every(id => profile.completed.includes(id))){
@@ -2054,7 +2189,7 @@
       const el = m.target && document.querySelector(m.target);
       if(el) P.pointAt(el, { delay: 0 });
       if(m.card){ P.ask(m.text, { title: m.card, placeholder: 'Your name' }, () => {}); return; }
-      P.say(m.text, { now: true, _x: true, top: !!m.top || /^editor|compose/.test(m.scene || ''), left: !!m.left, onDone: m.talk ? () => {} : undefined });
+      P.say(String(m.text || '').replace(/\{client\}/g, L1.clientName), { now: true, _x: true, top: !!m.top || /^editor|compose/.test(m.scene || ''), left: !!m.left, onDone: m.talk ? () => {} : undefined });
     });
     showScreen('screen-desktop');
     parent.postMessage({ type: 'piko-preview-ready' }, '*');
