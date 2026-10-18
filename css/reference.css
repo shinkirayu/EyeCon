@@ -2727,3 +2727,25 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 .hint-confirm .hc-actions{display:flex;gap:.75rem;margin-top:.5rem;}
 .hint-confirm .hc-card{width:min(28rem,92vw);}
 .hint-confirm .hc-actions .btn{min-width:0;white-space:nowrap;padding:.6rem 1.25rem;font-size:1.25rem;}
+/* Selection box drawn OUTSIDE the element (same edges as the red/green task frames),
+   so the element's real edges stay where you align them; a soft tint marks it as picked. */
+#editor-canvas .el.selected::after{inset:calc(-1 * var(--element-border,0px) - 3 * var(--selection-unit,1px))!important;border-width:calc(3 * var(--selection-unit,1px))!important;background:#9368dc14;}
+#editor-canvas .el.selected:not(.task-red):not(.task-green)::after{border-color:#9368dc;}
+/* Hint frames pulse so they're easy to spot. */
+#editor-canvas .el.hint-ok,#editor-canvas .el.hint-off{animation:hintPulse 1s ease-in-out infinite;}
+@keyframes hintPulse{50%{outline-offset:calc(8 * var(--selection-unit,1px));}}
+.reduce-motion #editor-canvas .el.hint-ok,.reduce-motion #editor-canvas .el.hint-off{animation:none;}
+#screen-editor.show-hint #editor-hint-banner.has-hint:not(.hidden){z-index:2101;} /* hint line stays above the spotlight dim */
+/* Level 4+ contrast hierarchy guide (in the contrast workbench). */
+#screen-editor .cz-guide{grid-column:1 / -1;display:grid;gap:.35rem;padding:.75rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
+#screen-editor .cz-guide .sl-label{font:800 .8rem var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:#2f6f73;}
+#screen-editor .cz-guide .sl-list{display:grid;gap:.2rem;margin:0;padding:0;list-style:none;}
+#screen-editor .cz-guide li{display:flex;justify-content:space-between;gap:.75rem;padding:.25rem .5rem;border-radius:.5rem;font:700 .9rem var(--font-body);color:#3b172e;}
+#screen-editor .cz-guide li b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#screen-editor .cz-guide li code{font:800 .85rem ui-monospace,Consolas,monospace;color:#2f6f73;white-space:nowrap;}
+#screen-editor .cz-guide li.here{background:#ede4fb;outline:2px solid #7656b3;}
+#screen-editor .cz-guide-q{margin:.25rem 0 0;font:800 .9rem var(--font-body);color:#7656b3;}
+/* Level 4+: grouped elements shown in neutral purple (no right/wrong colours). */
+#editor-canvas .el.task-group{--task-c:#9368dc;}
+#editor-canvas .el.selected.task-group::after{border-color:var(--task-c);border-width:calc(3 * var(--selection-unit,1px));}
+#editor-canvas .el.task-group:not(.selected){outline:calc(3 * var(--selection-unit,1px)) dashed var(--task-c)!important;outline-offset:0;}

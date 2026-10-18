@@ -148,6 +148,7 @@
         const band = check.max != null ? `${check.min ?? 4.5}–${check.max}` : `${check.min ?? 4.5}`;
         return `${shown}:1 / ${band}${shownSet.length > 1 ? ' · ratios differ' : ''}`;
       }
+      case 'sameFont': return [...new Set(els.map(e => e.fontSize))].join(' · ') + ' px';
       case 'ladder': return els.map(e => `${e.fontSize}`).join(' > ') + ' px';
       case 'stronger': {
         const r = e => window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)).toFixed(1);
@@ -189,7 +190,9 @@
     const brief = document.getElementById('editor-mail-brief');
     let progress = document.getElementById('editor-task-progress');
     if(!progress){ progress = Object.assign(document.createElement('div'), {id:'editor-task-progress', className:'editor-task-progress'}); brief.append(progress); }
-    progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
+    // Level 4+: no live progress (it could be gamed by sliding until it ticks). Just the job size.
+    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div><span>${results.length} things to fix</span></div>`;
+    else progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
       <div class="editor-task-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${results.length}" aria-valuenow="${doneCount}" aria-label="Tasks done"><i style="width:${results.length ? doneCount / results.length * 100 : 0}%"></i></div>`;
     const cards = sections.map(({cat, items}) => {
       const sec = document.createElement('li');
@@ -252,12 +255,14 @@
   }
   function markTaskElements(items){
     if(!state.canvasEl) return;
-    state.canvasEl.querySelectorAll('.task-red,.task-green').forEach(n => n.classList.remove('task-red','task-green'));
+    state.canvasEl.querySelectorAll('.task-red,.task-green,.task-group').forEach(n => n.classList.remove('task-red','task-green','task-group'));
     const G = window.EC_GRADING, ok = {};
     items.forEach(({goal, met}) => {
       G.goalIds(goal.check).forEach(id => { ok[id] = (ok[id] ?? true) && elementOk(goal, met, id); });
     });
-    Object.entries(ok).forEach(([id, good]) => state.canvasEl.querySelector(`.el[data-id="${id}"]`)?.classList.add(good ? 'task-green' : 'task-red'));
+    // Level 4+: grouped elements are shown, but not whether they're right.
+    const neutral = (state.level.levelNumber || 0) >= 4;
+    Object.entries(ok).forEach(([id, good]) => state.canvasEl.querySelector(`.el[data-id="${id}"]`)?.classList.add(neutral ? 'task-group' : good ? 'task-green' : 'task-red'));
   }
 
   // Studio layout: Piko (bottom-right) reads out the task(s) for the selected element.
@@ -811,7 +816,8 @@
     // The task's target band for this element (e.g. heading 7:1+, placeholders 4.5-7:1).
     const band = contrastBand(el), r1 = Math.round(res.ratio * 10) / 10;
     const tooDark = band.max != null && r1 > band.max, tooWeak = res.pass && band.min != null && r1 < band.min;
-    const tone = !res.pass || tooWeak ? 'fail' : tooDark || zone.id === 'harsh' || offHue ? 'warn' : 'pass';
+    const free = (state.level.levelNumber || 0) >= 4; // no target verdicts: the player judges hierarchy
+    const tone = free ? (res.pass ? 'pass' : 'fail') : !res.pass || tooWeak ? 'fail' : tooDark || zone.id === 'harsh' || offHue ? 'warn' : 'pass';
     const target = band.max != null ? `Target ${band.min ?? res.required}–${band.max}:1` : band.min != null ? `Target ${band.min}:1+` : '';
     const sub = tooDark ? 'Too dark for a hint' : tooWeak ? 'Not strong enough yet' : !res.pass ? (close ? 'Almost there' : 'Too light to read') : target || `Zone: ${zone.name}`;
     const piko = tooDark ? 'Readable, but now it looks like someone already typed here. Placeholders should be lighter than real text. Slide up a little.'
@@ -830,31 +836,51 @@
       <div class="cz-box ${tone}">
         <small class="cz-label">Contrast <span class="cz-aa-preview" style="color:${el.color};background:${bg}">Aa</span></small>
         <div class="cz-row"><b class="cz-ratio">${res.ratio.toFixed(1)}:1</b>
-          <div class="cz-verdict"><span><i aria-hidden="true">${tone === 'pass' ? '✓' : tone === 'warn' ? '!' : '✕'}</i>${!res.pass ? 'Fails AA' : tone === 'pass' && (band.min != null || band.max != null) ? 'On target' : 'Passes AA'}</span><small>${sub}</small></div></div>
+          <div class="cz-verdict"><span><i aria-hidden="true">${tone === 'pass' ? '✓' : tone === 'warn' ? '!' : '✕'}</i>${!res.pass ? 'Fails AA' : !free && tone === 'pass' && (band.min != null || band.max != null) ? 'On target' : 'Passes AA'}</span><small>${sub}</small></div></div>
         <div class="cz-bar"><i style="width:${fill.toFixed(1)}%"></i></div>
       </div>
-      <div class="cz-piko ${tone}"><small>Piko</small><p>${piko}</p></div>
+      ${free ? '' : `<div class="cz-piko ${tone}"><small>Piko</small><p>${piko}</p></div>`}
+      ${contrastGuideHtml(el)}
     </div>`;
   }
 
   // Typography: the page's size ladder (from a 'ladder' task), with a marker for the
   // selected text, plus a tip on where its size sits.
-  function ladderGoal(){ return (state.level.goals || []).find(g => g.check.ladder); }
+  function ladderGoal(){
+    const g = (state.level.goals || []).find(g => g.check.ladder);
+    if(g) return g;
+    const sg = state.level.sizeGuide; // display-only ladder: [{ id, name }]
+    return sg ? { check:{ ladder: sg.map(x => x.id) }, names: sg.map(x => x.name) } : null;
+  }
   function sizeLadderHtml(el){
     const g = ladderGoal();
     if(!g || !el.text) return '<div id="size-ladder"></div>';
     return `<div id="size-ladder">${sizeLadderInner(el)}</div>`;
   }
   function sizeLadderInner(el){
-    const g = ladderGoal(), names = ['Page title', 'Section title', 'Group title', 'Labels'];
+    const g = ladderGoal(), names = g.names || ['Page title', 'Section title', 'Group title', 'Labels'];
     const steps = window.EC_GRADING.goalIds(g.check).map(byId).filter(Boolean);
     const rows = steps.map((s, i) => `<li class="${s.id === el.id || (i === steps.length - 1 && !steps.some(x => x.id === el.id) && el.fontSize === s.fontSize) ? 'here' : ''}"><span style="font-size:${Math.min(28, Math.max(12, s.fontSize * .6))}px">Aa</span><b>${names[i] || ''}</b><code>${s.fontSize}px</code></li>`).join('');
     const top = steps[steps.length - 2], tip = el.fontSize < 16 ? ['fail', 'Too small to read comfortably. Go up to 16px.']
       : top && el.fontSize >= top.fontSize && !steps.slice(0, -1).some(s => s.id === el.id) ? ['warn', 'Now it\u2019s as big as a group title. People will think it\u2019s a heading!']
       : ['pass', el.fontSize === 16 ? 'Readable, and still smaller than the titles.' : `${el.fontSize}px`];
-    return `<small class="sl-label">Size ladder</small><ol class="sl-list">${rows}<li class="sl-you"><span style="font-size:${Math.min(28, Math.max(12, el.fontSize * .6))}px">Aa</span><b>This text</b><code>${el.fontSize}px</code></li></ol><p class="sl-tip ${tip[0]}">${tip[1]}</p>`;
+    if((state.level.levelNumber || 0) >= 4 && tip[0] !== 'fail') tip[1] = ''; // no 'that\u2019s right' on level 4+
+    return `<small class="sl-label">Size ladder</small><ol class="sl-list">${rows}<li class="sl-you"><span style="font-size:${Math.min(28, Math.max(12, el.fontSize * .6))}px">Aa</span><b>This text</b><code>${el.fontSize}px</code></li></ol>${tip[1] ? `<p class="sl-tip ${tip[0]}">${tip[1]}</p>` : ''}`;
   }
   function refreshSizeLadder(el){ const n = document.getElementById('size-ladder'); if(n && ladderGoal() && el.text) n.innerHTML = sizeLadderInner(el); }
+  // Level 4+: a contrast hierarchy guide (like the size ladder): each kind of text on this
+  // page and the contrast it should have, with the selected text's row marked.
+  function contrastGuideHtml(el){
+    if((state.level.levelNumber || 0) < 4) return '';
+    // Rules by role, not per element: the player decides what kind of text this is
+    // (heading? supporting text? button?) and so which contrast it needs.
+    return `<div class="cz-guide"><small class="sl-label">Contrast guide</small><ol class="sl-list">
+      <li><b>Headings and titles</b><code>strongest \u00b7 7:1+</code></li>
+      <li><b>Supporting text (taglines, hints)</b><code>softer \u00b7 4.5\u20137:1</code></li>
+      <li><b>Buttons and body text</b><code>readable \u00b7 4.5:1+</code></li>
+      <li><b>Anything</b><code>not above 15:1</code></li></ol>
+      <p class="cz-guide-q">What kind of text is this one?</p></div>`;
+  }
   // Target band from the level's contrast task for this element (min / max ratio).
   function contrastBand(el){
     const g = (state.level.goals || []).find(g => g.check.contrast && window.EC_GRADING.goalIds(g.check).includes(el.id));
@@ -932,7 +958,7 @@
       // The task's target band, shaded on the bar (bottom = darkest).
       let bandHtml = '';
       const band = contrastBand(el);
-      if(band.min != null || band.max != null){
+      if((band.min != null || band.max != null) && (state.level.levelNumber || 0) < 4){ // level 4+: no band, the contrast guide lists the targets instead
         const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el), {h,sat} = sliderValues(el,key);
         const need = window.WCAG.passesWCAG('#000000', bg, el.fontSize, Number(el.fontWeight) >= 700, 'AA').required;
         const ratioAt = t => window.WCAG.contrastRatio(hsvHex(h,sat/100,t/100), bg);
@@ -1574,7 +1600,7 @@
   const HINT_LINES = { sameY:'These belong on one line. Some of them don\u2019t match.', sameX:'These should share an edge. Some of them don\u2019t match.',
     sameRight:'These should share a right edge. Some of them don\u2019t match.', sameCenterX:'These should share a center. Some of them don\u2019t match.',
     evenGapsX:'These should be evenly spaced. Look at the gaps.', evenGapsY:'These should be evenly spaced. Look at the gaps.',
-    contrast:'These should all be readable.', minFont:'These should all be the same comfortable size.', maxFont:'Some of this text is too big.',
+    contrast:'These should all be readable.', sameFont:'These do the same job. Their sizes don’t match yet.', ladder:'These should step down in size by importance.', minFont:'These should all be the same comfortable size.', maxFont:'Some of this text is too big.',
     bigger:'One of these should stand out more than the other.', minH:'These should be easier to tap.', minW:'These should be easier to tap.',
     align:'These should all line up the same way.', sameSize:'These should be the same size.', above:'Labels belong above their boxes.',
     centeredX:'This should sit in the middle.', wraps:'The padding around this isn\u2019t even.', safeMargin:'Some of this is too close to the edge.' };
@@ -1589,7 +1615,7 @@
     btn.title = can ? `Hint: shows where to look (${cost} coins)` : `Not enough coins (a hint costs ${cost})`;
   }
   let hintTimer = null;
-  function clearPaidHint(){ clearTimeout(hintTimer); document.getElementById('editor-hint-banner')?.classList.remove('has-hint'); state.canvasEl?.querySelectorAll('.hint-ok,.hint-off').forEach(n => n.classList.remove('hint-ok','hint-off')); }
+  function clearPaidHint(){ clearTimeout(hintTimer); if(state.canvasEl?.querySelector('.hint-ok,.hint-off')) window.EC_PIKO?.spotlight(null); document.getElementById('editor-hint-banner')?.classList.remove('has-hint'); state.canvasEl?.querySelectorAll('.hint-ok,.hint-off').forEach(n => n.classList.remove('hint-ok','hint-off')); }
   function showPaidHint(){
     const G = window.EC_GRADING;
     const open = G.checkGoals(state.level, state.elements).filter(r => !r.met && !r.goal.compare && !r.goal.bonus);
@@ -1618,9 +1644,14 @@
       } else if(['evenGapsX','evenGapsY'].includes(kind)) ok = false;
       state.domNodes[id]?.classList.add(ok ? 'hint-ok' : 'hint-off');
     });
-    setHint('\uD83D\uDCA1 ' + (HINT_LINES[kind] || 'Take a closer look at these.'));
+    // Correct neighbours to copy (goal.refs) are framed green and lit too.
+    (pick.goal.refs || []).forEach(id => state.domNodes[id]?.classList.add('hint-ok'));
+    setHint('\uD83D\uDCA1 ' + (pick.goal.hint || HINT_LINES[kind] || 'Take a closer look at these.'));
     { const banner = document.getElementById('editor-hint-banner'); banner.classList.add('has-hint'); banner.classList.remove('hidden'); }
-    hintTimer = setTimeout(clearPaidHint, 8000);
+    // Spotlight the hinted elements (dim around them) so they're easy to spot; the
+    // frames stay for 5 seconds even while dragging.
+    window.EC_PIKO?.spotlight([...ids, ...(pick.goal.refs || [])].map(id => state.domNodes[id]).filter(Boolean));
+    hintTimer = setTimeout(clearPaidHint, 5000);
   }
   // Asks before spending coins on a hint: "This hint costs N coins. Use it?"
   function confirmHint(){
@@ -1814,7 +1845,6 @@
     document.getElementById('tool-inspector').addEventListener('click', ()=>{ state.tools.inspector=!state.tools.inspector; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates();renderRulers();renderSpacing(); });
     document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
-    document.getElementById('editor-canvas-wrap').addEventListener('pointerdown', ()=>clearPaidHint());
     document.getElementById('tool-show-clickable').addEventListener('click', ()=>{ playIntroFlash(); hideMobileToolsSheet(); });
     document.getElementById('tool-typescale').addEventListener('click', ()=>{
       const panel = document.getElementById('typescale-panel');

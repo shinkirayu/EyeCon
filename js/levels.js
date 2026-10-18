@@ -340,7 +340,7 @@ Gising sa Sarap!
 
 We run Cones, a small site that helps people understand colour blindness. Embarrassingly, a visitor told us parts of our own landing page are hard to read.
 
-The orange headline fades into the cream background, the "Try the simulator" button text is almost invisible, and the little tagline above the headline is too pale.
+The orange headline fades into the cream background, the "Try the simulator" button text is almost invisible, and the little tagline above the headline is too pale. The headline and section titles should stand out the most, the tagline a little softer, and please don't turn everything black: we love our colours.
 
 Could you fix the colours so everything passes WCAG AA, while keeping our bright orange and blue look?
 
@@ -370,21 +370,20 @@ Thanks for helping everyone see clearly,
         ...['#8C7A2B','#A69A57','#2E8B94','#8A8A8A'].map((c,i)=>shape('b'+i,'decorative',88+i*448,952,416,128,c,{radius:32,z:1})),
       ],
       goals:[
-        goal('Make the headline readable on the cream background.', {contrast:'AA', ids:['headline']},
-          'Light orange on cream is far below the 4.5:1 contrast text needs.',
-          'Pick a deeper orange or a dark color in Color.'),
-        goal('Make "Try the simulator" readable on its orange button.', {contrast:'AA', ids:['sim']},
-          'The main call to action is useless if nobody can read it.',
-          'Change the button text color until it passes.'),
-        goal('Make the "Color vision awareness" tagline readable.', {contrast:'AA', ids:['tagline']},
-          'Pale lavender on cream is hard to see, especially for low vision.',
-          'Darken the tagline color.'),
-        bonus('Make "Take test" readable too.', {contrast:'AA', ids:['test']},
-          'The second button should be just as readable as the first.',
-          'Darken its text color.'),
-        bonus('Make "Types of Color Blindness" readable.', {contrast:'AA', ids:['types']},
-          'Section titles guide people down the page, so they must be easy to see.',
-          'Give it a darker color.'),
+        // Harder level 2: headings strongest (7:1+), supporting text readable but softer
+        // (4.5-7:1), nothing harsher than 15:1, and brand colors kept (slider only).
+        Object.assign(goal('Give the headline the strongest contrast: at least 7:1, still orange.', {contrast:'AA', min:7, max:15, ids:['headline']},
+          'It is the most important text on the page, so it should stand out the most, without turning harsh.', ''), { hint:'The headline should be the strongest text on the page.', key:'headline', tooDark:'The headline is readable now, but it looks almost black. Could you keep our orange?' }),
+        Object.assign(goal('Make the "Color vision awareness" tagline readable but soft: 4.5 to 7:1.', {contrast:'AA', max:7, ids:['tagline']},
+          'The tagline supports the headline, so it should be readable but quieter.', ''), { hint:'The tagline should be readable but softer than the headline.', key:'tagline', tooDark:'The tagline is now as loud as the headline. It should stay a little softer.' }),
+        Object.assign(goal('Keep the headline stronger than the tagline.', {stronger:['headline','tagline']},
+          'Stronger contrast tells people what to read first. That is visual hierarchy.', ''), { hint:'The headline should stand out more than the tagline.', key:'hierarchy', compare:true }),
+        Object.assign(goal('Make "Types of Color Blindness" a strong section title: at least 7:1.', {contrast:'AA', min:7, max:15, ids:['types']},
+          'Section titles guide people down the page, so they should be as strong as the headline.', ''), { hint:'Section titles should be as strong as the headline.', key:'types' }),
+        Object.assign(goal('Make "Try the simulator" readable on its orange button.', {contrast:'AA', max:15, ids:['sim']},
+          'The main call to action is useless if nobody can read it.', ''), { hint:'This button text should be easy to read.', key:'sim' }),
+        Object.assign(goal('Make "Take test" readable too.', {contrast:'AA', max:15, ids:['test']},
+          'The second button should be just as readable as the first.', ''), { hint:'This button text should be easy to read.', key:'test' }),
       ],
       replyTemplates:{
         great:'Everything pops and passes now. Exactly what a colour-blindness site should look like!',
@@ -393,15 +392,15 @@ Thanks for helping everyone see clearly,
       }
     },
     {
-      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
+      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, sizeGuide:[{id:'month',name:'Card title'},{id:'nav1',name:'Menu link'},{id:'unitsVal',name:'Card value'},{id:'day1',name:'Smallest text'}], tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
       emailPreview:"Our student dashboard's numbers are smaller than their labels.",
       emailBody:`Good day!
 
 This is the IT office of Kolehiyo ng Lungsod ng Pitipiw Piw. Students keep telling us our new dashboard is confusing.
 
-The stat cards shout "GWA", "UNITS" and "ENROLLMENT" in big letters, but the actual numbers are smaller than the labels, so nobody notices their grades. The welcome message is also tiny compared to the date above it.
+The stat cards shout "GWA", "UNITS" and "ENROLLMENT" in big letters, but the actual numbers are smaller than the labels, so nobody notices their grades. The welcome message is also tiny compared to the date above it, and the program line is so small that students squint. The card titles don't match each other either.
 
-Could you fix the text sizes so the important information stands out first?
+Could you fix the text sizes so the important information stands out first? Most of the page already looks right, so please make the odd ones out match their neighbours. Our calendar days show the smallest size we're happy with.
 
 Maraming salamat,
 — Kolehiyo IT Office`,
@@ -449,24 +448,19 @@ Maraming salamat,
         shape('annBody','decorative',560,760,832,272,'#DADADA',{radius:16,z:4}),
       ],
       goals:[
-        goal('Make the GWA number bigger than its label.', {bigger:['gwaVal','gwaLbl']},
-          'The value is what students came for, so it should be the loudest thing in the card.',
-          'Raise 1.75 above 36px, or shrink the label.'),
-        goal('Make the units number bigger than its label.', {bigger:['unitsVal','unitsLbl']},
-          'Same card style, same rule: the number leads, the label supports.',
-          'Raise 24 above the UNITS label size.'),
-        goal('Make "Enrolled" bigger than its label.', {bigger:['enrVal','enrLbl']},
-          'Keeping all three cards consistent makes the row easy to scan.',
-          'Give Enrolled a larger size than ENROLLMENT.'),
-        goal('Make "Welcome Back, Juan!" bigger than the date.', {bigger:['welcome','date']},
-          'The greeting is the headline of the page. The date is supporting detail.',
-          'Increase the welcome size and shrink the date.'),
-        bonus('Make the program line exactly 20px.', {minFont:20, ids:['program']},
-          'Tiny white text on blue is hard to read.',
-          'Bump its font size up.'),
-        bonus('Make "Announcement :" exactly 32px.', {minFont:32, ids:['annTitle']},
-          'Card titles should match the weight of the stat cards around them.',
-          'Increase the heading size.'),
+        // Harder level 3, no guides: each broken text sits next to correct ones (refs) it should match.
+        Object.assign(goal('Make "Enrollment" and "Documents" the same size as the other sidebar links.', {minFont:24, ids:['nav2','nav5']},
+          'Links that do the same job should look the same, so the menu reads as one list.', ''),
+          { key:'sidebar', refs:['nav1','nav3','nav4','nav6'], hint:'These menu links don\u2019t match the ones around them.' }),
+        Object.assign(goal('Make "ENROLLMENT :" the same size as "GWA :" and "UNITS :".', {minFont:36, ids:['enrLbl']},
+          'The three stat cards are one set, so their titles should match.', ''),
+          { key:'enrLabel', refs:['gwaLbl','unitsLbl'], hint:'One card title doesn\u2019t match the other two.' }),
+        Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled".', {minFont:24, ids:['gwaVal']},
+          'Values in matching cards should match too, so none looks more important by accident.', ''),
+          { key:'gwaValue', refs:['unitsVal','enrVal'], hint:'One card value doesn\u2019t match the other two.' }),
+        Object.assign(goal('Make the program line 16px, like the calendar days.', {minFont:16, ids:['program']},
+          'Details can be small, but never below 16px, the size of the calendar days.', ''),
+          { key:'program', refs:['day1','day2','day3'], hint:'This line is smaller than the smallest comfortable size.' }),
       ],
       replyTemplates:{
         great:'Students can finally see their grades at a glance. Maraming salamat!',

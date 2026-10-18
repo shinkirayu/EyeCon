@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EyeCon Quiz</title>
+<link rel="icon" type="image/png" href="assets/sprites/piko.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#123b54;--plum:#3b172e;--teal:#77b9af;--teal-dark:#4f938a;--cream:#fcf7ef;--purple:#9b7bdc;--purple-dark:#7656b3;--bg:#bfebe9;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--plum);font-family:'Nunito',system-ui,sans-serif;}
+  body{display:grid;place-items:center;min-height:100vh;padding:1.5rem 1rem;}
+  .card{width:min(44rem,100%);padding:2rem 2.25rem;border:3px solid var(--teal);border-radius:1.75rem;background:var(--cream);box-shadow:0 .5rem 0 var(--teal-dark);}
+  .top{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}
+  .top img{width:3rem;height:auto;}
+  .tag{font:800 .85rem 'Nunito';letter-spacing:.14em;text-transform:uppercase;color:#2f7a70;}
+  .count{margin-left:auto;font:800 1rem 'Nunito';color:var(--ink);}
+  .bar{height:.75rem;border-radius:999px;background:#e3f1ec;overflow:hidden;margin-bottom:1.5rem;}
+  .bar i{display:block;height:100%;background:var(--purple);transition:width .3s ease;}
+  h1{margin:0 0 .5rem;font:800 2.25rem/1.1 'Baloo 2',sans-serif;color:var(--ink);}
+  h2{margin:0 0 1.25rem;font:800 1.5rem/1.3 'Baloo 2',sans-serif;color:var(--plum);}
+  p{margin:0 0 1rem;font:700 1.1rem/1.5 'Nunito';}
+  .opts{display:grid;gap:.75rem;margin:0 0 1.5rem;padding:0;list-style:none;}
+  .opt{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:.9rem;width:100%;padding:.9rem 1.1rem;border:3px solid #e4d8ca;border-radius:1rem;background:#fff;font:700 1.1rem/1.35 'Nunito';cursor:pointer;transition:border-color .15s,background .15s,transform .15s;}
+  .opt:hover{border-color:var(--teal);transform:translateY(-2px);}
+  .opt:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
+  .opt b{display:grid;place-items:center;flex:none;width:2rem;height:2rem;border-radius:50%;background:#e3f1ec;color:#2f7a70;font:800 1rem 'Baloo 2';}
+  .opt[aria-pressed="true"]{border-color:var(--purple-dark);background:#f1ebfb;}
+  .opt[aria-pressed="true"] b{background:var(--purple-dark);color:#fff;}
+  .actions{display:flex;justify-content:space-between;align-items:center;gap:1rem;}
+  .btn{all:unset;box-sizing:border-box;padding:.8rem 2rem;border-radius:1rem;background:var(--purple);color:#fff3d6;font:800 1.4rem 'Baloo 2',sans-serif;box-shadow:0 .3rem 0 var(--purple-dark);cursor:pointer;text-align:center;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
+  .ghost{all:unset;cursor:pointer;font:800 1rem 'Nunito';color:#5a6f6a;text-decoration:underline;}
+  .ghost:disabled{visibility:hidden;}
+  .score{display:inline-block;margin:.5rem 0 1rem;padding:.5rem 1.25rem;border-radius:1rem;background:#fff2cf;border:3px solid #f2d27a;font:800 2rem 'Baloo 2';color:var(--ink);}
+  .note{font:700 .95rem 'Nunito';color:#5a6f6a;}
+  .consent{max-height:16rem;overflow:auto;padding:1rem 1.25rem;border:2px solid #e4d8ca;border-radius:1rem;background:#fff;font:600 1rem/1.5 'Nunito';}
+  .consent p{font:600 1rem/1.5 'Nunito';margin:0 0 .6rem;}
+  .consent ul{margin:.25rem 0 .6rem;padding-left:1.25rem;}
+  .check{display:flex;gap:.6rem;align-items:flex-start;margin:1rem 0;font:800 1.05rem 'Nunito';cursor:pointer;}
+  .check input{width:1.3rem;height:1.3rem;margin-top:.15rem;accent-color:#7656b3;}
+  .field{display:grid;gap:.35rem;margin-bottom:1rem;font:800 1rem 'Nunito';}
+  .field input,.field select{padding:.7rem .9rem;border:2px solid #e4d8ca;border-radius:.8rem;background:#fff;font:700 1.05rem 'Nunito';color:var(--plum);}
+  .field input:focus,.field select:focus{outline:3px solid #f5b83d;outline-offset:1px;}
+  .google{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;padding:.85rem 1rem;border:3px solid #e4d8ca;border-radius:1rem;background:#fff;font:800 1.15rem 'Nunito';cursor:pointer;}
+  .google:hover{border-color:var(--teal);}
+  .google:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
+  .or{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:#5a6f6a;font:800 .9rem 'Nunito';}
+  .or::before,.or::after{content:'';flex:1;border-top:2px solid #e4d8ca;}
+  .row{display:flex;gap:.75rem;}
+  .row input{flex:1;min-width:0;}
+  .row .btn{font-size:1.1rem;padding:.6rem 1.1rem;}
+  .err{color:#a3142f;font:800 .95rem 'Nunito';min-height:1.2em;margin:.25rem 0 0;}
+  .ok{color:#1d6a40;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<main class="card" id="app" aria-live="polite"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/db.js"></script>
+<script>
+(() => {
+  // quiz.html?mode=pre (default) or ?mode=post. Same 20 questions; the answer key is `a`.
+  const Q = [
+    { q:'A button is 34px tall. On an 8-point grid, what height should it be changed to?', o:['30px','35px','32px or 40px','36px'], a:2 },
+    { q:'Which of the following spacing values follows the 8-point grid?', o:['24px','6px','10px','15px'], a:0 },
+    { q:'In UI design, what does “alignment” mean?', o:['All items use the same color','Items share the same edge or the same center','All text uses the same font size','Items are placed as far apart as possible'], a:1 },
+    { q:'In a navigation bar, “Home” and “Contact” are at Y = 56px, but “About” is at Y = 64px. What is the correct fix?', o:['Change all three links to Y = 64px','Make the “About” link bigger','Change the color of the “About” link','Change the Y value of “About” to 56px'], a:3 },
+    { q:'Why should the gaps between cards in the same row be equal?', o:['Equal gaps keep the page tidy and show that the cards belong together','Equal gaps make the text larger','Equal gaps improve color contrast','Equal gaps make the page load faster'], a:0 },
+    { q:'A restaurant client writes, “Our menu cards are all over the place.” What is the most likely fix?', o:['Change the colors of the cards','Make the text on the cards bigger','Put the cards on the same line and space them evenly','Remove some of the cards'], a:2 },
+    { q:'To center a title over a card, which must match?', o:['The top edge of the title and the top edge of the card','The color of the title and the color of the card','The font size of the title and the width of the card','The center of the title and the center of the card'], a:3 },
+    { q:'In UI design, what does “contrast” describe?', o:['How large the text is','How much text stands out from the color behind it','How far apart elements are','How many colors a page uses'], a:1 },
+    { q:'Under WCAG 2.2 Level AA, what is the minimum contrast ratio for normal-sized text?', o:['4.5:1','2:1','3:1','7:1'], a:0 },
+    { q:'Gray text on a white background has a contrast ratio of 3.5:1. Does it pass WCAG 2.2 Level AA for normal text?', o:['Yes, because it is above 3:1','Yes, because gray is a neutral color','It depends on the font used','No, because normal text needs at least 4.5:1'], a:3 },
+    { q:'Light gray text on a white button is hard to read. What is the best fix?', o:['Make the text color lighter','Make the button smaller','Make the text color darker','Move the button to another place'], a:2 },
+    { q:'A brand uses white text on a light orange button, and the text fails the contrast check. Which fix keeps the brand look?', o:['Change the text to yellow','Use a deeper orange (or a dark text color) until the ratio passes','Remove the button','Make the button wider'], a:1 },
+    { q:'Why does low-contrast text matter even if it looks fine to the designer?', o:['It makes the website load slower','It breaks the 8-point grid','It changes the size of the text','It becomes hard to read for people with weaker eyesight or on a phone in bright sunlight'], a:3 },
+    { q:'Pure black text on a pure white background has a ratio of 21:1. What is true about it?', o:['It passes, but it can feel too harsh, so designers often use an off-black','It fails WCAG 2.2 Level AA','It is exactly the minimum required ratio','It is only allowed for headings'], a:0 },
+    { q:'Under WCAG 2.2 Level AA, what is the minimum contrast ratio for large text (18pt, or 14pt bold)?', o:['2:1','3:1','4.5:1','7:1'], a:1 },
+    { q:'What is the commonly used minimum font size for body text on screens?', o:['10px','12px','16px','24px'], a:2 },
+    { q:'What is “visual hierarchy” in typography?', o:['Using the same size for all text','Using as many fonts as possible','Placing all text in the center','Using bigger text for headings and smaller text for details to guide the reader’s eye'], a:3 },
+    { q:'On a student dashboard, the label “GWA” is 24px but the actual grade below it is 16px. What is the problem?', o:['The grade should be larger than its label because it is the important information','The label should be removed','Both should be 8px','The grade should be a different color only'], a:0 },
+    { q:'Where should decorative fonts be avoided?', o:['In logos','In large titles on a poster','In paragraphs and key instructions','Decorative fonts should be used everywhere'], a:2 },
+    { q:'A game studio writes, “Labels, helper text, and values all look the same, so players don’t know where to look.” What should you change?', o:['Change all text to the same color','Give each type of text a different size so the most important text stands out','Move all the text to the left','Add more text to the screen'], a:1 },
+  ];
+  const mode = new URLSearchParams(location.search).get('mode') === 'post' ? 'post' : 'pre';
+  const STUDY = 'eyecon_study';
+  const readStudy = () => { try{ return JSON.parse(localStorage.getItem(STUDY) || '{}'); }catch(_){ return {}; } };
+  const writeStudy = s => { try{ localStorage.setItem(STUDY, JSON.stringify(s)); }catch(_){} };
+  const app = document.getElementById('app'), picks = new Array(Q.length).fill(null);
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let i = -1, started = 0;
+  const title = mode === 'pre' ? 'Pre-test' : 'Post-test';
+
+  function intro(){
+    app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">EyeCon ${title}</span></div>
+      <h1>${mode === 'pre' ? 'Before you clock in!' : 'One last quiz!'}</h1>
+      <p>${mode === 'pre' ? 'Answer 20 quick questions about alignment, contrast and typography. It’s okay not to know them yet: this shows us what you know before playing.' : 'The same 20 questions as before. Let’s see how much you’ve learned in the studio!'}</p>
+      <p class="note">About 5 minutes. Pick the best answer for each one.</p>
+      <div class="actions"><span></span><button class="btn" id="go">Start</button></div>`;
+    document.getElementById('go').onclick = () => { started = performance.now(); i = 0; question(); };
+    document.getElementById('go').focus();
+  }
+  function question(){
+    const it = Q[i];
+    app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title}</span><span class="count">${i + 1} / ${Q.length}</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i + 1}" aria-label="Question ${i + 1} of ${Q.length}"><i style="width:${(i + 1) / Q.length * 100}%"></i></div>
+      <h2 id="q">${esc(it.q)}</h2>
+      <ul class="opts" role="group" aria-labelledby="q">${it.o.map((o, k) => `<li><button class="opt" data-k="${k}" aria-pressed="${picks[i] === k}"><b>${'ABCD'[k]}</b><span>${esc(o)}</span></button></li>`).join('')}</ul>
+      <div class="actions"><button class="ghost" id="back" ${i === 0 ? 'disabled' : ''}>Back</button><button class="btn" id="next" ${picks[i] == null ? 'disabled' : ''}>${i === Q.length - 1 ? 'Finish' : 'Next'}</button></div>`;
+    app.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+      picks[i] = +b.dataset.k;
+      app.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      document.getElementById('next').disabled = false;
+    });
+    document.getElementById('back').onclick = () => { i--; question(); };
+    document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else finish(); };
+    app.querySelector('.opt').focus();
+  }
+  async function finish(){
+    const answers = picks.map((p, k) => ({ q:k, picked:p, correct:p === Q[k].a }));
+    const score = answers.filter(a => a.correct).length, duration = Math.round(performance.now() - started);
+    const study = readStudy(); study[mode] = { score, total:Q.length, at:new Date().toISOString() }; writeStudy(study);
+    app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title}</span></div><h1>Saving…</h1>`;
+    // Saved to Supabase (quiz_results) when online; the local copy keeps the flow going offline.
+    try{
+      await window.EC_DB?.ready;
+      if(window.EC_DB?.online) await window.EC_DB.client.from('quiz_results').insert({ kind:mode, score, total:Q.length, answers, duration_ms:duration });
+    }catch(e){ console.warn('EyeCon: quiz not saved online.', e); }
+    const pre = study.pre;
+    app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
+      <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
+      ${mode === 'post' ? `<div class="score">${score} / ${Q.length}</div>${pre ? `<p>Before playing you got ${pre.score} / ${pre.total}. ${score > pre.score ? 'Look how much you grew!' : 'Thanks for giving it your best!'}</p>` : ''}` : '<p>Now let’s put on your designer hat and clock in.</p>'}
+      <div class="actions"><a class="ghost" href="overview.html">Back to home</a><a class="btn" href="index.html">${mode === 'pre' ? 'Play EyeCon!' : 'Play again'}</a></div>`;
+    app.querySelector('.btn').focus();
+  }
+  // ---------- Study gate: consent, verified sign-in (Google or email code), short profile ----------
+  const db = window.EC_DB, RESUME = 'eyecon_quiz_resume';
+  const top = label => `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${label}</span></div>`;
+  const verified = () => db && db.online && !db.isGuest;
+  async function respondent(){
+    if(!verified()) return null;
+    const { data } = await db.client.from('respondents').select('*').eq('id', db.userId).maybeSingle();
+    return data;
+  }
+  async function alreadyTaken(){
+    if(!verified()) return false;
+    const { data } = await db.client.from('quiz_results').select('id').eq('player_id', db.userId).eq('kind', mode).maybeSingle();
+    return !!data;
+  }
+  function consent(){
+    app.innerHTML = `${top('Before we start')}<h1>Help our study</h1>
+      <div class="consent" tabindex="0" aria-label="Consent information">
+        <p><b>EyeCon</b> is a thesis project at De La Salle Lipa about learning UI design through a game.</p>
+        <p>If you take part, we will collect:</p>
+        <ul><li>your email (to match your pre-test and post-test)</li><li>your name, section and design experience</li><li>your quiz answers and how you play the game</li></ul>
+        <p>Your answers are used only for this research. Your name and email are never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
+        <p class="note">This follows the Data Privacy Act of 2012 (RA 10173). Questions? Ask the researchers.</p>
+      </div>
+      <label class="check"><input type="checkbox" id="agree"> I have read this and I agree to take part.</label>
+      <div class="actions"><a class="ghost" href="overview.html">Not now</a><button class="btn" id="go" disabled>Continue</button></div>`;
+    const agree = document.getElementById('agree'), go = document.getElementById('go');
+    agree.onchange = () => { go.disabled = !agree.checked; };
+    go.onclick = () => { sessionStorage.setItem('eyecon_consent', new Date().toISOString()); signIn(); };
+    agree.focus();
+  }
+  function signIn(){
+    if(!db || !db.online){ app.innerHTML = `${top('Sign in')}<h1>We can’t reach the server</h1><p>Check your internet connection, then try again.</p><div class="actions"><span></span><button class="btn" onclick="location.reload()">Try again</button></div>`; return; }
+    app.innerHTML = `${top('Sign in')}<h1>Who’s taking the quiz?</h1>
+      <p>Sign in so your pre-test and post-test can be matched, even on another device.</p>
+      <button class="google" id="google"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>Continue with Google</button>
+      <div class="or">or use your email</div>
+      <div class="field"><label for="email">Email</label><div class="row"><input id="email" type="email" autocomplete="email" placeholder="you@example.com"><button class="btn" id="send">Send code</button></div></div>
+      <div class="field" id="codeBox" hidden><label for="code">6-digit code from your email</label><div class="row"><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"><button class="btn" id="verify">Verify</button></div></div>
+      <p class="err" id="err" role="alert"></p>`;
+    const errEl = document.getElementById('err'), err = m => { errEl.textContent = m || ''; };
+    document.getElementById('google').onclick = async () => {
+      sessionStorage.setItem(RESUME, mode);
+      try{ await db.signInWithGoogle(); }catch(e){ err('Google sign-in failed: ' + (e.message || e)); }
+    };
+    let viaChange = false;
+    document.getElementById('send').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      if(!/^\S+@\S+\.\S+$/.test(email)) return err('Please type a valid email.');
+      err(''); const b = document.getElementById('send'); b.disabled = true; b.textContent = 'Sending…';
+      // A guest adds the email to its own account (keeps game progress); if that email
+      // already has an account, sign in to that one instead.
+      let res = db.isGuest ? await db.client.auth.updateUser({ email }) : { error:{ message:'not a guest' } };
+      viaChange = !res.error;
+      if(res.error) res = await db.client.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
+      b.disabled = false; b.textContent = 'Send code';
+      if(res.error) return err(res.error.message);
+      document.getElementById('codeBox').hidden = false; document.getElementById('code').focus();
+      errEl.innerHTML = '<span class="ok">Code sent! Check your inbox (and spam).</span>';
+    };
+    document.getElementById('verify').onclick = async () => {
+      const email = document.getElementById('email').value.trim(), token = document.getElementById('code').value.trim();
+      if(!/^\d{6}$/.test(token)) return err('The code has 6 digits.');
+      const { error } = await db.client.auth.verifyOtp({ email, token, type: viaChange ? 'email_change' : 'email' });
+      if(error) return err(error.message);
+      location.reload(); // pick up the verified session
+    };
+  }
+  async function profile(){
+    if(await respondent()) return intro();
+    app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Signed in as ${esc(db.email || '')}</p>
+      <div class="field"><label for="name">Name</label><input id="name" maxlength="40" value="${esc(db.fullName || '')}" autocomplete="name"></div>
+      <div class="field"><label for="section">Year level and section</label><input id="section" maxlength="40" placeholder="e.g. Grade 12 - STEM A"></div>
+      <div class="field"><label for="prior">Have you studied UI design before?</label><select id="prior"><option value="">Choose one</option><option value="yes">Yes</option><option value="a little">A little</option><option value="no">No</option></select></div>
+      <p class="err" id="err" role="alert"></p>
+      <div class="actions"><span></span><button class="btn" id="save">Continue</button></div>`;
+    document.getElementById('save').onclick = async () => {
+      const name = document.getElementById('name').value.trim(), section = document.getElementById('section').value.trim(), prior = document.getElementById('prior').value;
+      if(!name || !section || !prior){ document.getElementById('err').textContent = 'Please fill in all three.'; return; }
+      const { error } = await db.client.from('respondents').upsert({ id: db.userId, email: db.email, display_name: name, section, prior_ui: prior,
+        consent_at: sessionStorage.getItem('eyecon_consent') || new Date().toISOString(), updated_at: new Date().toISOString() });
+      if(error){ document.getElementById('err').textContent = 'Could not save: ' + error.message; return; }
+      intro();
+    };
+    document.getElementById('name').focus();
+  }
+  function taken(){
+    app.innerHTML = `${top(title)}<h1>You’ve already taken the ${title.toLowerCase()}</h1><p>Thanks! Each person takes it once.</p>
+      <div class="actions"><a class="ghost" href="overview.html">Back to home</a><a class="btn" href="index.html">Play EyeCon!</a></div>`;
+    const st = readStudy(); st[mode] = st[mode] || { at:new Date().toISOString() }; writeStudy(st);
+  }
+  (async () => {
+    app.innerHTML = `${top(title)}<h1>Loading…</h1>`;
+    try{ await (db && db.ready); }catch(_){}
+    sessionStorage.removeItem(RESUME);
+    if(!verified()) return mode === 'pre' && !sessionStorage.getItem('eyecon_consent') ? consent() : signIn();
+    if(await alreadyTaken()) return taken();
+    if(!sessionStorage.getItem('eyecon_consent') && !(await respondent())) return consent();
+    profile();
+  })();
+})();
+</script>
+</body>
+</html>

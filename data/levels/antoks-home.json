@@ -1,0 +1,341 @@
+{
+  "format": "eyecon-level-maker-v1",
+  "id": "antoks-manoks-homepage",
+  "name": "Antoks Manoks · Homepage",
+  "preset": "custom",
+  "canvas": {
+    "w": 1920,
+    "h": 1080,
+    "bg": "#EECFAB"
+  },
+  "elements": [
+    {
+      "id": "banner",
+      "type": "rect",
+      "role": "decorative",
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080,
+      "bg": null,
+      "z": 1,
+      "src": "assets/levels/antoks/banner.svg",
+      "gameLocked": true,
+      "radius": 0,
+      "fontSize": 16
+    },
+    {
+      "id": "chicken",
+      "type": "rect",
+      "role": "decorative",
+      "x": 872,
+      "y": 152,
+      "w": 1048,
+      "h": 344,
+      "bg": null,
+      "z": 2,
+      "src": "assets/levels/antoks/chicken.png",
+      "gameLocked": true,
+      "radius": 0,
+      "fontSize": 16
+    },
+    {
+      "id": "header",
+      "type": "rect",
+      "role": "card",
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 160,
+      "bg": "#FEFBF7",
+      "z": 3,
+      "shadow": {
+        "enabled": true,
+        "blur": 19,
+        "color": "rgba(0,0,0,.25)"
+      },
+      "gameLocked": true,
+      "radius": 0,
+      "fontSize": 16
+    },
+    {
+      "id": "logo",
+      "type": "text",
+      "role": "heading",
+      "text": "ANTOKS MANOKS",
+      "x": 40,
+      "y": 32,
+      "w": 680,
+      "h": 112,
+      "fontFamily": "Lilita One",
+      "fontSize": 85,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 4,
+      "gameLocked": true,
+      "radius": 0
+    },
+    {
+      "id": "mascot",
+      "type": "rect",
+      "role": "decorative",
+      "x": 728,
+      "y": 40,
+      "w": 80,
+      "h": 80,
+      "bg": null,
+      "z": 5,
+      "src": "assets/levels/antoks/mascot.png",
+      "bgSize": "contain",
+      "gameLocked": true,
+      "radius": 0,
+      "fontSize": 16
+    },
+    {
+      "id": "nav1",
+      "type": "text",
+      "role": "nav",
+      "text": "Home",
+      "x": 1000,
+      "y": 56,
+      "w": 168,
+      "h": 40,
+      "fontFamily": "Lato",
+      "fontSize": 32,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 6,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true,
+      "radius": 0
+    },
+    {
+      "id": "nav2",
+      "type": "text",
+      "role": "nav",
+      "text": "Delivery",
+      "x": 1184,
+      "y": 56,
+      "w": 168,
+      "h": 40,
+      "fontFamily": "Lato",
+      "fontSize": 32,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 7,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true,
+      "radius": 0
+    },
+    {
+      "id": "nav3",
+      "type": "text",
+      "role": "nav",
+      "text": "Contact",
+      "x": 1360,
+      "y": 80,
+      "w": 168,
+      "h": 40,
+      "fontFamily": "Lato",
+      "fontSize": 32,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 8,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": false,
+      "radius": 0
+    },
+    {
+      "id": "nav4",
+      "type": "text",
+      "role": "nav",
+      "text": "About",
+      "x": 1560,
+      "y": 88,
+      "w": 168,
+      "h": 40,
+      "fontFamily": "Lato",
+      "fontSize": 32,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 9,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": false,
+      "radius": 0
+    },
+    {
+      "id": "order",
+      "type": "rect",
+      "role": "button",
+      "text": "Order Now",
+      "x": 184,
+      "y": 200,
+      "w": 408,
+      "h": 80,
+      "fontFamily": "Lilita One",
+      "fontSize": 65,
+      "fontWeight": "400",
+      "color": "#FFFFFF",
+      "bg": "#7E0000",
+      "radius": 200,
+      "align": "center",
+      "z": 10,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true
+    },
+    {
+      "id": "tagline",
+      "type": "text",
+      "role": "heading",
+      "text": "Gising sa Sarap!",
+      "x": 784,
+      "y": 200,
+      "w": 528,
+      "h": 104,
+      "fontFamily": "Mr Dafoe",
+      "fontSize": 80,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": null,
+      "align": "center",
+      "z": 11,
+      "gameLocked": true,
+      "radius": 0
+    },
+    {
+      "id": "card2",
+      "type": "rect",
+      "role": "decorative",
+      "x": 616,
+      "y": 496,
+      "w": 304,
+      "h": 472,
+      "bg": null,
+      "z": 12,
+      "src": "assets/levels/antoks/card2.png",
+      "radius": 40,
+      "shadow": {
+        "enabled": true,
+        "blur": 23,
+        "color": "rgba(0,0,0,.25)"
+      },
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true,
+      "fontSize": 16
+    },
+    {
+      "id": "best",
+      "type": "rect",
+      "role": "button",
+      "text": "Best Sellers",
+      "x": 216,
+      "y": 416,
+      "w": 336,
+      "h": 64,
+      "fontFamily": "Lilita One",
+      "fontSize": 44,
+      "fontWeight": "400",
+      "color": "#7E0000",
+      "bg": "#FDFDFD",
+      "radius": 200,
+      "align": "center",
+      "z": 13,
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true
+    },
+    {
+      "id": "card1",
+      "type": "rect",
+      "role": "decorative",
+      "x": 160,
+      "y": 528,
+      "w": 304,
+      "h": 472,
+      "bg": null,
+      "z": 14,
+      "src": "assets/levels/antoks/card1.png",
+      "radius": 40,
+      "shadow": {
+        "enabled": true,
+        "blur": 23,
+        "color": "rgba(0,0,0,.25)"
+      },
+      "allow": [
+        "move"
+      ],
+      "gameLocked": false,
+      "fontSize": 16
+    },
+    {
+      "id": "card3",
+      "type": "rect",
+      "role": "decorative",
+      "x": 1000,
+      "y": 496,
+      "w": 304,
+      "h": 472,
+      "bg": null,
+      "z": 15,
+      "src": "assets/levels/antoks/card3.png",
+      "radius": 40,
+      "shadow": {
+        "enabled": true,
+        "blur": 23,
+        "color": "rgba(0,0,0,.25)"
+      },
+      "allow": [
+        "move"
+      ],
+      "gameLocked": true,
+      "fontSize": 16
+    },
+    {
+      "id": "card4",
+      "type": "rect",
+      "role": "decorative",
+      "x": 1384,
+      "y": 480,
+      "w": 304,
+      "h": 472,
+      "bg": null,
+      "z": 16,
+      "src": "assets/levels/antoks/card4.png",
+      "radius": 40,
+      "shadow": {
+        "enabled": true,
+        "blur": 23,
+        "color": "rgba(0,0,0,.25)"
+      },
+      "allow": [
+        "move"
+      ],
+      "gameLocked": false,
+      "fontSize": 16
+    }
+  ],
+  "hiddenTargets": []
+}

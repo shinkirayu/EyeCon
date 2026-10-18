@@ -206,7 +206,16 @@
     {
       lines.push(templates.bad || T.t('mail.revise.notYet'), T.t('mail.revise.ask'), '');
       const bad = relevant('bad').filter(f => !f.bonus);
-      (bad.length ? bad : [{title:T.t('mail.revise.fallback')}]).forEach(f => lines.push(`• ${f.title}`));
+      if((level.levelNumber || 0) >= 4){
+        // Level 4+: say what kind of problem is left, not which element (no answer key).
+        const G = window.EC_GRADING, kinds = new Set();
+        bad.forEach(f => { const g = (level.goals || []).find(x => x.label === f.title || x.tooDark === f.title || x.done === f.title); kinds.add(g ? (G.GOAL_TOOL[G.goalKind(g.check)] || 'position') : 'position'); });
+        const say = { position:'Some things still don\u2019t line up or feel evenly spaced.', sizing:'Some things still feel the wrong size.',
+          color:'Some text still doesn\u2019t read right: the most important parts should stand out more than the rest.', align:'Some things still don\u2019t line up.',
+          typography:'Some text sizes still feel off: it\u2019s hard to tell what matters most.' };
+        const vague = [...kinds].map(k => say[k]).filter(Boolean);
+        (vague.length ? [...new Set(vague)] : [T.t('mail.revise.fallback')]).forEach(t => lines.push(`\u2022 ${t}`));
+      } else (bad.length ? bad : [{title:T.t('mail.revise.fallback')}]).forEach(f => lines.push(`\u2022 ${f.title}`));
       lines.push('', T.t('mail.revise.closing'), '', `— ${level.clientName}`);
     }
     return lines.join('\n');

@@ -70,8 +70,10 @@
     // Level 4: training wheels off.
     handoff: [
       "Look at you! You've really got the hang of it. I'm so proud of you!",
-      "From here on, I'll step back and let you shine. No more red dots or step-by-step, because I know you've got this.",
-      "But if you ever feel stuck, that's okay! Tap the hint button. For a few coins, I'll gently show you where to look.",
+      "From here on, it's real client work. No red dots, no ticks, and no counter telling you when something is right.",
+      "Read the client's email, look at the page, and decide for yourself what's wrong and how it should look. Use what you learned: alignment, contrast and hierarchy.",
+      "When you think it's ready, send it. The client will tell you if something still feels off.",
+      "If you ever feel stuck, that's okay! Tap the hint button. For a few coins, I'll gently show you where to look.",
       "I'll always be right here cheering you on. Go get 'em, designer!"
     ],
     basicsDone: [
