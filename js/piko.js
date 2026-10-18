@@ -538,11 +538,13 @@
     d.style.left = cx + 'px'; d.style.top = cy + 'px';
     const mouse = kind === 'pan' ? mouseIcon('middle', 'right') : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
     const label = { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' }[kind];
+    // Which button(s), spelled out under the action.
+    const how = { pan:'Middle mouse button or right click', zoom:'Mouse wheel', drag:'Left click' }[kind];
     d.innerHTML = `<div class="pd-stage"><span class="pd-mouse">${mouse}</span>
       ${kind === 'pan' ? '<i class="pd-arrow l">◀</i><i class="pd-arrow r">▶</i>' : ''}
       ${kind === 'zoom' ? '<i class="pd-arrow u">▲</i><i class="pd-arrow d">▼</i><b class="pd-zoom">+ / −</b>' : ''}
       ${kind === 'drag' ? '<i class="pd-arrow u">▲</i>' : ''}</div>
-      <p>${label}</p>${kind === 'drag' ? `<p class="pd-or">or ${ARROWS}</p>` : ''}`;
+      <p>${label}</p><p class="pd-how">${how}</p>${kind === 'drag' ? `<p class="pd-or">or ${ARROWS}</p>` : ''}`;
     document.body.appendChild(d);
   }
   // "Sits a little lower": a dashed guide along Home/Contact's top edge and a

@@ -685,8 +685,12 @@
     if(pikoEnabled && (level.levelNumber || 0) >= 4 && !profile.onboarding.handoff){
       profile.onboarding.handoff = true; save();
       const H = P.SCRIPT.handoff;
-      P.pointAt(document.getElementById('tool-hint'));
-      const say = i => i < H.length ? P.say(H[i], { top:true, onDone: ()=>say(i + 1) }) : (P.clearTarget(), done());
+      // Only the line about hints lights up the hint button; the rest have no spotlight.
+      const say = i => {
+        if(i >= H.length){ P.clearTarget(); done(); return; }
+        if(/hint/i.test(H[i])) P.pointAt(document.getElementById('tool-hint')); else P.clearTarget();
+        P.say(H[i], { top:true, onDone: ()=>say(i + 1) });
+      };
       requestAnimationFrame(()=>say(0));
       return;
     }

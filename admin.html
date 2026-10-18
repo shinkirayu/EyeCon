@@ -644,12 +644,20 @@
   function labelFor(k){
     const m = k.match(/\.task\.(\d+)\.(label|tip)$/); if(m) return `Task ${+m[1] + 1} · ${m[2] === 'tip' ? 'tip' : 'what to do'}`;
     const f = { emailSubject:'Email subject', emailPreview:'Inbox preview line', emailBody:'Email body' }[k.split('.').pop()]; if(f) return f;
-    const rp = k.match(/\.reply\.(\w+)$/); if(rp) return { great:'Reply when it’s perfect (5★)', ok:'Reply when it’s approved', bad:'Reply when it needs fixing' }[rp[1]] || 'Client reply: ' + rp[1];
+    if(/\.reply\.note\./.test(k)) return 'Fix-again note: ' + (window.EC_TEXT.defaults[k]?.value || '').slice(0, 40) + '\u2026';
+    const rp = k.match(/\.reply\.(\w+)$/); if(rp) return { great:'Reply: approved, perfect (5\u2605)', ok:'Reply: approved', bad:'Reply: needs another fix' }[rp[1]] || 'Client reply: ' + rp[1];
+    if(/^mail\.revise\.vague\./.test(k)) return 'Fix-again line (level 4+): ' + k.split('.').pop();
     if(k.startsWith('mail.gift.')) return 'Thank-you gift (approval email)';
     return window.EC_TEXT.defaults[k]?.note || k;
   }
   // Tasks read in order; email fields subject → preview → body.
-  const order = k => { const t = k.match(/\.task\.(\d+)\.(label|tip)$/); if(t) return 100 + (+t[1]) * 2 + (t[2] === 'tip'); return ['emailSubject','emailPreview','emailBody'].indexOf(k.split('.').pop()) + 1 || 50; };
+  const order = k => {
+    const t = k.match(/\.task\.(\d+)\.(label|tip)$/); if(t) return 100 + (+t[1]) * 2 + (t[2] === 'tip');
+    const r = k.match(/\.reply\.(great|ok|bad)$/); if(r) return 10 + ['great','ok','bad'].indexOf(r[1]);
+    if(/\.reply\.note\./.test(k)) return 20;
+    if(k.startsWith('mail.gift.')) return 30;
+    return ['emailSubject','emailPreview','emailBody'].indexOf(k.split('.').pop()) + 1 || 50;
+  };
   function groupedView(keys, card){
     const groups = {};
     keys.forEach(k => (groups[groupOf(k)] = groups[groupOf(k)] || []).push(k));

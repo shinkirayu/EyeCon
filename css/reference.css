@@ -2749,3 +2749,4 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 #editor-canvas .el.task-group{--task-c:#9368dc;}
 #editor-canvas .el.selected.task-group::after{border-color:var(--task-c);border-width:calc(3 * var(--selection-unit,1px));}
 #editor-canvas .el.task-group:not(.selected){outline:calc(3 * var(--selection-unit,1px)) dashed var(--task-c)!important;outline-offset:0;}
+.piko-demo .pd-how{margin-top:-.35rem;font:700 1rem var(--font-body);color:#5a6f6a;}

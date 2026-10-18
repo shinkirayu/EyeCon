@@ -1598,12 +1598,13 @@ Nimbus Goods`,
   if(window.EC_TEXT) LEVELS.filter(l => l.levelNumber <= 7).forEach(l => {
     const T = window.EC_TEXT, k = `level.${l.id}`;
     ['emailSubject','emailPreview','emailBody'].forEach(f => { if(typeof l[f] === 'string') T.bind(`${k}.${f}`, l[f], 'emails', `${l.clientName}: request email`, v => { l[f] = v; }); });
-    Object.keys(l.replyTemplates || {}).forEach(f => T.bind(`${k}.reply.${f}`, l.replyTemplates[f], 'feedback', `${l.clientName}: client reply (${f})`, v => { l.replyTemplates[f] = v; }));
+    Object.keys(l.replyTemplates || {}).forEach(f => T.bind(`${k}.reply.${f}`, l.replyTemplates[f], 'emails', `${l.clientName}: client reply (${f})`, v => { l.replyTemplates[f] = v; }));
     (l.goals || []).forEach((g, i) => {
       // Tasks with a stable key keep their own saved text even if tasks are reordered.
       if(g.key) i = g.key;
       T.bind(`${k}.task.${i}.label`, g.label, 'tasks', `${l.clientName}: task ${i + 1}`, v => { g.label = v; });
       if(g.tip) T.bind(`${k}.task.${i}.tip`, g.tip, 'tasks', `${l.clientName}: task ${i + 1} tip`, v => { g.tip = v; });
+      if(g.tooDark) T.bind(`${k}.reply.note.${i}`, g.tooDark, 'emails', `${l.clientName}: fix-again note`, v => { g.tooDark = v; });
     });
   });
   window.EC_PROJECTS = PROJECTS;

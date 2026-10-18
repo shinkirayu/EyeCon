@@ -89,6 +89,8 @@
     { q:'Where should decorative fonts be avoided?', o:['In logos','In large titles on a poster','In paragraphs and key instructions','Decorative fonts should be used everywhere'], a:2 },
     { q:'A game studio writes, “Labels, helper text, and values all look the same, so players don’t know where to look.” What should you change?', o:['Change all text to the same color','Give each type of text a different size so the most important text stands out','Move all the text to the left','Add more text to the screen'], a:1 },
   ];
+  // Local files use .html names; the live site serves the landing page at / and the game at /play.
+  const LOCAL = /\.html$/.test(location.pathname), HOME = LOCAL ? 'overview.html' : '/', PLAY = LOCAL ? 'index.html' : 'play';
   const mode = new URLSearchParams(location.search).get('mode') === 'post' ? 'post' : 'pre';
   const STUDY = 'eyecon_study';
   const readStudy = () => { try{ return JSON.parse(localStorage.getItem(STUDY) || '{}'); }catch(_){ return {}; } };
@@ -137,7 +139,7 @@
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
       ${mode === 'post' ? `<div class="score">${score} / ${Q.length}</div>${pre ? `<p>Before playing you got ${pre.score} / ${pre.total}. ${score > pre.score ? 'Look how much you grew!' : 'Thanks for giving it your best!'}</p>` : ''}` : '<p>Now let’s put on your designer hat and clock in.</p>'}
-      <div class="actions"><a class="ghost" href="overview.html">Back to home</a><a class="btn" href="index.html">${mode === 'pre' ? 'Play EyeCon!' : 'Play again'}</a></div>`;
+      <div class="actions"><a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">${mode === 'pre' ? 'Play EyeCon!' : 'Play again'}</a></div>`;
     app.querySelector('.btn').focus();
   }
   // ---------- Study gate: consent, verified sign-in (Google or email code), short profile ----------
@@ -164,7 +166,7 @@
         <p class="note">This follows the Data Privacy Act of 2012 (RA 10173). Questions? Ask the researchers.</p>
       </div>
       <label class="check"><input type="checkbox" id="agree"> I have read this and I agree to take part.</label>
-      <div class="actions"><a class="ghost" href="overview.html">Not now</a><button class="btn" id="go" disabled>Continue</button></div>`;
+      <div class="actions"><a class="ghost" href="${HOME}">Not now</a><button class="btn" id="go" disabled>Continue</button></div>`;
     const agree = document.getElementById('agree'), go = document.getElementById('go');
     agree.onchange = () => { go.disabled = !agree.checked; };
     go.onclick = () => { sessionStorage.setItem('eyecon_consent', new Date().toISOString()); signIn(); };
@@ -227,7 +229,7 @@
   }
   function taken(){
     app.innerHTML = `${top(title)}<h1>You’ve already taken the ${title.toLowerCase()}</h1><p>Thanks! Each person takes it once.</p>
-      <div class="actions"><a class="ghost" href="overview.html">Back to home</a><a class="btn" href="index.html">Play EyeCon!</a></div>`;
+      <div class="actions"><a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play EyeCon!</a></div>`;
     const st = readStudy(); st[mode] = st[mode] || { at:new Date().toISOString() }; writeStudy(st);
   }
   (async () => {

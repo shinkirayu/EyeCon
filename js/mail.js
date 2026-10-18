@@ -183,6 +183,10 @@
    ['mail.revise.ask', 'Could you take another look? We would still love it if you could:'],
    ['mail.revise.fallback', 'Give it a little more polish.'],
    ['mail.revise.closing', 'Send us an updated version when you can. Thanks!'],
+   ['mail.revise.vague.position', 'Some things still don\u2019t line up or feel evenly spaced.'],
+   ['mail.revise.vague.sizing', 'Some things still feel the wrong size.'],
+   ['mail.revise.vague.color', 'Some text still doesn\u2019t read right: the most important parts should stand out more than the rest.'],
+   ['mail.revise.vague.typography', 'Some text sizes still feel off: it\u2019s hard to tell what matters most.'],
   ].forEach(([k, v]) => T.register(k, v, 'feedback', '“Fix again” email'));
   T.register('mail.myReply', 'Good day, {client} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon', 'emails', 'The reply the player types out');
   function buildClientReplyText(level, result, missionComplete){
@@ -210,10 +214,7 @@
         // Level 4+: say what kind of problem is left, not which element (no answer key).
         const G = window.EC_GRADING, kinds = new Set();
         bad.forEach(f => { const g = (level.goals || []).find(x => x.label === f.title || x.tooDark === f.title || x.done === f.title); kinds.add(g ? (G.GOAL_TOOL[G.goalKind(g.check)] || 'position') : 'position'); });
-        const say = { position:'Some things still don\u2019t line up or feel evenly spaced.', sizing:'Some things still feel the wrong size.',
-          color:'Some text still doesn\u2019t read right: the most important parts should stand out more than the rest.', align:'Some things still don\u2019t line up.',
-          typography:'Some text sizes still feel off: it\u2019s hard to tell what matters most.' };
-        const vague = [...kinds].map(k => say[k]).filter(Boolean);
+        const vague = [...kinds].map(k => T.t('mail.revise.vague.' + (k === 'align' ? 'position' : k))).filter(Boolean);
         (vague.length ? [...new Set(vague)] : [T.t('mail.revise.fallback')]).forEach(t => lines.push(`\u2022 ${t}`));
       } else (bad.length ? bad : [{title:T.t('mail.revise.fallback')}]).forEach(f => lines.push(`\u2022 ${f.title}`));
       lines.push('', T.t('mail.revise.closing'), '', `— ${level.clientName}`);
