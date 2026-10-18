@@ -2760,3 +2760,12 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 .controls-pop .qc-list small{display:block;font:600 .85rem/1.35 var(--font-body);color:#5a6f6a;}
 .controls-pop kbd{display:inline-grid;place-items:center;min-width:1.5rem;height:1.5rem;padding:0 .3rem;border:2px solid #4d0d74;border-bottom-width:3px;border-radius:.35rem;background:#fff3d6;font:800 .75rem var(--font-body);color:#4d0d74;}
 .controls-pop .qc-ico{height:2.6rem;}
+#modal-compose .compose-card .compose-attach-row{width:max-content!important;justify-self:start;} /* file choices pop up right beside "Attach file" */
+/* Contrast guide: rule and target stack so nothing runs past the panel; every text 4.5:1+ on cream. */
+#screen-editor .cz-guide{min-width:0;}
+#screen-editor .cz-guide li{display:grid;grid-template-columns:1fr;gap:.1rem;padding:.35rem .5rem;}
+#screen-editor .cz-guide li b{white-space:normal;overflow:visible;color:#3b172e;}
+#screen-editor .cz-guide li code{white-space:normal;font-size:.85rem;color:#1f5f5a;}
+#screen-editor .cz-guide .sl-label{color:#1f5f5a;}
+#screen-editor .cz-guide-q{color:#5b3aa0;}
+#screen-editor .cz-guide .sl-label,#screen-editor .cz-guide li,#screen-editor .cz-guide li b,#screen-editor .cz-guide li code,#screen-editor .cz-guide-q{font-size:1rem;} /* 16px at full size */

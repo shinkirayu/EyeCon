@@ -11,7 +11,7 @@
   const bindings = [];
   const shown = new Map(); // filled text -> key   // { key, apply(value) } for text living inside game objects
 
-  const fill = (text, vars) => vars ? String(text).replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? vars[k] : m) : text;
+  const fill = (text, vars) => vars ? String(text).replace(/\{([^{}\s]+)\}/g, (m, k) => { const plain = k.normalize('NFKC'), v = vars[plain]; return v == null ? m : (plain !== k ? '**' + v + '**' : v); }) : text;
 
   const api = {
     defaults, published,

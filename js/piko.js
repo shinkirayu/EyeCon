@@ -154,7 +154,7 @@
     }
   };
   // Editable from the admin page (EC_TEXT); lines with {placeholders} are filled when shown.
-  const fill = (t, vars) => t.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+  const fill = (t, vars) => t.replace(/\{([^{}\s]+)\}/g, (m, k) => { const plain = k.normalize('NFKC'), v = vars[plain]; return v == null ? m : (plain !== k ? '**' + v + '**' : v); });
   window.EC_TEXT?.bindObject('piko', SCRIPT, 'piko', 'Piko dialogue');
   const TEMPLATED = { niceToMeet:'name', inboxGuide:'client', nextMail:'client' };
   Object.entries(TEMPLATED).forEach(([k, v]) => { const tpl = () => window.EC_TEXT ? window.EC_TEXT.t('piko.' + k) : k; SCRIPT[k] = x => fill(tpl(), { [v]: x }); });
@@ -220,7 +220,7 @@
     // Any line (including admin-added ones) can say {name}: fill it with the player's name.
     // (No name yet, e.g. the admin preview: "Designer", like the home screen greeting.)
     const name = window.EC_STORE?.load?.().displayName || 'Designer';
-    t = String(t).replace(/\{name\}/g, name);
+    t = String(t).replace(/\{([^{}\s]+)\}/g, (m, k) => { const plain = k.normalize('NFKC'); return plain !== 'name' ? m : plain !== k ? '**' + name + '**' : name; });
     const esc = String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     let html = esc
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
@@ -288,7 +288,7 @@
     if(!x || (!x.before.length && !x.after.length && !x.skip)) return sayOne(line, opts);
     const finish = opts.onDone;
     const name = (window.EC_STORE && window.EC_STORE.load().displayName) || 'Designer';
-    const fillName = t => String(t).replace(/\{name\}/g, name);
+    const fillName = t => String(t).replace(/\{([^{}\s]+)\}/g, (m, k) => { const plain = k.normalize('NFKC'); return plain !== 'name' ? m : plain !== k ? '**' + name + '**' : name; });
     const queue = x.before.map(t => ({ t: fillName(t) }));
     if(!(x.skip && finish)) queue.push({ t: line, main: true }); // only talk lines can be skipped
     if(finish) queue.push(...x.after.map(t => ({ t: fillName(t) })));

@@ -878,8 +878,7 @@
       <li><b>Headings and titles</b><code>strongest \u00b7 7:1+</code></li>
       <li><b>Supporting text (taglines, hints)</b><code>softer \u00b7 4.5\u20137:1</code></li>
       <li><b>Buttons and body text</b><code>readable \u00b7 4.5:1+</code></li>
-      <li><b>Anything</b><code>not above 15:1</code></li></ol>
-      <p class="cz-guide-q">What kind of text is this one?</p></div>`;
+      <li><b>Anything</b><code>not above 15:1</code></li></ol></div>`;
   }
   // Target band from the level's contrast task for this element (min / max ratio).
   function contrastBand(el){

@@ -449,16 +449,16 @@ Maraming salamat,
       ],
       goals:[
         // Harder level 3, no guides: each broken text sits next to correct ones (refs) it should match.
-        Object.assign(goal('Make "Enrollment" and "Documents" the same size as the other sidebar links.', {minFont:24, ids:['nav2','nav5']},
+        Object.assign(goal('Make "Enrollment" and "Documents" the same size as the other sidebar links (Menu link size).', {minFont:24, ids:['nav2','nav5']},
           'Links that do the same job should look the same, so the menu reads as one list.', ''),
           { key:'sidebar', refs:['nav1','nav3','nav4','nav6'], hint:'These menu links don\u2019t match the ones around them.' }),
-        Object.assign(goal('Make "ENROLLMENT :" the same size as "GWA :" and "UNITS :".', {minFont:36, ids:['enrLbl']},
+        Object.assign(goal('Make "ENROLLMENT :" the same size as "GWA :" and "UNITS :" (Card title size).', {minFont:36, ids:['enrLbl']},
           'The three stat cards are one set, so their titles should match.', ''),
           { key:'enrLabel', refs:['gwaLbl','unitsLbl'], hint:'One card title doesn\u2019t match the other two.' }),
-        Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled".', {minFont:24, ids:['gwaVal']},
+        Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled" (Card value size).', {minFont:24, ids:['gwaVal']},
           'Values in matching cards should match too, so none looks more important by accident.', ''),
           { key:'gwaValue', refs:['unitsVal','enrVal'], hint:'One card value doesn\u2019t match the other two.' }),
-        Object.assign(goal('Make the program line 16px, like the calendar days.', {minFont:16, ids:['program']},
+        Object.assign(goal('Make the program line the smallest comfortable size, like the calendar days (Smallest text size).', {minFont:16, ids:['program']},
           'Details can be small, but never below 16px, the size of the calendar days.', ''),
           { key:'program', refs:['day1','day2','day3'], hint:'This line is smaller than the smallest comfortable size.' }),
       ],
@@ -1535,6 +1535,8 @@ Nimbus Goods`,
   }));
   // Level 1 teaches spacing by moving things: no resizing or recoloring.
   LEVELS.filter(l=>l.id==='mayo-portfolio'||l.id==='antoks-home').forEach(l=>l.elements.forEach(el=>{ if(!el.locked && !el.allow) el.allow=['move']; }));
+  // Contrast levels are color only: nothing moves or resizes (Yappers, Cones).
+  LEVELS.filter(l=>l.id==='yappers-login'||l.id==='cones-landing').forEach(l=>l.elements.forEach(el=>{ if(!el.locked) el.allow=['color']; }));
   // Level 3 is text only: nothing moves, resizes or recolors.
   LEVELS.filter(l=>l.id==='haybuhay-settings'||l.id==='kolehiyo-dashboard').forEach(l=>l.elements.forEach(el=>{ el.allow=['font']; })); // text size only (Hay Buhay, Kolehiyo)
 

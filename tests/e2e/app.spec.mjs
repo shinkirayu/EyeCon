@@ -500,8 +500,8 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
   await page.goto('/');await beginFirstDay(page);
-  // Any resizable element (Hay Buhay is text-only now, so use Cones).
-  await openClient(page,'Cones');
+  // Any resizable element (the color and text levels are locked down, so use BEAR ORAS).
+  await openClient(page,'BEAR ORAS');
   await page.locator('#editor-canvas .el').first().waitFor();
   const id=await page.evaluate(()=>{ for(const el of EC_EDITOR.getElements()){ if(el.locked) continue; EC_EDITOR.selectElement(el.id); if(document.querySelector(`#editor-canvas .el[data-id="${el.id}"] .nw`)) return el.id; } });
   const button=page.locator(`#editor-canvas .el[data-id="${id}"]`);
