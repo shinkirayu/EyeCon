@@ -61,6 +61,19 @@
       open: "This is the history of your chats with each client. Open it to read it again, then close it when you're done."
     },
     nextMail: "Ooh, you got another email! {client} needs your help next. Open it up!",
+    // End of each day (2+), before the sunset. {jobs} {approved} {coins} {xp} are filled in.
+    dayEnd: {
+      day2: ["Two clients down! Antoks and Cones learned what spacing and readable color can do.", "You did {jobs} jobs today and earned {coins} coins. Tomorrow there's a bigger one waiting. Get some sleep!"],
+      day3: ["BEAR ORAS's sign-in screen finally makes sense. That one had everything: alignment, contrast and size.", "You're becoming a real UI designer. See you tomorrow!"],
+      later: ["{jobs} jobs done today, {approved} approved. Nice work!", "Clock out, rest your eyes, and come back fresh."]
+    },
+    // Level 4: training wheels off.
+    handoff: [
+      "Look at you! You've really got the hang of it. I'm so proud of you!",
+      "From here on, I'll step back and let you shine. No more red dots or step-by-step, because I know you've got this.",
+      "But if you ever feel stuck, that's okay! Tap the hint button. For a few coins, I'll gently show you where to look.",
+      "I'll always be right here cheering you on. Go get 'em, designer!"
+    ],
     basicsDone: [
       "You did it! You've finished the basics: alignment, contrast and typography.",
       "Good job today! Every screen you fixed is now easier to read for somebody out there.",
@@ -91,6 +104,20 @@
         phShift: "See the outline on \"Password\" too? Selecting an element shows which elements it's grouped with. Hold Shift and click \"Password\" to select both, then one slider changes them together!",
         phBoth: "Slide both into the green band: readable (at least 4.5:1) but lighter than the heading. They stay the same contrast ratio, since they're grouped.",
         phDone: "Both placeholders match, and they stay lighter than the heading. Nice work!"
+      },
+      haybuhay: {
+        intro: "Typography is how text looks: its size, weight and font.",
+        ladder: "Here's this page's size ladder. Bigger means more important.",
+        first: "The biggest text, the page title, is read first.",
+        last: "The smallest, like the labels, is read last.",
+        min: "16px is the smallest comfortable size for reading on screen. Below that, people squint or zoom.",
+        pick: "Let's fix one. Left click \"1920 x 1080\" to pick it.",
+        size: "Use the arrows, or type, to make it 16px. Watch it grow!",
+        groupIntro: "Nice! Now the checkbox labels. Some are too small, and they're grouped, so they can be fixed together.",
+        groupPick: "Left click the glowing label to pick it.",
+        shift: "See the outlines? Those labels are grouped with it. Hold Shift and click each glowing one, then set them all at once.",
+        both: "Make them all exactly 16px.",
+        done: "Perfect! Every label reads clearly, and they're still smaller than the titles. That's hierarchy!"
       }
     },
     levels: {

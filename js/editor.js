@@ -148,6 +148,7 @@
         const band = check.max != null ? `${check.min ?? 4.5}–${check.max}` : `${check.min ?? 4.5}`;
         return `${shown}:1 / ${band}${shownSet.length > 1 ? ' · ratios differ' : ''}`;
       }
+      case 'ladder': return els.map(e => `${e.fontSize}`).join(' > ') + ' px';
       case 'stronger': {
         const r = e => window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)).toFixed(1);
         return `${r(els[0])}:1 vs ${r(els[1])}:1`;
@@ -307,7 +308,9 @@
   function open(level, savedElements){
     state.level = level;
     state.frozen = false; // set once a tutorial design is finished: nothing moves any more
+    state.hintsUsed = 0; state.hinted = []; // paid hints this level (level 4+)
     document.getElementById('screen-editor').classList.toggle('show-hint', (level.levelNumber || 0) >= 4);
+    requestAnimationFrame(()=>refreshHintPrice());
     state.focusGoal = null; // the suggested next task in the goal list
     state.elements = clone(savedElements || level.elements);
     state.elements.forEach(ensureDefaults);
@@ -736,6 +739,7 @@
   const editGroup = el => [el, ...[...state.extraSel].map(byId).filter(Boolean)];
   function selectElement(id){
     if(byId(id)?.locked)return;
+    if(state.lockSel && id !== state.selectedId) return; // tutorial: keep this selection
     clearExtraSel();
     if(state.selectedId){
       const prev = state.domNodes[state.selectedId];
@@ -760,6 +764,7 @@
   }
 
   function deselect(){
+    if(state.lockSel) return;
     clearExtraSel();
     if(state.selectedId){
       const prev = state.domNodes[state.selectedId];
@@ -832,6 +837,24 @@
     </div>`;
   }
 
+  // Typography: the page's size ladder (from a 'ladder' task), with a marker for the
+  // selected text, plus a tip on where its size sits.
+  function ladderGoal(){ return (state.level.goals || []).find(g => g.check.ladder); }
+  function sizeLadderHtml(el){
+    const g = ladderGoal();
+    if(!g || !el.text) return '<div id="size-ladder"></div>';
+    return `<div id="size-ladder">${sizeLadderInner(el)}</div>`;
+  }
+  function sizeLadderInner(el){
+    const g = ladderGoal(), names = ['Page title', 'Section title', 'Group title', 'Labels'];
+    const steps = window.EC_GRADING.goalIds(g.check).map(byId).filter(Boolean);
+    const rows = steps.map((s, i) => `<li class="${s.id === el.id || (i === steps.length - 1 && !steps.some(x => x.id === el.id) && el.fontSize === s.fontSize) ? 'here' : ''}"><span style="font-size:${Math.min(28, Math.max(12, s.fontSize * .6))}px">Aa</span><b>${names[i] || ''}</b><code>${s.fontSize}px</code></li>`).join('');
+    const top = steps[steps.length - 2], tip = el.fontSize < 16 ? ['fail', 'Too small to read comfortably. Go up to 16px.']
+      : top && el.fontSize >= top.fontSize && !steps.slice(0, -1).some(s => s.id === el.id) ? ['warn', 'Now it\u2019s as big as a group title. People will think it\u2019s a heading!']
+      : ['pass', el.fontSize === 16 ? 'Readable, and still smaller than the titles.' : `${el.fontSize}px`];
+    return `<small class="sl-label">Size ladder</small><ol class="sl-list">${rows}<li class="sl-you"><span style="font-size:${Math.min(28, Math.max(12, el.fontSize * .6))}px">Aa</span><b>This text</b><code>${el.fontSize}px</code></li></ol><p class="sl-tip ${tip[0]}">${tip[1]}</p>`;
+  }
+  function refreshSizeLadder(el){ const n = document.getElementById('size-ladder'); if(n && ladderGoal() && el.text) n.innerHTML = sizeLadderInner(el); }
   // Target band from the level's contrast task for this element (min / max ratio).
   function contrastBand(el){
     const g = (state.level.goals || []).find(g => g.check.contrast && window.EC_GRADING.goalIds(g.check).includes(el.id));
@@ -946,6 +969,7 @@
       html += `<details class="editor-setting-card" open><summary>Typography</summary>`;
       const sizeOnly = el.allow && el.allow.includes('font'); // text-size-only levels
       const sizeRow = `<div class="editor-unit-row editor-font-size-row"><label for="f-size">Size</label><span class="editor-unit-input editor-size-stepper"><button type="button" data-size-step="-1" aria-label="Decrease font size">&lt;</button><input type="number" id="f-size" value="${el.fontSize}" min="8" max="80" aria-label="Font size"/><button type="button" data-size-step="1" aria-label="Increase font size">&gt;</button></span><span class="editor-size-unit">px</span></div>`;
+      html += sizeLadderHtml(el);
       html += sizeOnly ? sizeRow : `<label class="editor-unit-row"><span>Font</span><span class="editor-unit-input"><select id="f-font">${FONTS.map(f=>`<option value="${f}" ${f===el.fontFamily?'selected':''}>${f}</option>`).join('')}</select></span></label>
         ${sizeRow}
         <label class="editor-unit-row"><span>Weight</span><span class="editor-unit-input"><select id="f-weight">${WEIGHTS.map(([v,l])=>`<option value="${v}" ${v===String(el.fontWeight)?'selected':''}>${l}</option>`).join('')}</select></span></label>`;
@@ -1008,7 +1032,11 @@
     const q = sel => fields.querySelector(sel);
 
     if(q('#f-font')) q('#f-font').addEventListener('change', e=>{ el.fontFamily = e.target.value; refreshElementDom(el); pushHistory(); refreshLiveOverlays(); });
-    if(q('#f-size')) q('#f-size').addEventListener('input', e=>{ el.fontSize = Number(e.target.value)||el.fontSize; refreshElementDom(el); refreshContrastBadge(el); refreshLiveOverlays(); });
+    if(q('#f-size')) q('#f-size').addEventListener('input', e=>{
+      const v = Number(e.target.value) || el.fontSize;
+      editGroup(el).filter(o => o.text).forEach(o => { o.fontSize = v; refreshElementDom(o); }); // Shift+click group: same size
+      refreshContrastBadge(el); refreshLiveOverlays(); refreshSizeLadder(el);
+    });
     if(q('#f-size')) q('#f-size').addEventListener('change', ()=>pushHistory());
     fields.querySelectorAll('[data-size-step]').forEach(button=>{
       button.addEventListener('click', ()=>{
@@ -1372,7 +1400,8 @@
     const id = elDiv.dataset.id;
     const el = byId(id);
     if(!el || el.locked) return;
-    if(e.shiftKey && state.selectedId && state.selectedId !== id){ toggleExtraSel(id); e.preventDefault(); return; }
+    if(e.shiftKey && state.selectedId && state.selectedId !== id){ if(!(state.lockSel && state.extraSel.has(id))) toggleExtraSel(id); e.preventDefault(); return; }
+    if(state.lockSel && id !== state.selectedId) return;
     selectElement(id);
     const handle = target.dataset.handle;
     if(!(handle ? can(el,'resize') : can(el,'move'))) return;
@@ -1537,7 +1566,83 @@
     hintHighlightTimeout = setTimeout(()=>div.classList.remove('hint-highlight'), 4000);
   }
 
+  // Level 4+: hints cost coins (10 for the first in a level, 15 after) and only show
+  // WHERE to look: the topmost unfinished task's group, framed green (already right)
+  // and red (still off), with one short line. Never how to fix it.
+  // The very first paid-hint use in the game is free (a taste of how hints work).
+  const HINT_COST = n => window.EC_HINT_FREE?.() ? 0 : n === 0 ? 10 : 15;
+  const HINT_LINES = { sameY:'These belong on one line. Some of them don\u2019t match.', sameX:'These should share an edge. Some of them don\u2019t match.',
+    sameRight:'These should share a right edge. Some of them don\u2019t match.', sameCenterX:'These should share a center. Some of them don\u2019t match.',
+    evenGapsX:'These should be evenly spaced. Look at the gaps.', evenGapsY:'These should be evenly spaced. Look at the gaps.',
+    contrast:'These should all be readable.', minFont:'These should all be the same comfortable size.', maxFont:'Some of this text is too big.',
+    bigger:'One of these should stand out more than the other.', minH:'These should be easier to tap.', minW:'These should be easier to tap.',
+    align:'These should all line up the same way.', sameSize:'These should be the same size.', above:'Labels belong above their boxes.',
+    centeredX:'This should sit in the middle.', wraps:'The padding around this isn\u2019t even.', safeMargin:'Some of this is too close to the edge.' };
+  function refreshHintPrice(){
+    const btn = document.getElementById('tool-hint');
+    if(!btn || !state.level) return;
+    const cost = HINT_COST(state.hintsUsed), can = (window.EC_HINT_COINS?.() ?? Infinity) >= cost;
+    let tag = btn.querySelector('.hint-cost');
+    if(!tag){ tag = document.createElement('span'); tag.className = 'hint-cost'; btn.appendChild(tag); }
+    tag.textContent = cost === 0 ? 'Free' : cost;
+    btn.classList.toggle('broke', !can);
+    btn.title = can ? `Hint: shows where to look (${cost} coins)` : `Not enough coins (a hint costs ${cost})`;
+  }
+  let hintTimer = null;
+  function clearPaidHint(){ clearTimeout(hintTimer); document.getElementById('editor-hint-banner')?.classList.remove('has-hint'); state.canvasEl?.querySelectorAll('.hint-ok,.hint-off').forEach(n => n.classList.remove('hint-ok','hint-off')); }
+  function showPaidHint(){
+    const G = window.EC_GRADING;
+    const open = G.checkGoals(state.level, state.elements).filter(r => !r.met && !r.goal.compare && !r.goal.bonus);
+    if(!open.length){ setHint('\u2728 Looking great: nothing left to point out. Try Submit!'); return; }
+    const topOf = g => Math.min(...G.goalIds(g.check).map(id => byId(id)?.y ?? Infinity));
+    open.sort((a, b) => topOf(a.goal) - topOf(b.goal));
+    // A repeat hint moves on to the next unfinished task.
+    const pick = open.find(r => !state.hinted.includes(r.goal)) || (state.hinted = [], open[0]);
+    const cost = HINT_COST(state.hintsUsed);
+    if(cost === 0) window.EC_HINT_USE_FREE?.();
+    else if(window.EC_HINT_PAY && !window.EC_HINT_PAY(cost)){ setHint(`Not enough coins: a hint costs ${cost}.`); return; }
+    window.EC_TRACK_HINT?.();
+    if(cost > 0) state.hintsUsed++; state.hinted.push(pick.goal); refreshHintPrice(); // the free one doesn't raise the price
+    clearPaidHint();
+    const kind = G.goalKind(pick.goal.check), ids = G.goalIds(pick.goal.check);
+    ids.forEach(id => {
+      const one = Array.isArray(pick.goal.check[kind]) ? {...pick.goal.check, [kind]:[id]} : {...pick.goal.check, ids:[id]};
+      // Relational checks (same line, even gaps...) can't be judged per element: frame them by
+      // whether they already sit with the majority.
+      let ok = G.checkGoals({ ...state.level, goals:[{ ...pick.goal, check: one }] }, state.elements)[0].met;
+      if(['sameY','sameX','sameRight','sameCenterX'].includes(kind)){
+        const f = { sameY:e=>e.y, sameX:e=>e.x, sameRight:e=>e.x+e.w, sameCenterX:e=>e.x+e.w/2 }[kind];
+        const vals = ids.map(byId).filter(Boolean).map(f), count = v => vals.filter(x => Math.abs(x - v) <= 1).length;
+        const best = vals.reduce((a, v) => count(v) > count(a) ? v : a, vals[0]);
+        ok = Math.abs(f(byId(id)) - best) <= 1;
+      } else if(['evenGapsX','evenGapsY'].includes(kind)) ok = false;
+      state.domNodes[id]?.classList.add(ok ? 'hint-ok' : 'hint-off');
+    });
+    setHint('\uD83D\uDCA1 ' + (HINT_LINES[kind] || 'Take a closer look at these.'));
+    { const banner = document.getElementById('editor-hint-banner'); banner.classList.add('has-hint'); banner.classList.remove('hidden'); }
+    hintTimer = setTimeout(clearPaidHint, 8000);
+  }
+  // Asks before spending coins on a hint: "This hint costs N coins. Use it?"
+  function confirmHint(){
+    const cost = HINT_COST(state.hintsUsed), coins = window.EC_HINT_COINS?.() ?? 0, enough = coins >= cost;
+    document.querySelector('.hint-confirm')?.remove();
+    const d = document.createElement('div');
+    d.className = 'hint-confirm'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'hint-confirm-title');
+    d.innerHTML = `<div class="hc-card"><div class="hc-icon" aria-hidden="true">\u{1F4A1}</div>
+      <h2 id="hint-confirm-title">${enough ? 'Need a little help?' : 'Not enough coins'}</h2>
+      <p>${cost === 0 ? 'Your first hint is <b>free</b>! After this, hints cost a few coins. I’ll show you where to look.' : enough ? `This hint costs <b>${window.EC_MONEY(cost)}</b>. I'll show you where to look.` : `A hint costs <b>${window.EC_MONEY(cost)}</b>, and you have ${window.EC_MONEY(coins)}. Finish a job to earn more!`}</p>
+      <small>Your coins: ${window.EC_MONEY(coins)}</small>
+      <div class="hc-actions">${enough ? '<button type="button" class="btn" data-no>No, thanks</button><button type="button" class="btn btn-accept" data-yes>Yes, show me</button>' : '<button type="button" class="btn btn-accept" data-no>Okay</button>'}</div></div>`;
+    document.body.appendChild(d);
+    const close = () => d.remove();
+    d.querySelector('[data-no]').onclick = close;
+    d.querySelector('[data-yes]')?.addEventListener('click', ()=>{ close(); showPaidHint(); });
+    d.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+    d.addEventListener('click', e => { if(e.target === d) close(); });
+    (d.querySelector('[data-yes]') || d.querySelector('[data-no]')).focus();
+  }
   function showHint(){
+    if((state.level.levelNumber || 0) >= 4) return confirmHint();
     window.EC_TRACK_HINT?.();
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
     const bad = unlockedFeedback(result.feedback, state.level.levelNumber, result.activeCategories).find(f=>f.type==='bad');
@@ -1709,6 +1814,7 @@
     document.getElementById('tool-inspector').addEventListener('click', ()=>{ state.tools.inspector=!state.tools.inspector; updateToolButtonStates(); renderOverlays(); });
     document.getElementById('tool-measure').addEventListener('click', ()=>{ state.tools.measure=!state.tools.measure; updateToolButtonStates();renderRulers();renderSpacing(); });
     document.getElementById('tool-hint').addEventListener('click', ()=>{ showHint(); hideMobileToolsSheet(); });
+    document.getElementById('editor-canvas-wrap').addEventListener('pointerdown', ()=>clearPaidHint());
     document.getElementById('tool-show-clickable').addEventListener('click', ()=>{ playIntroFlash(); hideMobileToolsSheet(); });
     document.getElementById('tool-typescale').addEventListener('click', ()=>{
       const panel = document.getElementById('typescale-panel');
@@ -2063,6 +2169,8 @@
 
   window.EC_EDITOR = {
     readVariant, setVariant, selectElement, focusElement, showWholeDesign,
+    lockSelection: on => { state.lockSel = !!on; },
+    refreshHintPrice,
     getSelection: () => [state.selectedId, ...state.extraSel].filter(Boolean), freezeDrag, releaseFrozenDrag,
     // Locks the design as it is (tutorial: once every task is done).
     freezeDesign(){ state.frozen = true; state.dragging = null; document.body.classList.remove('eyecon-dragging'); clearGuideLines(); deselect(); },

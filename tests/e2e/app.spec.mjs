@@ -650,9 +650,7 @@ test('goal elements show markers until solved, and moving them back un-solves',a
       page.locator('#screen-editor .editor-right-rail').boundingBox()
     ]);
     expect(stage.x+stage.width).toBeLessThan(right.x);
-    await expect(page.locator('#editor-piko-say')).toBeHidden();
-    await page.evaluate(()=>EC_EDITOR.selectElement('about'));
-    await expect(page.locator('#editor-piko-say')).toContainText('Line up "About"');
+    await expect(page.locator('#editor-piko-say')).toBeHidden(); // Piko's task card is hidden for now
   }
   // Line "About" up with Home and Contact.
   for(const [id,field,v] of [['about','y',40]]){

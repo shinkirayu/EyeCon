@@ -31,7 +31,7 @@ test('every page is a real, solvable task with the tools unlocked by then',async
       assert.ok(goal.label && goal.why && typeof goal.tip === 'string', `${level.id}: goal needs label, why and a tip (may be empty)`);
     }
     const start=G.checkGoals(level, level.elements);
-    start.forEach(r=>assert.equal(r.met,false,`${level.id}: "${r.goal.label}" is already done at the start`));
+    start.filter(r=>!r.goal.guard).forEach(r=>assert.equal(r.met,false,`${level.id}: "${r.goal.label}" is already done at the start`));
     const result=G.gradeSubmission(level, level.elements);
     assert.equal(result.mission.complete,false, `${level.id} must not be approvable untouched`);
   }

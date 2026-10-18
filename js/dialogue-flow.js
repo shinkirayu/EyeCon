@@ -61,7 +61,11 @@ window.EC_FLOW = [
   ]},
   { id:'lesson-yappers', scene:'editor:yappers-login', title:'Lesson: Level 2 (contrast)', prefix:'piko.levels.yappers.' },
   { id:'lesson-haybuhay', scene:'editor:haybuhay-settings', title:'Lesson: Level 3 (typography)', prefix:'piko.levels.haybuhay.' },
+  { id:'handoff', scene:'editor', title:'Level 4: on your own', prefix:'piko.handoff.', lastCue:'Hint button highlighted · player works alone' },
   { id:'basics', scene:'mail', title:'End of day 1', prefix:'piko.basicsDone.', lastCue:'Day summary appears' },
+  { id:'dayEnd2', scene:'mail', title:'End of day 2', prefix:'piko.dayEnd.day2.', lastCue:'Sunset animation, then Day 2 done' },
+  { id:'dayEnd3', scene:'mail', title:'End of day 3', prefix:'piko.dayEnd.day3.', lastCue:'Sunset animation, then Day 3 done' },
+  { id:'dayEndLater', scene:'mail', title:'End of later days', prefix:'piko.dayEnd.later.', lastCue:'Sunset animation · {jobs} {approved} {coins} {xp} are filled in' },
   { id:'lesson-antoks', scene:'editor:antoks-home', title:'Lesson: Level 4 (hints)', prefix:'piko.levels.antoks.' },
 ];
 // Lesson sections: every numbered line under the prefix, clicked through in order.

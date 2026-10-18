@@ -168,7 +168,7 @@ Yappers.com Product Design Team`,
           { key:'placeholders', tooDark:'We can read the placeholders now, but they look like the fields are already filled in. Could you soften them?' }),
         Object.assign(goal('Keep the heading stronger than the placeholders.', {stronger:['title','user']},
           'Stronger contrast tells people what matters most. That is visual hierarchy.',
-          'Make the heading darker than the placeholders.'), { key:'hierarchy', compare:true }),
+          'Make the heading darker than the placeholders.'), { key:'hierarchy', compare:true, guard:true }),
         Object.assign(goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
           'If people cannot read the main button, they cannot log in.',
           'Change the text color until it passes.'), { key:'login' }),
@@ -192,7 +192,7 @@ This is Hay Buhay 3! We'd like to task you with a rescue mission. I built the se
 
 Labels, helper text, and values all look the same right now, so players don't know where to look. Please give each its own size, weight, and color. Also, my line-height is under 1.2x and everything feels crammed like a jeepney at rush hour, so please open up the spacing.
 
-Keep it warm and calm, not like a tax form, and make sure contrast works for weaker eyesight and smaller laptop screens. You're free to regroup sections or change controls if you explain why.
+Keep the titles standing out; just make the small text comfortable to read. Keep it warm and calm, not like a tax form, and make sure contrast works for weaker eyesight and smaller laptop screens. You're free to regroup sections or change controls if you explain why.
 
 Send me a mockup or short screen recording by Friday. Rough is fine, I just want to see your thinking. Ask me anything, salamat!
 
@@ -256,20 +256,23 @@ Lead Developer, Hay Buhay 3`,
       goals:[
         // Only the labels the Level Maker marks as needed count (see data/levels/haybuhay-settings.json);
         // the locked ones are already at 16px and show the target size.
-        goal('Make the checkbox labels exactly 16px, like "Reflections".', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
-          'Options players tick need to be readable, and matching sizes make them read as one list.',
-          'Raise each small checkbox label to 16px.'),
-        goal('Make the slider labels exactly 16px, like "Visual Effects".', {minFont:16, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},
-          'Slider labels that match in size keep the screen calm instead of crammed.',
-          'Raise each small slider label to 16px.'),
-        goal('Make "1920 x 1080" exactly 16px, like "Default".', {minFont:16, ids:['sizeVal','rateVal']},
+        Object.assign(goal('Make "1920 x 1080" exactly 16px, like "Default".', {minFont:16, ids:['sizeVal','rateVal']},
           'Values are what players check and change, so they must not be the smallest text on the screen.',
-          'Raise the screen size value to 16px.'),
+          'Raise the screen size value to 16px.'), { key:'values' }),
+        Object.assign(goal('Make the checkbox labels exactly 16px, like "Reflections".', {minFont:16, ids:['opt1','opt2','opt3','opt4','opt5']},
+          'Options players tick need to be readable, and matching sizes make them read as one list.',
+          'Raise each small checkbox label to 16px.'), { key:'checkboxes' }),
+        Object.assign(goal('Make the slider labels exactly 16px, like "Visual Effects".', {minFont:16, ids:['s1','s2','s3','s4','s5','s6','s7','s8']},
+          'Slider labels that match in size keep the screen calm instead of crammed.',
+          'Raise each small slider label to 16px.'), { key:'sliders' }),
+        Object.assign(goal('Keep the hierarchy: titles bigger than group titles, bigger than labels.', {ladder:['title','graphics','sec1','opt1']},
+          'Bigger text is read first. When labels grow as big as titles, nobody can tell what is a heading.',
+          'Keep labels at 16px, smaller than the group titles.'), { key:'hierarchy', compare:true, guard:true }),
       ],
       replyTemplates:{
         great:'Salamat! Players can finally tell where to look. Hay Buhay 3 feels so much calmer.',
         ok:'Better! Some text still blends together, though.',
-        bad:'Still feels like a tax form. Everything is the same size.'
+        bad:'Still feels like a tax form. Everything is the same size, so it is hard to tell what is a title.'
       }
     },
     {

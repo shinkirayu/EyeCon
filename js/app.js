@@ -544,6 +544,63 @@
   // Level 2, step by step: pick "Welcome Bak!", darken it with the brightness
   // slider, and stop once it is on target (the heading's contrast task passes).
   const PRACTICE = {
+    // Level 3: the size ladder, then fix "1920 x 1080" + its grouped "Default" to 16px.
+    haybuhay: { at:1, run: async level => {
+      const P = window.EC_PIKO, L = P.SCRIPT.practice.haybuhay, E = window.EC_EDITOR, G = window.EC_GRADING;
+      const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+      const talk = (line, opts = {}) => new Promise(done => P.say(line, Object.assign({ top:true }, opts, { onDone:done })));
+      const el = id => document.querySelector(`#editor-canvas .el[data-id="${id}"]`), byId = id => E.getElements().find(e => e.id === id);
+      await talk(L.intro);
+      // Size ladder demo card (the page's real sizes).
+      const lg = level.goals.find(g => g.check.ladder), steps = lg ? G.goalIds(lg.check).map(byId).filter(Boolean) : [];
+      if(steps.length){
+        const d = document.createElement('div'); d.className = 'piko-ladder-demo'; d.setAttribute('aria-hidden', 'true');
+        d.innerHTML = steps.map(s => `<div style="font-size:${s.fontSize}px">${s.text}<small>${s.fontSize}px</small></div>`).join('');
+        document.body.appendChild(d); P.clearTarget();
+        await talk(L.ladder);
+        d.remove();
+        P.pointAt(el(steps[0].id)); await talk(L.first);
+        P.pointAt(el(steps[steps.length - 1].id)); await talk(L.last);
+      }
+      P.clearTarget(); await talk(L.min);
+      const valGoal = level.goals.find(g => g.check.minFont && G.goalIds(g.check).includes('sizeVal'));
+      const ok = () => valGoal && G.checkGoals({ ...level, goals:[valGoal] }, E.getElements())[0].met;
+      if(!el('sizeVal') || ok()) return;
+      await E.focusElement('sizeVal', 700, 1.8);
+      el('sizeVal').classList.add('piko-glow'); P.pointAt(el('sizeVal'));
+      P.say(L.pick, { left:true });
+      await until(()=>el('sizeVal')?.classList.contains('selected'));
+      el('sizeVal')?.classList.remove('piko-glow');
+      E.lockSelection(true);
+      const panel = document.getElementById('element-settings');
+      const lit = ids => P.spotlight(ids ? [panel, ...ids.map(el)] : null);
+      lit(['sizeVal']); P.say(L.size, { left:true });
+      await until(()=>byId('sizeVal')?.fontSize === 16 || ok());
+      lit(null);
+      E.lockSelection(false);
+      // Grouped labels: pick one checkbox label, Shift+click the other small ones, one size for all.
+      const boxGoal = level.goals.find(g => g.check.minFont && G.goalIds(g.check).includes('opt1'));
+      const boxOk = () => boxGoal && G.checkGoals({ ...level, goals:[boxGoal] }, E.getElements())[0].met;
+      const small = boxGoal ? G.goalIds(boxGoal.check).filter(id => byId(id) && !byId(id).locked && byId(id).fontSize !== 16) : [];
+      if(small.length > 1 && !boxOk()){
+        await talk(L.groupIntro, { left:true });
+        const [first, ...rest] = small;
+        await E.focusElement(first, 600, 1.4);
+        el(first).classList.add('piko-glow'); P.pointAt(el(first)); P.say(L.groupPick, { left:true });
+        await until(()=>el(first)?.classList.contains('selected'));
+        el(first)?.classList.remove('piko-glow'); E.lockSelection(true);
+        rest.forEach(id => el(id)?.classList.add('piko-glow'));
+        P.spotlight([el(first), ...rest.map(el)]); // light the picked label and every grouped one
+        P.say(L.shift, { left:true });
+        await until(()=>rest.every(id => E.getSelection().includes(id)) || boxOk());
+        rest.forEach(id => el(id)?.classList.remove('piko-glow'));
+        lit(small);
+        if(!boxOk()){ P.say(L.both, { left:true }); await until(boxOk); }
+        lit(null); E.lockSelection(false);
+      }
+      await talk(L.done, { left:true });
+      P.clearTarget();
+    } },
     yappers: { at:3, run: async level => {
       const P = window.EC_PIKO, L = P.SCRIPT.practice.yappers;
       const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
@@ -566,6 +623,7 @@
       P.say(L.pick, { left:true });
       await until(()=>title()?.classList.contains('selected'));
       title()?.classList.remove('piko-glow');
+      window.EC_EDITOR.lockSelection(true); // stays picked until it's on target
       // Foreground vs background, before touching the slider.
       const q = s => document.querySelector(s);
       const chips = [...document.querySelectorAll('#element-settings .cz-chip')];
@@ -588,7 +646,7 @@
       if(!met()){ P.say(L.bar, { left:true }); await until(()=>slid || met()); }
       document.removeEventListener('input', onSlide, true);
       if(!met()){ P.say(L.watch, { left:true }); await until(met); }
-      litPanel(false);
+      litPanel(false); window.EC_EDITOR.lockSelection(false);
       await talk(L.done, { left:true });
       // Placeholders: same ratio for both, inside the band (lighter than the heading).
       const G = window.EC_GRADING, el = id => document.querySelector(`#editor-canvas .el[data-id="${id}"]`);
@@ -604,6 +662,7 @@
       if(phGoal && !okFor(['user','pass'])){
         await window.EC_EDITOR.focusElement('user', 600, 1.6);
         await pickStep('user', L.phPick);
+        window.EC_EDITOR.lockSelection(true); // keep it picked; Shift+click can still add Password
         // Group them: Shift+click the second placeholder, then one slider moves both.
         el('pass')?.classList.add('piko-glow');
         P.pointAt(el('pass')); P.say(L.phShift, { left:true });
@@ -611,7 +670,7 @@
         el('pass')?.classList.remove('piko-glow');
         litPanel(true);
         if(!okFor(['user','pass'])){ P.say(L.phBoth, { left:true }); await until(()=>okFor(['user','pass'])); }
-        litPanel(false);
+        litPanel(false); window.EC_EDITOR.lockSelection(false);
         await talk(L.phDone, { left:true });
       }
       P.clearTarget();
@@ -621,6 +680,16 @@
     const key = level.project || level.id; // lessons are keyed by client: mayo, yappers, haybuhay
     const P = window.EC_PIKO, lines = pikoEnabled && P.SCRIPT.levels[key];
     profile.onboarding = profile.onboarding || {};
+    // First job after the basics: Piko hands over (no more red dots or step-by-step) and
+    // explains paid hints. Only once.
+    if(pikoEnabled && (level.levelNumber || 0) >= 4 && !profile.onboarding.handoff){
+      profile.onboarding.handoff = true; save();
+      const H = P.SCRIPT.handoff;
+      P.pointAt(document.getElementById('tool-hint'));
+      const say = i => i < H.length ? P.say(H[i], { top:true, onDone: ()=>say(i + 1) }) : (P.clearTarget(), done());
+      requestAnimationFrame(()=>say(0));
+      return;
+    }
     const seen = profile.onboarding.lessons = profile.onboarding.lessons || {};
     if(!lines || seen[key]){ requestAnimationFrame(done); return; }
     seen[key] = true; save();
@@ -1713,6 +1782,11 @@
     window.EC_DB?.track('level_leave', Object.assign({ session_id: levelSession.id, level_id: levelSession.levelId, attempt: levelSession.attempt, data:{ hints: levelSession.hints } }, sessionTimes()));
     levelSession = null;
   }
+  // Paid hints (level 4+): spend coins from the player's balance.
+  window.EC_HINT_COINS = () => profile.currency || 0;
+  window.EC_HINT_FREE = () => !profile.onboarding?.freeHint;
+  window.EC_HINT_USE_FREE = () => { profile.onboarding = profile.onboarding || {}; profile.onboarding.freeHint = true; save(); };
+  window.EC_HINT_PAY = cost => { if((profile.currency || 0) < cost) return false; profile.currency -= cost; save(); refreshHeader(); return true; };
   window.EC_TRACK_HINT = () => { if(levelSession){ levelSession.hints++; window.EC_DB?.track('hint', { session_id: levelSession.id, level_id: levelSession.levelId, attempt: levelSession.attempt }); } };
   function finishMissionSubmission(){
     if(!pendingSubmission) return;
@@ -1859,6 +1933,19 @@
   function showDaySummary(){
     const day=window.EC_STORE.workday(profile);
     if(day.submissions<window.EC_STORE.dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return;
+    // Days 2+: Piko wraps up the day (once) before the sunset animation. Day 1 has its own basics lines.
+    if(pikoEnabled && day.day > 1 && showDaySummary.talkedDay !== day.day){
+      showDaySummary.talkedDay = day.day;
+      const D = window.EC_PIKO.SCRIPT.dayEnd, approved = day.reviews.filter(r => r.approved).length;
+      const fill = t => t.replace('{jobs}', day.submissions).replace('{approved}', approved).replace('{coins}', day.coins).replace('{xp}', day.xp);
+      const lines = (D['day' + day.day] || D.later).map(fill);
+      const waitReward = () => new Promise(r => { const t = setInterval(()=>{ if(document.getElementById('modal-reward').classList.contains('hidden')){ clearInterval(t); r(); } }, 200); });
+      waitReward().then(()=>{
+        const say = i => i < lines.length ? window.EC_PIKO.say(lines[i], { top:true, onDone: ()=>say(i + 1) }) : (window.EC_PIKO.hideBubble(), showDaySummary());
+        setTimeout(()=>say(0), 600);
+      });
+      return;
+    }
     if(showDaySummary.animatedDay !== day.day){
       showDaySummary.animatedDay = day.day;
       playDayEndAnimation(day.day, showDaySummary);
@@ -2461,6 +2548,7 @@
       profile.onboarding = profile.onboarding || {};
       profile.onboarding.lessons = profile.onboarding.lessons || {};
       delete profile.onboarding.lessons[level.project || level.id];
+      if(level.levelNumber === 4) delete profile.onboarding.handoff; // replay the "Look at you!" handoff
       const first = level.levelNumber === 1;
       profile.onboarding.seen = !first; save();
       pikoStage = first ? 'element' : null;

@@ -2686,3 +2686,44 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{display:none;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail{bottom:1rem!important;}
 }
+/* Piko's task card hidden for now. */
+#screen-editor .editor-piko-say{display:none!important;}
+/* Typography size ladder in the Design tools panel. */
+#size-ladder{display:grid;gap:.4rem;margin:.5rem 0 .75rem;padding:.75rem;border:2px solid #e4d8ca;border-radius:.875rem;background:#fcf7ef;}
+#size-ladder:empty{display:none;}
+#size-ladder .sl-label{font:800 .8rem var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:#2f6f73;}
+#size-ladder .sl-list{display:grid;gap:.25rem;margin:0;padding:0;list-style:none;}
+#size-ladder li{display:grid;grid-template-columns:3rem 1fr auto;align-items:center;gap:.5rem;padding:.2rem .5rem;border-radius:.5rem;}
+#size-ladder li span{font-family:var(--font-display);font-weight:800;color:#3b172e;line-height:1;}
+#size-ladder li b{font:700 .95rem var(--font-body);color:#3b172e;}
+#size-ladder li code{font:700 .9rem ui-monospace,Consolas,monospace;color:#5a6f6a;}
+#size-ladder li.here,#size-ladder li.sl-you{background:#ede4fb;outline:2px solid #7656b3;}
+#size-ladder .sl-you{margin-top:.25rem;}
+#size-ladder .sl-tip{margin:0;padding:.5rem .75rem;border-radius:.6rem;font:700 .95rem/1.35 var(--font-body);}
+#size-ladder .sl-tip.fail{background:#fde6ea;color:#a3142f;}#size-ladder .sl-tip.warn{background:#fff3d6;color:#8a5a00;}#size-ladder .sl-tip.pass{background:#e2f5e9;color:#1d6a40;}
+/* Size ladder demo card on the canvas (tutorial). */
+.piko-ladder-demo{position:fixed;z-index:2103;left:50%;top:40%;transform:translate(-50%,-50%);display:grid;gap:.25rem;padding:1.25rem 1.75rem;border:3px solid #77b9af;border-radius:1.5rem;background:#fcf7ef;box-shadow:0 .375rem 0 #4f938a;pointer-events:none;animation:pdIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+.piko-ladder-demo div{display:flex;align-items:baseline;gap:1rem;color:#310032;font-family:'Righteous',var(--font-display);}
+.piko-ladder-demo small{font:800 .9rem var(--font-body);color:#7656b3;}
+/* Paid hint: price tag on the button, green/red "where to look" frames. */
+#tool-hint{position:relative;}
+#tool-hint .hint-cost{position:absolute;right:-.45rem;top:-.45rem;min-width:1.35rem;height:1.35rem;padding:0 .3rem;border:2px solid #fff;border-radius:999px;background:#7656b3;color:#fff;font:800 .75rem/1.1rem var(--font-body);text-align:center;}
+#tool-hint.broke{opacity:.5;}
+#editor-canvas .el.hint-ok{outline:calc(3 * var(--selection-unit,1px)) solid #3e9b86!important;outline-offset:calc(3 * var(--selection-unit,1px));}
+#editor-canvas .el.hint-off{outline:calc(3 * var(--selection-unit,1px)) solid #e53b42!important;outline-offset:calc(3 * var(--selection-unit,1px));}
+/* Hint line: a pill centred under the toolbar, only while there's a hint to read. */
+#screen-editor.show-hint #editor-hint-banner{display:none!important;}
+#screen-editor.show-hint #editor-hint-banner.has-hint:not(.hidden){display:flex!important;position:absolute;z-index:85;left:calc((100% - var(--studio-right, 20rem) - 1rem) / 2);top:calc(var(--editor-topbar-h) + 5rem);transform:translateX(-50%);width:max-content;max-width:40rem;max-height:none;align-items:center;gap:.75rem;padding:.6rem 1rem;border:3px solid #f5b83d;border-radius:999px;background:#fff8e6;color:#3b172e;font:700 1.05rem var(--font-body);text-transform:none;box-shadow:0 .375rem 1rem #3b172e26;}
+#screen-editor.show-hint #editor-hint-banner.has-hint:not(.hidden){top:auto!important;bottom:2rem;} /* bottom of the canvas: never covers what it frames */
+/* "Use a hint?" prompt. */
+.hint-confirm{position:fixed;inset:0;z-index:3000;display:grid;place-items:center;background:#123b5455;backdrop-filter:blur(2px);}
+.hint-confirm .hc-card{width:min(24rem,90vw);display:grid;justify-items:center;gap:.6rem;padding:1.75rem 2rem 1.5rem;border:3px solid #77b9af;border-radius:1.75rem;background:#fcf7ef;box-shadow:0 .375rem 0 #4f938a;text-align:center;animation:pdIn .3s cubic-bezier(.34,1.56,.64,1) both;}
+.hint-confirm .hc-icon{display:grid;place-items:center;width:4rem;height:4rem;border-radius:50%;background:#f9d985;font-size:2rem;}
+.hint-confirm h2{margin:0;font:800 1.75rem var(--font-display);color:#3b172e;}
+.hint-confirm p{margin:0;font:600 1.05rem/1.45 var(--font-body);color:#3b172e;}
+.hint-confirm .money{display:inline-flex;align-items:center;gap:.2rem;vertical-align:middle;}
+.hint-confirm .money-icon{width:1.2rem;height:1.2rem;}
+.hint-confirm small{font:700 .9rem var(--font-body);color:#5a6f6a;}
+.hint-confirm .hc-actions{display:flex;gap:.75rem;margin-top:.5rem;}
+.hint-confirm .hc-card{width:min(28rem,92vw);}
+.hint-confirm .hc-actions .btn{min-width:0;white-space:nowrap;padding:.6rem 1.25rem;font-size:1.25rem;}

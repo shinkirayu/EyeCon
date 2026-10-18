@@ -88,7 +88,7 @@
   // Each tour page lists plain-language goals (see levels.js). Required goals
   // decide approval; each bonus goal met adds a star. Checks are relative
   // ("these share a left edge") so there's no single pixel-perfect answer.
-  const GOAL_TOOL = { stronger:'color', align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
+  const GOAL_TOOL = { ladder:'typography', stronger:'color', align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
     evenGapsY:'position', evenGapsX:'position', safeMargin:'position', minW:'sizing', minH:'sizing',
     minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color', sameColor:'color',
     centeredX:'position', above:'position', sameSize:'sizing', wraps:'sizing' };
@@ -139,6 +139,8 @@
         return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass
           && (check.min == null || r >= check.min) && (check.max == null || r <= check.max);
       });
+      // [biggest, ..., smallest]: each step's font is bigger than the next (size hierarchy).
+      case 'ladder': return els.length > 1 && els.every((el, i) => i === 0 || els[i-1].fontSize > el.fontSize);
       // [main, ...others]: the first has higher contrast than every other one (hierarchy).
       case 'stronger': {
         const r = el => Math.round(window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)) * 10) / 10;
