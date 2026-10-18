@@ -809,7 +809,9 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
   await say(); await say(); await page.waitForTimeout(900);
   await page.locator('#icon-mail').click();
-  await page.waitForTimeout(900); await page.locator('#mail-list .mail-item').first().click();
+  // Piko explains EyeMail first, then the dim fades in on the email.
+  await expect(page.locator('.piko-bubble')).toContainText('EyeMail'); await say();
+  await expect(page.locator('.piko-bubble')).toContainText('Each email'); await say(); await page.waitForTimeout(1500); await page.locator('#mail-list .mail-item').first().click();
   await page.waitForTimeout(3500); await page.locator('#attachment-chip').click();
   await page.waitForTimeout(800); await page.locator('#btn-close-preview').click();
   await page.waitForTimeout(1200); await page.locator('#btn-accept-job').click();
@@ -823,26 +825,28 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.mouse.up({button:'middle'}); await page.waitForTimeout(400);
   await expect(bubble).toContainText('zoom');
   await page.waitForTimeout(600); await page.mouse.wheel(0, -120); await page.waitForTimeout(800); // clicks/wheel wait out Piko's 0.4s beat
-  await expect(bubble).toContainText('red dots');
+  await expect(bubble).toContainText('red dots',{timeout:15000}); // the zoom demo lingers, then the view zooms out first
   await next(); await expect(bubble).toContainText('Heads up');
   await next(); await expect(bubble).toContainText('together');
   await next(); await expect(bubble).toContainText('Left click it');
   const about = page.locator('#editor-canvas .el[data-id="about"]');
   await expect(about).toHaveClass(/piko-glow/);
-  await expect(page.locator('.piko-hole')).toHaveClass(/hidden/); // no dim over what to click
+  // (since "luv u" the screen stays dimmed here, with About glowing on top)
   await page.evaluate(()=>EC_EDITOR.selectElement('about')); await page.waitForTimeout(1200);
-  await expect(bubble).toContainText('This panel');
-  await next(); await expect(bubble).toContainText('lit up');
-  await next(); await expect(bubble).toContainText('Drag it upwards');
+  await expect(bubble).toContainText('Drag it upwards');
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');
-  await next(); await expect(bubble).toContainText('keeps score');
+  await next(); await expect(bubble).toContainText('This is the element panel');
+  await next(); await expect(bubble).toContainText('alignment rulers');
+  await next(); await expect(bubble).toContainText('This is the toolbar');
   await next(); await expect(bubble).toContainText('show or hide the grid');
   await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
   await next(); await expect(bubble).toContainText('click this one');
   await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('see-through');
   await page.locator('#grid-opacity-slider').fill('0.6'); await page.waitForTimeout(1600);
-  await expect(bubble).toContainText('Submit');
+  await expect(bubble).toContainText('undo and redo');
+  await next(); await expect(bubble).toContainText('zoom in and out');
+  await next(); await expect(bubble).toContainText('Submit');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
 });
 
@@ -868,6 +872,8 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
   // A line added after an action plays once the player has done it.
   await page.waitForTimeout(1500); await page.locator('#icon-mail').click();
   await page.waitForTimeout(1500); await expect(bubble).toContainText('Added after opening Mail.');
+  await next(); await expect(bubble).toContainText('EyeMail');
+  await next(); await expect(bubble).toContainText('Each email');
   await next(); await expect(bubble).toContainText('needs a hand');
 });
 
@@ -884,7 +890,7 @@ test('Piko lines can be re-read with back and forward', async ({ page }) => {
   await expect(text).toContainText("What's your name?");
   await page.getByRole('button', { name: 'Previous line' }).click();
   await expect(text).toContainText("Hi, I'm Piko");
-  await expect(bubble.locator('.piko-hint')).toContainText('Earlier line');
+  await expect(bubble.locator('.piko-hint')).toContainText('Next (1/3)');
   // No › button: a click anywhere (or →) goes back to the newest line.
   await expect(page.getByRole('button', { name: 'Next line' })).toBeHidden();
   await page.keyboard.press('ArrowRight');

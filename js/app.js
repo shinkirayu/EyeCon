@@ -218,14 +218,20 @@
       await talk(W.intro);
       // Learn by doing: these lines can't be clicked away, only done.
       const wrap = document.getElementById('editor-canvas-wrap');
-      P.say(W.pan, { top:true });
+      P.pointAt(wrap); // dim everything but the canvas so eyes go to the demo and Piko
+      P.say(W.pan, { top:true }); P.demo('pan');
       let held = 0; // ~1s of actual panning, in 200ms ticks
       await until(()=>(held += wrap.classList.contains('panning') ? 1 : 0) >= 5);
       await new Promise(r => setTimeout(r, 2000)); // let them pan around a bit more
-      P.say(W.zoom, { top:true });
+      P.say(W.zoom, { top:true }); P.demo('zoom');
       let zoomed = false; wrap.addEventListener('wheel', ()=>{ zoomed = true; }, { once:true });
       await until(()=>zoomed);
-      await new Promise(r => setTimeout(r, 2000)); // let them play with zoom first
+      await new Promise(r => setTimeout(r, 2200)); // let them play with zoom, demo still showing
+      P.demo(null); P.clearTarget();
+      await new Promise(r => setTimeout(r, 600));
+      body.classList.add('piko-view-lock'); // no panning or zooming while the red dots are shown
+      await window.EC_EDITOR.showWholeDesign(); // zoom out and centre so every red mark is in view
+      await new Promise(r => setTimeout(r, 400));
       const marks = [...document.querySelectorAll('#editor-canvas .el.needs-edit')];
       marks.forEach(m => m.classList.add('piko-mark-wait'));
       body.classList.remove('piko-marks-hidden');
@@ -241,7 +247,7 @@
       await talk(W.dotsLater);
       // Hands-on: fix "About" together.
       const practice = elDiv('about') && !goalsMet('about') ? 'about' : null;
-      body.classList.remove('piko-tour-lock');
+      body.classList.remove('piko-tour-lock', 'piko-view-lock');
       if(practice){
         await talk(W.together);
         // selectAbout + its admin-added lines: the intro lines light up the
@@ -249,58 +255,86 @@
         const extra = window.EC_TEXT?.extras('piko.workspace.selectAbout') || { after:[] };
         const lines = [W.selectAbout, ...extra.after];
         const selected = () => elDiv(practice)?.classList.contains('selected');
-        for(const line of lines.slice(0, -1)){
+        for(const [i, line] of lines.slice(0, -1).entries()){
           if(selected()) break;
+          // Center "About" with the line that names it (the one right before "click it").
+          const naming = i === lines.length - 2;
+          if(naming) await window.EC_EDITOR.focusElement(practice, 700, 1.8); // centre and zoom in a little on About
           P.pointAt(elDiv('nav'));
-          await talk(line, { left:true, _x:true });
+          if(naming) setTimeout(()=>P.offsetHint(['home', 'contact'], practice), 500); // show how far it drops
+          await talk(line, { left:true, top:false, _x:true }); // bottom-left: the bar it points at is at the top
+          P.offsetHint();
         }
         if(!selected()){
           P.clearTarget();
-          await window.EC_EDITOR.focusElement(practice);
+          if(lines.length === 1) await window.EC_EDITOR.focusElement(practice); // already centred above otherwise
           glow(practice); P.pointAt(elDiv(practice));
           P.say(lines[lines.length - 1], { left:true, _x:true }); // bottom-left: keeps the page's top menu row clear
           await until(selected);
         }
-        await step('#element-settings', W.controls, { left:true });
-        // Selecting it also lit up its task on the left: point that out.
-        // (desktop: the task pops up in Piko's corner card; phones: it lights up in the list)
-        { const say = document.getElementById('editor-piko-say'), task = document.querySelector('#editor-mail-points .editor-goal.focus');
-          if(say && !say.hidden && say.offsetParent) await step('#editor-piko-say', W.taskLit, { left:true });
-          else if(task){ task.scrollIntoView({ block:'nearest' }); await step('#editor-mail-points .editor-goal.focus', W.taskLit); } }
         P.clearTarget(); glow(practice);
-        P.say(W.dragAbout, { left:true });
+        P.say(W.dragAbout, { left:true }); P.demo('drag', elDiv(practice));
         // Praise only once it's lined up AND the mouse is let go.
-        let down = false;
+        let down = false, explaining = false, explained = false;
         const onDown = () => { down = true; }, onUp = () => { down = false; };
         document.addEventListener('pointerdown', onDown, true); document.addEventListener('pointerup', onUp, true);
-        await until(()=>!down && goalsMet(practice));
+        // The first time the drag shows its guides (spacing tags + alignment line),
+        // hold the drag right there and explain them with labels.
+        const guidesUp = () => document.querySelector('#editor-canvas .guide-line') && document.querySelector('#editor-canvas .spacing-overlay text');
+        const watch = setInterval(async ()=>{
+          if(explained || !document.body.classList.contains('eyecon-dragging') || !guidesUp()) return;
+          explained = explaining = true; clearInterval(watch);
+          window.EC_EDITOR.freezeDrag();
+          P.demo(null); body.classList.add('piko-view-lock');
+          await window.EC_EDITOR.focusElement(practice, 500, 2.2); // zoom in so the guides and labels are easy to read
+          P.guideNotes(true);
+          await talk(W.guides, { left:true, top:false });
+          P.guideNotes(false); body.classList.remove('piko-view-lock');
+          window.EC_EDITOR.releaseFrozenDrag();
+          down = false; explaining = false;
+          if(!goalsMet(practice)){ P.say(W.dragAbout, { left:true }); P.demo('drag'); }
+        }, 100);
+        await until(()=>!down && !explaining && goalsMet(practice));
+        clearInterval(watch);
         document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('pointerup', onUp, true);
-        glow(null);
+        glow(null); P.demo(null);
         await talk(W.nice);
+        // Keep About selected for this one step so its panel is showing while Piko points at it.
+        if(!elDiv(practice)?.classList.contains('selected')) window.EC_EDITOR.selectElement(practice);
+        await step('#element-settings', W.controls, { left:true }); // the panel can move it too
+        await step('#screen-editor .editor-topbar', W.rulers); // alignment rulers + spacing guide (lights the whole toolbar)
       } else {
         P.clearTarget();
         P.say(W.element, { top:true });
         await until(()=>document.querySelector('#editor-canvas .el.selected'));
         await step('#element-settings', W.controls, { left:true });
       }
-      await step(document.querySelector('#editor-mail-points')?.offsetParent ? '#screen-editor .editor-side-rail:not(.editor-right-rail)' : '#editor-task-progress', W.tasks, { left:true });
       // Toolbar: the player clicks each tool to see what it does.
       // After the click, the spotlight moves to what the tool changed.
+      // Every toolbar step lights the whole toolbar (the border it sits on) and
+      // glows the specific tool inside it.
+      const pill = document.querySelector('#screen-editor .editor-topbar'); // the rounded toolbar container, not just the tool row
+      const glowTool = el => { document.querySelectorAll('.piko-tb-glow').forEach(n => n.classList.remove('piko-tb-glow')); el?.classList.add('piko-tb-glow'); };
+      const toolStep = async (sel, line) => { P.pointAt(pill); glowTool(sel && document.querySelector(sel)); await talk(line); glowTool(null); };
       const clickTool = async (id, ask, done, show) => {
         const btn = document.getElementById(id);
         let clicked = false; btn.addEventListener('click', ()=>{ clicked = true; }, { once:true });
-        P.pointAt(btn); P.say(ask, { top:true });
+        P.pointAt(pill); glowTool(btn); P.say(ask, { top:true });
         await until(()=>clicked);
+        glowTool(null);
         P.pointAt(document.querySelector(show));
         await talk(done);
       };
+      // Toolbar tour, left to right: grid → grid options → undo/redo → zoom.
+      await toolStep(null, W.toolbar);
       await clickTool('tool-grid', W.grid, W.gridDone, '#editor-canvas-wrap'); // the visible canvas area, between the side bars
       // Grid settings: open it, try a slider, then a 1s beat to see the change.
       {
         const btn = document.getElementById('tool-grid-settings'), panel = document.getElementById('grid-settings-panel');
         let clicked = false; btn.addEventListener('click', ()=>{ clicked = true; }, { once:true });
-        P.pointAt(btn); P.say(W.gridSettings, { top:true });
+        P.pointAt(pill); glowTool(btn); P.say(W.gridSettings, { top:true });
         await until(()=>clicked);
+        glowTool(null);
         let changed = false; panel.addEventListener('input', ()=>{ changed = true; }, { once:true });
         P.pointAt(document.getElementById('editor-canvas-wrap')); // panel sits on the canvas: light both
         P.say(W.gridSettingsDone, { top:true });
@@ -308,6 +342,9 @@
         await new Promise(r => setTimeout(r, 1000));
         panel.hidden = true;
       }
+      // Just a look, nothing to click.
+      await toolStep('#screen-editor .editor-tools-left', W.toolbarUndo);
+      await toolStep('#screen-editor .editor-zoom-controls', W.toolbarZoom);
       body.classList.add('piko-no-submit');
       await step('#tool-save', W.submit, { left:true });
       body.classList.remove('piko-no-submit');
@@ -326,12 +363,24 @@
     const here = () => window.EC_EDITOR.getLevel() === level && document.getElementById('screen-editor').classList.contains('active');
     const allDone = () => window.EC_GRADING.checkGoals(level, window.EC_EDITOR.getElements()).every(r => r.met);
     (async ()=>{
-      await until(()=>!here() || allDone());
-      if(!here()) return; // submitted or left before finishing: nothing to show
+      // Done only once every task passes with nothing held: a drag that passes
+      // mid-move doesn't count until the mouse is let go and it still passes.
+      const settled = () => allDone() && !window.EC_EDITOR.isDragging();
+      for(;;){
+        await until(()=>!here() || settled());
+        if(!here()) return; // submitted or left before finishing: nothing to show
+        await new Promise(r => setTimeout(r, 400));
+        if(!here()) return;
+        if(settled()) break;
+      }
+      window.EC_EDITOR.freezeDesign(); // finished: everything stays exactly where it is
+      await new Promise(r => setTimeout(r, 900)); // a beat to enjoy the finished design first
+      if(!here()) return;
       await window.EC_EDITOR.showWholeDesign(); // whole page in view, grid off, so the change is easy to see
       const btn = document.getElementById('tool-preview'), save = document.getElementById('tool-save');
       let held = false, released = false;
-      const onDown = () => { held = true; };
+      // While the button is held, the spotlight moves to the canvas so the before/after is bright and clear.
+      const onDown = () => { held = true; P.pointAt(document.getElementById('editor-canvas-wrap')); };
       const onUp = () => { if(held) released = true; };
       btn.addEventListener('pointerdown', onDown); btn.addEventListener('keydown', onDown);
       document.addEventListener('pointerup', onUp); btn.addEventListener('keyup', onUp);
@@ -340,6 +389,9 @@
       btn.removeEventListener('pointerdown', onDown); btn.removeEventListener('keydown', onDown);
       document.removeEventListener('pointerup', onUp); btn.removeEventListener('keyup', onUp);
       if(!here()){ P.clearTarget(); P.hideBubble(); return; }
+      P.clearTarget(); P.hideBubble();
+      await new Promise(r => setTimeout(r, 1200)); // let the after-view sink in before Submit
+      if(!here()) return;
       P.pointAt(save); P.say(W.submitNow, { left:true });
       let sent = false; save.addEventListener('click', ()=>{ sent = true; }, { once:true });
       await until(()=>sent || !here());
@@ -522,8 +574,12 @@
       if(row && level){
         // Only this email works for now: no scrolling, no other rows.
         row.classList.add('piko-target'); document.body.classList.add('piko-inbox');
-        window.EC_PIKO.pointAt(row);
-        window.EC_PIKO.say(window.EC_PIKO.SCRIPT.inboxGuide(level.clientName));
+        // First explain the Mail app (no dim), then fade the dim in on the email.
+        const P = window.EC_PIKO;
+        P.say(P.SCRIPT.mailIntro, { onDone: ()=> P.say(P.SCRIPT.mailExplain, { onDone: ()=>{
+          P.pointAt(row);
+          P.say(P.SCRIPT.inboxGuide(level.clientName));
+        } }) });
       } else document.body.classList.remove('piko-line-pending'); // nothing to point at: don't stay frozen
     }, 450);
   }

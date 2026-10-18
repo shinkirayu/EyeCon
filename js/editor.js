@@ -300,6 +300,7 @@
   // ---------------- Open / build ----------------
   function open(level, savedElements){
     state.level = level;
+    state.frozen = false; // set once a tutorial design is finished: nothing moves any more
     document.getElementById('screen-editor').classList.toggle('show-hint', (level.levelNumber || 0) >= 4);
     state.focusGoal = null; // the suggested next task in the goal list
     state.elements = clone(savedElements || level.elements);
@@ -431,18 +432,23 @@
   }
 
   // Smoothly pans so an element sits in the middle of the workspace (current zoom).
-  function focusElement(id, ms = 600){
+  function focusElement(id, ms = 600, zoomTo = null){
     const el = state.elements.find(e => e.id === id);
     const wrap = document.getElementById('editor-canvas-wrap');
     if(!el || !wrap || !state.level) return Promise.resolve();
-    const scale = baseFitScale(state.level.canvas.w, state.level.canvas.h) * state.displayZoom;
-    const fromX = state.panX, fromY = state.panY;
+    cancelAnimationFrame(zoomAnimId); zoomAnchor = null;
+    const base = baseFitScale(state.level.canvas.w, state.level.canvas.h);
+    const fromX = state.panX, fromY = state.panY, fromZ = state.displayZoom;
+    const toZ = zoomTo == null ? fromZ : zoomTo; // optionally zoom in on it too
+    if(zoomTo != null) state.zoom = toZ;
+    const scale = base * toZ;
     const toX = wrap.clientWidth / 2 - (el.x + el.w / 2) * scale;
     const toY = wrap.clientHeight / 2 - (el.y + el.h / 2) * scale;
     const start = performance.now();
     return new Promise(done => {
       const frame = now => {
         const t = Math.min(1, (now - start) / ms), ease = 1 - Math.pow(1 - t, 3);
+        state.displayZoom = fromZ + (toZ - fromZ) * ease;
         state.panX = fromX + (toX - fromX) * ease;
         state.panY = fromY + (toY - fromY) * ease;
         applyCanvasTransform();
@@ -1196,7 +1202,7 @@
   function renderSpacing(){
     state.guideLayerEl?.querySelector('.spacing-overlay')?.remove();
     const el=byId(state.selectedId);
-    if((!state.tools.measure && !(state.dragging && state.tools.guides)) || !el || !state.guideLayerEl)return;
+    if((!state.tools.measure && !((state.dragging || state.heldGuides) && state.tools.guides)) || !el || !state.guideLayerEl)return;
     const nearest={};
     const add=(side,gap,x1,y1,x2,y2)=>{if(gap>=0 && (!nearest[side] || gap<nearest[side].gap))nearest[side]={gap,x1,y1,x2,y2};};
     // Measure to every element, locked ones included (they're the reference points).
@@ -1311,6 +1317,7 @@
 
   function onPointerDown(e){
     if(e.button !== 0) return; // left click only — middle-click is reserved for panning
+    if(state.frozen) return; // finished design: look, don't touch
     const target = e.target;
     const elDiv = target.closest('.el');
     if(!elDiv){ deselect(); return; }
@@ -1400,6 +1407,25 @@
       renderSpacing();
       if(state.tools.measure) drawDragLabel(el.x, Math.max(0,el.y-24), `${Math.round(w)}×${Math.round(h)}px`);
     }
+  }
+
+  // Tutorial "hold": stop the current drag mid-move but leave its guides on screen
+  // so Piko can explain them; releaseFrozenDrag() finishes it like a mouse-up.
+  function freezeDrag(){
+    if(!state.dragging) return false;
+    state.dragging = null;
+    state.heldGuides = true; // spacing tags stay up (and redraw at new zooms) while held
+    document.body.classList.remove('eyecon-dragging');
+    return true;
+  }
+  function releaseFrozenDrag(){
+    state.heldGuides = false;
+    clearGuideLines();
+    pushHistory();
+    renderSpacing();
+    const el = byId(state.selectedId);
+    if(el) showSettings(el);
+    refreshLiveOverlays();
   }
 
   function onPointerUp(){
@@ -1826,6 +1852,7 @@
           return;
         }
       }
+      if(state.frozen && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){ e.preventDefault(); return; }
       if(state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
         const el = byId(state.selectedId);
         if(!el || el.locked || !can(el,'move')) return;
@@ -1986,7 +2013,10 @@
   }, true));
 
   window.EC_EDITOR = {
-    readVariant, setVariant, selectElement, focusElement, showWholeDesign,
+    readVariant, setVariant, selectElement, focusElement, showWholeDesign, freezeDrag, releaseFrozenDrag,
+    // Locks the design as it is (tutorial: once every task is done).
+    freezeDesign(){ state.frozen = true; state.dragging = null; document.body.classList.remove('eyecon-dragging'); clearGuideLines(); deselect(); },
+    isDragging: () => !!state.dragging,
     open, undo, redo,
     setOnSubmit: fn => state.onSubmit = fn,
     getElements: () => state.elements,

@@ -16,6 +16,8 @@
     askName: "What's your name?",
     askNameTitle: "What should Piko call you?",
     niceToMeet: "Nice to meet you, {name}! Let's get you settled in.",
+    mailIntro: "This is EyeMail, your work inbox! Clients send you their design jobs here.",
+    mailExplain: "Each email shows who it's from, what they need, and how tricky it is. Finished jobs move to Completed.",
     inboxGuide: "{client} needs a hand. Open their email to see the job.",
     previewGuide: "They sent their design. Click the attachment to take a look.",
     acceptGuide: "Seen enough? Click Accept to start the job.",
@@ -25,6 +27,9 @@
       zoom: "Nice moves! Now scroll your mouse wheel to zoom in and out.",
       problems: "Spot the red dots? Each one marks something the client wants fixed.",
       dotsLater: "Heads up! As you clear more clients, the trickier each level will get and the fewer warning hints will show up.",
+      toolbar: "This is the toolbar! Everything for working on the design lives up here.",
+      toolbarUndo: "Made a mistake? You can undo and redo your changes right here. No need to click, just remember it's here!",
+      toolbarZoom: "You can also zoom in and out here whenever you want a closer look.",
       grid: "Click this button to show or hide the grid.",
       gridDone: "See? Everything snaps to the grid, so lining things up is easy.",
       gridSettings: "Now click this one.",
@@ -32,11 +37,11 @@
       together: "Let's fix one together so you get the feel of it.",
       selectAbout: "See \"About\" up in the top menu? It sits a little lower than Home and Contact. Left click it to pick it.",
       element: "Click any element with a red dot to get started.",
-      taskLit: "See how its task lit up? Selecting something shows exactly which task it belongs to.",
-      controls: "Got it! This panel shows what you picked. You'll use it more later.",
+      controls: "This is the element panel. You can also adjust it here, and you'll use it more later!",
       dragAbout: "Drag it upwards to make sure it's aligned with the \"Home\" and \"Contact\" line. The arrow keys work too!",
+      guides: "Hold on! See these guides? The purple tags show the space between elements, and the pink line shows what it lines up with. Use them to line things up!",
       nice: "Perfect! See how much tidier that menu row looks? That's alignment.",
-      tasks: "Your task progress keeps score. That one just ticked off!",
+      rulers: "When you drag, alignment rulers and the spacing between elements show up. Use them as your guide to line things up!",
       submit: "Fix the rest, then hit Submit to send it to the client.",
       compare: "All tasks done! Press and hold this button to compare your design with the original.",
       submitNow: "See the difference? Now hit Submit to send it to the client."
@@ -178,13 +183,13 @@
   // Lines shown since Piko last appeared, for ‹ › re-reading.
   let history = [], view = -1, latestCanAdvance = false;
   window.EC_TEXT?.register('piko.ui.continue', 'Click anywhere to continue', 'ui', 'Hint under Piko’s line');
-  window.EC_TEXT?.register('piko.ui.back', 'Earlier line · click to return', 'ui', 'Hint while re-reading an earlier line');
+  window.EC_TEXT?.register('piko.ui.reread', 'Next', 'ui', 'Hint while re-reading an earlier line (a (2/4) counter is added)');
   const hintText = k => window.EC_TEXT ? window.EC_TEXT.t(k) : '';
   function showView(){
     const { textEl, hint, prev, next } = dom, latest = view === history.length - 1;
     textEl.innerHTML = richText(history[view]);
     dom.bubble.classList.toggle('piko-reviewing', !latest);
-    hint.textContent = !latest ? hintText('piko.ui.back') : latestCanAdvance ? hintText('piko.ui.continue') : '';
+    hint.textContent = !latest ? `${hintText('piko.ui.reread')} (${view + 1}/${history.length})` : latestCanAdvance ? hintText('piko.ui.continue') : '';
     prev.disabled = view <= 0;
     next.disabled = latest && !latestCanAdvance;
     prev.hidden = next.hidden = history.length < 2 && !latestCanAdvance;
@@ -308,7 +313,7 @@
     };
     if(opts.onDone) setTimeout(() => document.addEventListener('click', advanceAnywhere, true));
     bubble.onclick = () => {
-      if(view < history.length - 1){ view = history.length - 1; showView(); return; } // re-reading: a click jumps back to the current line
+      if(view < history.length - 1){ view++; showView(); return; } // re-reading: a click steps forward one line
       if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
       document.removeEventListener('click', advanceAnywhere, true);
       if(typeTimer){ finishTyping(); return; }
@@ -364,6 +369,11 @@
           return;
         }
         clearInterval(placeRetryTimer); placeRetryTimer = null;
+        // Every new highlight fades in from clear, like the first one on the Mail
+        // app (instead of the dim snapping straight from one target to the next).
+        if(!lift && currentTarget !== el && !hole.classList.contains('hidden')){
+          hole.style.transition = 'none'; hole.classList.add('hidden'); void hole.offsetWidth; hole.style.transition = '';
+        }
         place();
         cursor.classList.remove('hidden');
         if(opts.dim !== false && !lift){
@@ -381,11 +391,15 @@
         cursor.style.top = (r.top + r.height * .7) + 'px';
         // Desktop icons: dim everything and lift the icon itself above it.
         if(lift) return;
-        // Exact fit: same box and corner radius as the target.
-        hole.style.left = r.left + 'px';
-        hole.style.top = r.top + 'px';
-        hole.style.width = r.width + 'px';
-        hole.style.height = r.height + 'px';
+        // Exact fit: same box and corner radius as the target, clipped to the
+        // editor's visible canvas area (a page-wide bar shouldn't spill over the panels).
+        const clip = el.closest('#editor-canvas') && document.getElementById('editor-canvas-wrap')?.getBoundingClientRect();
+        const L = clip ? Math.max(r.left, clip.left) : r.left, T = clip ? Math.max(r.top, clip.top) : r.top;
+        const R = clip ? Math.min(r.right, clip.right) : r.right, B = clip ? Math.min(r.bottom, clip.bottom) : r.bottom;
+        hole.style.left = L + 'px';
+        hole.style.top = T + 'px';
+        hole.style.width = Math.max(0, R - L) + 'px';
+        hole.style.height = Math.max(0, B - T) + 'px';
         hole.style.borderRadius = getComputedStyle(el).borderRadius;
       };
       tryPlace();
@@ -455,5 +469,98 @@
     }, 50);
   }
 
-  window.EC_PIKO = { SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
+  // On-screen control demos for players who skip reading: a "TRY IT" card with a big
+  // mouse (and arrows) acting the move out in the middle of the canvas, until Piko's
+  // step is done.
+  function demo(kind){
+    document.querySelectorAll('.piko-demo').forEach(n => n.remove());
+    if(!kind) return;
+    const wrap = document.getElementById('editor-canvas-wrap');
+    if(!wrap) return;
+    const r = wrap.getBoundingClientRect();
+    const d = document.createElement('div');
+    d.className = 'piko-demo piko-demo-' + kind;
+    d.setAttribute('aria-hidden', 'true');
+    // The drag demo sits to the side: About is centred in the canvas and must stay visible.
+    const cx = kind === 'drag' ? r.left + r.width * .78 : r.left + r.width / 2, cy = kind === 'drag' ? r.top + r.height * .36 : r.top + r.height / 2;
+    d.style.left = cx + 'px'; d.style.top = cy + 'px';
+    const mouse = kind === 'pan' ? mouseIcon('middle', 'right') : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
+    const label = { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' }[kind];
+    d.innerHTML = `<div class="pd-stage"><span class="pd-mouse">${mouse}</span>
+      ${kind === 'pan' ? '<i class="pd-arrow l">◀</i><i class="pd-arrow r">▶</i>' : ''}
+      ${kind === 'zoom' ? '<i class="pd-arrow u">▲</i><i class="pd-arrow d">▼</i><b class="pd-zoom">+ / −</b>' : ''}
+      ${kind === 'drag' ? '<i class="pd-arrow u">▲</i>' : ''}</div>
+      <p>${label}</p>${kind === 'drag' ? `<p class="pd-or">or ${ARROWS}</p>` : ''}`;
+    document.body.appendChild(d);
+  }
+  // "Sits a little lower": a dashed guide along Home/Contact's top edge and a
+  // bracket showing how far About drops below it, drawn in with a bounce.
+  function offsetHint(refIds, id){
+    document.querySelectorAll('.piko-offset, .po-tag-top').forEach(n => n.remove());
+    const canvas = document.getElementById('editor-canvas'), els = window.EC_EDITOR?.getElements?.() || [];
+    const refs = [].concat(refIds || []).map(r => els.find(e => e.id === r)).filter(Boolean), el = els.find(e => e.id === id);
+    if(!canvas || !refs.length || !el) return;
+    // Line, box and bracket are drawn inside the canvas in design pixels, so they
+    // stay put while panning and scale with the canvas when zooming.
+    const all = [...refs, el];
+    const left = Math.min(...all.map(r => r.x)) - 12, right = Math.max(...all.map(r => r.x + r.w)) + 12;
+    const top = Math.min(...refs.map(r => r.y)); // the shared line Home and Contact sit on
+    const h = document.createElement('div');
+    h.className = 'piko-offset'; h.setAttribute('aria-hidden', 'true');
+    h.innerHTML = `<i class="po-line" style="left:${left}px;top:${top}px;width:${right - left}px"></i>
+      <i class="po-ghost" style="left:${el.x - 6}px;top:${el.y - 6}px;width:${el.w + 12}px;height:${el.h + 12}px"></i>
+      <i class="po-gap" style="left:${el.x - 16}px;top:${top}px;height:${Math.max(4, el.y - top)}px"></i>`;
+    canvas.appendChild(h);
+    // The tag lives on the top layer (above the dim) and tracks the page every frame.
+    const q = i => canvas.querySelector(`.el[data-id="${i.id}"]`);
+    const aboutDom = q(el), refDoms = refs.map(q);
+    const tag = document.createElement('div');
+    tag.className = 'po-tag-top'; tag.setAttribute('aria-hidden', 'true');
+    tag.innerHTML = '<span>↑ a little lower than Home &amp; Contact</span>';
+    document.body.appendChild(tag);
+    const place = () => {
+      if(!tag.isConnected || !aboutDom) return;
+      const ab = aboutDom.getBoundingClientRect(), sc = ab.width / el.w;
+      tag.style.transform = `scale(${sc})`;
+      tag.style.left = (ab.left + ab.width / 2 - 20 * sc) + 'px'; // its ↑ sits right under the middle of About
+      tag.style.top = (ab.bottom + 14 * sc) + 'px';
+      requestAnimationFrame(place);
+    };
+    place();
+  }
+
+  // Callout labels pointing at the drag guides (spacing tags, alignment line, the
+  // elements it lines up with). Top layer, fixed in place while the drag is held.
+  function guideNotes(on){
+    document.querySelectorAll('.piko-anno').forEach(n => n.remove());
+    if(!on) return;
+    const add = (x, y, text, dir) => {
+      const n = document.createElement('div');
+      n.className = 'piko-anno piko-anno-' + dir; n.setAttribute('aria-hidden', 'true');
+      n.textContent = text; n.style.left = x + 'px'; n.style.top = y + 'px';
+      document.body.appendChild(n);
+    };
+    const about = document.querySelector('#editor-canvas .el.selected')?.getBoundingClientRect();
+    const mid = r => r.left + r.width / 2;
+    // The gap tag nearest the dragged element (in its row, above it).
+    const tags = [...document.querySelectorAll('#editor-canvas .spacing-overlay rect')].map(n => n.getBoundingClientRect());
+    if(tags.length && about){
+      const t = tags.filter(r => r.bottom <= about.top + 4).sort((a, b) => Math.abs(mid(a) - mid(about)) - Math.abs(mid(b) - mid(about)))[0] || tags[0];
+      add(mid(t), t.top - 10, 'Space between elements', 'down');
+    }
+    // Only the pieces it lines up with (not the whole bar behind them).
+    const refs = [...document.querySelectorAll('#editor-canvas .alignment-reference')].map(n => n.getBoundingClientRect())
+      .filter(r => !about || r.width < about.width * 4);
+    const line = document.querySelector('#editor-canvas .guide-line.h') || document.querySelector('#editor-canvas .guide-line.v');
+    if(line){
+      const r = line.getBoundingClientRect();
+      if(line.classList.contains('h')) add((refs.length ? Math.max(...refs.map(q => q.right)) : r.left + r.width * .75) + 18, r.top, 'Line they all line up on', 'left');
+      else add(r.left + 18, (refs.length ? Math.min(...refs.map(q => q.top)) : r.top + 40) - 10, 'Line they all line up on', 'left');
+    }
+    if(refs.length){
+      const q = about ? refs.sort((a, b) => Math.abs(mid(a) - mid(about)) - Math.abs(mid(b) - mid(about)))[0] : refs[0];
+      add(mid(q), q.bottom + 12, 'Lines up with this', 'up');
+    }
+  }
+  window.EC_PIKO = { demo, offsetHint, guideNotes, SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
 })();

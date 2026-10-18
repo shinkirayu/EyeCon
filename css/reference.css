@@ -2409,7 +2409,7 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #modal-reward .reward-bar{height:1rem;border:2px solid #77b9af;border-radius:999px;background:linear-gradient(90deg,#3e9b86 var(--a),#8ee09b var(--a) var(--b),#e3f4f1 var(--b));}
 #modal-reward .reward-pills{justify-content:center;}
 #modal-mail-detail .mail-detail-attachment .attachment-card{zoom:.8;}
-#modal-mail-detail .mail-detail-attachment .attachment-name{font-size:20px;} /* 16px after the .8 zoom */
+
 /* Reward on the right above the divider; attachment + a bigger Accept below it. */
 #modal-mail-detail .mail-detail-card .mail-detail-body{padding-bottom:0;border-bottom:0;}
 #modal-mail-detail .mail-detail-card .mail-detail-reward{grid-row:3;grid-column:1 / -1;justify-self:end;margin:1rem 0;}
@@ -2418,17 +2418,6 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #modal-mail-detail .mail-detail-card #btn-accept-job{grid-row:5;align-self:center;margin-top:1rem;min-width:16rem;min-height:5.5rem;font-size:2.5rem;}
 #modal-reward .reward-fee .reward-total{display:flex;justify-content:center;}
 #modal-mail-detail .mail-detail-card .mail-detail-reward{grid-column:2;justify-self:center;}
-#modal-mail-detail .mail-detail-attachment .attachment-card{display:flex!important;flex-direction:row!important;align-items:center;gap:1rem;padding-right:1.25rem;}
-#modal-mail-detail .mail-detail-attachment .attachment-name{display:flex;align-items:center;gap:.5rem;}
-#modal-mail-detail .mail-detail-attachment .attachment-card{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;}
-#modal-mail-detail .mail-detail-attachment .attachment-thumb{border-radius:.75rem;overflow:hidden;box-shadow:0 .25rem .75rem #3b172e26;}
-#modal-mail-detail .mail-detail-attachment .attachment-name{background:none!important;padding:0!important;}
-#modal-mail-detail .mail-detail-attachment,#modal-mail-detail .mail-detail-attachment .attachment-card{width:auto!important;max-width:none!important;overflow:visible!important;}
-#modal-mail-detail .mail-detail-attachment .attachment-name{white-space:nowrap;overflow:visible!important;text-overflow:clip!important;max-width:none!important;flex:none;}
-#modal-mail-detail .mail-detail-attachment .attachment-name{font-size:20px!important;}
-#modal-mail-detail .mail-detail-attachment .attachment-thumb{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;}
-#modal-mail-detail .mail-detail-attachment .attachment-card:is(:hover,:focus-visible) .attachment-thumb{transform:translateY(-4px) rotate(-1.5deg);box-shadow:0 .75rem 1.25rem #3b172e33;}
-#modal-mail-detail .mail-detail-attachment .attachment-card:is(:hover,:focus-visible) .attachment-name{text-decoration:underline;text-underline-offset:4px;}
 /* Workspace loading screen: big eyes and label. */
 .app-loading-screen .loading-eyes{width:min(32rem,70vw)!important;}
 .app-loading-screen .loading-label{font-size:2.5rem!important;}
@@ -2562,3 +2551,103 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 .piko-ico.piko-arrows{height:1.6em;vertical-align:-.45em;}
 /* During the tutorial the talking Piko is the one in the speech bubble; the corner eyes step aside. */
 body.piko-tutorial #screen-editor .editor-piko{visibility:hidden;}
+/* Back arrow sits top-left, just before the PIKO name. */
+.piko-panel{position:relative;}
+.piko-nav.prev{position:absolute;top:1.55rem;left:1rem;width:1.5rem;height:1.5rem;}
+.piko-bubble:has(.piko-nav.prev:not([hidden])) .piko-name{padding-left:1.75rem;}
+/* The spotlight dim fades (in and out) instead of popping: keep it rendered while "hidden". */
+.piko-hole.hidden{display:block!important;}
+/* Attachment: the original card (preview on top, file name below), lifting on hover. */
+#modal-mail-detail .mail-detail-attachment .attachment-card{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;}
+#modal-mail-detail .mail-detail-attachment .attachment-card:is(:hover,:focus-visible){transform:translateY(-4px) rotate(-1deg);box-shadow:0 .75rem 1.25rem #3b172e33;}
+.piko-hole.hidden::after{display:none;} /* the pulsing white outline goes as soon as Piko moves on */
+/* Mail attachment: the preview fills the card edge to edge (no grey margin). */
+#modal-mail-detail .attachment-thumb{display:block;height:auto!important;background:none;}
+#modal-mail-detail .attachment-thumb > div{border-radius:0!important;box-shadow:none!important;}
+#modal-mail-detail .mail-detail-attachment .attachment-card{width:max-content!important;overflow:hidden;}
+#modal-mail-detail .mail-detail-attachment .attachment-name{width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* the preview sets the card width, never the file name */
+#modal-mail-detail .mail-detail-attachment .attachment-name{font-size:.85em;}
+
+/* Tutorial control demos: a "TRY IT" card in the game's look (cream, teal border,
+   chunky shadow) with a big mouse acting the move out over the canvas. */
+.piko-demo{position:fixed;z-index:2103;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:.5rem;padding:1.5rem 2rem 1.25rem;border:3px solid #77b9af;border-radius:1.75rem;background:#fcf7ef;box-shadow:0 .375rem 0 #4f938a,0 .75rem 1.5rem #12334426;pointer-events:none;animation:pdIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pdIn{from{opacity:0;transform:translate(-50%,-40%) scale(.85)}}
+.piko-demo::before{content:'TRY IT';position:absolute;top:-.85rem;left:50%;transform:translateX(-50%);padding:.15rem .75rem;border-radius:999px;background:#2f7a70;color:#fff;font:800 .8rem var(--font-body);letter-spacing:.14em;}
+.piko-demo p{margin:0;font:800 1.5rem var(--font-display);color:#3b172e;}
+.piko-demo .pd-or{font:700 1.1rem var(--font-body);display:flex;align-items:center;gap:.4rem;color:#5a6f6a;}
+.piko-demo .pd-or .piko-ico{height:1.6em;}
+.pd-stage{position:relative;width:12rem;height:7rem;display:grid;place-items:center;background:#e3f1ec;border-radius:1.25rem;}
+.pd-mouse .piko-ico{height:5.5rem;margin:0;vertical-align:0;}
+.pd-arrow{position:absolute;font-style:normal;font-size:1.5rem;color:#2f7a70;}
+.pd-arrow.l{left:.25rem;top:50%;transform:translateY(-50%);}.pd-arrow.r{right:.25rem;top:50%;transform:translateY(-50%);}
+.pd-arrow.u{top:-.25rem;left:50%;transform:translateX(-50%);}.pd-arrow.d{bottom:-.25rem;left:50%;transform:translateX(-50%);}
+.pd-zoom{position:absolute;right:0;top:50%;transform:translateY(-50%);font:800 1.25rem var(--font-display);color:#2f7a70;}
+.piko-demo-pan .pd-mouse{animation:pdPan 1.6s ease-in-out infinite;}
+@keyframes pdPan{0%,100%{transform:translateX(-2.5rem)}50%{transform:translateX(2.5rem)}}
+.piko-demo-zoom .pd-mouse{animation:pdWheel 1s ease-in-out infinite;}
+@keyframes pdWheel{0%,100%{transform:translateY(0)}50%{transform:translateY(-.4rem)}}
+.piko-demo-zoom .pd-arrow{animation:pdBlink 1s steps(1) infinite;}.piko-demo-zoom .pd-arrow.d{animation-delay:.5s;}
+@keyframes pdBlink{50%{opacity:.15}}
+.piko-demo-drag .pd-mouse{animation:pdDrag 1.4s ease-in-out infinite;}
+@keyframes pdDrag{0%{transform:translateY(1.5rem)}60%,100%{transform:translateY(-1.5rem)}}
+/* "Sits a little lower" hint: dashed line on Home/Contact's top, a ghost outline where About should be, a bracket for the gap. */
+.piko-offset{position:absolute;inset:0;z-index:500;pointer-events:none;}
+.piko-offset i{position:absolute;display:block;}
+.po-line{height:0;border-top:3px dashed #e53b42;transform-origin:left;animation:poLine .6s ease-out both;}
+@keyframes poLine{from{transform:scaleX(0)}}
+.po-ghost{border:3px dashed #3e9b86;border-radius:6px;background:#3e9b8622;animation:poGhost 1.6s ease-in-out .6s infinite both;}
+@keyframes poGhost{0%,100%{opacity:.35}50%{opacity:1}}
+.po-gap{width:10px;border:3px solid #e53b42;border-left:0;border-radius:0 6px 6px 0;animation:poGap .5s cubic-bezier(.34,1.56,.64,1) .5s both;}
+.po-gap b{position:absolute;left:14px;top:50%;transform:translateY(-50%);padding:.1rem .45rem;border-radius:.4rem;background:#e53b42;color:#fff;font:800 .85rem var(--font-body);white-space:nowrap;}
+@keyframes poGap{from{transform:scaleY(0);opacity:0}}
+.reduce-motion .piko-demo *,.reduce-motion .piko-offset *{animation:none!important;}
+.po-gap{border-left:3px solid #e53b42;border-right:0;border-radius:6px 0 0 6px;}
+.po-tag{transform:translateX(-50%);padding:.2rem .6rem;border-radius:.5rem;background:#e53b42;color:#fff;font:800 .9rem var(--font-body);white-space:nowrap;box-shadow:0 .2rem 0 #a3142f;animation:poTag 1.2s ease-in-out .6s infinite both;}
+@keyframes poTag{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+.po-line{border-top-width:4px;z-index:1;}
+.po-ghost{z-index:0;}
+/* The marker lives in the canvas, so size it in canvas pixels: it pans with the page and scales with zoom. */
+.piko-offset .po-line{border-top:6px dashed #e53b42;}
+.piko-offset .po-ghost{border:5px dashed #3e9b86;border-radius:8px;}
+.piko-offset .po-gap{width:16px;border-left:6px solid #e53b42;border-radius:10px 0 0 10px;}
+.piko-offset .po-tag{padding:6px 16px;border-radius:12px;font-size:30px;line-height:1.2;box-shadow:0 6px 0 #a3142f;}
+@keyframes poTag{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-10px)}}
+.piko-offset .po-tag{font-size:22px;padding:5px 14px;transform:none;animation:poTag2 1.2s ease-in-out .6s infinite both;}
+@keyframes poTag2{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+/* "A little lower" tag: top layer (above the dim), scaled with the canvas zoom. */
+.po-tag-top{position:fixed;z-index:2102;transform-origin:top left;pointer-events:none;}
+.po-tag-top span{display:inline-block;padding:5px 14px;border-radius:12px;background:#e53b42;color:#fff;font:800 22px/1.2 var(--font-body);white-space:nowrap;box-shadow:0 6px 0 #a3142f;animation:poTag2 1.2s ease-in-out .6s infinite both;}
+.reduce-motion .po-tag-top span{animation:none;}
+/* Zoom/drag demo: room above and below the mouse so the arrows don't touch it. */
+.piko-demo-zoom .pd-stage,.piko-demo-drag .pd-stage{height:11rem;width:13rem;}
+.piko-demo-zoom .pd-arrow.u,.piko-demo-drag .pd-arrow.u{top:.4rem;}
+.piko-demo-zoom .pd-arrow.d{bottom:.4rem;}
+/* Tutorial: while Piko points out the red dots, the canvas can't be panned or zoomed. */
+body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
+/* Tutorial toolbar steps: the tool being explained glows inside the lit toolbar. */
+#screen-editor .tool-pill .piko-tb-glow{outline:3px solid #f5b83d;outline-offset:3px;border-radius:.75rem;animation:pikoGlow 1.2s ease-in-out infinite;}
+.reduce-motion #screen-editor .tool-pill .piko-tb-glow{animation:none;}
+/* Compose reply: same layout as the client's mail (header, body, divider, then the
+   attachment on the left and the big Send button on the right). */
+#modal-compose .compose-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;column-gap:1.5rem;align-items:center;}
+#modal-compose .compose-card .compose-head{grid-row:1;grid-column:1 / -1;}
+#modal-compose .compose-card .compose-body{grid-row:2;grid-column:1 / -1;}
+#modal-compose .compose-card .compose-hint{grid-row:3;grid-column:1 / -1;margin:.5rem 0 1rem;}
+#modal-compose .compose-card::after{content:'';grid-row:4;grid-column:1 / -1;border-top:2px solid #b2ddd3;}
+#modal-compose .compose-card .compose-attach-row{grid-row:5;grid-column:1;min-height:0;margin:1rem 0 0;width:auto;}
+#modal-compose .compose-card .btn-send{grid-row:5;grid-column:2;align-self:center;margin:1rem 0 0;min-width:16rem;min-height:5.5rem;font-size:2.5rem;}
+#modal-compose #compose-attachment-chip .attachment-card,#modal-compose #compose-attachment-chip{zoom:.8;}
+#modal-compose .attachment-thumb{display:block;height:auto!important;background:none;}
+#modal-compose .attachment-thumb > div{border-radius:0!important;box-shadow:none!important;}
+#modal-compose .attachment-name{width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85em;}
+/* Same card width and padding as the client's mail. */
+@media(min-width:901px){#modal-compose .compose-card{width:min(80rem,96vw);max-width:none;min-height:0;padding:3.5rem 4rem;}}
+#modal-compose .compose-card .compose-body{padding-bottom:1rem;}
+#modal-compose .compose-card .compose-hint:empty{margin:0;}
+/* Tutorial callouts on the drag guides. */
+.piko-anno{position:fixed;z-index:2103;padding:.35rem .75rem;border:2px solid #4d0d74;border-radius:.75rem;background:#fff8e6;color:#3b172e;font:800 .95rem var(--font-body);white-space:nowrap;pointer-events:none;box-shadow:0 .25rem 0 #4d0d7440;animation:pdIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+.piko-anno::after{content:'';position:absolute;width:.7rem;height:.7rem;background:#fff8e6;border:2px solid #4d0d74;transform:rotate(45deg);}
+.piko-anno-down{transform:translate(-50%,-100%);}.piko-anno-down::after{left:calc(50% - .4rem);bottom:-.45rem;border-top:0;border-left:0;}
+.piko-anno-up{transform:translateX(-50%);}.piko-anno-up::after{left:calc(50% - .4rem);top:-.45rem;border-bottom:0;border-right:0;}
+.piko-anno-left{transform:translateY(-50%);}.piko-anno-left::after{left:-.45rem;top:calc(50% - .4rem);border-top:0;border-right:0;}
+@keyframes pdIn{from{opacity:0;scale:.85}}
