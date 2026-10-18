@@ -67,6 +67,7 @@
     elements: [],
     original: [],
     selectedId: null,
+    extraSel: new Set(), // Shift+click: more elements edited together with the selected one
     history: [],
     future: [],
     tools: { gridVisible:true, snap:true, guides:true, inspector:false, measure:false, showTargets:false, gridSize:8, gridOpacity:0.35 },
@@ -144,7 +145,12 @@
         // Several elements: show each ratio, and flag when they don't match.
         const shownSet = [...new Set(ratios.map(r=>r.toFixed(1)))];
         const shown = els.length > 1 ? shownSet.join(' · ') : ratios[0].toFixed(1);
-        return `${shown}:1 / 4.5${shownSet.length > 1 ? ' · ratios differ' : ''}`;
+        const band = check.max != null ? `${check.min ?? 4.5}–${check.max}` : `${check.min ?? 4.5}`;
+        return `${shown}:1 / ${band}${shownSet.length > 1 ? ' · ratios differ' : ''}`;
+      }
+      case 'stronger': {
+        const r = e => window.WCAG.contrastRatio(e.color, window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, e)).toFixed(1);
+        return `${r(els[0])}:1 vs ${r(els[1])}:1`;
       }
       case 'sameColor': return [...new Set(els.map(e=>e.color.toUpperCase()))].join(' · ');
       case 'centeredX': return `centre ${Math.round(els[0].x + els[0].w/2)} / ${state.level.canvas.w/2}`;
@@ -219,8 +225,8 @@
     // On a new selection, scroll the task list so its highlighted task is in view.
     if(sel && sel !== state.scrolledToSel) list.querySelector('.editor-goal.focus')?.scrollIntoView({ block:'nearest', behavior:'smooth' });
     state.scrolledToSel = sel;
-    pikoSayTask(sel ? results.filter(r => isFocus(r.goal)) : null);
-    markTaskElements(sel ? results.filter(r => isFocus(r.goal)) : []);
+    pikoSayTask(sel ? results.filter(r => isFocus(r.goal) && (!r.goal.compare || window.EC_GRADING.goalIds(r.goal.check)[0] === sel)) : null);
+    markTaskElements(sel ? results.filter(r => isFocus(r.goal) && !r.goal.compare) : []);
   }
 
   // Selecting any element of a task outlines every element in that task: green
@@ -711,8 +717,26 @@
   }
 
   // ---------------- Selection ----------------
+  function clearExtraSel(){
+    state.extraSel.forEach(x => state.domNodes[x]?.classList.remove('selected', 'multi'));
+    state.extraSel.clear();
+  }
+  // Shift+click: add (or remove) another element to edit together with the selected one.
+  function toggleExtraSel(id){
+    const el = byId(id), main = byId(state.selectedId);
+    if(!el || el.locked || !main || id === main.id) return;
+    // Only elements grouped with the selected one (they share a task) can join it.
+    const grouped = (state.level.goals || []).filter(g => !g.compare).some(g => { const ids = window.EC_GRADING.goalIds(g.check); return ids.includes(id) && ids.includes(main.id); });
+    if(!grouped){ setHint('Shift+click only adds elements grouped with this one: look for the matching outline.'); return; }
+    if(state.extraSel.has(id)){ state.extraSel.delete(id); state.domNodes[id]?.classList.remove('selected', 'multi'); }
+    else { state.extraSel.add(id); state.domNodes[id]?.classList.add('selected', 'multi'); }
+    showSettings(main);
+  }
+  // The selected element plus its Shift+click partners (color changes apply to all).
+  const editGroup = el => [el, ...[...state.extraSel].map(byId).filter(Boolean)];
   function selectElement(id){
     if(byId(id)?.locked)return;
+    clearExtraSel();
     if(state.selectedId){
       const prev = state.domNodes[state.selectedId];
       if(prev) prev.classList.remove('selected');
@@ -736,6 +760,7 @@
   }
 
   function deselect(){
+    clearExtraSel();
     if(state.selectedId){
       const prev = state.domNodes[state.selectedId];
       if(prev) prev.classList.remove('selected');
@@ -778,9 +803,17 @@
     const offHue = hexColor(base) && hexColor(el.color) && hsvOf(base).s > .12 && hsvOf(el.color).s > .12
       && Math.min(Math.abs(hsvOf(base).h - hsvOf(el.color).h), 6 - Math.abs(hsvOf(base).h - hsvOf(el.color).h)) * 60 > 25;
     const close = !res.pass && res.ratio >= res.required - 1.5;
-    const tone = !res.pass ? 'fail' : zone.id === 'harsh' || offHue ? 'warn' : 'pass';
-    const sub = !res.pass ? (close ? 'Almost there' : 'Too light to read') : `Zone: ${zone.name}`;
-    const piko = !res.pass ? (close ? `Almost! Slide a bit darker and keep it ${name}.` : `Too faint to read. Slide down toward a darker ${name}.`)
+    // The task's target band for this element (e.g. heading 7:1+, placeholders 4.5-7:1).
+    const band = contrastBand(el), r1 = Math.round(res.ratio * 10) / 10;
+    const tooDark = band.max != null && r1 > band.max, tooWeak = res.pass && band.min != null && r1 < band.min;
+    const tone = !res.pass || tooWeak ? 'fail' : tooDark || zone.id === 'harsh' || offHue ? 'warn' : 'pass';
+    const target = band.max != null ? `Target ${band.min ?? res.required}–${band.max}:1` : band.min != null ? `Target ${band.min}:1+` : '';
+    const sub = tooDark ? 'Too dark for a hint' : tooWeak ? 'Not strong enough yet' : !res.pass ? (close ? 'Almost there' : 'Too light to read') : target || `Zone: ${zone.name}`;
+    const piko = tooDark ? 'Readable, but now it looks like someone already typed here. Placeholders should be lighter than real text. Slide up a little.'
+      : tooWeak ? `This is the most important text. Give it the strongest contrast: slide down to a deep ${name}.`
+      : !res.pass ? (close ? `Almost! Slide a bit darker and keep it ${name}.` : `Too faint to read. Slide down toward a darker ${name}.`)
+      : band.max != null ? 'Nice! Readable, but still clearly a hint.'
+      : band.min != null ? 'That’s it! The heading stands out the most.'
       : zone.id === 'harsh' ? 'Black on white passes, but it’s harsh on screens. Try a deep shade of the client’s color instead.'
       : offHue ? `Readable, but that isn't the client's ${name}. Slide back to the ${name} zone for the full fee.`
       : zone.id === 'great' ? `Nice! Easy to read and still the client's ${name}.`
@@ -790,15 +823,20 @@
     return `<div class="editor-contrast-card cz zone-${zone.id}" aria-label="Color contrast">
       <div class="cz-chips">${chip('Text color', el.color)}${chip('Against background', bg)}</div>
       <div class="cz-box ${tone}">
-        <small class="cz-label">Contrast</small>
+        <small class="cz-label">Contrast <span class="cz-aa-preview" style="color:${el.color};background:${bg}">Aa</span></small>
         <div class="cz-row"><b class="cz-ratio">${res.ratio.toFixed(1)}:1</b>
-          <div class="cz-verdict"><span><i aria-hidden="true">${res.pass ? '✓' : '✕'}</i>${res.pass ? 'Passes AA' : 'Fails AA'}</span><small>${sub}</small></div></div>
+          <div class="cz-verdict"><span><i aria-hidden="true">${tone === 'pass' ? '✓' : tone === 'warn' ? '!' : '✕'}</i>${!res.pass ? 'Fails AA' : tone === 'pass' && (band.min != null || band.max != null) ? 'On target' : 'Passes AA'}</span><small>${sub}</small></div></div>
         <div class="cz-bar"><i style="width:${fill.toFixed(1)}%"></i></div>
       </div>
       <div class="cz-piko ${tone}"><small>Piko</small><p>${piko}</p></div>
     </div>`;
   }
 
+  // Target band from the level's contrast task for this element (min / max ratio).
+  function contrastBand(el){
+    const g = (state.level.goals || []).find(g => g.check.contrast && window.EC_GRADING.goalIds(g.check).includes(el.id));
+    return g ? { min: g.check.min ?? null, max: g.check.max ?? null } : { min:null, max:null };
+  }
   // Comfort zones on top of WCAG's minimum (the 15:1 "too harsh" line is a comfort
   // guideline, not a WCAG rule): fail · large text only · AA · great · too harsh.
   function contrastZone(r){
@@ -868,7 +906,18 @@
     const amount=sliderValues(el,key).tone;
     const top=barColors(el,key).top;
     if(key==='color'){
-      return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span><small>Light <span>Dark</span></small></label>`;
+      // The task's target band, shaded on the bar (bottom = darkest).
+      let bandHtml = '';
+      const band = contrastBand(el);
+      if(band.min != null || band.max != null){
+        const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el), {h,sat} = sliderValues(el,key);
+        const need = window.WCAG.passesWCAG('#000000', bg, el.fontSize, Number(el.fontWeight) >= 700, 'AA').required;
+        const ratioAt = t => window.WCAG.contrastRatio(hsvHex(h,sat/100,t/100), bg);
+        const reach = target => { if(ratioAt(0) < target) return null; let a = 0, b = 100; for(let i=0;i<20;i++){ const m=(a+b)/2; if(ratioAt(m) >= target) a=m; else b=m; } return a; };
+        const hi = reach(band.min ?? need), lo = band.max != null ? (reach(band.max) ?? 0) : 0;
+        if(hi != null && hi > lo) bandHtml = `<span class="cz-band" style="bottom:${lo}%;height:${hi - lo}%"></span>`;
+      }
+      return `<label data-bar="${key}" class="editor-tone-field editor-tone-vertical editor-bright-bar" style="--tone-top:${top}"><span>Text brightness <output>${Math.round(amount)}%</output></span><input type="range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="Text brightness, black at bottom and brightest at top"/><span class="editor-tone-swatch" style="background:${el[key]}"></span>${bandHtml}<small>Light <span>Dark</span></small></label>`;
     }
     return `<label data-bar="${key}" class="editor-tone-field" style="--tone-top:${barColors(el,key).top}"><span>${label} brightness <output>${Math.round(amount)}%</output></span><div class="editor-tone-row"><span class="editor-tone-swatch" style="background:${el[key]}"></span><input type="range" class="editor-bright-range" id="${id}" min="0" max="100" step="0.1" value="${amount}" aria-label="${label} brightness"/></div><small>Black <span>Bright</span></small></label>`;
   }
@@ -876,7 +925,7 @@
   function showSettings(el){
     const fields = document.getElementById('settings-fields');
     const isLocked = !!el.locked;
-    document.getElementById('element-settings-title').textContent = friendlyElementName(el);
+    document.getElementById('element-settings-title').textContent = state.extraSel.size ? `${state.extraSel.size + 1} elements selected` : friendlyElementName(el);
     document.getElementById('selection-dimensions').textContent = `${Math.round(el.w)} x ${Math.round(el.h)} px`;
 
     if(isLocked){
@@ -981,8 +1030,8 @@
       summary.addEventListener('click',e=>e.preventDefault());
     });
     if(q('#f-color')) q('#f-color').addEventListener('input', e=>{
-      el.colorTone=Number(e.target.value);
-      el.color=mixColor(el,'color');refreshElementDom(el);refreshBars(el,'color',fields);
+      editGroup(el).filter(o=>o.text).forEach(o=>{ o.colorTone=Number(e.target.value); o.color=mixColor(o,'color'); refreshElementDom(o); });
+      refreshBars(el,'color',fields);
       e.target.closest('.editor-tone-field').querySelector('output').textContent=Math.round(el.colorTone)+'%';
       e.target.closest('.editor-tone-field').querySelector('.editor-tone-swatch').style.background=el.color;
       refreshContrastBadge(el);
@@ -992,8 +1041,7 @@
     for(const [id,key] of [['#f-color-sat','color'],['#f-bg-sat','bg']]){
       const input=q(id); if(!input) continue;
       input.addEventListener('input', e=>{
-        el[key+'Sat']=Number(e.target.value);
-        el[key]=mixColor(el,key);refreshElementDom(el);
+        editGroup(el).filter(o=>key!=='color' || o.text).forEach(o=>{ o[key+'Sat']=Number(e.target.value); o[key]=mixColor(o,key); refreshElementDom(o); });
         e.target.closest('.editor-tone-field').querySelector('output').textContent=Math.round(el[key+'Sat'])+'%';
         const swatch=q(key==='color'?'#f-color':'#f-bg')?.closest('.editor-tone-field').querySelector('.editor-tone-swatch');
         refreshBars(el,key,fields);
@@ -1324,6 +1372,7 @@
     const id = elDiv.dataset.id;
     const el = byId(id);
     if(!el || el.locked) return;
+    if(e.shiftKey && state.selectedId && state.selectedId !== id){ toggleExtraSel(id); e.preventDefault(); return; }
     selectElement(id);
     const handle = target.dataset.handle;
     if(!(handle ? can(el,'resize') : can(el,'move'))) return;
@@ -2013,7 +2062,8 @@
   }, true));
 
   window.EC_EDITOR = {
-    readVariant, setVariant, selectElement, focusElement, showWholeDesign, freezeDrag, releaseFrozenDrag,
+    readVariant, setVariant, selectElement, focusElement, showWholeDesign,
+    getSelection: () => [state.selectedId, ...state.extraSel].filter(Boolean), freezeDrag, releaseFrozenDrag,
     // Locks the design as it is (tutorial: once every task is done).
     freezeDesign(){ state.frozen = true; state.dragging = null; document.body.classList.remove('eyecon-dragging'); clearGuideLines(); deselect(); },
     isDragging: () => !!state.dragging,

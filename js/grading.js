@@ -88,7 +88,7 @@
   // Each tour page lists plain-language goals (see levels.js). Required goals
   // decide approval; each bonus goal met adds a star. Checks are relative
   // ("these share a left edge") so there's no single pixel-perfect answer.
-  const GOAL_TOOL = { align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
+  const GOAL_TOOL = { stronger:'color', align:'align', sameX:'position', sameY:'position', sameRight:'position', sameCenterX:'position',
     evenGapsY:'position', evenGapsX:'position', safeMargin:'position', minW:'sizing', minH:'sizing',
     minFont:'typography', maxFont:'typography', bigger:'typography', contrast:'color', sameColor:'color',
     centeredX:'position', above:'position', sameSize:'sizing', wraps:'sizing' };
@@ -131,10 +131,19 @@
       // so the fix stays consistent (e.g. both input placeholders).
       // Several pieces must read the same: equal ratios as shown (one decimal),
       // not identical hex codes, so #777777 and #767676 (both 4.5:1) count.
+      // Optional min / max (a target band, e.g. placeholders 4.5-7:1 so they read as
+      // hints; headings 7:1+). The max is a design guideline, not a WCAG rule.
       case 'contrast': return new Set(els.map(el => window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)).toFixed(1))).size <= 1 && els.every(el => {
         const bold = Number(el.fontWeight) >= 700 || el.fontWeight === 'bold';
-        return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass;
+        const r = Math.round(window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)) * 10) / 10;
+        return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass
+          && (check.min == null || r >= check.min) && (check.max == null || r <= check.max);
       });
+      // [main, ...others]: the first has higher contrast than every other one (hierarchy).
+      case 'stronger': {
+        const r = el => Math.round(window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)) * 10) / 10;
+        return els.length > 1 && els.slice(1).every(o => r(els[0]) > r(o));
+      }
       case 'sameColor': return els.length > 1 && sameColor();
       // Horizontally centred on the canvas.
       case 'centeredX': return els.every(el => Math.abs(el.x + el.w/2 - level.canvas.w/2) <= 1);
@@ -506,7 +515,11 @@
       scores.goals = goalSummary.score;
       goalResults.forEach(({goal, met}) => feedback.push({
         type: met ? 'good' : 'bad', category:'Goals', elId: goalIds(goal.check)[0], bonus: !!goal.bonus,
-        title: met ? (goal.done || goal.label) : goal.label,
+        // A contrast band that failed for being too dark can carry its own note.
+        title: met ? (goal.done || goal.label) : (goal.tooDark && goal.check.max != null && goalIds(goal.check).some(id => {
+          const el = elements.find(e => e.id === id);
+          return el && Math.round(window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)) * 10) / 10 > goal.check.max;
+        }) ? goal.tooDark : goal.label),
         detail: met ? (goal.why || '') : (goal.tip || goal.why || ''),
         suggest: met ? '' : (goal.tip || ''),
       }));

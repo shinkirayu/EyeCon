@@ -2651,3 +2651,38 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 .piko-anno-up{transform:translateX(-50%);}.piko-anno-up::after{left:calc(50% - .4rem);top:-.45rem;border-bottom:0;border-right:0;}
 .piko-anno-left{transform:translateY(-50%);}.piko-anno-left::after{left:-.45rem;top:calc(50% - .4rem);border-top:0;border-right:0;}
 @keyframes pdIn{from{opacity:0;scale:.85}}
+/* Contrast task target band shaded on the text brightness bar. */
+#screen-editor .editor-bright-bar .cz-band{position:absolute;left:-.3rem;width:2.6rem;border:2px dashed #237a4b;border-radius:.5rem;background:#5cc28a33;pointer-events:none;z-index:0;}
+/* Temporary test-level buttons on the home screen. */
+.dev-levels{position:absolute;z-index:50;top:1rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.4rem;padding:.4rem .6rem;border:2px dashed #7656b3;border-radius:1rem;background:#fff8e6e6;font:800 .9rem var(--font-body);color:#3b172e;}
+.dev-levels button{width:2.2rem;height:2.2rem;border:2px solid #7656b3;border-radius:.6rem;background:#fff;color:#4d0d74;font:800 1rem var(--font-display);cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
+.dev-levels button:hover,.dev-levels button:focus-visible{background:#ede4fb;}
+@media(min-width:901px){
+  /* Piko's task card sits fully left of the right panel (no overlap with Design tools). */
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko-say:not([hidden]){right:calc(var(--studio-right) + 2.5rem);}
+}
+/* A tall, easy-to-drag brightness bar in the contrast workbench. */
+#screen-editor .editor-contrast-workbench > .editor-bright-bar{height:14rem;}
+#screen-editor .editor-contrast-workbench > .editor-bright-bar input[type=range]{height:100%;}
+/* Tutorial: the Design tools panel glows (no dim) while the player slides colors. */
+#element-settings.piko-panel-glow{outline:4px solid #f5b83d;outline-offset:4px;border-radius:1rem;animation:pikoGlow 1.2s ease-in-out infinite;}
+.reduce-motion #element-settings.piko-panel-glow{animation:none;}
+/* Shift+click partners: outlined like the selection, without resize handles. */
+#editor-canvas .el.selected.multi .el-handle{display:none;}
+@media(min-width:901px){#screen-editor[data-layout="double"][data-ed-theme="blue"]{--editor-right-panel:26rem;}} /* wider right panel */
+.piko-multi-dim{position:fixed;inset:0;z-index:2099;background:rgba(34,29,38,.62);pointer-events:none;animation:pikoDimIn 1.2s ease both;}
+#screen-editor .cz-bar,#screen-editor .cz-verdict small{display:none;}
+/* Bigger color chips in the contrast panel. */
+#screen-editor .cz-chip small{font-size:.95rem;}
+#screen-editor .cz-chip > span{padding:.6rem .9rem;gap:.6rem;}
+#screen-editor .cz-chip i{width:1.6rem;height:1.6rem;}
+#screen-editor .cz-chip code{font-size:1.25rem;}
+.cz-aa-preview{display:inline-block;margin-left:.4rem;padding:0 .45rem;border:1px solid #0002;border-radius:.35rem;font:800 1rem/1.4 var(--font-display);letter-spacing:0;text-transform:none;vertical-align:middle;}
+.piko-fgbg-demo{position:fixed;z-index:2103;left:50%;top:38%;transform:translate(-50%,-50%);display:flex;gap:1rem;padding:1rem;border:3px solid #77b9af;border-radius:1.5rem;background:#fcf7ef;box-shadow:0 .375rem 0 #4f938a;animation:pdIn .35s cubic-bezier(.34,1.56,.64,1) both;pointer-events:none;}
+.piko-fgbg-demo div{display:grid;place-items:center;width:9rem;height:7rem;border-radius:1rem;font:800 3rem/1 var(--font-display);}
+.piko-fgbg-demo small{font:800 1rem var(--font-body);color:#3b172e;background:#fff;padding:.1rem .5rem;border-radius:.4rem;}
+@media(min-width:901px){
+  /* Corner Piko hidden for now, so the right panel runs to the bottom. */
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-piko{display:none;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail{bottom:1rem!important;}
+}

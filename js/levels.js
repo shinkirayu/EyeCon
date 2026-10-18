@@ -125,7 +125,7 @@ Thanks.
 
 We're commissioning you to help refresh the Yappers.com login screen. Our review found that the input labels, placeholder text, and error messages currently fail the WCAG 2.2 minimum 4.5:1 contrast ratio.
 
-Please update these elements to meet accessibility requirements while keeping the interface clean, friendly, and unmistakably Yappers.
+Please update these elements to meet accessibility requirements while keeping the interface clean, friendly, and unmistakably Yappers. The welcome heading should stand out the most, and the placeholders should still look like hints, not text someone already typed in.
 
 We're looking forward to seeing your take on the updated login experience. Please share the revised designs with the team once they're ready for review.
 
@@ -159,15 +159,19 @@ Yappers.com Product Design Team`,
         img('apple','assets/levels/yappers/apple.png',1312,704,24,24,{z:4}),
       ],
       goals:[
-        goal('Make "Welcome Bak!" readable on the white card.', {contrast:'AA', ids:['title']},
-          'Pale yellow on white almost disappears. Even big text needs 4.5:1 contrast.',
-          'Pick a darker text color in Color.'),
-        goal('Make both placeholder texts pass 4.5:1 with the same contrast ratio.', {contrast:'AA', ids:['user','pass']},
-          'Light grey placeholders are hard to read, especially for people with low vision. Matching fields should look the same.',
-          'Darken both placeholders until they show the same ratio, at least 4.5:1.'),
-        goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
+        Object.assign(goal('Give "Welcome Bak!" the strongest contrast: at least 7:1, still gold.', {contrast:'AA', min:7, ids:['title']},
+          'It is the most important text on the screen, so it should stand out the most.',
+          'Slide its brightness down to a deep gold.'), { key:'heading' }),
+        Object.assign(goal('Make both placeholders readable but soft: 4.5 to 7:1, the same for both.', {contrast:'AA', max:7, ids:['user','pass']},
+          'Placeholders are hints. If they are as dark as real text, people think the field is already filled in.',
+          'Aim for the middle band: readable, but lighter than the heading.'),
+          { key:'placeholders', tooDark:'We can read the placeholders now, but they look like the fields are already filled in. Could you soften them?' }),
+        Object.assign(goal('Keep the heading stronger than the placeholders.', {stronger:['title','user']},
+          'Stronger contrast tells people what matters most. That is visual hierarchy.',
+          'Make the heading darker than the placeholders.'), { key:'hierarchy', compare:true }),
+        Object.assign(goal('Make the "Log in" text readable on its button.', {contrast:'AA', ids:['login']},
           'If people cannot read the main button, they cannot log in.',
-          'Change the text color until it passes.'),
+          'Change the text color until it passes.'), { key:'login' }),
         bonus('Make "or continue with" readable too.', {contrast:'AA', ids:['or']},
           'Small helper text needs the full 4.5:1, not just the big stuff.',
           'Darken its text color.'),
@@ -1599,6 +1603,8 @@ Nimbus Goods`,
     ['emailSubject','emailPreview','emailBody'].forEach(f => { if(typeof l[f] === 'string') T.bind(`${k}.${f}`, l[f], 'emails', `${l.clientName}: request email`, v => { l[f] = v; }); });
     Object.keys(l.replyTemplates || {}).forEach(f => T.bind(`${k}.reply.${f}`, l.replyTemplates[f], 'feedback', `${l.clientName}: client reply (${f})`, v => { l.replyTemplates[f] = v; }));
     (l.goals || []).forEach((g, i) => {
+      // Tasks with a stable key keep their own saved text even if tasks are reordered.
+      if(g.key) i = g.key;
       T.bind(`${k}.task.${i}.label`, g.label, 'tasks', `${l.clientName}: task ${i + 1}`, v => { g.label = v; });
       if(g.tip) T.bind(`${k}.task.${i}.tip`, g.tip, 'tasks', `${l.clientName}: task ${i + 1} tip`, v => { g.tip = v; });
     });

@@ -541,6 +541,82 @@
     })();
   }
   // Short Piko intro the first time each of the first three jobs opens.
+  // Level 2, step by step: pick "Welcome Bak!", darken it with the brightness
+  // slider, and stop once it is on target (the heading's contrast task passes).
+  const PRACTICE = {
+    yappers: { at:3, run: async level => {
+      const P = window.EC_PIKO, L = P.SCRIPT.practice.yappers;
+      const until = test => new Promise(done => { const t = setInterval(()=>{ if(test()){ clearInterval(t); done(); } }, 200); });
+      const talk = (line, opts = {}) => new Promise(done => P.say(line, Object.assign({ top:true }, opts, { onDone:done })));
+      const title = () => document.querySelector('#editor-canvas .el[data-id="title"]');
+      const met = () => window.EC_GRADING.checkGoals(level, window.EC_EDITOR.getElements())
+        .find(r => r.goal.check.contrast && window.EC_GRADING.goalIds(r.goal.check).includes('title'))?.met;
+      if(!title()) return;
+      // While sliding colors, nothing is dimmed (the text on the canvas must be seen
+      // changing); the panel just glows instead.
+      // While sliding colors: dim everything except the text being changed and its color panel.
+      const litPanel = on => {
+        const panel = document.getElementById('element-settings');
+        panel?.classList.toggle('piko-panel-glow', on);
+        P.spotlight(on ? [panel, ...window.EC_EDITOR.getSelection().map(id => document.querySelector(`#editor-canvas .el[data-id="${id}"]`))] : null);
+      };
+      P.clearTarget(); P.hideBubble();
+      await window.EC_EDITOR.focusElement('title', 700, 1.6);
+      title().classList.add('piko-glow'); P.pointAt(title());
+      P.say(L.pick, { left:true });
+      await until(()=>title()?.classList.contains('selected'));
+      title()?.classList.remove('piko-glow');
+      // Foreground vs background, before touching the slider.
+      const q = s => document.querySelector(s);
+      const chips = [...document.querySelectorAll('#element-settings .cz-chip')];
+      if(chips[0]){ P.pointAt(chips[0]); await talk(L.fg, { left:true }); }
+      if(chips[1]){ P.pointAt(chips[1]); await talk(L.bgc, { left:true }); }
+      if(q('#element-settings .cz-box')){ P.pointAt(q('#element-settings .cz-box')); await talk(L.ratio, { left:true }); }
+      { // demo: the same gold on white vs navy
+        const c = window.EC_EDITOR.getElements().find(e => e.id === 'title')?.color || '#FFEA96';
+        const R = (a, b) => window.WCAG.contrastRatio(a, b).toFixed(1);
+        const d = document.createElement('div'); d.className = 'piko-fgbg-demo'; d.setAttribute('aria-hidden', 'true');
+        d.innerHTML = `<div style="background:#fff;color:${c}">Aa<small>${R(c,'#ffffff')}:1</small></div><div style="background:#123b54;color:${c}">Aa<small>${R(c,'#123b54')}:1</small></div>`;
+        document.body.appendChild(d); P.clearTarget();
+        await talk(L.demo, { left:true });
+        d.remove();
+      }
+      if(q('#f-color')){ P.spotlight([q('#f-color').closest('.editor-bright-bar'), title()]); await talk(L.slider, { left:true }); P.spotlight(null); }
+      let slid = false; const onSlide = e => { if(e.target.id === 'f-color') slid = true; };
+      document.addEventListener('input', onSlide, true);
+      litPanel(true);
+      if(!met()){ P.say(L.bar, { left:true }); await until(()=>slid || met()); }
+      document.removeEventListener('input', onSlide, true);
+      if(!met()){ P.say(L.watch, { left:true }); await until(met); }
+      litPanel(false);
+      await talk(L.done, { left:true });
+      // Placeholders: same ratio for both, inside the band (lighter than the heading).
+      const G = window.EC_GRADING, el = id => document.querySelector(`#editor-canvas .el[data-id="${id}"]`);
+      const phGoal = level.goals.find(g => g.check.contrast && G.goalIds(g.check).includes('user'));
+      const okFor = ids => phGoal && G.checkGoals({ ...level, goals:[{ ...phGoal, check:{ ...phGoal.check, ids } }] }, window.EC_EDITOR.getElements())[0].met;
+      const pickStep = async (id, line) => {
+        if(!el(id)) return;
+        el(id).classList.add('piko-glow'); P.pointAt(el(id));
+        P.say(line, { left:true });
+        await until(()=>el(id)?.classList.contains('selected'));
+        el(id)?.classList.remove('piko-glow');
+      };
+      if(phGoal && !okFor(['user','pass'])){
+        await window.EC_EDITOR.focusElement('user', 600, 1.6);
+        await pickStep('user', L.phPick);
+        // Group them: Shift+click the second placeholder, then one slider moves both.
+        el('pass')?.classList.add('piko-glow');
+        P.pointAt(el('pass')); P.say(L.phShift, { left:true });
+        await until(()=>window.EC_EDITOR.getSelection().includes('pass') || okFor(['user','pass']));
+        el('pass')?.classList.remove('piko-glow');
+        litPanel(true);
+        if(!okFor(['user','pass'])){ P.say(L.phBoth, { left:true }); await until(()=>okFor(['user','pass'])); }
+        litPanel(false);
+        await talk(L.phDone, { left:true });
+      }
+      P.clearTarget();
+    } },
+  };
   function runPikoLevelTips(level, done){
     const key = level.project || level.id; // lessons are keyed by client: mayo, yappers, haybuhay
     const P = window.EC_PIKO, lines = pikoEnabled && P.SCRIPT.levels[key];
@@ -551,6 +627,9 @@
     let lastSel = null;
     const step = i => {
       if(i >= lines.length){ P.clearTarget(); done(); return; }
+      // Some lessons swap a line for a hands-on practice (e.g. level 2: darken "Welcome Bak!").
+      const practice = PRACTICE[key];
+      if(practice && i === practice.at){ practice.run(level).then(()=>step(i + 1)); return; }
       const [line, sel] = lines[i], el = sel && document.querySelector(sel);
       if(el){ P.pointAt(el); lastSel = sel; } // no selector: keep the last highlight
       P.say(line, { top:true, left:lastSel === '#element-settings', onDone: ()=>step(i + 1) });
@@ -2374,6 +2453,24 @@
     document.getElementById('btn-reward-collect').addEventListener('click', ()=>{window.EC_MODAL.hide('modal-reward');showDaySummary();});
     window.EC_EDITOR.initToolbarOnce();
 
+    // Temporary test buttons on the home screen: open a level with its Piko lesson
+    // replayed (level 1 runs the full first-day workspace tour). No analytics.
+    document.querySelectorAll('[data-dev-level]').forEach(b => b.addEventListener('click', ()=>{
+      const level = window.EC_LEVELS.find(l => l.levelNumber === +b.dataset.devLevel);
+      if(!level) return;
+      profile.onboarding = profile.onboarding || {};
+      profile.onboarding.lessons = profile.onboarding.lessons || {};
+      delete profile.onboarding.lessons[level.project || level.id];
+      const first = level.levelNumber === 1;
+      profile.onboarding.seen = !first; save();
+      pikoStage = first ? 'element' : null;
+      document.body.classList.toggle('piko-tutorial', first);
+      showScreen('screen-editor', ()=>{
+        window.EC_EDITOR.open(level);
+        if(first) runPikoWorkspaceTour(level);
+        else runPikoLevelTips(level, ()=>{});
+      });
+    }));
     window.EC_MAIL.setHandlers({
       onAccept: level => {
         if(profile.pendingClientReply || profile.readyReply){showToast('Read your client reply before starting another task.',2500);return;}

@@ -643,16 +643,13 @@ test('goal elements show markers until solved, and moving them back un-solves',a
     // Canvas on the left, client card + Design tools on the right, Piko in the
     // corner reading out the selected element's task (no separate task list).
     await expect(page.locator('#screen-editor .editor-heading')).toHaveText('Editing');
-    await expect(page.locator('#editor-piko')).toBeVisible();
+    await expect(page.locator('#editor-piko')).toBeHidden(); // corner Piko hidden for now
     await expect(page.locator('#editor-mail-points')).toBeHidden();
     const [stage,right]=await Promise.all([
       page.locator('#editor-canvas-wrap').boundingBox(),
       page.locator('#screen-editor .editor-right-rail').boundingBox()
     ]);
     expect(stage.x+stage.width).toBeLessThan(right.x);
-    // The right panel stops above Piko so he never covers Design tools.
-    const piko=await page.locator('#editor-piko').boundingBox();
-    expect(right.y+right.height).toBeLessThanOrEqual(piko.y+1);
     await expect(page.locator('#editor-piko-say')).toBeHidden();
     await page.evaluate(()=>EC_EDITOR.selectElement('about'));
     await expect(page.locator('#editor-piko-say')).toContainText('Line up "About"');
@@ -696,7 +693,7 @@ test('two-bar editor panels have fixed widths',async({page})=>{
   await expect(page.locator('.editor-rail-resizer')).toHaveCount(0);
   const panel=await page.locator('#screen-editor .editor-right-rail').boundingBox();
   const rem=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize));
-  expect(Math.abs(panel.width/rem-20)).toBeLessThan(1);
+  expect(Math.abs(panel.width/rem-26)).toBeLessThan(1);
 });
 
 test('profile settings list and the browser shows the store and client sites',async({page})=>{

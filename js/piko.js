@@ -74,6 +74,25 @@
     },
     // First visit to each of the first three jobs: one basic skill per level.
     // [line, selector to point at (optional)]
+    // Hands-on practice that replaces a lesson line (see PRACTICE in app.js).
+    practice: {
+      yappers: {
+        pick: "Let's try it on the heading. Left click \"Welcome Bak!\" to pick it.",
+        fg: "This is the **foreground**: the color of the text itself.",
+        bgc: "This is the **background**: the color right behind the text. Here it's the white card.",
+        ratio: "Contrast compares the two. The further apart they are in lightness, the bigger the number.",
+        demo: "Same text color, different background, different contrast! It's always about the pair.",
+        slider: "Here you can only change the foreground. Darker text on a light background means more contrast.",
+        bar: "This is its color panel. Drag the brightness slider down to make the text darker.",
+        watch: "See the contrast number climb? Keep going until it says On target: 7:1 or more.",
+        done: "Perfect! The heading now stands out the most. That's hierarchy!",
+        phPick: "Now the placeholders. Left click \"Phone, username, or email\" to pick it.",
+        phSlide: "Slide it into the green band: readable (at least 4.5:1) but lighter than the heading, so it still looks like a hint.",
+        phShift: "See the outline on \"Password\" too? Selecting an element shows which elements it's grouped with. Hold Shift and click \"Password\" to select both, then one slider changes them together!",
+        phBoth: "Slide both into the green band: readable (at least 4.5:1) but lighter than the heading. They stay the same contrast ratio, since they're grouped.",
+        phDone: "Both placeholders match, and they stay lighter than the heading. Nice work!"
+      }
+    },
     levels: {
       mayo: [
         ["Quick tip before you go!"],
@@ -88,7 +107,10 @@
         ["Select some text, then move its color sliders. Darker text on a light background, or lighter text on a dark one.", '#element-settings'],
         ["Watch the ratio badge in the panel. A green check means it passes."],
         ["Heads up: some elements are grouped. Fix every element in the group, and only then will the task be done."],
-        ["Tip: you only need to change the color, not the layout. Go for it!"]
+        ["Tip: you only need to change the color, not the layout. Go for it!"],
+        ["One more thing: contrast also shows what matters most. The heading gets the strongest contrast, at least 7:1."],
+        ["Placeholders are hints, so keep them softer: readable, but not as dark as real text. Aim for 4.5 to 7:1."],
+        ["Heads up: that 7:1 limit is a design guideline, not a WCAG rule. WCAG only sets the 4.5:1 minimum."]
       ],
       antoks: [
         ["Click the hint button to help you! Your first hint is on us!", '#tool-hint']
@@ -163,6 +185,7 @@
     [/(left mouse button|left-click|left click)/gi, () => mouseIcon('left')],
     [/(mouse wheel|scroll wheel)/gi, () => mouseIcon('middle')],
     [/(arrow keys)/gi, () => ARROWS],
+    [/\b(Shift)\b/g, () => `<svg class="piko-ico" viewBox="0 0 14 14" aria-hidden="true">${arrowKey(0, 0, 'M7 2.5l4.5 5H9.2V11H4.8V7.5H2.5z')}</svg>`],
   ];
   function richText(t){
     // Any line (including admin-added ones) can say {name}: fill it with the player's name.
@@ -562,5 +585,25 @@
       add(mid(q), q.bottom + 12, 'Lines up with this', 'up');
     }
   }
-  window.EC_PIKO = { demo, offsetHint, guideNotes, SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
+  // Dim with several lit holes at once (e.g. the text being recolored AND its color
+  // panel). An even-odd clip path cuts each target out; it follows them every frame.
+  let multiFrame = null;
+  function spotlight(els){
+    cancelAnimationFrame(multiFrame);
+    document.querySelectorAll('.piko-multi-dim').forEach(n => n.remove());
+    els = (els || []).filter(Boolean);
+    if(!els.length) return;
+    clearTarget();
+    const dim = document.createElement('div'); dim.className = 'piko-multi-dim'; dim.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(dim);
+    const draw = () => {
+      if(!dim.isConnected) return;
+      const W = innerWidth, H = innerHeight, pad = 8;
+      const holes = els.filter(e => e.isConnected).map(e => { const r = e.getBoundingClientRect(); return `M${r.left - pad} ${r.top - pad}H${r.right + pad}V${r.bottom + pad}H${r.left - pad}Z`; }).join('');
+      dim.style.clipPath = `path(evenodd, 'M0 0H${W}V${H}H0Z${holes}')`;
+      multiFrame = requestAnimationFrame(draw);
+    };
+    draw();
+  }
+  window.EC_PIKO = { spotlight, demo, offsetHint, guideNotes, SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
 })();
