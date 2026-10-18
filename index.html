@@ -536,17 +536,15 @@
   <!-- Quick controls run-down (editor "?" button) -->
   <div id="controls-pop" popover class="controls-pop" role="dialog" aria-labelledby="controls-title">
     <h2 id="controls-title">Quick controls</h2>
-    <dl>
-      <dt>Click</dt><dd>Select an element</dd>
-      <dt>Drag</dt><dd>Move it (snaps to the 8px grid)</dd>
-      <dt>Arrow keys</dt><dd>Nudge 8px · <kbd>Shift</kbd> for 32px</dd>
-      <dt>Esc</dt><dd>Deselect</dd>
-      <dt>Ctrl + Z / Ctrl + Y</dt><dd>Undo / Redo</dd>
-      <dt>Scroll wheel</dt><dd>Zoom in and out</dd>
-      <dt>Middle / right drag</dt><dd>Pan around the canvas</dd>
-      <dt>Hold the eye</dt><dd>Compare with the original</dd>
-      <dt>Bulb</dt><dd>Get a hint</dd>
-    </dl>
+    <ul class="qc-list">
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Left click</b><small>Select an element</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Left click + drag</b><small>Move it (snaps to the 8px grid)</small></span></li>
+      <li><span class="qc-keys"><kbd>Shift</kbd> + <svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Shift + click</b><small>Add a grouped element to edit them together</small></span></li>
+      <li><span class="qc-keys"><kbd>▲</kbd><kbd>▼</kbd><kbd>◀</kbd><kbd>▶</kbd></span><span><b>Arrow keys</b><small>Nudge 8px (<kbd>Shift</kbd> for 32px) · on color tasks: lighter / darker</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#fff"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#7c3aed" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Mouse wheel</b><small>Zoom in and out</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#fff"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#7c3aed"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#7c3aed" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Hold middle or right + drag</b><small>Pan around the canvas</small></span></li>
+      <li><span class="qc-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Y</kbd></span><span><b>Undo / Redo</b><small>Undo or redo a change</small></span></li>
+    </ul>
     <button type="button" class="btn btn-accept" popovertarget="controls-pop" popovertargetaction="hide">Got it</button>
   </div>
 

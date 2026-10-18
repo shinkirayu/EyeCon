@@ -2750,3 +2750,13 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 #editor-canvas .el.selected.task-group::after{border-color:var(--task-c);border-width:calc(3 * var(--selection-unit,1px));}
 #editor-canvas .el.task-group:not(.selected){outline:calc(3 * var(--selection-unit,1px)) dashed var(--task-c)!important;outline-offset:0;}
 .piko-demo .pd-how{margin-top:-.35rem;font:700 1rem var(--font-body);color:#5a6f6a;}
+/* Quick controls: icon column + action + what it does. */
+.controls-pop{width:min(32rem,94vw);}
+.controls-pop .qc-list{display:grid;gap:.6rem;margin:0 0 1rem;padding:0;list-style:none;}
+.controls-pop .qc-list li{display:grid;grid-template-columns:7.5rem 1fr;align-items:center;gap:.75rem;padding:.4rem .5rem;border-radius:.75rem;background:#fff;}
+.controls-pop .qc-keys{display:flex;align-items:center;justify-content:center;gap:.2rem;font:800 .85rem var(--font-body);color:#4d0d74;flex-wrap:wrap;}
+.controls-pop .qc-ico{height:2.2rem;width:auto;}
+.controls-pop .qc-list b{display:block;font:800 .95rem var(--font-body);color:#3b172e;}
+.controls-pop .qc-list small{display:block;font:600 .85rem/1.35 var(--font-body);color:#5a6f6a;}
+.controls-pop kbd{display:inline-grid;place-items:center;min-width:1.5rem;height:1.5rem;padding:0 .3rem;border:2px solid #4d0d74;border-bottom-width:3px;border-radius:.35rem;background:#fff3d6;font:800 .75rem var(--font-body);color:#4d0d74;}
+.controls-pop .qc-ico{height:2.6rem;}
