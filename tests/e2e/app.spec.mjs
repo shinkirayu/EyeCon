@@ -15,6 +15,7 @@ test.beforeEach(async ({ page }, info) => {
 test('Piko welcomes the player on the first desktop visit', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble');
   await expect(bubble).toBeVisible();
   await expect(bubble).toContainText('Piko');
@@ -403,8 +404,8 @@ test('marking an approved task complete pays out with a celebration', async ({ p
     await input.fill(String(value));
     await input.dispatchEvent('change');
   };
-  // Illustration is locked at 504: Instagram and Tumblr get 24px gaps on one line.
-  await set('insta', 'x', 432); await set('tumblr', 'x', 576); await set('tumblr', 'y', 784);
+  // Instagram (424) and the illustration (504) are locked 32px apart: Tumblr matches that gap, on their line.
+  await set('tumblr', 'x', 584); await set('tumblr', 'y', 784);
   await set('about', 'y', 40);
   await set('title', 'x', 336); // centre "Explore for more!" over the caption
   await set('title', 'y', 208); // and just above the cards (24px gap)
@@ -801,6 +802,7 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.setViewportSize({width:1600,height:900});
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const say = async () => { await page.waitForTimeout(900); await page.locator('.piko-panel').click(); };
   await say(); await page.waitForTimeout(900);
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
@@ -847,6 +849,45 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
 });
 
+test('Piko shows the first job visually with "Show me"', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({width:1600,height:900});
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: /Show me/ }).click();
+  const cue = page.locator('.piko-bubble.piko-cue:not(.hidden)'), hand = page.locator('.tv-hand:not(.hidden)');
+  const see = async (text, timeout = 15000) => { await expect(cue).toContainText(text, { timeout }); await page.waitForTimeout(1300); }; // clicks wait out the dim
+  // Talk beats are short and move on by themselves; no "click to continue" footer.
+  await expect(cue).toContainText('Piko'); await expect(cue.locator('.piko-foot')).toBeHidden();
+  await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
+  await see('Open Mail'); await expect(hand).toHaveClass(/g-tap/); // the hand acts out the click on Mail
+  await page.locator('#icon-mail').click();
+  await see('Open the email'); await page.locator('#mail-list .mail-item').first().click();
+  await see('See their design'); await page.locator('#attachment-chip').click();
+  await page.waitForTimeout(800); await page.locator('#btn-close-preview').click();
+  await see('Accept'); await page.locator('#btn-accept-job').click();
+  await see('drag'); await expect(page.locator('.piko-demo')).toBeVisible(); // the moving-mouse "TRY IT" card
+  const wrap = await page.locator('#editor-canvas-wrap').boundingBox();
+  await page.mouse.move(wrap.x + 300, wrap.y + 300); await page.mouse.down({button:'middle'});
+  for(let i=0;i<12;i++){ await page.mouse.move(wrap.x + 300 + i*4, wrap.y + 300); await page.waitForTimeout(120); }
+  await page.mouse.up({button:'middle'});
+  await see('zoom'); await page.mouse.wheel(0, -120);
+  await see('About', 20000); await page.locator('#editor-canvas .el[data-id="about"]').click();
+  // Shown, not told: a see-through About slides up onto the dashed line.
+  await see('Drag it up'); await expect(page.locator('#editor-canvas .tv-ghost')).toHaveCount(1);
+  for(let i=0;i<8 && !(await cue.textContent().catch(()=>'')).includes('Lined up');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
+  await expect(cue).toContainText('Lined up'); await expect(page.locator('.tv-ghost')).toHaveCount(0);
+  await see('Show the grid'); await page.locator('#tool-grid').click();
+  await expect(page.locator('.tv-burst')).toHaveCount(1); // a quick ✓ where the player clicked
+  await see('Grid options'); await page.locator('#tool-grid-settings').click();
+  await see('slider'); await expect(hand).toHaveClass(/g-slide-x/);
+  await page.locator('#grid-opacity-slider').fill('0.6');
+  await see('Fix the rest, then Submit');
+  await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
+  // The classic tutorial stays one click away in Settings.
+  expect(await page.evaluate(() => [EC_STORE.load().settings.tutorialStyle, EC_PIKO.getStyle()])).toEqual(['visual', 'visual']);
+});
+
 test('Piko plays admin-added lines before and after a line', async ({ page }) => {
   // Published text from the admin editor, served without touching the real database.
   await page.addInitScript(() => {
@@ -859,6 +900,7 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble'), next = async () => { await page.waitForTimeout(1200); await bubble.locator('.piko-panel').click(); };
   await page.waitForTimeout(900); await expect(bubble).toContainText("Hi, I'm Piko");
   await next(); await expect(bubble).toContainText('Added after the hello, Designer!');
@@ -877,6 +919,7 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
 test('Piko lines can be re-read with back and forward', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble'), text = bubble.locator('.piko-text');
   await page.waitForTimeout(1200);
   await expect(bubble.locator('.piko-hint')).toHaveText('Click anywhere to continue');

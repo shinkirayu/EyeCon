@@ -193,7 +193,7 @@
     // Level 4+: no live progress (it could be gamed by sliding until it ticks). Just the job size.
     // The job size counts the elements that need fixing (a task can cover several elements, and two tasks can share one).
     const fixIds = new Set(results.flatMap(r => window.EC_GRADING.goalIds(r.goal.check)).filter(id => { const el = byId(id); return el && !el.locked; }));
-    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div class="editor-fix-count"><b>${fixIds.size}</b><span>${fixIds.size === 1 ? 'thing' : 'things'} to fix</span></div>`;
+    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div class="editor-fix-count"><span>This job has</span><b>${fixIds.size}</b><span>${fixIds.size === 1 ? 'fix' : 'fixes'}</span></div>`;
     else progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
       <div class="editor-task-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${results.length}" aria-valuenow="${doneCount}" aria-label="Tasks done"><i style="width:${results.length ? doneCount / results.length * 100 : 0}%"></i></div>`;
     const cards = sections.map(({cat, items}) => {
@@ -1632,7 +1632,7 @@
   function showPaidHint(){
     const G = window.EC_GRADING;
     const open = G.checkGoals(state.level, state.elements).filter(r => !r.met && !r.goal.compare && !r.goal.bonus);
-    if(!open.length){ setHint('\u2728 Looking great: nothing left to point out. Try Submit!'); return; }
+    if(!open.length){ setHint('\u2728 All fixed! No hint needed, and no coins spent. Hit Submit.'); return; }
     const topOf = g => Math.min(...G.goalIds(g.check).map(id => byId(id)?.y ?? Infinity));
     open.sort((a, b) => topOf(a.goal) - topOf(b.goal));
     // A repeat hint moves on to the next unfinished task.
@@ -1686,13 +1686,17 @@
     (d.querySelector('[data-yes]') || d.querySelector('[data-no]')).focus();
   }
   function showHint(){
-    if((state.level.levelNumber || 0) >= 4) return confirmHint();
+    if((state.level.levelNumber || 0) >= 4){
+      // Already solved: say so for free instead of asking for coins.
+      const open = window.EC_GRADING.checkGoals(state.level, state.elements).some(r => !r.met && !r.goal.compare && !r.goal.bonus);
+      return open ? confirmHint() : setHint('✨ All fixed! No hint needed, and no coins spent. Hit Submit.');
+    }
     window.EC_TRACK_HINT?.();
     const result = window.EC_GRADING.gradeSubmission(state.level, state.elements);
     const bad = unlockedFeedback(result.feedback, state.level.levelNumber, result.activeCategories).find(f=>f.type==='bad');
     if(!bad){
       clearHintHighlight();
-      setHint('✨ Looking great — no major issues detected. Try Save when ready!');
+      setHint('✨ All fixed! Nothing left to point out. Hit Submit.');
       return;
     }
     if(bad.elId && byId(bad.elId)){

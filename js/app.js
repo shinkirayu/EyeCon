@@ -160,8 +160,29 @@
     const db = window.EC_DB;
     let choice = null; try{ choice = localStorage.getItem('eyecon_auth_choice'); }catch(_){}
     const AUTH_CHOICE = false; // Google sign-in hidden for now: everyone plays as a guest
-    if(AUTH_CHOICE && db?.online && db.isGuest && !choice){ showAuthChoice(runPikoIntro); return; }
-    runPikoIntro();
+    if(AUTH_CHOICE && db?.online && db.isGuest && !choice){ showAuthChoice(()=>chooseTutorialStyle(runPikoIntro)); return; }
+    chooseTutorialStyle(runPikoIntro);
+  }
+  // First visit: learn by watching and trying (visual cues) or by reading Piko's lines.
+  // Changeable later in Settings > Tutorial.
+  const TUTORIAL_NAMES = { visual:'Show me', classic:'Explain it' };
+  function chooseTutorialStyle(done){
+    if(profile.settings.tutorialStyle) return done();
+    const card = document.createElement('div');
+    card.className = 'piko-name-card tut-choice';
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'tut-choice-title');
+    card.innerHTML = `<div class="piko-name-form"><img src="assets/sprites/piko.png" alt="" class="piko-name-face">
+      <h2 id="tut-choice-title">How do you like to learn?</h2>
+      <div class="tc-opts">
+        <button type="button" class="tc-opt" data-style="visual"><span class="tc-pic" aria-hidden="true"><i class="tc-target"></i><img src="assets/sprites/cursor-point.png" alt=""></span><b>${TUTORIAL_NAMES.visual}</b><small>Watch, then try it</small></button>
+        <button type="button" class="tc-opt" data-style="classic"><span class="tc-pic" aria-hidden="true"><span class="tc-read"><i></i><i></i><i></i></span></span><b>${TUTORIAL_NAMES.classic}</b><small>Piko explains each step</small></button>
+      </div></div>`;
+    card.querySelectorAll('[data-style]').forEach(btn => btn.addEventListener('click', ()=>{
+      profile.settings.tutorialStyle = btn.dataset.style; save(); applySettings();
+      card.remove(); done();
+    }));
+    document.body.appendChild(card);
+    card.querySelector('[data-style]').focus();
   }
   function showAuthChoice(done){
     const card = document.createElement('div');
@@ -256,7 +277,7 @@
         // selectAbout + its admin-added lines: the intro lines light up the
         // navigation bar; the last line centers "About", lights it and waits for the click.
         const extra = window.EC_TEXT?.extras('piko.workspace.selectAbout') || { after:[] };
-        const lines = [W.selectAbout, ...extra.after];
+        const lines = [W.selectAbout, ...(P.getStyle() === 'visual' ? [] : extra.after)]; // visual: the cue + offset hint show it
         const selected = () => elDiv(practice)?.classList.contains('selected');
         for(const [i, line] of lines.slice(0, -1).entries()){
           if(selected()) break;
@@ -929,6 +950,7 @@
     window.EC_SOUND.setMusicEnabled(!!s.musicEnabled);
     window.EC_SOUND.setMusicVolume(s.musicVolume != null ? s.musicVolume : 0.28);
     currentParticleSetting = s.particles || 'full';
+    window.EC_PIKO?.setStyle?.(s.tutorialStyle || 'classic'); // "Show me" (visual) or "Explain it" (classic)
     applyCosmetics();
   }
   function applySettings(){ applySettingsObj(profile.settings); }
@@ -1898,7 +1920,8 @@
           profile.onboarding = profile.onboarding || {}; profile.onboarding.basics = true; save();
           const P = window.EC_PIKO, lines = P.SCRIPT.basicsDone;
           // After his wrap-up (and once the reward card is closed), the first day ends.
-          const endDay = () => { const t = setInterval(()=>{ if(!document.getElementById('modal-reward').classList.contains('hidden')) return; clearInterval(t); showDaySummary(); }, 200); };
+          showDaySummary.wrapUp = true; // Collect on the reward card mustn't end the day under his lines
+          const endDay = () => { const t = setInterval(()=>{ if(!document.getElementById('modal-reward').classList.contains('hidden')) return; clearInterval(t); showDaySummary.wrapUp = false; showDaySummary(); }, 200); };
           // A line may be [text, selector]: Piko points at that (the Guidebook on the taskbar).
           const say = i => { if(i >= lines.length) return endDay(); const [t, sel] = Array.isArray(lines[i]) ? lines[i] : [lines[i]];
             const at = sel && document.querySelector(sel); at ? P.pointAt(at) : P.clearTarget(); P.say(t, { top:true, onDone: ()=>say(i + 1) }); };
@@ -1941,6 +1964,7 @@
   }
 
   function showDaySummary(){
+    if(showDaySummary.wrapUp) return; // day one: Piko's wrap-up first (it calls this when done)
     const day=window.EC_STORE.workday(profile);
     if(day.submissions<window.EC_STORE.dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return;
     // Days 2+: Piko wraps up the day (once) before the sunset animation. Day 1 has its own basics lines.
@@ -2203,6 +2227,7 @@
       </li>
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
+      ${picker('tutorial','Tutorial',TUTORIAL_NAMES[profile.settings.tutorialStyle || 'classic'])}
       ${inEditor ? '' : editorRows}
       <li class="profile-setting admin-only">
         <span id="qs-notut-label">Skip tutorials</span>
@@ -2241,6 +2266,12 @@
         profile.settings.panButton = ids[(i + Number(btn.dataset.step) + ids.length) % ids.length];
         save();
         btn.closest('.profile-picker').querySelector('output').textContent = PAN_NAMES[profile.settings.panButton];
+        return;
+      }
+      if(key === 'tutorial'){ // two styles: either arrow switches
+        profile.settings.tutorialStyle = profile.settings.tutorialStyle === 'visual' ? 'classic' : 'visual';
+        save(); applySettings();
+        btn.closest('.profile-picker').querySelector('output').textContent = TUTORIAL_NAMES[profile.settings.tutorialStyle];
         return;
       }
       if(key === 'keys'){

@@ -44,6 +44,16 @@
   .check{display:flex;gap:.6rem;align-items:flex-start;margin:1rem 0;font:800 1.05rem 'Nunito';cursor:pointer;}
   .check input{width:1.3rem;height:1.3rem;margin-top:.15rem;accent-color:#7656b3;}
   .field{display:grid;gap:.35rem;margin-bottom:1rem;font:800 1rem 'Nunito';}
+.ev-h{margin:1.5rem 0 .5rem;font:800 1.2rem 'Nunito';color:var(--plum);}
+  .ev{margin:0 0 .75rem;padding:.75rem 1rem;border:2px solid #e4d8ca;border-radius:.8rem;background:#fff;}
+  .ev legend{padding:0;font:700 1rem/1.4 'Nunito';color:var(--plum);float:left;width:100%;margin-bottom:.5rem;}
+  .ev-scale{clear:both;display:flex;gap:.5rem;}
+  .ev-scale label{flex:1;cursor:pointer;position:relative;}
+  .ev-scale input{position:absolute;opacity:0;}
+  .ev-scale span{display:grid;place-items:center;min-height:2.5rem;border:2px solid #e4d8ca;border-radius:.6rem;font:800 1.1rem 'Nunito';color:var(--plum);}
+  .ev-scale input:checked+span{background:#2f7a70;border-color:#2f7a70;color:#fff;}
+  .ev-scale input:focus-visible+span{outline:3px solid #f5b83d;outline-offset:1px;}
+  .field textarea{padding:.7rem .9rem;border:2px solid #e4d8ca;border-radius:.8rem;font:700 1rem 'Nunito';color:var(--plum);}
   .field input,.field select{padding:.7rem .9rem;border:2px solid #e4d8ca;border-radius:.8rem;background:#fff;font:700 1.05rem 'Nunito';color:var(--plum);}
   .field input:focus,.field select:focus{outline:3px solid #f5b83d;outline-offset:1px;}
   .google{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;padding:.85rem 1rem;border:3px solid #e4d8ca;border-radius:1rem;background:#fff;font:800 1.15rem 'Nunito';cursor:pointer;}
@@ -146,7 +156,7 @@
       document.getElementById('next').disabled = false;
     });
     document.getElementById('back').onclick = () => { i--; question(); };
-    document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else finish(); };
+    document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else mode === 'post' ? evaluation() : finish(); };
     app.querySelector('.opt').focus();
   }
   // Post-test result: before vs after, overall and per skill area (Appendix C item ranges).
@@ -163,8 +173,45 @@
     return `<div class="cmp">${row('Before playing', 'pre', pre.score, pre.total)}${row('After playing', 'post', post.score, post.total)}
       <p class="cmp-gain ${gain > 0 ? 'up' : ''}">${gain > 0 ? `+${gain} more correct. Look how much you grew!` : gain === 0 ? 'Same score as before. Thanks for giving it your best!' : 'Thanks for giving it your best!'}</p>${areas}</div>`;
   }
+  // Post-test Part II (software quality, ISO/IEC 25010) and Part III (comments). Saved with the answers.
+  const EVAL = [
+    ['A. Functional Suitability', [
+      ['FS1', 'The tasks in EyeCon cover the main alignment, contrast, and typography standards I need to practice.'],
+      ['FS2', 'EyeCon ticked off a task only when my fix actually met the rule (for example, the 8px grid or the required text size).'],
+      ['FS3', 'The Contrast readout showed accurate contrast ratios and correct pass/fail results for WCAG 2.2 Level AA.'],
+      ['FS4', 'The tools provided (Design Panel, grid overlay, snapping, and before/after toggle) were enough to complete every client’s tasks.']]],
+    ['B. Interaction Capability', [
+      ['IC1', 'Piko’s onboarding and lessons taught me how to use EyeCon’s controls.'],
+      ['IC2', 'The client emails, task list, and tips made it clear what I needed to fix.'],
+      ['IC3', 'Dragging, snapping, and changing values in the Design Panel were easy to control.'],
+      ['IC4', 'The reset button, before/after toggle, and Back to Editor let me recover easily from mistakes.'],
+      ['IC5', 'The hints and the UI Survival Guide helped me when I was stuck.'],
+      ['IC6', 'The story, the clients, the Service Fees, and the thank-you gifts kept me engaged.']]],
+    ['C. Performance Efficiency', [
+      ['PE1', 'EyeCon loaded quickly in my web browser.'],
+      ['PE2', 'Dragging elements, panning, and zooming responded smoothly without lag.'],
+      ['PE3', 'The task list and the Contrast readout updated immediately after each change.'],
+      ['PE4', 'EyeCon did not noticeably slow down my computer or browser.']]]];
+  let rating = null;
+  function evaluation(){
+    const scale = [[5,'Strongly Agree'],[4,'Agree'],[3,'Neutral'],[2,'Disagree'],[1,'Strongly Disagree']];
+    app.innerHTML = `${top('Part II · Software quality')}<h1>Rate EyeCon</h1><p class="note">5 = Strongly Agree, 4 = Agree, 3 = Neutral, 2 = Disagree, 1 = Strongly Disagree</p>
+      ${EVAL.map(([h, items]) => `<h2 class="ev-h">${h}</h2>${items.map(([id, t]) => `<fieldset class="ev"><legend><b>${id}.</b> ${t}</legend><div class="ev-scale">${scale.map(([v, l]) => `<label title="${l}"><input type="radio" name="${id}" value="${v}" aria-label="${v}, ${l}"><span>${v}</span></label>`).join('')}</div></fieldset>`).join('')}`).join('')}
+      <h2 class="ev-h">Part III · Comments and suggestions (optional)</h2>
+      <div class="field"><textarea id="ev-comments" rows="4" maxlength="2000" aria-label="Comments and suggestions"></textarea></div>
+      <p class="err" id="err" role="alert"></p>
+      <div class="actions"><span></span><button class="btn" id="ev-done">Finish</button></div>`;
+    document.getElementById('ev-done').onclick = () => {
+      const ids = EVAL.flatMap(([, items]) => items.map(([id]) => id)), scores = {};
+      for(const id of ids){ const c = app.querySelector(`input[name="${id}"]:checked`); if(!c){ document.getElementById('err').textContent = `Please rate every statement (${id} is missing).`; app.querySelector(`input[name="${id}"]`).focus(); return; } scores[id] = +c.value; }
+      rating = { eval: scores, comments: document.getElementById('ev-comments').value.trim() };
+      finish();
+    };
+    window.scrollTo(0, 0);
+  }
   async function finish(){
     const answers = picks.map((p, k) => ({ q:Q[k].n, picked:p, correct:p === Q[k].a }));
+    if(rating) answers.push(rating); // Part II/III ride along (no question number, so scoring ignores it)
     const score = answers.filter(a => a.correct).length, duration = Math.round(performance.now() - started);
     const study = readStudy(); study[mode] = { score, total:Q.length, answers, at:new Date().toISOString() }; writeStudy(study);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title}</span></div><h1>Saving…</h1>`;
@@ -231,13 +278,21 @@
     }
     app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Take both tests on this same device and browser, with the same name.</p>
       <div class="field"><label for="name">Name</label><input id="name" maxlength="40" autocomplete="name" placeholder="e.g. Juan Dela Cruz"></div>
-      <div class="field"><label for="section">Year level and section</label><input id="section" maxlength="40" placeholder="e.g. 1st Year BSIT"></div>
-      <div class="field"><label for="prior">Have you studied UI design before?</label><select id="prior"><option value="">Choose one</option><option value="yes">Yes</option><option value="a little">A little</option><option value="no">No</option></select></div>
+      <div class="field"><label for="type">Respondent type</label><select id="type"><option value="">Choose one</option><option>Student</option><option>UI design professional</option></select></div>
+      <div class="field"><label for="age">Age</label><select id="age"><option value="">Choose one</option><option>18–20</option><option>21–24</option><option>25 and above</option></select></div>
+      <div class="field"><label for="inst">Institution / affiliation</label><select id="inst"><option value="">Choose one</option><option>De La Salle Lipa</option><option value="school">Other school or university</option><option value="company">Company / organization</option></select>
+        <input id="inst-other" maxlength="60" placeholder="Name of school or company" hidden aria-label="Name of school or company"></div>
+      <div class="field"><label for="section">Program (students) or role (professionals)</label><input id="section" maxlength="40" placeholder="e.g. 1st Year BSIT"></div>
+      <div class="field"><label for="prior">Have you used UI design tools such as Figma before?</label><select id="prior"><option value="">Choose one</option><option value="yes">Yes</option><option value="no">No</option></select></div>
       <p class="err" id="err" role="alert"></p>
       <div class="actions"><span></span><button class="btn" id="save">Continue</button></div>`;
+    const v = id => document.getElementById(id).value.trim(), other = document.getElementById('inst-other');
+    document.getElementById('inst').onchange = e => { other.hidden = !['school', 'company'].includes(e.target.value); if(!other.hidden) other.focus(); };
     document.getElementById('save').onclick = async () => {
-      const name = document.getElementById('name').value.trim(), section = document.getElementById('section').value.trim(), prior = document.getElementById('prior').value;
-      if(!name || !section || !prior){ document.getElementById('err').textContent = 'Please fill in all three.'; return; }
+      const name = v('name'), prior = v('prior'), inst = v('inst'), instName = inst === 'school' || inst === 'company' ? v('inst-other') : inst;
+      if(!name || !v('type') || !v('age') || !instName || !v('section') || !prior){ document.getElementById('err').textContent = 'Please fill in every field.'; return; }
+      // Kept in the existing "section" column as one readable line (no schema change).
+      const section = [v('type'), v('age'), instName, v('section')].join(' · ');
       const { error } = await db.client.from('respondents').upsert({ id: db.userId, email: db.email, display_name: name, section, prior_ui: prior,
         consent_at: sessionStorage.getItem('eyecon_consent') || new Date().toISOString(), updated_at: new Date().toISOString() });
       if(error){ document.getElementById('err').textContent = 'Could not save: ' + error.message; return; }

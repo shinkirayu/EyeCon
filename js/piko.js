@@ -161,8 +161,9 @@
   const fill = (t, vars) => t.replace(/\{([^{}\s]+)\}/g, (m, k) => { const plain = k.normalize('NFKC'), v = vars[plain]; return v == null ? m : (plain !== k ? '**' + v + '**' : v); });
   window.EC_TEXT?.bindObject('piko', SCRIPT, 'piko', 'Piko dialogue');
   const TEMPLATED = { niceToMeet:'name', inboxGuide:'client', nextMail:'client' };
-  Object.entries(TEMPLATED).forEach(([k, v]) => { const tpl = () => window.EC_TEXT ? window.EC_TEXT.t('piko.' + k) : k; SCRIPT[k] = x => fill(tpl(), { [v]: x }); });
-  SCRIPT.reply.arrived = x => fill(window.EC_TEXT ? window.EC_TEXT.t('piko.reply.arrived') : '', { client: x });
+  // Filled through EC_TEXT.t so the filled line still maps back to its key (the visual tutorial needs it).
+  Object.entries(TEMPLATED).forEach(([k, v]) => { SCRIPT[k] = x => window.EC_TEXT ? window.EC_TEXT.t('piko.' + k, { [v]: x }) : fill(k, { [v]: x }); });
+  SCRIPT.reply.arrived = x => window.EC_TEXT ? window.EC_TEXT.t('piko.reply.arrived', { client: x }) : '';
 
   const MS_PER_CHAR = 52;
   const SFX_EVERY_N_CHARS = 2;
@@ -183,14 +184,18 @@
       '<div class="piko-panel"><p class="piko-name">PIKO</p><h4 class="piko-line"><span class="piko-text"></span><span class="piko-caret">|</span></h4>' +
       '<div class="piko-foot"><button type="button" class="piko-nav prev" aria-label="Previous line">‹</button><span class="piko-hint"></span><button type="button" class="piko-nav next" aria-label="Next line">›</button></div></div>' +
       '<img class="piko-img" src="assets/sprites/piko.png" alt="Piko, the EyeCon guide, waves hello." />';
+    // Visual tutorial: a hand that acts out the move (tap / hold / slide) on the target.
+    const hand = document.createElement('div'); hand.className = 'tv-hand hidden'; hand.setAttribute('aria-hidden', 'true');
+    hand.innerHTML = '<i class="tv-ripple"></i><img src="assets/sprites/cursor-point.png" alt="">';
     document.body.appendChild(hole);
     document.body.appendChild(cursor);
     document.body.appendChild(bubble);
-    dom = { hole, cursor, bubble, textEl: bubble.querySelector('.piko-text'), caretEl: bubble.querySelector('.piko-caret'),
+    document.body.appendChild(hand);
+    dom = { hole, cursor, hand, bubble, textEl: bubble.querySelector('.piko-text'), caretEl: bubble.querySelector('.piko-caret'),
       hint: bubble.querySelector('.piko-hint'), prev: bubble.querySelector('.prev'), next: bubble.querySelector('.next') };
     // ‹ › re-read earlier lines of this conversation; › on the newest line advances it.
-    dom.prev.addEventListener('click', e => { e.stopPropagation(); if(view > 0){ view--; showView(); } });
-    dom.next.addEventListener('click', e => { e.stopPropagation(); if(view < history.length - 1){ view++; showView(); } else if(latestCanAdvance) bubble.onclick?.(); });
+    dom.prev.addEventListener('click', e => { e.stopPropagation(); if(!cue && view > 0){ view--; showView(); } });
+    dom.next.addEventListener('click', e => { e.stopPropagation(); if(!cue && view < history.length - 1){ view++; showView(); } else if(latestCanAdvance) bubble.onclick?.(); });
     addEventListener('keydown', e => {
       if(bubble.classList.contains('hidden') || e.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
       if(e.key === 'ArrowLeft'){ dom.prev.click(); e.preventDefault(); }
@@ -235,6 +240,146 @@
     html = html.replace(all, m => { const [, icon, replace] = CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m)); return replace ? icon() : m + ' ' + icon(); });
     return html;
   }
+
+  // ---------- Visual tutorial ("Show me") ----------
+  // Same tutorial steps as the classic one (app.js drives both), shown differently:
+  // each Piko line maps to a short cue beside the target, a hand that acts the move
+  // out, or a small animated card. Talk lines that only explain are skipped or play
+  // as a few-second card; lines that wait for an action stay until it is done.
+  let style = 'classic';
+  const visual = () => style === 'visual';
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const playerName = () => window.EC_STORE?.load?.().displayName || 'Designer';
+  // Keys pressing, for "press any key".
+  const KEYS = '<span class="tv-keys" aria-hidden="true"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>';
+  const ICON = { left: () => mouseIcon('left'), pan: () => mouseIcon('middle', 'right'), wheel: () => mouseIcon('middle'), keys: () => KEYS,
+    shift: () => '<kbd class="piko-kbd">⇧ Shift</kbd>' };
+  // Little animated pictures for the ideas that used to be paragraphs.
+  const ART = {
+    fix: '<div class="tva tva-fix"><div class="tva-win bad"><i></i><i></i><i></i></div><b class="tva-arrow">➜</b><div class="tva-win good"><i></i><i></i><i></i></div></div>',
+    align: '<div class="tva tva-align"><s></s><i></i><i></i><i></i></div>',
+    gaps: '<div class="tva tva-gaps"><i></i><i></i><i></i></div>',
+    contrast: '<div class="tva tva-contrast"><span class="aa">Aa</span><b class="r lo">1.6 : 1</b><b class="r hi">7.5 : 1</b></div>',
+    ratio: '<div class="tva tva-ratio"><span class="sw bad">Aa<em>✕</em></span><span class="sw good">Aa<em>✓</em></span><b>4.5 : 1</b></div>',
+    type: '<div class="tva tva-type"><b>Title</b><span>Subtitle</span><small>Small details</small></div>',
+    min16: '<div class="tva tva-min"><span class="bad"><em>12px</em>Aa ✕</span><span class="good"><em>16px</em>Aa ✓</span></div>',
+    noDots: '<div class="tva tva-nodots"><span class="dot">!</span><b class="tva-arrow">➜</b><span class="bulb">💡</span></div>',
+    basics: '<div class="tva tva-basics"><span>✓ Alignment</span><span>✓ Contrast</span><span>✓ Typography</span></div>',
+  };
+  const SKIP = { skip:true };
+  const tap = (cue, more) => Object.assign({ cue, icon:'left', gesture:'tap' }, more);
+  const VISUAL = {
+    'piko.tutorial.0': { cue:'Hi! I’m Piko 👋', mid:1, auto:1800 },
+    'piko.niceToMeet': () => ({ cue:`Hi, ${playerName()}!`, mid:1, auto:1400 }),
+    'piko.tutorial.1': { cue:'You fix clients’ designs', card:ART.fix, auto:3200 },
+    'piko.tutorial.2': tap('Open Mail'),
+    'piko.mailIntro': SKIP, 'piko.mailExplain': SKIP,
+    'piko.inboxGuide': tap('Open the email'),
+    'piko.previewGuide': tap('See their design'),
+    'piko.acceptGuide': tap('Accept the job'),
+    'piko.workspace.intro': SKIP,
+    'piko.workspace.pan': { cue:'Hold right-click, then drag', icon:'pan', at:'.piko-demo' },
+    'piko.workspace.zoom': { cue:'Scroll to zoom', icon:'wheel', at:'.piko-demo' },
+    'piko.workspace.problems': { cue:'Red ! = fix this', at:'#editor-canvas .el.needs-edit', auto:2600 },
+    'piko.workspace.dotsLater': SKIP, 'piko.workspace.together': SKIP,
+    'piko.workspace.selectAbout': tap('Click “About”', { onShow: () => offsetHint(['home', 'contact'], 'about'), onHide: () => offsetHint() }),
+    'piko.workspace.element': { cue:'Click an item with a red !', icon:'left' },
+    'piko.workspace.controls': { cue:'You can fine-tune here too', auto:2200 },
+    'piko.workspace.dragAbout': { cue:'Drag it up onto the line', icon:'left', at:'#editor-canvas .el.piko-glow', burst:false },
+    'piko.workspace.guides': { cue:'Pink line = lined up', at:'#editor-canvas-wrap', auto:3200 },
+    'piko.workspace.nice': { success:'Lined up!', auto:1400 },
+    'piko.workspace.rulers': SKIP, 'piko.workspace.toolbar': SKIP,
+    'piko.workspace.toolbarUndo': { cue:'Undo · Redo', at:'.piko-tb-glow', auto:1800 },
+    'piko.workspace.toolbarZoom': { cue:'Zoom', at:'.piko-tb-glow', auto:1500 },
+    'piko.workspace.grid': tap('Show the grid', { at:'.piko-tb-glow' }),
+    'piko.workspace.gridDone': { cue:'Things snap to 8px', auto:2200 },
+    'piko.workspace.gridSettings': tap('Grid options', { at:'.piko-tb-glow' }),
+    'piko.workspace.gridSettingsDone': { cue:'Try the slider', icon:'left', at:'#grid-settings-panel input[type=range]', gesture:'slide-x' },
+    'piko.workspace.submit': { cue:'Fix the rest, then Submit', auto:2800 },
+    'piko.workspace.compare': { cue:'Hold to compare', icon:'left', gesture:'hold' },
+    'piko.workspace.submitNow': tap('Submit'),
+    'piko.reply.arrived': tap('Open their reply'),
+    'piko.reply.complete': tap('Mark Completed'),
+    'piko.reply.revise': tap('Back to Editor'),
+    'piko.shop.browser': tap('Open the Browser'),
+    'piko.shop.store': tap('Visit the Store'),
+    'piko.shop.browse': { cue:'Look around, then close it', auto:2600 },
+    'piko.completed.tab': tap('Open Completed'),
+    'piko.completed.open': tap('Open this chat'),
+    'piko.nextMail': tap('New email! Open it'),
+    'piko.compose.type': { cue:'Press any key to type', icon:'keys' },
+    'piko.compose.attach': tap('Attach your design'),
+    'piko.compose.send': tap('Send'),
+    'piko.handoff.0': { cue:'From now on, you decide', card:ART.noDots, auto:3400 },
+    'piko.handoff.1': SKIP, 'piko.handoff.2': SKIP, 'piko.handoff.3': SKIP, 'piko.handoff.5': SKIP,
+    'piko.handoff.4': { cue:'Stuck? Use a hint', gesture:'tap', auto:2800 },
+    'piko.basicsDone.0': { cue:'Basics done!', card:ART.basics, auto:3000 },
+    'piko.basicsDone.1': SKIP, 'piko.basicsDone.3.0': SKIP, 'piko.basicsDone.4': SKIP,
+    'piko.basicsDone.2.0': { cue:'Guidebook: a refresher, anytime', gesture:'tap', auto:3000 },
+    'piko.basicsDone.5': { cue:'See you tomorrow!', mid:1, auto:1800 },
+    'piko.levels.mayo.0.0': SKIP, 'piko.levels.mayo.3.0': SKIP,
+    'piko.levels.mayo.1.0': { cue:'Line up the edges', card:ART.align, auto:2800 },
+    'piko.levels.mayo.2.0': { cue:'Keep gaps equal', card:ART.gaps, auto:2800 },
+    'piko.levels.yappers.0.0': { cue:'Contrast: text vs. background', card:ART.contrast, auto:3200 },
+    'piko.levels.yappers.1.0': SKIP,
+    'piko.levels.yappers.2.0': { cue:'Normal text: 4.5 : 1 or more', card:ART.ratio, auto:3000 },
+    'piko.levels.yappers.4.0': SKIP, 'piko.levels.yappers.6.0': SKIP, 'piko.levels.yappers.7.0': SKIP, 'piko.levels.yappers.8.0': SKIP, 'piko.levels.yappers.9.0': SKIP,
+    'piko.levels.yappers.5.0': { cue:'Grouped? Fix them all', auto:2200 },
+    'piko.levels.antoks.0.0': { cue:'Stuck? Use a hint', gesture:'tap', auto:2800 },
+    'piko.levels.haybuhay.0.0': { cue:'Typography = text size', card:ART.type, auto:2800 },
+    'piko.levels.haybuhay.2.0': SKIP, 'piko.levels.haybuhay.3.0': SKIP, 'piko.levels.haybuhay.4.0': SKIP,
+    'piko.practice.yappers.pick': tap('Click the heading'),
+    'piko.practice.yappers.fg': { cue:'Text color', side:'left', auto:1700 },
+    'piko.practice.yappers.bgc': { cue:'Background color', side:'left', auto:1700 },
+    'piko.practice.yappers.ratio': { cue:'Their contrast', side:'left', auto:1900 },
+    'piko.practice.yappers.guide': { cue:'Target ranges', side:'left', auto:2400 },
+    'piko.practice.yappers.guideRow': SKIP,
+    'piko.practice.yappers.demo': { cue:'Same text, new background', at:'.piko-fgbg-demo', auto:2800 },
+    'piko.practice.yappers.slider': { cue:'Down = darker', at:'#f-color', side:'left', gesture:'slide-y', auto:2400 },
+    'piko.practice.yappers.bar': { cue:'Drag the slider down', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.watch': { cue:'Keep going: 7 : 1 or more', at:'#element-settings .cz-box', side:'left' },
+    'piko.practice.yappers.done': { success:'Strongest text!', auto:1500 },
+    'piko.practice.yappers.phPick': tap('Click the placeholder'),
+    'piko.practice.yappers.phSlide': SKIP,
+    'piko.practice.yappers.phShift': tap('Shift + click “Password”', { icon:'shift' }),
+    'piko.practice.yappers.phBoth': { cue:'Slide into 4.5–7 : 1', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.phDone': { success:'Matched!', auto:1400 },
+    'piko.practice.haybuhay.intro': SKIP, 'piko.practice.haybuhay.groupIntro': SKIP,
+    'piko.practice.haybuhay.ladder': { cue:'Bigger = more important', at:'.piko-ladder-demo', auto:2600 },
+    'piko.practice.haybuhay.first': { cue:'Read first', auto:1500 },
+    'piko.practice.haybuhay.last': { cue:'Read last', auto:1500 },
+    'piko.practice.haybuhay.min': { cue:'Body text: 16px or more', card:ART.min16, auto:2800 },
+    'piko.practice.haybuhay.pick': tap('Click “1920 x 1080”'),
+    'piko.practice.haybuhay.size': tap('Make it 16px', { at:'#f-size + button', side:'left' }),
+    'piko.practice.haybuhay.groupPick': tap('Click the glowing label'),
+    'piko.practice.haybuhay.shift': tap('Shift + click the glowing ones', { icon:'shift' }),
+    'piko.practice.haybuhay.both': tap('Make them 16px', { at:'#f-size + button', side:'left' }),
+    'piko.practice.haybuhay.done': { success:'All readable!', auto:1500 },
+    // End of days 2+: one short story beat each (the day summary shows the numbers).
+    'piko.dayEnd.day2.0': { cue:'Two clients down! 🎉', mid:1, auto:2200 },
+    'piko.dayEnd.day3.0': { cue:'BEAR ORAS is fixed! 🐻', mid:1, auto:2200 }, 'piko.dayEnd.day3.1': { cue:'See you tomorrow!', mid:1, auto:1800 },
+    'piko.dayEnd.later.1': { cue:'Clock out, rest your eyes 😴', mid:1, auto:2200 },
+  };
+  // What to show for a line: an entry above, or (unknown / admin-added lines) skip it if it
+  // only talks, show it as-is if it asks for an action.
+  function visualFor(line, isTalk){
+    const key = window.EC_TEXT?.keyFor(line);
+    let v = key && VISUAL[key];
+    if(typeof v === 'function') v = v(line);
+    if(!v) return isTalk ? SKIP : { cue: line, raw:true };
+    return v;
+  }
+  function cueHtml(v, line, timed){
+    const timer = timed ? `<i class="tv-timer" style="--auto:${timed}ms"></i>` : '';
+    if(v.success) return `<span class="tv-ok" aria-hidden="true">✓</span><b class="tv-cap">${esc(v.success)}</b>${timer}`;
+    const icon = v.icon && ICON[v.icon] ? `<span class="tv-icon">${ICON[v.icon]()}</span>` : '';
+    const text = v.raw ? richText(line) : esc(v.cue);
+    return `${v.card ? `<div class="tv-art">${v.card}</div>` : ''}<span class="tv-row">${icon}<b class="tv-cap">${text}</b></span>${timer}`;
+  }
+  function setStyle(s){
+    style = s === 'visual' ? 'visual' : 'classic';
+    document.body.classList.toggle('tut-visual', visual());
+  }
   let typeTimer = null;
   let currentTarget = null;
   // Lines shown since Piko last appeared, for ‹ › re-reading.
@@ -254,6 +399,7 @@
 
   // Pause before each Piko line so beats don't land back to back.
   const LINE_DELAY_MS = 600;
+  const lineDelay = () => visual() ? 250 : LINE_DELAY_MS; // visual cues are short: less wait
   let sayDelayTimer = null;
 
   function hideBubble(){
@@ -261,9 +407,63 @@
     document.body.classList.remove('piko-line-pending');
     document.removeEventListener('click', advanceAnywhere, true);
     if(!dom) return; // (history kept: ‹ can re-read lines from before the last action too)
+    endCue(true);
     dom.bubble.classList.add('hidden');
     clearInterval(typeTimer);
     typeTimer = null;
+  }
+
+  // The cue on screen in the visual tutorial: follows its target every frame.
+  let cue = null; // { v, action, frame, autoTimer, rect }
+  function endCue(done){
+    if(!cue) return;
+    clearTimeout(cue.autoTimer); cancelAnimationFrame(cue.frame);
+    cue.v.onHide?.();
+    // The player did what an action cue asked: a quick ✓ where they did it.
+    if(done && cue.action && cue.rect && !cue.v.success && cue.v.burst !== false) successBurst(cue.rect);
+    dom.hand.className = 'tv-hand hidden';
+    dom.bubble.style.left = dom.bubble.style.top = '';
+    cue = null;
+  }
+  function successBurst(r){
+    const b = document.createElement('div'); b.className = 'tv-burst'; b.setAttribute('aria-hidden', 'true'); b.textContent = '✓';
+    b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
+    document.body.appendChild(b);
+    window.EC_SOUND?.play?.('pikoLine');
+    setTimeout(() => b.remove(), 900);
+  }
+  // Places the cue beside its target (below it, else above; inside the bottom of tall
+  // areas like the canvas), and the hand on the target, every frame. Nothing to point
+  // at: cards and greetings sit in the middle, the rest low and centred.
+  function placeCue(){
+    if(!cue || !dom) return;
+    const { bubble, hand } = dom, v = cue.v;
+    const t = (v.at && document.querySelector(v.at)) || currentTarget;
+    const r = t && t.isConnected ? t.getBoundingClientRect() : null;
+    const cw = bubble.offsetWidth, ch = bubble.offsetHeight, W = innerWidth, H = innerHeight, gap = 16;
+    let x, y;
+    if(r && r.width && !(v.card && !v.at)){
+      const big = r.height > H * .45;
+      x = Math.min(Math.max(8, r.left + r.width / 2 - cw / 2), W - cw - 8);
+      y = big ? Math.min(r.bottom, H) - gap - ch : r.bottom + gap + ch <= H - 8 ? r.bottom + gap : Math.max(8, r.top - gap - ch);
+      if(v.side === 'left'){ // beside it instead, left of the side panel, so what's under the target stays in view
+        const panel = t.closest('#element-settings')?.getBoundingClientRect() || r;
+        x = Math.max(8, panel.left - gap - cw); y = Math.min(Math.max(8, r.top + r.height / 2 - ch / 2), H - ch - 8);
+      }
+      cue.rect = r;
+      const g = v.gesture && !big ? v.gesture : null;
+      hand.className = 'tv-hand' + (g ? ' g-' + g : ' hidden');
+      if(g){
+        hand.style.left = (r.left + r.width * (g === 'slide-x' ? .3 : .5)) + 'px';
+        hand.style.top = (r.top + r.height * (g === 'slide-y' ? .3 : .55)) + 'px';
+        hand.style.setProperty('--slide', (g === 'slide-y' ? r.height * .45 : r.width * .45) + 'px');
+      }
+    } else {
+      x = (W - cw) / 2; y = v.card || v.success || v.mid ? Math.max(8, (H - ch) / 2) : Math.max(8, H - ch - 144);
+      hand.className = 'tv-hand hidden';
+    }
+    bubble.style.left = Math.round(x) + 'px'; bubble.style.top = Math.round(y) + 'px';
+    cue.frame = requestAnimationFrame(placeCue);
   }
 
   // Shows one line of dialogue with a typewriter reveal; clicking mid-type
@@ -282,6 +482,13 @@
   // (unless skipped), then lines added after it, before the game continues.
   function say(line, opts){
     opts = opts || {};
+    if(visual()){
+      // Lines that only explain are skipped; the rest become a short cue (admin-added
+      // before/after lines are left to the classic tutorial).
+      const v = visualFor(line, !!opts.onDone);
+      if(v.skip && opts.onDone){ hideBubble(); setTimeout(opts.onDone); return; }
+      return sayOne(line, Object.assign({}, opts, { _v: v }));
+    }
     if(opts._x) return sayOne(line, opts);
     if(pendingAfter.length){ // lines added after the previous action line
       const q = pendingAfter; pendingAfter = [];
@@ -318,12 +525,17 @@
     if(!opts.now && !showing){
       ensureDom().bubble.classList.add('hidden');
       document.body.classList.add('piko-line-pending'); // the highlighted control waits for this line
-      sayDelayTimer = setTimeout(() => sayOne(line, Object.assign({}, opts, { now:true })), LINE_DELAY_MS);
+      sayDelayTimer = setTimeout(() => sayOne(line, Object.assign({}, opts, { now:true })), lineDelay());
       return;
     }
     const { textEl, caretEl, bubble } = ensureDom();
-    bubble.classList.toggle('piko-top', !!opts.top);
-    bubble.classList.toggle('piko-left', !!opts.left); // keep clear of right-side highlights
+    const v = opts._v;
+    endCue(true); // a new line replaces the cue (✓ if it had asked for an action)
+    bubble.classList.toggle('piko-cue', !!v);
+    bubble.classList.toggle('piko-cue-card', !!(v && (v.card || v.success)));
+    bubble.classList.toggle('piko-cue-ok', !!(v && v.success));
+    bubble.classList.toggle('piko-top', !v && !!opts.top);
+    bubble.classList.toggle('piko-left', !v && !!opts.left); // keep clear of right-side highlights
     if(bubble.classList.contains('hidden')){
       // Pop in like a storybook character jumping onto the page.
       bubble.classList.remove('piko-pop'); void bubble.offsetWidth; bubble.classList.add('piko-pop');
@@ -355,6 +567,13 @@
     finishTyping(); // ponytail: typewriter off for now; restore the setInterval reveal to bring it back
     history.push(full); if(history.length > 30) history.shift(); view = history.length - 1; latestCanAdvance = !!opts.onDone;
     showView();
+    const autoMs = v && opts.onDone ? (v.auto || 2200) : 0;
+    if(v){
+      textEl.innerHTML = cueHtml(v, full, autoMs);
+      cue = { v, action: !opts.onDone, frame: 0, autoTimer: 0, rect: null };
+      v.onShow?.();
+      placeCue();
+    }
     // Lines that lead somewhere advance on a click anywhere; the click is
     // swallowed so it can't also hit whatever is under it.
     document.removeEventListener('click', advanceAnywhere, true);
@@ -369,9 +588,7 @@
       bubble.onclick();
     };
     if(opts.onDone) setTimeout(() => document.addEventListener('click', advanceAnywhere, true));
-    bubble.onclick = () => {
-      if(view < history.length - 1){ view++; showView(); return; } // re-reading: a click steps forward one line
-      if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
+    const advance = () => {
       document.removeEventListener('click', advanceAnywhere, true);
       if(typeTimer){ finishTyping(); return; }
       // If onDone chains another line, Piko stays up; otherwise he leaves.
@@ -381,6 +598,13 @@
       // microtask, so Piko should stay up instead of leaving and popping back.
       setTimeout(() => { if(!saidAgain) hideBubble(); });
     };
+    bubble.onclick = () => {
+      if(view < history.length - 1){ view++; showView(); return; } // re-reading: a click steps forward one line
+      if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
+      advance();
+    };
+    // Visual tutorial: explaining beats move on by themselves (a click still skips ahead).
+    if(autoMs) cue.autoTimer = setTimeout(advance, autoMs);
   }
 
   let placeRetryTimer = null;
@@ -402,7 +626,7 @@
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     if(!el){ clearTarget(); return; }
     // Piko is about to pop in: land the highlight with him, not before.
-    if(opts.delay == null && (!dom || dom.bubble.classList.contains('hidden'))) opts.delay = LINE_DELAY_MS;
+    if(opts.delay == null && (!dom || dom.bubble.classList.contains('hidden'))) opts.delay = lineDelay();
     const lift = el.classList.contains('desktop-icon');
     const run = () => {
       const { cursor, hole } = ensureDom();
@@ -476,6 +700,7 @@
   }
 
   function clearTarget(){
+    if(cue?.action) hideBubble(); // visual tutorial: the step is done, the cue leaves with its ✓
     const { cursor, hole } = ensureDom();
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     document.querySelectorAll('.piko-pointed').forEach(n => n.classList.remove('piko-pointed'));
@@ -500,10 +725,10 @@
   // Piko asks a question: his line shows, then a game-style card pops up with
   // a text field + OK. Calls onAnswer(text). `prefill` seeds the field.
   function ask(line, { placeholder = '', maxLength = 24, prefill = '', title = '' } = {}, onAnswer){
-    say(line, { top:false });
+    if(visual()) hideBubble(); else say(line, { top:false }); // visual: the card alone asks
     const { bubble } = ensureDom();
     const waitForBubble = setInterval(() => {
-      if(bubble.classList.contains('hidden')) return;
+      if(!visual() && bubble.classList.contains('hidden')) return;
       clearInterval(waitForBubble);
       const card = document.createElement('div');
       card.className = 'piko-name-card';
@@ -529,9 +754,10 @@
   // On-screen control demos for players who skip reading: a "TRY IT" card with a big
   // mouse (and arrows) acting the move out in the middle of the canvas, until Piko's
   // step is done.
-  function demo(kind){
-    document.querySelectorAll('.piko-demo').forEach(n => n.remove());
+  function demo(kind, el){
+    document.querySelectorAll('.piko-demo, .tv-ghost').forEach(n => n.remove());
     if(!kind) return;
+    if(kind === 'drag' && visual() && ghostDrag(el || document.querySelector('#editor-canvas .el.piko-glow'))) return;
     const wrap = document.getElementById('editor-canvas-wrap');
     if(!wrap) return;
     const r = wrap.getBoundingClientRect();
@@ -552,6 +778,26 @@
       <p>${label}</p><p class="pd-how">${how}</p>${kind === 'drag' ? `<p class="pd-or">or ${ARROWS}</p>` : ''}`;
     document.body.appendChild(d);
   }
+  // Visual tutorial: a see-through copy of the element (with the hand) slides from
+  // where it is up to the line it should share, so the move is shown, not told.
+  function ghostDrag(node){
+    const E = window.EC_EDITOR, G = window.EC_GRADING, canvas = document.getElementById('editor-canvas');
+    const els = E?.getElements?.() || [], me = node && els.find(e => e.id === node.dataset.id);
+    const goal = me && (E.getLevel()?.goals || []).find(g => g.check.sameY && G.goalIds(g.check).includes(me.id));
+    const refs = goal ? G.goalIds(goal.check).map(id => els.find(e => e.id === id)).filter(e => e && e.id !== me.id) : [];
+    if(!canvas || !refs.length) return false;
+    const all = [...refs, me], left = Math.min(...all.map(e => e.x)) - 12, right = Math.max(...all.map(e => e.x + e.w)) + 12;
+    const g = document.createElement('div');
+    g.className = 'tv-ghost'; g.setAttribute('aria-hidden', 'true');
+    // Design pixels inside the canvas: it pans and zooms with the page.
+    g.style.cssText = `left:${me.x}px;top:${me.y}px;width:${me.w}px;height:${me.h}px;--dy:${refs[0].y - me.y}px;` +
+      `font:${me.fontWeight || 400} ${me.fontSize || 16}px '${me.fontFamily || 'Nunito'}';color:${me.color || '#3b172e'}`;
+    // The dashed line is the shared top edge it should move onto.
+    g.innerHTML = `<i class="tv-ghost-line" style="left:${left - me.x}px;width:${right - left}px"></i>` +
+      `<span class="tv-ghost-el">${esc(me.text || '')}<img src="assets/sprites/cursor-point.png" alt=""></span>`;
+    canvas.appendChild(g);
+    return true;
+  }
   // "Sits a little lower": a dashed guide along Home/Contact's top edge and a
   // bracket showing how far About drops below it, drawn in with a bounce.
   function offsetHint(refIds, id){
@@ -570,6 +816,7 @@
       <i class="po-ghost" style="left:${el.x - 6}px;top:${el.y - 6}px;width:${el.w + 12}px;height:${el.h + 12}px"></i>
       <i class="po-gap" style="left:${el.x - 16}px;top:${top}px;height:${Math.max(4, el.y - top)}px"></i>`;
     canvas.appendChild(h);
+    if(visual()) return; // the line, box and bracket say it; the cue sits where the tag would
     // The tag lives on the top layer (above the dim) and tracks the page every frame.
     const q = i => canvas.querySelector(`.el[data-id="${i.id}"]`);
     const aboutDom = q(el), refDoms = refs.map(q);
@@ -641,5 +888,5 @@
     };
     draw();
   }
-  window.EC_PIKO = { spotlight, demo, offsetHint, guideNotes, SCRIPT, say, ask, hideBubble, pointAt, clearTarget };
+  window.EC_PIKO = { spotlight, demo, offsetHint, guideNotes, SCRIPT, say, ask, hideBubble, pointAt, clearTarget, setStyle, getStyle: () => style };
 })();
