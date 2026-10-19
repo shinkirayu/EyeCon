@@ -148,8 +148,8 @@
    transition:opacity .4s ease;}
   .scroll-hint i{display:grid;place-items:center;width:2.2vw;height:1.5vw; /* vw, not px: browser zoom leaves it the same size on screen */
     /* a plain dark triangle pointing down, with a soft shadow */
-    filter:drop-shadow(0 4px 6px #000a);}
-  .scroll-hint i::before{content:"";width:100%;height:100%;background:#0d1b2a;opacity:.15;clip-path:polygon(0 0,100% 0,50% 100%);animation:hintBob 1.4s ease-in-out infinite;}
+    filter:drop-shadow(0 2px 3px #0002);}
+  .scroll-hint i::before{content:"";width:100%;height:100%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 22'%3E%3Cpath d='M4 3h24L16 19z' fill='%23506870' stroke='%23506870' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.3;animation:hintBob 1.4s ease-in-out infinite;} /* rounded triangle */
   .scroll-hint.gone{opacity:0;}
   @keyframes hintBob{50%{transform:translateY(8px)}}
   @media (prefers-reduced-motion:reduce){.scroll-hint i::before{animation:none;}}
