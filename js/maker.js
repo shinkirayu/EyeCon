@@ -98,6 +98,7 @@
     }
     if(el.fontFamily) node.style.fontFamily=`'${el.fontFamily}', sans-serif`;
     if(el.fontWeight) node.style.fontWeight=el.fontWeight;
+    node.style.textDecoration=el.underline?'underline':'';
     if(el.border&&el.border.width) node.style.border=`${el.border.width}px ${el.border.style} ${el.border.color}`;
     if(el.align){ node.style.textAlign=el.align; node.style.justifyContent={left:'flex-start',right:'flex-end'}[el.align]||'center'; }
     if(el.opacity!=null) node.style.opacity=el.opacity;
@@ -204,12 +205,13 @@
   // player do to it. Goal targets are always needed.
   function gameRules(el){
     const isGoal=goalIds().has(el.id), needed=!el.gameLocked;
-    const allow=el.allow||['move','resize','color'];
+    // Player tools by skill: Alignment = move, Typography = text size ('font'; old 'resize' counts), Contrast = color.
+    const allow=(el.allow||['move','font','color']).map(k=>k==='resize'?'font':k);
     const box=(key,label,checked,dis)=>`<label class="maker-rule"><input type="checkbox" data-maker-rule="${key}" ${checked?'checked':''} ${dis?'disabled':''}/> ${label}</label>`;
     return `<fieldset class="maker-rules"><legend>In the game</legend>
       ${box('needed','Needed to solve',needed)}${isGoal?`<small>${needed?'A client goal checks this element.':'Left out of its client goal.'}</small>`:''}
       <div class="maker-rule-group"${needed?'':' hidden'}>
-        ${box('move','Movable',allow.includes('move'))}${box('resize','Scalable (size &amp; text size)',allow.includes('resize'))}${box('color','Contrast color',allow.includes('color'))}
+        ${box('move','Alignment (move)',allow.includes('move'))}${el.text?box('font','Typography (text size)',allow.includes('font')):''}${box('color','Contrast (color)',allow.includes('color'))}
         <label class="maker-group-field">Color group <input type="text" data-maker-group value="${safe(el.colorGroup||'')}" placeholder="e.g. placeholders" maxlength="30"/></label>
         <small>Elements with the same group name must end up the exact same color.</small>
       </div></fieldset>`;
@@ -642,9 +644,9 @@
       if(rule&&ruleEl){
         if(rule==='needed') ruleEl.gameLocked=!e.target.checked;
         else{
-          const allow=new Set(ruleEl.allow||['move','resize','color']);
+          const allow=new Set((ruleEl.allow||['move','font','color']).map(k=>k==='resize'?'font':k));
           e.target.checked?allow.add(rule):allow.delete(rule);
-          ruleEl.allow=['move','resize','color'].filter(k=>allow.has(k));
+          ruleEl.allow=['move','font','color'].filter(k=>allow.has(k));
         }
         render();record();return;
       }

@@ -112,7 +112,10 @@
   // The first trip from the title screen lands on the desk, then Pixel gives
   // the player a compact explanation before their very first client email.
   // Piko's guide sequence: null | 'mail' | 'inbox' | 'attachment' | 'accept' | 'element' | 'controls' | 'save' | 'send'
-  const pikoEnabled = !window.EC_NO_PIKO; // e2e tests opt out
+  // e2e tests opt out; admins (index.html?admin) can switch tutorials off in Settings, kept per browser.
+  function skipTutorialsStored(){ try{ return localStorage.getItem('ec-skip-tutorials') === '1'; }catch(e){ return false; } }
+  const pikoAllowed = () => !window.EC_NO_PIKO && !(new URLSearchParams(location.search).has('admin') && skipTutorialsStored());
+  let pikoEnabled = pikoAllowed();
   let pikoStage = null;
   function isFirstDay(){
     return !profile.onboarding?.seen && profile.completed.length === 0 && profile.history.length === 0;
@@ -2197,6 +2200,10 @@
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${inEditor ? '' : editorRows}
       <li class="profile-setting admin-only">
+        <span id="qs-notut-label">Skip tutorials</span>
+        <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${skipTutorialsStored()}" aria-labelledby="qs-notut-label" data-setting="notut" title="Admin: no Piko tutorials, so levels open straight into the editor"><span></span></button></div>
+      </li>
+      <li class="profile-setting admin-only">
         <span>Start over</span>
         <div class="profile-control profile-control-wide"><button type="button" class="btn btn-no btn-sm qs-reset" id="qs-reset">Reset all</button></div>
       </li>
@@ -2208,6 +2215,13 @@
       input.addEventListener('input', ()=>{ out.textContent = input.value + '%'; if(input.dataset.setting !== 'scale') setQuickSetting(input.dataset.setting, Number(input.value)); });
       // Size re-lays out the whole UI, so apply it once the slider is let go.
       input.addEventListener('change', ()=>setQuickSetting(input.dataset.setting, Number(input.value)));
+    });
+    const notut = root.querySelector('[data-setting="notut"]');
+    notut?.addEventListener('click', ()=>{
+      const on = notut.getAttribute('aria-checked') !== 'true';
+      notut.setAttribute('aria-checked', String(on));
+      try{ localStorage.setItem('ec-skip-tutorials', on ? '1' : ''); }catch(e){}
+      pikoEnabled = pikoAllowed();
     });
     const sw = root.querySelector('[data-setting="motion"]');
     sw.addEventListener('click', ()=>{

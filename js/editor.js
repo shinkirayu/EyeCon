@@ -667,6 +667,7 @@
       div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
       div.style.fontSize = el.fontSize + 'px';
       div.style.fontWeight = el.fontWeight;
+      div.style.textDecoration = el.underline ? 'underline' : ''; // links
       div.style.color = el.color;
       div.style.lineHeight = '1.15';
       div.style.whiteSpace = 'pre-line';
@@ -718,6 +719,7 @@
       div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
       div.style.fontSize = el.fontSize + 'px';
       div.style.fontWeight = el.fontWeight;
+      div.style.textDecoration = el.underline ? 'underline' : ''; // links
       div.style.color = el.color;
       div.style.justifyContent = textAlignToFlex(el.align);
       div.style.textAlign = el.align;
@@ -2116,7 +2118,7 @@
       if(el.text){
         d.style.alignItems='center'; d.style.justifyContent = textAlignToFlex(el.align); d.style.textAlign = el.align;
         d.style.fontFamily = `'${el.fontFamily}', sans-serif`;
-        d.style.fontSize = el.fontSize+'px'; d.style.fontWeight = el.fontWeight; d.style.color = el.color;
+        d.style.fontSize = el.fontSize+'px'; d.style.fontWeight = el.fontWeight; d.style.color = el.color; d.style.textDecoration = el.underline ? 'underline' : '';
         d.style.lineHeight = '1.15';
         d.style.padding = `0 ${el.padding}px`; d.textContent = el.text; // same (possibly empty) padding as the live element
       }
