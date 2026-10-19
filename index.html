@@ -249,7 +249,7 @@
       <div class="mail-search mail-progress" id="mail-progress">
         <b id="mail-progress-from">Junior</b>
         <div class="mail-progress-track" role="progressbar" aria-label="Jobs completed" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0"><i id="mail-progress-fill"></i></div>
-        <b id="mail-progress-to">Senior</b>
+        <b id="mail-progress-to">Intermediate</b>
       </div>
       <div class="mail-header-right">
         <div class="xp-chip" id="xp-chip" title="Level & XP">Lv. <span id="hdr-level">1</span></div>
@@ -662,5 +662,6 @@
 <script src="js/client-sites.js"></script>
 <script src="js/app.js"></script>
 <script src="js/guidebook.js"></script>
+<script>document.addEventListener('contextmenu', e => { if(!e.target.closest('input,textarea,[contenteditable="true"]')) e.preventDefault(); }); /* no browser right-click menu (text boxes keep it for paste) */</script>
 </body>
 </html>

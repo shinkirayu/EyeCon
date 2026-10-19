@@ -6,7 +6,6 @@
 
   const FONTS = ['Baloo 2','Quicksand','Patrick Hand','Georgia','Arial','Verdana','Times New Roman','Fjalla One','Just Another Hand','Modak','Autour One','Roboto Slab','Londrina Solid','Niramit','Righteous','Kumbh Sans','Sansation','Boldonse','Liter','Inter','Lilita One','Kaushan Script','Lato','Mr Dafoe'];
   const WEIGHTS = [ ['400','Regular'], ['500','Medium'], ['600','Semibold'], ['700','Bold'], ['800','Extra Bold'] ];
-  const SNAP_THRESHOLD = 6;
 
   // ---------------- Tutorial-style progressive unlock ----------------
   // Each level teaches one new concept on top of everything before it, so
@@ -1332,7 +1331,8 @@
     // locked pieces included, so spacing a card shows every gap in its row.
     const span=(o,axis)=>axis==='x'?[o.x,o.x+o.w]:[o.y,o.y+o.h];
     const overlaps=(a,b,axis)=>{const [a1,a2]=span(a,axis),[b1,b2]=span(b,axis);return Math.min(a2,b2)-Math.max(a1,b1)>0;};
-    for(const axis of ['x','y']){
+    // Level 7 (a long sign-in column): only the nearest gaps, not every gap down the form.
+    for(const axis of (state.level.levelNumber === 7 ? [] : ['x','y'])){
       const cross=axis==='x'?'y':'x';
       // Peers are similar in size across the row, so big backgrounds and bars don't join in.
       const size=o=>axis==='x'?o.h:o.w, similar=o=>size(o)<=size(el)*2 && size(o)>=size(el)/2;
@@ -1390,20 +1390,27 @@
     others.forEach(o=>{ vCandidates.push(o.x, o.x+o.w/2, o.x+o.w); hCandidates.push(o.y, o.y+o.h/2, o.y+o.h); });
 
     let snappedX = nx, snappedY = ny, matchedV = null, matchedH = null;
+    // Magnet, like Canva/Photoshop: pulls in from ~16 screen px and holds a little longer, but never more than one 8px grid step.
+    const prev = state.snapPrev || (state.snapPrev = {}), pull = Math.min(16 / getScale(), 7), hold = Math.min(28 / getScale(), 7); // capped under 8: one grid step always breaks free
+    const near = (e, cand, axis) => Math.abs(e.v - cand) <= (prev[axis] === cand ? hold : pull);
+    const onGrid = (cand, e) => Math.abs((cand-e.off)/8-Math.round((cand-e.off)/8))<0.001;
+    if(prev.v != null) vCandidates.unshift(prev.v); // the line it's stuck to wins first
+    if(prev.h != null) hCandidates.unshift(prev.h);
     const edgesX = [ {v:nx, off:0}, {v:nx+el.w/2, off:el.w/2}, {v:nx+el.w, off:el.w} ];
     for(const cand of vCandidates){
       for(const e of edgesX){
-        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD && Math.abs((cand-e.off)/8-Math.round((cand-e.off)/8))<0.001){ snappedX = cand-e.off; matchedV = cand; break; }
+        if(near(e, cand, 'v') && onGrid(cand, e)){ snappedX = cand-e.off; matchedV = cand; break; }
       }
       if(matchedV!=null) break;
     }
     const edgesY = [ {v:ny, off:0}, {v:ny+el.h/2, off:el.h/2}, {v:ny+el.h, off:el.h} ];
     for(const cand of hCandidates){
       for(const e of edgesY){
-        if(Math.abs(e.v-cand) <= SNAP_THRESHOLD && Math.abs((cand-e.off)/8-Math.round((cand-e.off)/8))<0.001){ snappedY = cand-e.off; matchedH = cand; break; }
+        if(near(e, cand, 'h') && onGrid(cand, e)){ snappedY = cand-e.off; matchedH = cand; break; }
       }
       if(matchedH!=null) break;
     }
+    prev.v = matchedV; prev.h = matchedH;
     if(matchedV!=null) drawVGuide(matchedV, matchedV === cw/2);
     if(matchedH!=null) drawHGuide(matchedH, matchedH === ch/2);
     others.filter(o=>o.role!=='background').forEach(o=>{
@@ -1530,7 +1537,7 @@
   // so Piko can explain them; releaseFrozenDrag() finishes it like a mouse-up.
   function freezeDrag(){
     if(!state.dragging) return false;
-    state.dragging = null;
+    state.dragging = null; state.snapPrev = null;
     state.heldGuides = true; // spacing tags stay up (and redraw at new zooms) while held
     document.body.classList.remove('eyecon-dragging');
     return true;
@@ -1547,7 +1554,7 @@
 
   function onPointerUp(){
     if(!state.dragging) return;
-    state.dragging = null;
+    state.dragging = null; state.snapPrev = null;
     document.body.classList.remove('eyecon-dragging');
     clearGuideLines();
     pushHistory();
@@ -1670,11 +1677,13 @@
   function confirmHint(){
     const cost = HINT_COST(state.hintsUsed), coins = window.EC_HINT_COINS?.() ?? 0, enough = coins >= cost;
     document.querySelector('.hint-confirm')?.remove();
+    // Three ways to offer, taking turns each time the hint button is used.
+    const ask = ['Want me to guide you?', 'Need a little nudge?', 'Shall I point you in the right direction?'][(state.hintAsks = (state.hintAsks || 0) + 1) % 3];
     const d = document.createElement('div');
     d.className = 'hint-confirm'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'hint-confirm-title');
     d.innerHTML = `<div class="hc-card"><div class="hc-icon" aria-hidden="true">\u{1F4A1}</div>
       <h2 id="hint-confirm-title">${enough ? 'Need a little help?' : 'Not enough coins'}</h2>
-      <p>${cost === 0 ? 'Your first hint is <b>free</b>! After this, hints cost a few coins. I’ll show you where to look.' : enough ? `This hint costs <b>${window.EC_MONEY(cost)}</b>. I'll show you where to look.` : `A hint costs <b>${window.EC_MONEY(cost)}</b>, and you have ${window.EC_MONEY(coins)}. Finish a job to earn more!`}</p>
+      <p>${cost === 0 ? `Your first hint is <b>free</b>! After this, hints cost a few coins. ${ask}` : enough ? `This hint costs <b>${window.EC_MONEY(cost)}</b>. ${ask}` : `A hint costs <b>${window.EC_MONEY(cost)}</b>, and you have ${window.EC_MONEY(coins)}. Finish a job to earn more!`}</p>
       <small>Your coins: ${window.EC_MONEY(coins)}</small>
       <div class="hc-actions">${enough ? '<button type="button" class="btn" data-no>No, thanks</button><button type="button" class="btn btn-accept" data-yes>Yes, show me</button>' : '<button type="button" class="btn btn-accept" data-no>Okay</button>'}</div></div>`;
     document.body.appendChild(d);

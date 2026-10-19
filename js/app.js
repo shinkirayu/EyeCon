@@ -1216,14 +1216,16 @@
   }
 
   // ---------------- Mail folder switching (within the Mail app) ----------------
-  // Header progress: jobs done out of 7 (Junior 1–3, Intermediate 4–6, Senior 7).
+  // Header progress in two stages: the 3 basics fill Junior -> Intermediate; then the bar resets
+  // and the next 4 jobs fill Intermediate -> Senior.
   function renderMailProgress(){
     const done = window.EC_LEVELS.filter(l => l.levelNumber <= 7 && profile.completed.includes(l.id)).length;
-    const tier = ['Junior','Senior'];
-    document.getElementById('mail-progress-from').textContent = tier[0];
-    document.getElementById('mail-progress-to').textContent = tier[1];
-    document.getElementById('mail-progress-fill').style.width = (done / 7 * 100) + '%';
-    document.querySelector('.mail-progress-track').setAttribute('aria-valuenow', done);
+    const [from, to, n, max] = done < 3 ? ['Junior', 'Intermediate', done, 3] : ['Intermediate', 'Senior', done - 3, 4];
+    document.getElementById('mail-progress-from').textContent = from;
+    document.getElementById('mail-progress-to').textContent = to;
+    document.getElementById('mail-progress-fill').style.width = (n / max * 100) + '%';
+    const track = document.querySelector('.mail-progress-track');
+    track.setAttribute('aria-valuenow', n); track.setAttribute('aria-valuemax', max);
   }
   function renderCurrentFolder(){
     renderMailProgress();
@@ -1999,7 +2001,7 @@
       document.body.appendChild(modal);
       document.getElementById('next-workday').addEventListener('click',()=>{
         if(!window.EC_STORE.nextWorkday(profile))return;
-        window.EC_MODAL.hide(modal);updateClock();refreshHeader();currentFolder='inbox';openMailApp();
+        window.EC_MODAL.hide(modal);updateClock();refreshHeader();currentFolder='inbox';showScreen('screen-desktop'); // a free moment on the desktop (browse, shop) before Mail
       });
     }
     const summary=document.getElementById('workday-summary');
@@ -2679,4 +2681,6 @@
   });
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+  // From the post-test credits (play#desk): straight to the desktop to browse freely.
+  if(location.hash === '#desk'){ history.replaceState(null, '', location.pathname + location.search); setTimeout(() => showScreen('screen-desktop'), 0); }
 })();

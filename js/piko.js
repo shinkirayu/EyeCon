@@ -82,7 +82,7 @@
       ["Need a refresher? Open your **Guidebook**. It covers alignment, contrast and typography, with examples.", '#taskbar-guide'],
       ["It's always right here on your taskbar, and on your desktop too.", '#taskbar-guide'],
       "That's a wrap for your first shift. Go rest those eyes!",
-      "Tomorrow, four new clients are writing in. I'll see you then!"
+      "I'll see you tomorrow!"
     ],
     compose: {
       type: "To get your client's approval, send them an email. Press any key on your keyboard to start typing!",
@@ -282,8 +282,8 @@
     'piko.previewGuide': tap('See their design', { why:'Look at the page before you start fixing it.' }),
     'piko.acceptGuide': tap('Accept the job', { why:'This opens their page in your workspace.' }),
     'piko.workspace.intro': SKIP,
-    'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo' },
-    'piko.workspace.zoom': { cue:'Scroll to zoom in and out', at:'.piko-demo' },
+    'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo', stack:1 },
+    'piko.workspace.zoom': { cue:'Scroll to zoom in and out', at:'.piko-demo', stack:1 },
     'piko.workspace.problems': { cue:'Red ! = needs fixing', why:'Each mark is something the client wants fixed.', at:'#editor-canvas .el.needs-edit' },
     'piko.workspace.dotsLater': SKIP, 'piko.workspace.together': SKIP,
     'piko.workspace.selectAbout': tap('Click “About”', { why:'It sits lower than Home and Contact, so the menu looks uneven.',
@@ -357,7 +357,7 @@
     'piko.practice.yappers.phDone': { success:'Matched!', why:'Readable hints that stay softer than the heading.', at:'#editor-canvas .el.selected' },
     // Level 3 practice.
     'piko.practice.haybuhay.intro': SKIP, 'piko.practice.haybuhay.groupIntro': SKIP,
-    'piko.practice.haybuhay.ladder': { cue:'Bigger = more important', why:'This page’s text sizes, from the title down to the labels.', at:'.piko-ladder-demo' },
+    'piko.practice.haybuhay.ladder': { cue:'This is hierarchy', why:'Bigger = more important. This page’s sizes, from the title down to the labels.', at:'.piko-ladder-demo' },
     'piko.practice.haybuhay.first': { cue:'Read first', why:'The biggest text gets noticed first.' },
     'piko.practice.haybuhay.last': { cue:'Read last', why:'Small text is for details.' },
     'piko.practice.haybuhay.min': { cue:'Body text: 16px or more', why:'Any smaller and people squint or zoom.', card:ART.min16 },
@@ -470,7 +470,9 @@
     if(r && r.width && !(v.card && !v.at)){
       const big = r.height > H * .45;
       x = Math.min(Math.max(8, r.left + r.width / 2 - cw / 2), W - cw - 8);
-      y = big ? Math.min(r.bottom, H) - gap - ch : r.bottom + gap + ch <= H - 8 ? r.bottom + gap : Math.max(8, r.top - gap - ch);
+      // Read top to bottom: a target in the lower half gets its cue above it, otherwise below.
+      const lower = r.top + r.height / 2 > H / 2;
+      y = big ? Math.min(r.bottom, H) - gap - ch : lower && r.top - gap - ch >= 8 ? r.top - gap - ch : r.bottom + gap + ch <= H - 8 ? r.bottom + gap : Math.max(8, r.top - gap - ch);
       if(v.side === 'left'){ // beside it instead, left of the side panel, so what's under the target stays in view
         const panel = t.closest('#element-settings')?.getBoundingClientRect() || r;
         x = Math.max(8, panel.left - gap - cw); y = Math.min(Math.max(8, r.top + r.height / 2 - ch / 2), H - ch - 8);
@@ -561,6 +563,7 @@
     bubble.classList.toggle('piko-cue', !!v);
     bubble.classList.toggle('piko-cue-card', !!(v && (v.card || v.success)));
     bubble.classList.toggle('piko-cue-ok', !!(v && v.success));
+    bubble.classList.toggle('piko-cue-stack', !!(v && v.stack)); // centred under its card, Piko below
     bubble.classList.toggle('piko-top', !v && !!opts.top);
     bubble.classList.toggle('piko-left', !v && !!opts.left); // keep clear of right-side highlights
     if(bubble.classList.contains('hidden')){

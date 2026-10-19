@@ -99,6 +99,16 @@
   @media(min-width:760px){.ev{display:grid;grid-template-columns:1fr 15rem;gap:1rem;align-items:center;}.ev-t{float:none;margin:0;}.ev-scale{clear:none;}} /* statement and scale side by side */
   .ev-scale span{min-height:2.25rem;}
   .ev-h{margin:.5rem 0;}
+  .credits{position:fixed;inset:0;z-index:100;overflow:hidden;background:#123b54;color:#fff3d6;}
+  .credits .roll{position:absolute;left:0;right:0;top:100%;display:grid;justify-items:center;gap:.4rem;text-align:center;animation:roll 16s linear forwards;}
+  .credits img{width:min(20rem,70vw);margin-bottom:.5rem;}
+  .credits h2{margin:2.5rem 0 .5rem;font:800 1.2rem 'Nunito';letter-spacing:.2em;text-transform:uppercase;color:#94d9cf;}
+  .credits p{margin:0;display:grid;font:700 1.1rem 'Nunito';color:#fff3d6;}
+  .credits p b{font:800 2rem/1.1 'Baloo 2';color:#fff;}
+  .credits .cr-sub{margin-top:1.5rem;font:800 1.4rem 'Nunito';}
+  .credits .cr-skip{position:absolute;right:1.5rem;bottom:1.5rem;color:#fff3d6;}
+  @keyframes roll{to{transform:translateY(calc(-100% - 100vh))}}
+  @media (prefers-reduced-motion:reduce){.credits .roll{animation-duration:30s;}}
 </style>
 </head>
 <body>
@@ -255,8 +265,22 @@
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
       ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p>Now let’s put on your designer hat and clock in.</p>'}
-      <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play again</a>`}</div>`;
+      <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><button class="btn" id="to-credits">Continue</button>`}</div>`;
+    document.getElementById('to-credits')?.addEventListener('click', credits);
     app.querySelector('.btn').focus();
+  }
+  // After the post-test: the credits roll, then back to the game's desktop for free browsing.
+  function credits(){
+    const team = [['Nica', 'The Greatest Animator'], ['Nadine', 'The GOAT Artist'], ['Kryu', 'The Lead Larper'], ['Awi', 'The Brain']];
+    const go = () => { location.href = PLAY + '#desk'; };
+    const d = document.createElement('div'); d.className = 'credits'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Credits');
+    d.innerHTML = `<div class="roll"><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><p class="cr-sub">Thank you for playing!</p>
+      <h2>Made by</h2>${team.map(([n, r]) => `<p><b>${n}</b><span>${r}</span></p>`).join('')}
+      <h2>With thanks to</h2><p><b>Piko</b><span>Your guide</span></p><p><b>Every client</b><span>For trusting us with their screens</span></p><p><b>You</b><span>For helping our study</span></p>
+      <p class="cr-sub">De La Salle Lipa</p></div><button class="ghost cr-skip">Skip ▸</button>`;
+    document.body.appendChild(d);
+    d.querySelector('.cr-skip').onclick = go; d.querySelector('.cr-skip').focus();
+    d.querySelector('.roll').addEventListener('animationend', () => setTimeout(go, 600));
   }
   // ---------- Study gate: consent, then a username and short profile (Google/email sign-in hidden for now) ----------
   const db = window.EC_DB, RESUME = 'eyecon_quiz_resume';
@@ -350,5 +374,6 @@ if(window.top !== window) document.addEventListener('click', e => {
   if(a.classList.contains('ghost') || a.hasAttribute('data-close')) parent.postMessage('eyecon-quiz-close', '*'); else window.top.location.href = a.href;
 });
 </script>
+<script>document.addEventListener('contextmenu', e => { if(!e.target.closest('input,textarea,[contenteditable="true"]')) e.preventDefault(); }); /* no browser right-click menu (text boxes keep it for paste) */</script>
 </body>
 </html>
