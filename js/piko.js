@@ -237,7 +237,8 @@
       .replace(/(?:[\u{1D400}-\u{1D7FF}](?:[\s'’.,!?-]*[\u{1D400}-\u{1D7FF}])*)+/gu, m => '<b>' + m.normalize('NFKC') + '</b>');
     // One pass over all rules so a phrase only gets one icon.
     const all = new RegExp(CONTROL_ICONS.map(([re]) => re.source).join('|'), 'gi');
-    html = html.replace(all, m => { const [, icon, replace] = CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m)); return replace ? icon() : m + ' ' + icon(); });
+    html = html.replace(all, m => { if(m === 'shift') return m; // "your first shift" (work), not the Shift key
+      const [, icon, replace] = CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m)); return replace ? icon() : m + ' ' + icon(); });
     return html;
   }
 
