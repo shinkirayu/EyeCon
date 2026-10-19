@@ -831,16 +831,16 @@
       : 'Passes! A little darker makes it even easier to read.';
     const chip = (label, c) => `<div class="cz-chip"><small>${label}</small><span><i style="background:${c}"></i><code>${String(c).toUpperCase()}</code></span></div>`;
     const fill = res.pass ? 100 : Math.min(100, res.ratio / res.required * 100);
-    return `<div class="editor-contrast-card cz zone-${zone.id}" aria-label="Color contrast">
-      <div class="cz-chips">${chip('Text color', el.color)}${chip('Against background', bg)}</div>
-      <div class="cz-box ${tone}">
+    const box = `<div class="cz-box ${tone}">
         <small class="cz-label">Contrast <span class="cz-aa-preview" style="color:${el.color};background:${bg}">Aa</span></small>
         <div class="cz-row"><b class="cz-ratio">${res.ratio.toFixed(1)}:1</b>
           <div class="cz-verdict"><span><i aria-hidden="true">${tone === 'pass' ? '✓' : tone === 'warn' ? '!' : '✕'}</i>${!res.pass ? 'Fails AA' : !free && tone === 'pass' && (band.min != null || band.max != null) ? 'On target' : 'Passes AA'}</span><small>${sub}</small></div></div>
         <div class="cz-bar"><i style="width:${fill.toFixed(1)}%"></i></div>
-      </div>
+      </div>`;
+    return `<div class="editor-contrast-card cz zone-${zone.id}" aria-label="Color contrast">
+      <div class="cz-chips">${chip('Text color', el.color)}${chip('Background', bg)}</div>
+      ${contrastGuideHtml(el, box) || box}
       ${free ? '' : `<div class="cz-piko ${tone}"><small>Piko</small><p>${piko}</p></div>`}
-      ${contrastGuideHtml(el)}
     </div>`;
   }
 
@@ -873,15 +873,18 @@
   function refreshSizeLadder(el){ const n = document.getElementById('size-ladder'); if(n && ladderGoal() && el.text) n.innerHTML = sizeLadderInner(el); }
   // Level 4+: a contrast hierarchy guide (like the size ladder): each kind of text on this
   // page and the contrast it should have, with the selected text's row marked.
-  function contrastGuideHtml(el){
-    if((state.level.levelNumber || 0) < 4) return '';
-    // Rules by role, not per element: the player decides what kind of text this is
-    // (heading? supporting text? button?) and so which contrast it needs.
-    return `<div class="cz-guide"><small class="sl-label">Contrast guide</small><ol class="sl-list">
-      <li><b>Headings and titles</b><code>strongest \u00b7 7:1+</code></li>
-      <li><b>Supporting text (taglines, hints)</b><code>softer \u00b7 4.5\u20137:1</code></li>
-      <li><b>Buttons and body text</b><code>readable \u00b7 4.5:1+</code></li>
-      <li><b>Anything</b><code>not above 15:1</code></li></ol></div>`;
+  function contrastGuideHtml(el, inner = ''){
+    if((state.level.levelNumber || 0) < 4 || !el.text || !el.color) return '';
+    // Like the size ladder: a list of contrast ranges; the row this text's ratio falls in lights up.
+    // It never says what kind of text this is: the player decides which range it belongs in.
+    const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
+    const r = Math.round(window.WCAG.contrastRatio(el.color, bg) * 10) / 10;
+    const rows = [
+      ['Headings, titles and buttons', '7:1 and up', r >= 7],
+      ['Labels, hints and captions', '4.5–7:1', r >= 4.5 && r < 7],
+      ['Too faint to read', 'under 4.5:1', r < 4.5],
+    ].map(([name, range, here]) => `<li class="${here ? 'here' : ''}"><b>${name}</b><code>${range}</code></li>`).join('');
+    return `<div class="cz-guide"><small class="sl-label">Contrast guide</small><ol class="sl-list">${rows}</ol>${inner}</div>`;
   }
   // Target band from the level's contrast task for this element (min / max ratio).
   function contrastBand(el){

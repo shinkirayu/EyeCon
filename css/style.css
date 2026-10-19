@@ -1808,7 +1808,7 @@ button, [role='button'], a, input[type='range'], select, label{
 }
 .side-btn:nth-child(1){ background:#dfcee8; }
 .side-btn:nth-child(1).active{ background:#d5bfe2; color:#40213c; }
-.side-btn:nth-child(2){ background:#ffdb82; }
+.side-btn:nth-child(2){ background:#ffe7a3; }
 .side-btn:hover,.side-btn:focus-visible{ transform:translateY(-.25rem) rotate(-.4deg); box-shadow:0 1rem 1.25rem rgba(87,61,63,.18); }
 .side-icon{ font-size:2.625rem; }
 .badge-count{ width:2.5rem; height:2.5rem; font-size:1.375rem; border:.1875rem solid #fff8ee; box-shadow:0 2px 0 rgba(91,21,42,.2); }

@@ -3,36 +3,36 @@
   <defs>
     <style>
       .cls-1 {
-        fill: #86c7c3;
-        stroke: #86c7c3;
+        fill: #b3cfa6;
+        stroke: #b3cfa6;
         stroke-linejoin: round;
         stroke-width: .6px;
       }
 
       .cls-2 {
-        fill: #97cec8;
-        stroke: #a1e5e0;
+        fill: #9fbf94;
+        stroke: #fcf3e2;
         stroke-miterlimit: 10;
       }
 
       .cls-3 {
-        fill: #ff9c43;
+        fill: #6fcf7a;
       }
 
       .cls-4 {
-        fill: #f94343;
+        fill: #f18586;
       }
 
       .cls-5 {
-        fill: #a793e2;
+        fill: #f8d56b;
       }
 
       .cls-6 {
-        fill: #a1e5e0;
+        fill: #fcf3e2;
       }
 
       .cls-7 {
-        fill: #f1e9ff;
+        fill: #9fcfe0;
       }
 
       .cls-8 {
@@ -43,7 +43,7 @@
   <g id="pc">
     <g>
       <path class="cls-6" d="M141.96,352.68H10c-5.52,0-10-4.47-10-9.98V9.98C0,4.47,4.48,0,10,0h131.96v352.68Z"/>
-      <path class="cls-1" d="M210.43,274.32c-23.83,26.53-47.66,53.06-71.49,79.6V.55c23.83,12.67,47.66,25.35,71.49,38.02v235.74Z"/>
+      <path class="cls-1" d="M141.96,0L210.43,38.02V274.32L141.96,352.68Z"/>
       <rect class="cls-7" x="11.45" y="146.55" width="122.46" height="29.45" rx="5" ry="5"/>
       <rect class="cls-7" x="11.45" y="182.23" width="122.46" height="160.09" rx="5" ry="5"/>
       <circle class="cls-4" cx="124.21" cy="18.21" r="9.7"/>

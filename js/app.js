@@ -915,7 +915,7 @@
   // state, so toggling a control gives instant feedback before Apply commits it.
   function applySettingsObj(s){
     // Admin tools: Skip/Repeat on emails + the Level Maker app (tests can force them on).
-    document.documentElement.classList.toggle('admin-tools', !!s.admin || !!window.EC_ADMIN);
+    document.documentElement.classList.toggle('admin-tools', !!window.EC_ADMIN || new URLSearchParams(location.search).has('admin')); // admin tools only via index.html?admin — no switch in Settings
     document.documentElement.setAttribute('data-theme', s.theme === 'hc' ? 'hc' : 'light');
     document.documentElement.style.setProperty('--ui-scale', 1); // Size is fixed at the default (50%)
     if(window.EC_FIT) window.EC_FIT(); // Size is capped to what the screen can hold
@@ -2196,15 +2196,7 @@
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
       ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${inEditor ? '' : editorRows}
-      ${window.EC_DB?.online ? `<li class="profile-setting">
-        <span>Account</span>
-        <div class="profile-control profile-control-wide"><small>${escapeHtml(window.EC_DB.isGuest ? (profile.displayName || 'Guest') : (window.EC_DB.email || 'Google account'))}</small></div>
-      </li>` : ''}
-      <li class="profile-setting">
-        <span id="qs-admin-label">Admin tools</span>
-        <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${!!profile.settings.admin}" aria-labelledby="qs-admin-label" data-setting="admin" title="Shows Skip/Repeat on emails and the Level Maker app"><span></span></button></div>
-      </li>
-      <li class="profile-setting">
+      <li class="profile-setting admin-only">
         <span>Start over</span>
         <div class="profile-control profile-control-wide"><button type="button" class="btn btn-no btn-sm qs-reset" id="qs-reset">Reset all</button></div>
       </li>
@@ -2216,12 +2208,6 @@
       input.addEventListener('input', ()=>{ out.textContent = input.value + '%'; if(input.dataset.setting !== 'scale') setQuickSetting(input.dataset.setting, Number(input.value)); });
       // Size re-lays out the whole UI, so apply it once the slider is let go.
       input.addEventListener('change', ()=>setQuickSetting(input.dataset.setting, Number(input.value)));
-    });
-    const adminSw = root.querySelector('[data-setting="admin"]');
-    adminSw?.addEventListener('click', ()=>{
-      const on = adminSw.getAttribute('aria-checked') !== 'true';
-      adminSw.setAttribute('aria-checked', String(on));
-      setQuickSetting('admin', on);
     });
     const sw = root.querySelector('[data-setting="motion"]');
     sw.addEventListener('click', ()=>{
@@ -2293,6 +2279,7 @@
     const isStats = mode === 'stats', isSettings = mode === 'settings';
     popup.classList.toggle('profile-layout', !isStats);
     popup.classList.toggle('settings-layout', isSettings);
+    popup.classList.toggle('room-settings', !!(anchor && anchor.id === 'note-settings')); // opened from the title-screen note: big and centred
     popup.dataset.mode = mode;
     if(isSettings){
       if(taskbarStatsBorrowed){
@@ -2332,12 +2319,21 @@
   function positionStatsPopup(){
     const popup = document.getElementById('taskbar-stats-popup');
     if(!popup || popup.classList.contains('hidden') || !statsPopupAnchor) return;
+    popup.style.zoom = ''; // only the title-screen note scales the panel; the taskbar ones stay normal size
+    if(popup.classList.contains('room-settings')){ // title-screen note: scale to fill ~60% of the window
+      popup.style.maxHeight = 'none';
+      popup.style.zoom = Math.min(1.15, innerHeight * .6 / popup.offsetHeight, innerWidth * .6 / popup.offsetWidth).toFixed(3); // capped so big screens don't blow it up
+      return;
+    }
     const bar = document.getElementById('global-taskbar').getBoundingClientRect();
     const button = statsPopupAnchor.getBoundingClientRect();
     const visibleTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
-    popup.style.left = Math.max(12, Math.min(button.left, innerWidth - popup.offsetWidth - 12)) + 'px';
-    popup.style.bottom = Math.max(8, innerHeight - bar.top + 8) + 'px';
-    popup.style.maxHeight = Math.max(160, bar.top - 16 - visibleTop) + 'px';
+    const z = popup.classList.contains('settings-layout') ? 1.15 : 1; // Settings from the taskbar is larger, easier to read
+    popup.style.zoom = z > 1 ? z : '';
+    const w = popup.getBoundingClientRect().width; // on-screen width; left/bottom below are in the zoomed element's own units
+    popup.style.left = Math.max(12, Math.min(button.left, innerWidth - w - 12)) / z + 'px';
+    popup.style.bottom = Math.max(8, innerHeight - bar.top + 8) / z + 'px';
+    popup.style.maxHeight = Math.max(160, bar.top - 16 - visibleTop) / z + 'px';
   }
   window.addEventListener('resize', () => requestAnimationFrame(positionStatsPopup));
   function closeTaskbarStatsPopup(){
@@ -2460,7 +2456,12 @@
     document.getElementById('mini-desktop').addEventListener('keydown', e=>{
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); miniDesktopBackgroundAction(); }
     });
-    document.getElementById('note-settings').addEventListener('click', ()=>openMonitorAppPopup('settings'));
+    document.getElementById('note-settings').addEventListener('click', e=>{
+      e.stopPropagation(); // the monitor's outside-click handler would otherwise close it at once
+      const pop = document.getElementById('taskbar-stats-popup');
+      if(!pop.classList.contains('hidden') && pop.dataset.mode === 'settings') closeTaskbarStatsPopup();
+      else openTaskbarStatsPopup(e.currentTarget, 'settings');
+    });
     document.getElementById('monitor-app-popup-close').addEventListener('click', ()=>closeMonitorAppPopup());
     initPikoGuideChain();
     initPikoComposeGuide();
@@ -2495,7 +2496,7 @@
     // Clicking outside the profile or stats window dismisses it.
     document.addEventListener('pointerdown', e=>{
       const popup = document.getElementById('taskbar-stats-popup');
-      if(popup.classList.contains('hidden') || popup.contains(e.target) || e.target.closest('#icon-profile, #icon-stats, #taskbar-settings, #taskbar-profile, .taskbar-running-app')) return;
+      if(popup.classList.contains('hidden') || popup.contains(e.target) || e.target.closest('#icon-profile, #icon-stats, #note-settings, #taskbar-settings, #taskbar-profile, .taskbar-running-app')) return;
       closeTaskbarStatsPopup();
     });
     document.getElementById('taskbar-stats-popup-close').addEventListener('click', closeTaskbarStatsPopup);

@@ -1143,9 +1143,9 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 #screen-desktop #icon-mail #glyph-mail::after{content:none;}
 /* Mail folders keep their own color; the selected one gets a deeper shade. */
 .mail-sidebar .side-btn[data-folder="inbox"]{background:#dfcee8;}
-.mail-sidebar .side-btn[data-folder="completed"]{background:#ffdb82;}
+.mail-sidebar .side-btn[data-folder="completed"]{background:#ffe7a3;}
 #screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{background:#d2b9e3;box-shadow:0 .4375rem .625rem #bd9b7126;}
-#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#ffcf52;box-shadow:0 .4375rem .625rem #bd9b7126;}
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#ffdc72;box-shadow:0 .4375rem .625rem #bd9b7126;}
 #screen-shell .mail-sidebar .side-btn:not(.active){box-shadow:0 .4375rem .625rem #bd9b7126;}
 /* Opened email: the same big thick ✕ as the mail app, no circle. */
 .mail-detail-card .mail-detail-close{top:1.25rem;right:1.25rem;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:.5rem;background:transparent url('../assets/icons/close-icon.svg') center/85% no-repeat;cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer;}
@@ -2479,7 +2479,7 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
 #screen-shell .mail-sidebar .side-btn .badge-count{width:3.5rem!important;height:3.5rem!important;min-width:3.5rem!important;font-size:2rem!important;}
 /* Selected folder: darker fill and an outline so it stands out. */
 #screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{background:#b9a0d6!important;}
-#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#f5c94d!important;}
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{background:#ffdc72!important;}
 
 /* Task keywords: clearly heavier and marker-highlighted so they guide the player. */
 #screen-editor .editor-goal p,#screen-editor .piko-task p{font-weight:500!important;}
@@ -2848,7 +2848,7 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 
 /* Title screen: the illustrated room (assets/landing/room, layered SVGs).
    The stage keeps the art's 3138x1609 ratio and sits on the floor; the cream wall fills above. */
-#screen-home .desk-scene{ background:#fffced!important; }
+#screen-home .desk-scene{ background:#b5e4d8!important; }
 #screen-home .reference-brand,#screen-home .sticky-note{ display:none!important; }
 #screen-home .room-scene{ position:absolute; inset:0; pointer-events:none; }
 #screen-home .room-stage{ position:absolute; left:0; bottom:0; width:100%; aspect-ratio:3138/1609; }
@@ -2884,7 +2884,7 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 #screen-home #mini-desktop:hover,#screen-home .note-btn:hover{ transform:translateY(-.3cqw) rotate(-2deg); filter:none; }
 /* Full-bleed: the scene fills the viewport and the art runs past every edge, so it never clips.
    --W = stage width; u = one art unit (W/3138). Monitor centre held at 50% x 45%. */
-#screen-home,#screen-home .desk-scene{ background:#fffced!important; }
+#screen-home,#screen-home .desk-scene{ background:#b5e4d8!important; }
 #screen-home .desk-scene{ width:100vw!important; height:100dvh!important;
   --W:max(320cqw,460cqh); --u:calc(var(--W) / 3138); --L:calc(50cqw - var(--W) * .5257); --T:calc(45cqh - var(--W) * .3285); }
 #screen-home .room-stage{ left:var(--L); top:var(--T); width:var(--W); }
@@ -2923,3 +2923,130 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 #screen-home #mini-desktop,#screen-home .note-btn{ filter:drop-shadow(calc(-2 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u)) rgba(60,40,80,.25)); }
 #screen-home #mini-desktop:hover,#screen-home .note-btn:hover,#screen-home #mini-desktop:focus-visible,#screen-home .note-btn:focus-visible{
   filter:brightness(.88) drop-shadow(calc(-2 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u)) rgba(60,40,80,.25)); }
+/* No shadow on the monitor glass or the lamp. */
+#screen-home .room-screen,#screen-home .room-lamp{ filter:none; }
+/* Screen feel: slightly soft picture plus a diagonal glass glare. */
+#screen-home .room-screen{ filter:none; }
+#screen-home .room-glare{ aspect-ratio:440.79/247.94; z-index:6; pointer-events:none; }
+#screen-home .room-glare::before{ content:''; position:absolute; left:.4%; top:3.7%; width:98.3%; height:96%; border-radius:2.4% / 4%;
+  background:
+    linear-gradient(115deg,rgba(255,255,255,.34) 0 14%,rgba(255,255,255,0) 14% 19%,rgba(255,255,255,.18) 19% 25%,rgba(255,255,255,0) 25%),
+    radial-gradient(90% 70% at 15% 0%,rgba(255,255,255,.25),rgba(255,255,255,0) 60%),
+    linear-gradient(rgba(255,255,255,0) 70%,rgba(20,60,90,.12)); }
+/* Dim the screen a little, and set the note labels white, tilted with their notes. */
+#screen-home .room-glare::after{ content:''; position:absolute; left:.4%; top:3.7%; width:98.3%; height:96%; border-radius:2.4% / 4%; background:rgba(10,20,40,.3); }
+#screen-home #mini-desktop,#screen-home .note-btn{ color:#fff; }
+#screen-home #mini-desktop::before{ color:#fff; text-shadow:0 calc(2 * var(--u)) calc(2 * var(--u)) rgba(60,40,80,.45); transform:rotate(-8deg); }
+#screen-home .note-btn span{ display:block; color:#fff; text-shadow:0 calc(2 * var(--u)) calc(2 * var(--u)) rgba(60,40,80,.45); }
+#screen-home .note-settings span{ transform:rotate(8deg); }
+#screen-home .note-website span{ transform:rotate(-9deg); }
+/* Labels: no shadow, larger. */
+#screen-home #mini-desktop::before,#screen-home .note-btn span{ text-shadow:none; }
+#screen-home .note-btn{ font-size:calc(14 * var(--u)); line-height:1; }
+#screen-home #mini-desktop::before{ font-size:calc(19 * var(--u)); }
+/* Wall dressing: polka dots + chair rail with a darker wainscot, and three posters. */
+#screen-home .room-pattern{ left:-50%; top:-100%; width:200%; height:162%; z-index:0;
+  background:radial-gradient(circle,rgba(255,255,255,.3) 0 calc(5 * var(--u)),transparent calc(5.5 * var(--u))) 0 0/calc(70 * var(--u)) calc(70 * var(--u)),
+             radial-gradient(circle,rgba(255,255,255,.18) 0 calc(5 * var(--u)),transparent calc(5.5 * var(--u))) calc(35 * var(--u)) calc(35 * var(--u))/calc(70 * var(--u)) calc(70 * var(--u)); }
+#screen-home .room-rail{ left:-50%; top:62%; width:200%; height:10%; z-index:0; background:#a5d6c7; border-top:calc(9 * var(--u)) solid #fff3dc; box-shadow:0 calc(-4 * var(--u)) calc(8 * var(--u)) rgba(150,86,40,.12); }
+#screen-home .room-poster{ z-index:1; height:auto; filter:drop-shadow(calc(-3 * var(--u)) calc(5 * var(--u)) calc(6 * var(--u)) rgba(150,86,40,.28)); }
+/* Shadows fall down onto the desk, not sideways onto the wall; nothing casts onto the wall itself. */
+#screen-home .room-cabinet,#screen-home .room-curtains{ filter:none; }
+#screen-home .room-rail{ box-shadow:none; }
+#screen-home .room-monitor{ filter:drop-shadow(calc(-1 * var(--u)) calc(7 * var(--u)) calc(7 * var(--u)) var(--sh)); }
+#screen-home .room-tower{ filter:drop-shadow(0 calc(7 * var(--u)) calc(7 * var(--u)) var(--sh)); }
+#screen-home .room-plant{ filter:drop-shadow(calc(-1 * var(--u)) calc(5 * var(--u)) calc(6 * var(--u)) var(--sh)); }
+/* Note labels: dark shade of each note's own colour, all above 4.5:1 on the paper. */
+#screen-home .note-settings,#screen-home .note-settings span{ color:#2d1a8c; }
+#screen-home #mini-desktop,#screen-home #mini-desktop::before{ color:#6b4700; }
+#screen-home .note-website,#screen-home .note-website span{ color:#8f0f38; }
+/* Centre "start" on the note's body (the folded corner pulls the box centre down). */
+#screen-home #mini-desktop::before{ transform:translateY(calc(-8 * var(--u))) rotate(-8deg); }
+#screen-home #mini-desktop::before{ transform:translateY(calc(-5 * var(--u))) rotate(-8deg); }
+#screen-home .note-website span{ transform:translateY(calc(-4 * var(--u))) rotate(-9deg); }
+#screen-home #mini-desktop::before{ transform:translate(calc(3 * var(--u)),calc(-2 * var(--u))) rotate(-8deg); }
+/* Posters hidden for now (markup kept in index.html). */
+#screen-home .room-poster{ display:none; }
+/* eyecon logo centred on the monitor glass (above the dim overlay so it stays crisp). */
+#screen-home .room-logo{ z-index:7; transform:translate(-50%,-50%); }
+/* Settings panel from the settings note: the quick-settings card, bigger and centred. */
+.taskbar-quick-popup.room-settings{ left:50%!important; top:50%!important; bottom:auto!important; translate:-50% -50%; } /* size set in positionStatsPopup */
+/* Test-level shortcuts are admin-only (open the game with ?admin). */
+html:not(.admin-tools) .dev-levels{ display:none!important; }
+/* Mail folders: make the selected one obvious (strong fill, dark ring, lifted) and quiet the other. */
+#screen-shell .mail-sidebar .side-btn{ transition:transform .15s, box-shadow .15s, filter .15s; }
+#screen-shell .mail-sidebar .side-btn:not(.active){ filter:saturate(.55) brightness(1.04); box-shadow:none; }
+#screen-shell .mail-sidebar .side-btn.active{ outline:.3125rem solid #3b172e; outline-offset:-.3125rem; box-shadow:0 .75rem 1rem rgba(59,23,46,.3)!important; z-index:1; }
+#screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{ background:#a97fd6; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{ background:#ffd24a!important; }
+/* Lighter selected outline: a darker shade of each folder's own colour, thinner. */
+#screen-shell .mail-sidebar .side-btn.active{ outline-width:.1875rem; outline-offset:-.1875rem; }
+#screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{ outline-color:#8a62bb; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{ outline-color:#e0a82a; }
+#screen-shell .mail-sidebar .side-btn.active{ outline-width:.3125rem; outline-offset:-.3125rem; }
+#screen-shell .mail-sidebar .side-btn,#screen-shell .mail-sidebar .side-btn.active,#screen-shell .mail-sidebar .side-btn:not(.active){ box-shadow:none!important; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"]:not(.active){ background:#fff3cf; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"]:not(.active){ background:#ffdd85; filter:none; }
+#screen-shell .mail-sidebar .side-btn[data-folder="inbox"]:not(.active){ background:#cbb2e4; filter:none; }
+#screen-shell .mail-sidebar .side-btn[data-folder="inbox"].active{ background:#a276d2; outline-color:#7c52b0; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{ background:#fbc531!important; outline-color:#d99b1f; }
+#screen-shell .mail-sidebar .side-btn[data-folder="completed"].active{ background:#ffd24a!important; }
+
+/* ===== Contrast guide: one range bar per role, with a pin that moves on this text's row ===== */
+#screen-editor .cz-ranges{ gap:.75rem; }
+#screen-editor .cz-range{ display:grid; gap:.35rem; padding:.5rem .6rem; border-radius:.75rem; opacity:.7; }
+#screen-editor .cz-range.here{ opacity:1; background:#ede4fb; outline:2px solid #7656b3; }
+#screen-editor .cz-range-head{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:.25rem .75rem; }
+#screen-editor .cz-range-head b{ font:800 1rem var(--font-body); color:#3b172e; }
+#screen-editor .cz-range-head code{ font:700 1rem var(--font-body); color:#1f5f5a; }
+#screen-editor .cz-track{ position:relative; height:1rem; border-radius:999px; background:#fff; border:2px solid #cdbfe3; }
+#screen-editor .cz-span{ position:absolute; top:0; bottom:0; border-radius:999px; background:#8fd0aa; }
+#screen-editor .cz-range:not(.here) .cz-span{ background:#c9bfdd; }
+#screen-editor .cz-pin{ position:absolute; top:50%; width:1.25rem; height:1.25rem; margin:-.625rem 0 0 -.625rem; border:3px solid #fff; border-radius:50%; background:#7656b3; box-shadow:0 0 0 2px #3b172e; transition:left .12s; }
+#screen-editor .cz-pin.off{ background:#d0213f; }
+#screen-editor .cz-you{ margin:0; font:700 1rem/1.3 var(--font-body); color:#3b172e; }
+#screen-editor .cz-you.off{ color:#a3142f; }
+#screen-editor .cz-you.ok{ color:#1d6a40; }
+#screen-editor .cz-scale{ position:relative; height:1.4rem; margin:0 .6rem; }
+#screen-editor .cz-scale span{ position:absolute; transform:translateX(-50%); font:700 1rem var(--font-body); color:#5a6f6a; }
+
+/* ===== Consistent type in the design panels: body font, nothing under 16px ===== */
+#screen-editor .cz-chip small,#screen-editor .cz-label,#screen-editor .cz-piko small,#screen-editor .cz-verdict small,
+#screen-editor .cz-guide .sl-label,#screen-editor .cz-guide li,#screen-editor .cz-guide li b,#screen-editor .cz-guide-q,
+#screen-editor .contrast-tip,#screen-editor .contrast-note,#size-ladder .sl-label,#size-ladder .sl-tip,#size-ladder li,#size-ladder li b,
+#screen-editor.editor-studio .editor-piko-say small,#screen-editor .editor-goal-measure,#screen-editor.editor-studio .editor-piko-say .editor-goal-measure{ font-size:1rem!important; font-family:var(--font-body)!important; }
+#screen-editor .cz-chip code,#screen-editor .cz-guide li code,#size-ladder li code,#screen-editor .editor-goal-measure{ font-family:var(--font-body)!important; font-size:1rem!important; font-weight:800; }
+#screen-editor.editor-studio .editor-piko-say::before{ font-size:1rem; }
+#screen-editor .editor-side-rail small,#screen-editor .editor-side-rail p,#screen-editor .editor-mail-brief small,#screen-editor .editor-mail-brief p{ font-size:max(1rem,1em); font-family:var(--font-body); }
+/* Guide: both role ranges look the same (no hint which one this text is); "This text" row carries the pin. */
+#screen-editor .cz-range,#screen-editor .cz-range.here{ opacity:1; background:transparent; outline:0; }
+#screen-editor .cz-range .cz-span,#screen-editor .cz-range:not(.here) .cz-span{ background:#8fd0aa; }
+#screen-editor .cz-this{ background:#ede4fb; outline:2px solid #7656b3; }
+#screen-editor .cz-pin,#screen-editor .cz-pin.off{ background:#7656b3; }
+/* Contrast guide as a list (like the size ladder): matching range + "This text" row highlighted. */
+#screen-editor .cz-guide li.sl-you{ margin-top:.25rem; background:#ede4fb; outline:2px solid #7656b3; }
+#screen-editor .cz-guide li{ display:flex!important; justify-content:space-between; align-items:center; }
+#screen-editor .cz-guide li.here,#screen-editor .cz-guide li.sl-you{ background:#ede4fb!important; outline:2px solid #7656b3!important; }
+#screen-editor .cz-guide li{ display:flex!important; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:.25rem .75rem!important; }
+/* Guide rows: range always on the right; a long label wraps inside its own column instead. */
+#screen-editor .cz-guide li{ flex-wrap:nowrap!important; }
+#screen-editor .cz-guide li b{ flex:1; min-width:0; white-space:normal!important; }
+#screen-editor .cz-guide li code{ flex:none; white-space:nowrap!important; text-align:right; }
+/* ===== Colour workbench, compact: tall slider on the left beside everything; chips side by side; tighter guide ===== */
+#screen-editor .editor-contrast-workbench{ grid-template-columns:2rem minmax(0,1fr)!important; gap:.6rem .75rem!important; padding:.75rem!important; }
+#screen-editor .editor-contrast-workbench > .editor-bright-bar{ grid-column:1; grid-row:1 / span 2; align-self:stretch; min-height:0; }
+#screen-editor .editor-contrast-workbench > .editor-bright-bar input[type=range]{ height:100%!important; min-height:10rem; }
+#screen-editor .editor-contrast-workbench .cz-chips{ grid-column:2; grid-row:1; grid-template-columns:1fr 1fr; gap:.5rem!important; }
+#screen-editor .editor-contrast-workbench .cz-chip small{ margin-bottom:.25rem; letter-spacing:.06em; white-space:nowrap; }
+#screen-editor .editor-contrast-workbench .cz-chip > span{ display:flex; width:100%; box-sizing:border-box; padding:.4rem .5rem!important; }
+#screen-editor .editor-contrast-workbench .cz-guide{ grid-column:2; grid-row:2; gap:.25rem; padding:.5rem .6rem; }
+#screen-editor .cz-guide .sl-list{ gap:.1rem; }
+#screen-editor .cz-guide li{ padding:.25rem .4rem!important; }
+#screen-editor .cz-guide .cz-box{ margin-top:.35rem; padding:.4rem .6rem; border-width:2px; }
+#screen-editor .cz-guide .cz-ratio{ font-size:1.75rem; }
+#screen-editor .cz-guide .cz-row{ gap:.6rem; }
+/* Chips: two fixed, equal columns so the Background chip never shifts with the text colour's value. */
+#screen-editor .editor-contrast-workbench{ width:100%; box-sizing:border-box; }
+#screen-editor .editor-contrast-workbench .cz-chips{ display:grid!important; grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important; }
+#screen-editor .editor-contrast-workbench .cz-chip{ min-width:0; }
+#screen-editor .editor-contrast-workbench .cz-chip code{ font-variant-numeric:tabular-nums; }

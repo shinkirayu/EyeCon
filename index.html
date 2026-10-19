@@ -58,6 +58,10 @@
       <div class="room-scene" aria-hidden="true"><div class="room-stage">
         <div class="room-window"></div>
         <img class="room-wall" src="assets/landing/room/wall.svg" alt="" style="left:0.000%;top:0.000%;width:99.980%">
+        <div class="room-pattern"></div>
+        <div class="room-rail"></div>
+        <svg class="room-poster" viewBox="0 0 200 270" style="left:37.540%;top:50.218%;width:2.294%;transform:rotate(-3deg)"><rect width="200" height="270" rx="6" fill="#fff8ee"/><rect x="8" y="8" width="184" height="254" rx="3" fill="none" stroke="#f18586" stroke-width="3"/><ellipse cx="100" cy="110" rx="62" ry="46" fill="#fff" stroke="#3b172e" stroke-width="4"/><circle cx="112" cy="110" r="26" fill="#444"/><circle cx="121" cy="101" r="8" fill="#fff"/><text x="100" y="212" text-anchor="middle" font-family="Baloo 2,Bayon,sans-serif" font-weight="800" font-size="40" fill="#e34c70">eyecon</text><rect x="78.0" y="-8" width="44" height="18" fill="#ffe9a0" opacity=".85" transform="rotate(-3 100.0 0)"/></svg>
+        <svg class="room-poster" viewBox="0 0 270 190" style="left:40.217%;top:51.461%;width:3.187%;transform:rotate(2deg)"><rect width="270" height="190" rx="6" fill="#8fd0f5"/><circle cx="212" cy="52" r="24" fill="#ffe27a"/><ellipse cx="70" cy="48" rx="34" ry="12" fill="#fff"/><ellipse cx="95" cy="40" rx="22" ry="12" fill="#fff"/><path d="M0 190V120C60 90 130 100 200 130 230 142 255 140 270 135V190Z" fill="#7fd26a"/><path d="M0 190V150C70 125 160 140 270 165V190Z" fill="#5fb94d"/><rect x="5" y="5" width="260" height="180" rx="4" fill="none" stroke="#fff" stroke-width="5"/><rect x="113.0" y="-8" width="44" height="18" fill="#ffe9a0" opacity=".85" transform="rotate(-3 135.0 0)"/></svg>
         <img class="room-cabinet" src="assets/landing/room/cabinet.svg" alt="" style="left:9.305%;top:21.380%;width:25.362%">
         <img class="room-curtain-rod" src="assets/landing/room/curtain-rod.svg" alt="" style="left:60.739%;top:6.153%;width:30.292%">
         <img class="room-curtains" src="assets/landing/room/curtains.svg" alt="" style="left:62.014%;top:5.656%;width:29.307%">
@@ -65,6 +69,8 @@
         <img class="room-tower" src="assets/landing/room/tower.svg" alt="" style="left:36.488%;top:57.054%;width:6.715%">
         <img class="room-monitor" src="assets/landing/room/monitor.svg" alt="" style="left:44.901%;top:53.139%;width:15.324%">
         <img class="room-screen" src="assets/landing/room/screen.svg" alt="" style="left:45.645%;top:53.689%;width:14.047%">
+        <img class="room-logo" src="assets/landing/logo.png" alt="" style="left:52.61%;top:61.67%;width:6.6%">
+        <div class="room-glare" style="left:45.645%;top:53.689%;width:14.047%"></div>
         <img class="room-mousepad" src="assets/landing/room/mousepad.svg" alt="" style="left:41.746%;top:74.891%;width:22.945%">
         <img class="room-keyboard" src="assets/landing/room/keyboard.svg" alt="" style="left:44.009%;top:74.891%;width:11.687%">
         <img class="room-mouse" src="assets/landing/room/mouse.svg" alt="" style="left:57.138%;top:75.575%;width:2.177%">
@@ -143,8 +149,8 @@
       <!-- Floating "app window" — pops up above/over the monitor when a mini
            icon is clicked, showing the real, live app content (reparented in
            from its normal screen and back out again on close). -->
-      <button type="button" class="note-btn note-settings" id="note-settings">settings</button>
-      <a class="note-btn note-website" href="overview.html">back to website</a>
+      <button type="button" class="note-btn note-settings" id="note-settings"><span>settings</span></button>
+      <a class="note-btn note-website" href="overview.html"><span>back to website</span></a>
 
       <div class="monitor-app-popup hidden" id="monitor-app-popup" role="dialog" aria-modal="true" aria-labelledby="monitor-app-popup-title">
         <div class="monitor-app-popup-titlebar">
