@@ -850,7 +850,8 @@
     const g = (state.level.goals || []).find(g => g.check.ladder);
     if(g) return g;
     const sg = state.level.sizeGuide; // display-only ladder: [{ id, name }]
-    return sg ? { check:{ ladder: sg.map(x => x.id) }, names: sg.map(x => x.name) } : null;
+    if(sg) return { check:{ ladder: sg.map(x => x.id) }, names: sg.map(x => x.name) };
+    return state.level.sizeLadder ? { check:{ ladder:[] }, names: state.level.ladderNames } : null; // display-only, the standard 40/32/24/16 ladder
   }
   function sizeLadderHtml(el){
     const g = ladderGoal();
@@ -860,9 +861,11 @@
   function sizeLadderInner(el){
     const g = ladderGoal(), names = g.names || ['Page title', 'Section title', 'Group title', 'Labels'];
     const steps = window.EC_GRADING.goalIds(g.check).map(byId).filter(Boolean);
-    const rows = steps.map((s, i) => `<li class="${s.id === el.id || (i === steps.length - 1 && !steps.some(x => x.id === el.id) && el.fontSize === s.fontSize) ? 'here' : ''}"><span style="font-size:${Math.min(28, Math.max(12, s.fontSize * .6))}px">Aa</span><b>${names[i] || ''}</b><code>${s.fontSize}px</code></li>`).join('');
-    const top = steps[steps.length - 2], tip = el.fontSize < 16 ? ['fail', 'Too small to read comfortably. Go up to 16px.']
-      : top && el.fontSize >= top.fontSize && !steps.slice(0, -1).some(s => s.id === el.id) ? ['warn', 'Now it\u2019s as big as a group title. People will think it\u2019s a heading!']
+    // A fixed guide (the level's own sizes only for a sizeGuide level); the row matching this text's size lights up.
+    const sizes = state.level.sizeGuide ? steps.map(s => s.fontSize) : [40, 32, 24, 16];
+    const rows = sizes.map((px, i) => `<li class="${el.fontSize === px ? 'here' : ''}"><span style="font-size:${Math.min(28, Math.max(12, px * .6))}px">Aa</span><b>${names[i] || ''}</b><code>${px}px</code></li>`).join('');
+    const top = sizes[sizes.length - 2], tip = el.fontSize < 16 ? ['fail', 'Too small to read comfortably. Go up to 16px.']
+      : top && el.fontSize >= top && !steps.slice(0, -1).some(s => s.id === el.id) ? ['warn', 'Now it\u2019s as big as a group title. People will think it\u2019s a heading!']
       : ['pass', el.fontSize === 16 ? 'Readable, and still smaller than the titles.' : `${el.fontSize}px`];
     if((state.level.levelNumber || 0) >= 4 && tip[0] !== 'fail') tip[1] = ''; // no 'that\u2019s right' on level 4+
     return `<small class="sl-label">Size ladder</small><ol class="sl-list">${rows}<li class="sl-you"><span style="font-size:${Math.min(28, Math.max(12, el.fontSize * .6))}px">Aa</span><b>This text</b><code>${el.fontSize}px</code></li></ol>${tip[1] ? `<p class="sl-tip ${tip[0]}">${tip[1]}</p>` : ''}`;

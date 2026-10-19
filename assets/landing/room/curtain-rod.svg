@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950.55 46.94">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #b9d4fc;
+      }
+    </style>
+  </defs>
+  <g id="CurtainRod">
+    <g>
+      <rect class="cls-1" x="54.13" y="14.38" width="851.74" height="18.38" rx="5" ry="5"/>
+      <circle class="cls-1" cx="927.19" cy="23.36" r="23.36"/>
+      <rect class="cls-1" x="893.02" y="7.7" width="16.09" height="32.57" rx="5" ry="5"/>
+      <circle class="cls-1" cx="23.36" cy="23.57" r="23.36"/>
+      <rect class="cls-1" x="41.45" y="7.91" width="16.09" height="32.57" rx="5" ry="5" transform="translate(98.98 48.4) rotate(-180)"/>
+    </g>
+  </g>
+</svg>

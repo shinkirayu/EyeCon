@@ -15,4 +15,4 @@
   <symbol id="cart" viewBox="0 0 64 64"><image href="../sprites/cart.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
   <symbol id="spark" viewBox="0 0 64 64"><path d="M32 4 38 25l21 7-21 7-6 21-7-21L4 32l21-7z" fill="#A982E8"/><circle cx="32" cy="32" r="5" fill="#FFF5DE"/></symbol>
   <symbol id="save" viewBox="0 0 64 64"><path d="M8 8h41l7 7v41H8z" fill="#A982E8"/><path d="M17 8h28v20H17zm1 32h28v16H18z" fill="#DED5FA"/><path d="M38 9v15" stroke="#A982E8" stroke-width="5"/></symbol>
-</svg>
+<symbol id="book" viewBox="0 0 64 64"><path d="M32 15C24 8.5 12 7.5 3 10V54C12 51.5 24 52.5 32 59C40 52.5 52 51.5 61 54V10C52 7.5 40 8.5 32 15Z" fill="#AF89EB"/><path d="M9 15.5C17 14.5 25 16 29.5 20.5V51C24 48 16.5 47.5 9 48.5Z" fill="#FFFAF3"/><path d="M55 15.5C47 14.5 39 16 34.5 20.5V51C40 48 47.5 47.5 55 48.5Z" fill="#FFFAF3"/></symbol></svg>

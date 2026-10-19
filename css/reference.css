@@ -1075,8 +1075,8 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 
 /* ---------------- Browser app ---------------- */
 #screen-desktop .desktop-icon#icon-browser{position:relative;bottom:auto;display:block;width:6.5rem;min-width:0;min-height:0;padding:0;}
-#screen-desktop #icon-browser #glyph-browser{display:block;width:100%!important;height:auto!important;aspect-ratio:152/136;background:url('../assets/icons/browser-icon.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;font-size:0;}
-#screen-desktop #icon-browser .desktop-icon-label{display:block;color:#254b50;font:700 1rem/1 var(--font-body);text-align:center;}
+#screen-desktop #icon-browser #glyph-browser,#screen-desktop #icon-guide #glyph-guide{display:block;width:100%!important;height:auto!important;aspect-ratio:152/136;background:url('../assets/icons/browser-icon.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;font-size:0;}
+#screen-desktop #icon-browser .desktop-icon-label,#screen-desktop #icon-guide .desktop-icon-label{display:block;color:#254b50;font:700 1rem/1 var(--font-body);text-align:center;}
 #screen-browser.active{display:flex;flex-direction:column;background:#eef3ef;}
 .browser-chrome{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:#fcf7ef;border-bottom:2px solid #c8e6da;}
 .browser-chrome .app-back-btn{position:static;width:3rem;height:3rem;flex:0 0 3rem;}
@@ -1116,11 +1116,11 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
 .profile-picker output{min-width:6.5rem;text-align:center;}
 
 /* Desktop app icons stack by their real height so they never overlap. */
-#screen-desktop .desktop-icon#icon-maker,#screen-desktop .desktop-icon#icon-browser{height:auto;}
+#screen-desktop .desktop-icon#icon-maker,#screen-desktop .desktop-icon#icon-browser,#screen-desktop .desktop-icon#icon-guide{height:auto;}
 /* Desktop apps: no hover backdrop (just the lift), white labels. */
 #screen-desktop .desktop-icon:hover,#screen-desktop .desktop-icon:focus-visible{background:transparent;}
 #screen-desktop .desktop-icon:focus-visible{outline:3px solid #fff;outline-offset:4px;border-radius:1rem;}
-#screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label{color:#fff;}
+#screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label,#screen-desktop #icon-guide .desktop-icon-label{color:#fff;}
 /* Settings rows share one grid: name | control (centered) | value. */
 .profile-setting{grid-template-columns:6.5rem 1fr 3.5rem;gap:1rem;min-height:3.25rem;}
 .profile-control{display:flex;align-items:center;justify-content:center;width:100%;}
@@ -1269,10 +1269,10 @@ body:has(#screen-shell.active) #global-taskbar .taskbar-btn{
   #screen-editor[data-layout="compact"] .tool-btn.btn-save.editor-save-corner{top:1rem;right:1rem;}
 }
 /* The three desktop apps are always the same size (the phone layout made them differ). */
-#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:6.5rem;min-width:0;}
-@media(max-width:900px){#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4rem;}}
+#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:6.5rem;min-width:0;}
+@media(max-width:900px){#screen-desktop .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:4rem;}}
 /* White app labels keep a soft shadow so they stay readable over white clouds. */
-#screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label{text-shadow:0 1px 2px #1d3b4f99,0 0 6px #1d3b4f66;}
+#screen-desktop #icon-mail .desktop-icon-label,#screen-desktop #icon-maker .desktop-icon-label,#screen-desktop #icon-browser .desktop-icon-label,#screen-desktop #icon-guide .desktop-icon-label{text-shadow:0 1px 2px #1d3b4f99,0 0 6px #1d3b4f66;}
 /* Phones: keep the desktop mail layout — Inbox and Completed in a left column. */
 @media(max-width:900px){
   #screen-shell .mail-body{flex-direction:row;align-items:stretch;gap:1rem;}
@@ -1301,8 +1301,8 @@ html.booting body{visibility:hidden;}
 /* iOS Safari enlarges text on its own in landscape; keep sizes exactly as designed. */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 /* Desktop app pictures get explicit, identical sizes (no sizing from the button, which iOS resolved differently). */
-#screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:5.5rem!important;height:4.875rem!important;aspect-ratio:auto;margin:0 auto;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;}
-@media(max-width:900px){#screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:3.5rem!important;height:3.125rem!important;}}
+#screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser,#screen-desktop #icon-guide #glyph-guide{width:5.5rem!important;height:4.875rem!important;aspect-ratio:auto;margin:0 auto;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;}
+@media(max-width:900px){#screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser,#screen-desktop #icon-guide #glyph-guide{width:3.5rem!important;height:3.125rem!important;}}
 /* Phones: dialogs fit the visible screen height and scroll inside. */
 @media(pointer:coarse){
   .mail-detail-card,.compose-card,.reward-card{max-height:calc(var(--visible-h,100dvh) - 1.5rem);overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -1595,18 +1595,18 @@ html.keyboard-editing #app-root{height:var(--typing-height);}
 #screen-desktop #icon-profile,#screen-desktop #icon-shop{display:none!important;}
 /* Desktop apps: one column of equal square cells with even spacing. */
 #screen-desktop .desktop-icons{display:flex!important;flex-direction:column!important;align-items:center;gap:1.5rem!important;width:auto!important;grid-template-columns:none!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:0.5rem;width:7rem!important;height:7rem!important;min-width:0;padding:0;margin:0;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{line-height:1.1;text-align:center;}
-@media(max-width:900px){#screen-desktop .desktop-icons{gap:1rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4.75rem!important;height:4.75rem!important;}}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{flex:none!important;width:4.5rem!important;height:4rem!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{white-space:nowrap;}
-@media(max-width:900px){#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:3rem!important;height:2.75rem!important;}}
-@media(max-height:500px){#screen-desktop .desktop-icons{top:.75rem!important;gap:.5rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:4.25rem!important;height:4.25rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:2.75rem!important;height:2.5rem!important;}}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:0.5rem;width:7rem!important;height:7rem!important;min-width:0;padding:0;margin:0;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-label{line-height:1.1;text-align:center;}
+@media(max-width:900px){#screen-desktop .desktop-icons{gap:1rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:4.75rem!important;height:4.75rem!important;}}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-glyph{flex:none!important;width:4.5rem!important;height:4rem!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-label{white-space:nowrap;}
+@media(max-width:900px){#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-glyph{width:3rem!important;height:2.75rem!important;}}
+@media(max-height:500px){#screen-desktop .desktop-icons{top:.75rem!important;gap:.5rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:4.25rem!important;height:4.25rem!important;}#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-glyph{width:2.75rem!important;height:2.5rem!important;}}
 /* Cell size follows the screen height too, so the column always fits above the taskbar. */
 #screen-desktop .desktop-icons{gap:min(1.5rem,2.5vh)!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:min(7rem,17vh)!important;height:min(7rem,17vh)!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:min(5.5rem,12vh)!important;height:min(4.875rem,10.5vh)!important;}
-#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-label{font-size:min(1rem,3.2vh);}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:min(7rem,17vh)!important;height:min(7rem,17vh)!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-glyph{width:min(5.5rem,12vh)!important;height:min(4.875rem,10.5vh)!important;}
+#screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-label{font-size:min(1rem,3.2vh);}
 /* Mail rows: no reward chip (the reward shows inside the opened email). */
 #screen-shell .mail-item .mail-prize{display:none!important;}
 /* Edit Mode banner: a rounded sticky tag with breathing room, not a full-bleed block. */
@@ -1992,11 +1992,11 @@ img.money-icon{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.15
 .piko-cursor img{width:100%;height:100%;image-rendering:pixelated;}
 /* Bigger desktop icons on large screens. */
 @media(min-width:901px) and (min-height:501px){
-  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser){width:9rem!important;height:9rem!important;}
-  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser) .desktop-icon-glyph{width:6rem!important;height:5.5rem!important;}
+  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide){width:9rem!important;height:9rem!important;}
+  #screen-desktop .desktop-icons .desktop-icon:is(#icon-mail,#icon-maker,#icon-browser,#icon-guide) .desktop-icon-glyph{width:6rem!important;height:5.5rem!important;}
 }
 @media(min-width:901px) and (min-height:501px){
-  #screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser{width:7rem!important;height:6.25rem!important;}
+  #screen-desktop #icon-mail #glyph-mail,#screen-desktop #icon-maker #glyph-maker,#screen-desktop #icon-browser #glyph-browser,#screen-desktop #icon-guide #glyph-guide{width:7rem!important;height:6.25rem!important;}
 }
 #screen-desktop .desktop-icon:hover,#screen-desktop .desktop-icon:focus-visible{transform:none;}
 /* Piko lifts a desktop icon above the full-screen dim: just the glyph, label and badge. */
@@ -2769,3 +2769,157 @@ body.piko-view-lock #editor-canvas-wrap{pointer-events:none;}
 #screen-editor .cz-guide .sl-label{color:#1f5f5a;}
 #screen-editor .cz-guide-q{color:#5b3aa0;}
 #screen-editor .cz-guide .sl-label,#screen-editor .cz-guide li,#screen-editor .cz-guide li b,#screen-editor .cz-guide li code,#screen-editor .cz-guide-q{font-size:1rem;} /* 16px at full size */
+/* UI Survival Guide: an open book in the middle of the screen. */
+.guidebook{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;background:#1a1033b3;}
+.guidebook.hidden{display:none;}
+.gb-book{position:relative;padding:3rem 1.5rem 1.25rem;border-radius:1.25rem;background:linear-gradient(#7458d0,#4f3a9e);border:.375rem solid #c9b8f5;box-shadow:0 1.5rem 3rem #0008, inset 0 0 0 .25rem #34236f;}
+.gb-spread{display:grid;grid-template-columns:repeat(2,auto);gap:0;padding:.75rem;border-radius:.5rem;background:#ece4ff;box-shadow:inset 0 0 1.5rem #6b4fbf55;position:relative;}
+.gb-spread:not(.single)::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:2.5rem;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#0000002e 45%,#0000002e 55%,transparent);pointer-events:none;}
+
+.gb-page{position:relative;box-sizing:border-box;height:min(72vh,calc((100vw - 8rem) * 842 / 1190));aspect-ratio:595/842;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:.6em;padding:1.6em 1.4em 2em;font-size:min(1.65vh,calc((100vw - 8rem) / 70));
+  background-color:#fffbea;background-image:linear-gradient(#ecf1e3 1px,transparent 1px),linear-gradient(90deg,#ecf1e3 1px,transparent 1px);background-size:1.1em 1.1em;color:#2b1a24;font-family:var(--font-body);text-align:center;}
+.gb-page h2{margin:0;font:800 2.6em/1 var(--font-display);color:#4a3a8c;}
+.gb-page h2.gb-small{font-size:1.7em;line-height:1.2;}
+.gb-page h3{margin:0;font:700 1.15em var(--font-display);color:#8c2148;}
+.gb-prob{margin:-.3em 0 0;font-weight:700;line-height:1.35;}
+.gb-banner{width:92%;padding:.35em;border-radius:.4em;background:#f6f4a3;box-shadow:0 .2em .3em #0002;font:800 1.7em var(--font-display);color:#4a3a8c;}
+.gb-rule{align-self:flex-start;width:60%;margin-top:.2em;padding:.6em .8em;border:.22em solid #ddd8ad;border-radius:.7em;background:#fffdf3;}
+.gb-rule.r{align-self:flex-end;}
+.gb-rule b{display:inline;-webkit-box-decoration-break:clone;box-decoration-break:clone;font:800 1.15em var(--font-display);color:#2a7193;background:linear-gradient(transparent 55%,#f6d4e3 55%);}
+.gb-rule p{margin:.3em 0 0;font-size:.9em;font-weight:600;line-height:1.35;}
+.gb-note{position:relative;width:92%;margin-top:auto;padding:1.8em 1em .9em;border:.18em solid #4a3a8c;border-radius:.4em;background:#cbbcf2;}
+.gb-note span{position:absolute;top:-.9em;left:50%;transform:translateX(-50%);padding:.25em 1.4em;background:#6a4fb3;color:#ffe25c;font:800 1.15em var(--font-display);white-space:nowrap;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%);}
+.gb-note p{margin:0;font-weight:700;line-height:1.4;}
+.gb-three{margin:.5em 0;padding-left:1.2em;text-align:left;line-height:1.45;font-weight:600;}
+.gb-three li{margin-bottom:.9em;}.gb-three b{color:#2f7a52;}
+.gb-folio{position:absolute;bottom:.5em;font:700 .8em var(--font-body);color:#9a8a70;}
+.gb-page.gb-cover-page{background:#6b4fbf radial-gradient(circle at 30% 20%,#8d6fe0,transparent 60%);color:#fff;justify-content:center;}
+.gb-cover h1{margin:.2em 0 0;font:800 3.2em/1 var(--font-display);color:#fff;text-shadow:.08em .08em 0 #2b1a4f;}
+.gb-cover p{margin:.3em auto 1em;padding:.3em .8em;background:#ffe25c;color:#4a3a8c;font:800 1.4em var(--font-display);border-radius:.3em;}
+.gb-cover .gb-eye{font-size:5em;display:block;margin:.3em 0;}
+.gb-cover small{font:700 1em var(--font-body);color:#e9e0ff;}
+.gb-tabs{position:absolute;top:.75rem;left:1.5rem;display:flex;gap:.375rem;}
+.gb-tabs button,.gb-pager button{border:2px solid #c9b8f5;background:#5b44b0;color:#f1ebff;font:700 .95rem var(--font-body);border-radius:.5rem;padding:.3rem .8rem;cursor:pointer;}
+.gb-tabs button.on,.gb-pager button.on{background:#ffe25c;border-color:#ffe25c;color:#34236f;}
+.gb-pager{display:flex;justify-content:center;gap:.375rem;margin-top:.75rem;}
+.gb-pager button:disabled{opacity:.4;cursor:default;}
+.gb-close{position:absolute;top:.6rem;right:.9rem;border:0;background:none;color:#f1ebff;font-size:1.5rem;cursor:pointer;}
+.gb-page.gb-cover-page{padding:0;background:#6b4fbf;}
+.gb-cover-img{display:block;width:100%;height:100%;object-fit:cover;}
+/* Click a page edge to turn the page; it curls a little on hover. */
+.gb-spread-wrap{position:relative;}
+.gb-edge{position:absolute;top:0;bottom:0;width:14%;border:0;padding:0;background:transparent;cursor:pointer;z-index:1;}
+.gb-edge.gb-prev{left:0;border-radius:.5rem 0 0 .5rem;}.gb-edge.gb-next{right:0;border-radius:0 .5rem .5rem 0;}
+.gb-edge.gb-prev:hover{background:linear-gradient(90deg,#6b4fbf40,transparent);}
+.gb-edge.gb-next:hover{background:linear-gradient(270deg,#6b4fbf40,transparent);}
+.gb-edge::after{content:"";position:absolute;bottom:0;width:2.25rem;height:2.25rem;opacity:0;transition:opacity .15s;}
+.gb-edge.gb-next::after{right:0;background:linear-gradient(225deg,transparent 50%,#d9ccff 50%,#a993ea);border-radius:0 0 .5rem 0;}
+.gb-edge.gb-prev::after{left:0;background:linear-gradient(135deg,transparent 50%,#d9ccff 50%,#a993ea);border-radius:0 0 0 .5rem;}
+.gb-edge:hover::after,.gb-edge:focus-visible::after{opacity:1;}
+.gb-edge:disabled{display:none;}
+/* Page turn: one sheet (front = leaving page, back = arriving page) swings over the spine. */
+.gb-spread{perspective:2600px;grid-template-columns:1fr 1fr;}
+.gb-blank{height:min(72vh,calc((100vw - 8rem) * 842 / 1190));aspect-ratio:595/842;}
+.gb-sheet{position:absolute;top:.75rem;bottom:.75rem;width:calc(50% - .75rem);z-index:2;pointer-events:none;transform-style:preserve-3d;animation:var(--gb-turn,.85s) cubic-bezier(.5,.1,.3,1) forwards;}
+.gb-sheet.fwd{left:50%;transform-origin:left center;animation-name:gb-turn-fwd;}
+.gb-sheet.back{right:50%;transform-origin:right center;animation-name:gb-turn-back;}
+.gb-face{position:absolute;inset:0;backface-visibility:hidden;}
+.gb-face.rear{transform:rotateY(180deg);}
+.gb-face > *{height:100%;}
+.gb-face::after{content:"";position:absolute;inset:0;pointer-events:none;animation:gb-shade var(--gb-turn,.85s) cubic-bezier(.5,.1,.3,1) forwards;}
+@keyframes gb-turn-fwd{from{transform:rotateY(0)}to{transform:rotateY(-180deg)}}
+@keyframes gb-turn-back{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+@keyframes gb-shade{0%,100%{background:transparent}50%{background:#2b1a4f40}}
+.gb-book{padding-top:2.75rem;}
+/* Closed book on the cover and last page: clip the empty half and slide to centre. */
+.gb-stage{display:grid;justify-items:center;gap:.75rem;}
+.gb-book{padding:1.25rem;}
+.gb-pager{margin-top:0;}
+.guidebook > .gb-close{position:fixed;top:1rem;right:1.25rem;font-size:2rem;}
+@media (prefers-reduced-motion: reduce){.gb-book{transition:none;}}
+/* Inside back cover: the cover's purple, with a faint EyeCon stamp. */
+.gb-endpaper{position:relative;height:min(72vh,calc((100vw - 8rem) * 842 / 1190));aspect-ratio:595/842;display:grid;place-items:end center;padding-bottom:2.5em;box-sizing:border-box;
+  background:radial-gradient(circle at 70% 25%,#8a6be0,transparent 55%),repeating-linear-gradient(45deg,#ffffff0a 0 .6rem,transparent .6rem 1.2rem),#6b4fbf;box-shadow:inset 1.25rem 0 1.5rem -1rem #2b1a4f80;}
+.gb-endpaper span{font:800 1.4rem var(--font-display);color:#ffffff40;letter-spacing:.1em;}
+#screen-desktop #icon-guide #glyph-guide{display:block;background:url('../assets/icons/guide-icon.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;font-size:0;}
+#global-taskbar #taskbar-guide{display:flex;align-items:center;justify-content:center;background:none;font-size:0;}
+#global-taskbar #taskbar-guide .game-taskbar-icon{width:3.375rem;height:3.375rem;}
+@media(max-width:900px){#global-taskbar #taskbar-guide .game-taskbar-icon{width:2.75rem;height:2.75rem;}}
+
+/* Title screen: the illustrated room (assets/landing/room, layered SVGs).
+   The stage keeps the art's 3138x1609 ratio and sits on the floor; the cream wall fills above. */
+#screen-home .desk-scene{ background:#fffced!important; }
+#screen-home .reference-brand,#screen-home .sticky-note{ display:none!important; }
+#screen-home .room-scene{ position:absolute; inset:0; pointer-events:none; }
+#screen-home .room-stage{ position:absolute; left:0; bottom:0; width:100%; aspect-ratio:3138/1609; }
+#screen-home .room-stage>*{ position:absolute; height:auto; }
+#screen-home .room-window{ left:66.5%; top:9.5%; width:19.3%; height:59.8%; z-index:1;
+  background:linear-gradient(90deg,transparent 46%,#fedaaa 46% 54%,transparent 54%),
+             linear-gradient(transparent 30%,#fedaaa 30% 34%,transparent 34% 62%,#fedaaa 62% 66%,transparent 66%);
+  border:1.1cqw solid #fedaaa; border-bottom-width:1.4cqw; border-radius:.6cqw .6cqw 0 0; box-shadow:inset 0 0 0 .3cqw #dd9554; }
+#screen-home .room-curtains,#screen-home .room-curtain-rod{ z-index:2; }
+#screen-home .room-desk{ z-index:3; }
+#screen-home .room-tower,#screen-home .room-monitor,#screen-home .room-mousepad,#screen-home .room-plant,#screen-home .room-lamp{ z-index:4; }
+#screen-home .room-keyboard,#screen-home .room-mouse,#screen-home .room-notes{ z-index:5; }
+/* The monitor's screen is the Start button: screen.svg rect mapped into desk-scene cqw units. */
+#screen-home #mini-desktop{ left:45.63cqw; top:32.64cqw; width:13.96cqw; height:7.85cqw; border-radius:.3cqw;
+  background:url('../assets/landing/room/screen.svg') center/100% 100% no-repeat!important; box-shadow:none; transform:none; }
+#screen-home #mini-desktop::before{ text-shadow:0 .2cqw 0 #3a8fd6; }
+#screen-home #mini-desktop:hover{ transform:translateY(-2px); filter:brightness(1.06); }
+/* Zoomed in: monitor large and centred (stage 360cqw wide, monitor centre at 50cqw x 24cqw). */
+#screen-home .desk-scene{ overflow:hidden!important; }
+#screen-home .room-stage{ left:-139.3cqw; top:-94.3cqw; bottom:auto; width:360cqw; }
+#screen-home #mini-desktop{ left:25cqw; top:5.3cqw; width:50.25cqw; height:28.27cqw; border-radius:.6cqw; }
+#screen-home #mini-desktop::before{ font-size:6cqw; }
+/* Sticky notes are the menu: yellow = start, purple = settings, pink = back to website. */
+#screen-home,#screen-home .desk-scene{ background:#b5e4d8!important; }
+#screen-home .room-screen{ z-index:5; }
+#screen-home #mini-desktop,#screen-home .note-btn{ position:absolute; z-index:8; top:33.9cqw; width:6.06cqw; height:6cqw; padding:0;
+  background:transparent!important; border:0; box-shadow:none; display:flex; align-items:center; justify-content:center; text-align:center;
+  color:#3b172e; font:800 1.25cqw/1 var(--font-display); text-decoration:none; cursor:url("../assets/sprites/cursor-point.png") 9 2, pointer; }
+#screen-home #mini-desktop{ left:45.6cqw; }
+#screen-home #mini-desktop::before{ font-size:1.6cqw; color:#3b172e; text-shadow:none; }
+#screen-home .note-settings{ left:37.85cqw; }
+#screen-home .note-website{ left:53.6cqw; }
+#screen-home #mini-desktop:hover,#screen-home .note-btn:hover{ transform:translateY(-.3cqw) rotate(-2deg); filter:none; }
+/* Full-bleed: the scene fills the viewport and the art runs past every edge, so it never clips.
+   --W = stage width; u = one art unit (W/3138). Monitor centre held at 50% x 45%. */
+#screen-home,#screen-home .desk-scene{ background:#fffced!important; }
+#screen-home .desk-scene{ width:100vw!important; height:100dvh!important;
+  --W:max(320cqw,460cqh); --u:calc(var(--W) / 3138); --L:calc(50cqw - var(--W) * .5257); --T:calc(45cqh - var(--W) * .3285); }
+#screen-home .room-stage{ left:var(--L); top:var(--T); width:var(--W); }
+#screen-home .room-stage::after{ content:''; position:absolute; left:-50%; right:-50%; top:95%; height:300%; background:#eaac60; z-index:0; }
+#screen-home #mini-desktop,#screen-home .note-btn{ top:calc(var(--T) + 1112 * var(--u)); width:calc(66 * var(--u)); height:calc(67 * var(--u)); font-size:calc(11 * var(--u)); }
+#screen-home .note-settings{ left:calc(var(--L) + 1530 * var(--u)); }
+#screen-home #mini-desktop{ left:calc(var(--L) + 1616 * var(--u)); }
+#screen-home .note-website{ left:calc(var(--L) + 1703 * var(--u)); }
+#screen-home #mini-desktop::before{ font-size:calc(14 * var(--u)); }
+/* Plant sits behind the monitor; each note is its own button and darkens on hover. */
+#screen-home .room-plant{ z-index:3; }
+#screen-home #mini-desktop,#screen-home .note-btn{ top:calc(var(--T) + 1111 * var(--u)); width:calc(68.25 * var(--u)); height:calc(71.68 * var(--u));
+  background:center/100% 100% no-repeat!important; transition:filter .15s; }
+#screen-home .note-settings{ left:calc(var(--L) + 1530 * var(--u)); background-image:url('../assets/landing/room/note-purple.svg')!important; }
+#screen-home #mini-desktop{ left:calc(var(--L) + 1614 * var(--u)); background-image:url('../assets/landing/room/note-yellow.svg')!important; }
+#screen-home .note-website{ left:calc(var(--L) + 1702 * var(--u)); background-image:url('../assets/landing/room/note-pink.svg')!important; }
+#screen-home #mini-desktop:hover,#screen-home .note-btn:hover,#screen-home #mini-desktop:focus-visible,#screen-home .note-btn:focus-visible{ transform:none; filter:brightness(.88); }
+/* Outside the window: soft sky with a hint of hills, so the panes don't read as wall. */
+#screen-home .room-window{ background:
+  linear-gradient(90deg,transparent 46%,#fedaaa 46% 54%,transparent 54%),
+  linear-gradient(transparent 30%,#fedaaa 30% 34%,transparent 34% 62%,#fedaaa 62% 66%,transparent 66%),
+  radial-gradient(120% 40% at 30% 100%,#bfe8a0 60%,transparent 61%),
+  linear-gradient(#8fd0f5,#cdeefc 70%); }
+/* Depth: warm, soft shadows (light from the window, upper right) instead of grey drop shadows. */
+#screen-home{ --sh:rgba(150,86,40,.22); --sh-soft:rgba(150,86,40,.12); }
+#screen-home .room-cabinet{ filter:drop-shadow(calc(-8 * var(--u)) calc(6 * var(--u)) calc(14 * var(--u)) var(--sh)); }
+#screen-home .room-curtains{ filter:drop-shadow(calc(-6 * var(--u)) calc(8 * var(--u)) calc(12 * var(--u)) rgba(200,60,110,.18)); }
+#screen-home .room-window{ box-shadow:inset 0 0 0 .3cqw #dd9554, inset 0 calc(10 * var(--u)) calc(18 * var(--u)) rgba(80,120,160,.18); }
+#screen-home .room-desk{ filter:drop-shadow(0 calc(10 * var(--u)) calc(16 * var(--u)) var(--sh)); }
+#screen-home .room-monitor,#screen-home .room-tower{ filter:drop-shadow(calc(-6 * var(--u)) calc(8 * var(--u)) calc(10 * var(--u)) var(--sh)); }
+#screen-home .room-lamp,#screen-home .room-plant{ filter:drop-shadow(calc(-5 * var(--u)) calc(6 * var(--u)) calc(8 * var(--u)) var(--sh)); }
+#screen-home .room-mousepad{ filter:drop-shadow(0 calc(3 * var(--u)) calc(4 * var(--u)) var(--sh-soft)); }
+#screen-home .room-keyboard,#screen-home .room-mouse{ filter:drop-shadow(calc(-2 * var(--u)) calc(4 * var(--u)) calc(4 * var(--u)) var(--sh)); }
+/* Inner shade on the monitor glass so the wallpaper sits inside the bezel. */
+#screen-home .room-screen{ filter:drop-shadow(0 0 calc(2 * var(--u)) rgba(30,80,90,.25)); }
+#screen-home #mini-desktop,#screen-home .note-btn{ filter:drop-shadow(calc(-2 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u)) rgba(60,40,80,.25)); }
+#screen-home #mini-desktop:hover,#screen-home .note-btn:hover,#screen-home #mini-desktop:focus-visible,#screen-home .note-btn:focus-visible{
+  filter:brightness(.88) drop-shadow(calc(-2 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u)) rgba(60,40,80,.25)); }

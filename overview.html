@@ -124,8 +124,8 @@
   @keyframes pcWaveOut{to{opacity:0}}
   .pc-bubble{position:absolute;bottom:-40px;border-radius:50%;background:#fff;opacity:.55;animation:pcBubble var(--t,2s) ease-in var(--d,0s) forwards;}
   @keyframes pcBubble{to{transform:translate(var(--x,0),-120vh) scale(.4);opacity:0}}
-  .play-curtain img{position:relative;width:min(60vw,720px);height:auto;opacity:0;transform:scale(.2);}
-  .play-curtain.logo img{animation:pcLogo .7s cubic-bezier(.34,1.56,.64,1) forwards;}
+  .play-curtain video{position:relative;width:min(60vw,720px);height:auto;opacity:0;transform:scale(.2);}
+  .play-curtain.logo video{animation:pcLogo .7s cubic-bezier(.34,1.56,.64,1) forwards;}
   @keyframes pcLogo{0%{opacity:0;transform:scale(.2) rotate(-8deg)}55%{opacity:1;transform:scale(1.12,.9) rotate(2deg)}80%{transform:scale(.96,1.05)}100%{opacity:1;transform:none}}
   /* Piko's eyes do a happy grow-and-shrink "boing" and stay. */
   /* Piko grows, then shrinks away; the PLAY! circle shrinks away just after. */
@@ -226,7 +226,7 @@
   <div class="shot" style="left:963px;top:340px;transform:rotate(-4.43deg);box-shadow:0 10px 0 0 #173f58"><img src="assets/landing/v2/shot-front.png" alt="A peek at the EyeCon studio desk" style="inset:0;width:100%;height:100%;object-fit:cover"></div>
   <a class="play-btn" data-x="330" data-play href="play">PLAY EYECON!</a>
 </main>
-<div class="play-curtain" id="play-curtain" aria-hidden="true"><img alt="" data-src="assets/landing/eyecon-logo-anim.webp"><p class="pc-tip">For the best experience play in fullscreen (press <kbd>F11</kbd>)<br>use keyboard <svg class="pc-ico" viewBox="0 0 48 30" aria-hidden="true"><rect x="2" y="2" width="44" height="26" rx="6" fill="#fff3d6" stroke="#4d0d74" stroke-width="3"/><g fill="#9b7bdc"><rect x="8" y="8" width="5" height="4" rx="1.5"/><rect x="16" y="8" width="5" height="4" rx="1.5"/><rect x="24" y="8" width="5" height="4" rx="1.5"/><rect x="32" y="8" width="8" height="4" rx="1.5"/><rect x="8" y="15" width="8" height="4" rx="1.5"/><rect x="19" y="15" width="5" height="4" rx="1.5"/><rect x="27" y="15" width="5" height="4" rx="1.5"/><rect x="35" y="15" width="5" height="4" rx="1.5"/><rect x="14" y="21" width="20" height="3.5" rx="1.5"/></g></svg> and mouse <svg class="pc-ico" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="2" width="22" height="30" rx="11" fill="#fff3d6" stroke="#4d0d74" stroke-width="3"/><path d="M13 3v11M3 14h20" stroke="#4d0d74" stroke-width="2.5"/><rect x="11" y="6" width="4" height="6" rx="2" fill="#9b7bdc"/></svg></p></div>
+<div class="play-curtain" id="play-curtain" aria-hidden="true"><video src="assets/eyecon-logo-anim.webm" playsinline preload="auto" aria-hidden="true"></video><p class="pc-tip">For the best experience play in fullscreen (press <kbd>F11</kbd>)<br>use keyboard <svg class="pc-ico" viewBox="0 0 48 30" aria-hidden="true"><rect x="2" y="2" width="44" height="26" rx="6" fill="#fff3d6" stroke="#4d0d74" stroke-width="3"/><g fill="#9b7bdc"><rect x="8" y="8" width="5" height="4" rx="1.5"/><rect x="16" y="8" width="5" height="4" rx="1.5"/><rect x="24" y="8" width="5" height="4" rx="1.5"/><rect x="32" y="8" width="8" height="4" rx="1.5"/><rect x="8" y="15" width="8" height="4" rx="1.5"/><rect x="19" y="15" width="5" height="4" rx="1.5"/><rect x="27" y="15" width="5" height="4" rx="1.5"/><rect x="35" y="15" width="5" height="4" rx="1.5"/><rect x="14" y="21" width="20" height="3.5" rx="1.5"/></g></svg> and mouse <svg class="pc-ico" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="2" width="22" height="30" rx="11" fill="#fff3d6" stroke="#4d0d74" stroke-width="3"/><path d="M13 3v11M3 14h20" stroke="#4d0d74" stroke-width="2.5"/><rect x="11" y="6" width="4" height="6" rx="2" fill="#9b7bdc"/></svg></p></div>
 <script>
   // Lay the 1920px design out at window width.
   const stage = document.getElementById('stage');
@@ -345,9 +345,8 @@
   })();
   // Play: pop the button, flood the screen with the navbar colour, play the logo, then go.
   (() => {
-    const curtain = document.getElementById('play-curtain'), logo = curtain.querySelector('img');
-    const LOGO_MS = 5200; // length of eyecon-logo-anim
-    addEventListener('load', () => { const pre = new Image(); pre.src = logo.dataset.src; }); // warm it up
+    const curtain = document.getElementById('play-curtain'), logo = curtain.querySelector('video');
+    const LOGO_MS = 6000; // length of eyecon-logo-anim
     document.querySelectorAll('[data-play]').forEach(a => a.addEventListener('click', e => {
       if(e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // new-tab clicks stay normal
       e.preventDefault();
@@ -377,7 +376,7 @@
       setTimeout(() => curtain.classList.add('tip'), 1850);
       setTimeout(() => {
         curtain.classList.remove('tip');
-        logo.src = logo.dataset.src + '?t=' + Date.now(); // restart from the first frame
+        logo.currentTime = 0; logo.play().catch(() => {}); // restart from the first frame
         curtain.classList.add('logo');
       }, 1850 + TIP_MS);
       setTimeout(go, 1850 + TIP_MS + LOGO_MS);

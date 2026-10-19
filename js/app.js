@@ -1968,7 +1968,14 @@
     }
     const summary=document.getElementById('workday-summary');
     // Just the day wrap-up: no totals or per-client list.
-    summary.innerHTML=`<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2>`;
+    // After the last client (Level 7): send the player to the post-test.
+    const allDone = profile.completed.includes('oras-signin');
+    summary.innerHTML = allDone
+      ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">You finished every client!</h2>
+         <p>One last thing: take the post-test so we can see how much you learned.</p>
+         <a class="btn btn-accept" id="post-test-link" href="quiz.html?mode=post">Take the post-test</a>`
+      : `<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2>`;
+    document.getElementById('next-workday').textContent = allDone ? 'Keep playing' : 'Next day';
     window.EC_MODAL.show(modal);document.getElementById('next-workday').focus();
   }
 
@@ -2191,9 +2198,7 @@
       ${inEditor ? '' : editorRows}
       ${window.EC_DB?.online ? `<li class="profile-setting">
         <span>Account</span>
-        <div class="profile-control profile-control-wide">${window.EC_DB.isGuest
-          ? '<button type="button" class="btn btn-accept btn-sm qs-reset" id="qs-google">Save with Google</button>'
-          : `<small>${escapeHtml(window.EC_DB.email || 'Google account')}</small>`}</div>
+        <div class="profile-control profile-control-wide"><small>${escapeHtml(window.EC_DB.isGuest ? (profile.displayName || 'Guest') : (window.EC_DB.email || 'Google account'))}</small></div>
       </li>` : ''}
       <li class="profile-setting">
         <span id="qs-admin-label">Admin tools</span>
@@ -2455,6 +2460,7 @@
     document.getElementById('mini-desktop').addEventListener('keydown', e=>{
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); miniDesktopBackgroundAction(); }
     });
+    document.getElementById('note-settings').addEventListener('click', ()=>openMonitorAppPopup('settings'));
     document.getElementById('monitor-app-popup-close').addEventListener('click', ()=>closeMonitorAppPopup());
     initPikoGuideChain();
     initPikoComposeGuide();

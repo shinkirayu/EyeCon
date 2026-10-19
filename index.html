@@ -55,6 +55,22 @@
       <button type="button" data-dev-level="1">1</button><button type="button" data-dev-level="2">2</button><button type="button" data-dev-level="3">3</button><button type="button" data-dev-level="4">4</button><button type="button" data-dev-level="5">5</button><button type="button" data-dev-level="6">6</button><button type="button" data-dev-level="7">7</button>
     </nav>
     <div class="desk-scene" id="desk-scene">
+      <div class="room-scene" aria-hidden="true"><div class="room-stage">
+        <div class="room-window"></div>
+        <img class="room-wall" src="assets/landing/room/wall.svg" alt="" style="left:0.000%;top:0.000%;width:99.980%">
+        <img class="room-cabinet" src="assets/landing/room/cabinet.svg" alt="" style="left:9.305%;top:21.380%;width:25.362%">
+        <img class="room-curtain-rod" src="assets/landing/room/curtain-rod.svg" alt="" style="left:60.739%;top:6.153%;width:30.292%">
+        <img class="room-curtains" src="assets/landing/room/curtains.svg" alt="" style="left:62.014%;top:5.656%;width:29.307%">
+        <img class="room-desk" src="assets/landing/room/desk.svg" alt="" style="left:28.967%;top:72.902%;width:47.167%">
+        <img class="room-tower" src="assets/landing/room/tower.svg" alt="" style="left:36.488%;top:57.054%;width:6.715%">
+        <img class="room-monitor" src="assets/landing/room/monitor.svg" alt="" style="left:44.901%;top:53.139%;width:15.324%">
+        <img class="room-screen" src="assets/landing/room/screen.svg" alt="" style="left:45.645%;top:53.689%;width:14.047%">
+        <img class="room-mousepad" src="assets/landing/room/mousepad.svg" alt="" style="left:41.746%;top:74.891%;width:22.945%">
+        <img class="room-keyboard" src="assets/landing/room/keyboard.svg" alt="" style="left:44.009%;top:74.891%;width:11.687%">
+        <img class="room-mouse" src="assets/landing/room/mouse.svg" alt="" style="left:57.138%;top:75.575%;width:2.177%">
+        <img class="room-plant" src="assets/landing/room/plant.svg" alt="" style="left:59.751%;top:64.823%;width:6.326%">
+        <img class="room-lamp" src="assets/landing/room/lamp.svg" alt="" style="left:60.644%;top:57.303%;width:7.565%">
+      </div></div>
       <div class="reference-brand" aria-hidden="true">eyecon</div>
       <div class="home-street" aria-hidden="true">
         <div class="street-cloud cloud-one"></div><div class="street-cloud cloud-two"></div>
@@ -127,6 +143,9 @@
       <!-- Floating "app window" — pops up above/over the monitor when a mini
            icon is clicked, showing the real, live app content (reparented in
            from its normal screen and back out again on close). -->
+      <button type="button" class="note-btn note-settings" id="note-settings">settings</button>
+      <a class="note-btn note-website" href="overview.html">back to website</a>
+
       <div class="monitor-app-popup hidden" id="monitor-app-popup" role="dialog" aria-modal="true" aria-labelledby="monitor-app-popup-title">
         <div class="monitor-app-popup-titlebar">
           <span class="monitor-app-popup-icon" id="monitor-app-popup-icon" aria-hidden="true">📬</span>
@@ -184,6 +203,10 @@
         <button class="desktop-icon" id="icon-browser" aria-label="Open Browser app">
           <span class="desktop-icon-glyph" id="glyph-browser" aria-hidden="true"></span>
           <span class="desktop-icon-label">Browser</span>
+        </button>
+        <button class="desktop-icon" id="icon-guide" aria-label="Open the UI Survival Guide">
+          <span class="desktop-icon-glyph" id="glyph-guide" aria-hidden="true"></span>
+          <span class="desktop-icon-label">Guidebook</span>
         </button>
         <button class="desktop-icon" id="icon-stats" aria-label="Open Stats app">
           <span class="desktop-icon-glyph" id="glyph-stats">📊</span>
@@ -632,5 +655,6 @@
 <script src="js/maker.js"></script>
 <script src="js/client-sites.js"></script>
 <script src="js/app.js"></script>
+<script src="js/guidebook.js"></script>
 </body>
 </html>

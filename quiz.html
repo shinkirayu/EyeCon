@@ -142,10 +142,11 @@
       <div class="actions"><a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">${mode === 'pre' ? 'Play EyeCon!' : 'Play again'}</a></div>`;
     app.querySelector('.btn').focus();
   }
-  // ---------- Study gate: consent, verified sign-in (Google or email code), short profile ----------
+  // ---------- Study gate: consent, then a username and short profile (Google/email sign-in hidden for now) ----------
   const db = window.EC_DB, RESUME = 'eyecon_quiz_resume';
   const top = label => `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${label}</span></div>`;
-  const verified = () => db && db.online && !db.isGuest;
+  // Each browser gets an anonymous account; the pre-test and post-test pair through it and the username.
+  const verified = () => db && db.online && !!db.userId;
   async function respondent(){
     if(!verified()) return null;
     const { data } = await db.client.from('respondents').select('*').eq('id', db.userId).maybeSingle();
@@ -161,58 +162,24 @@
       <div class="consent" tabindex="0" aria-label="Consent information">
         <p><b>EyeCon</b> is a thesis project at De La Salle Lipa about learning UI design through a game.</p>
         <p>If you take part, we will collect:</p>
-        <ul><li>your email (to match your pre-test and post-test)</li><li>your name, section and design experience</li><li>your quiz answers and how you play the game</li></ul>
-        <p>Your answers are used only for this research. Your name and email are never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
+        <ul><li>a username you choose (to match your pre-test and post-test)</li><li>your section and design experience</li><li>your quiz answers and how you play the game</li></ul>
+        <p>Your answers are used only for this research. Your username is never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
         <p class="note">This follows the Data Privacy Act of 2012 (RA 10173). Questions? Ask the researchers.</p>
       </div>
       <label class="check"><input type="checkbox" id="agree"> I have read this and I agree to take part.</label>
       <div class="actions"><a class="ghost" href="${HOME}">Not now</a><button class="btn" id="go" disabled>Continue</button></div>`;
     const agree = document.getElementById('agree'), go = document.getElementById('go');
     agree.onchange = () => { go.disabled = !agree.checked; };
-    go.onclick = () => { sessionStorage.setItem('eyecon_consent', new Date().toISOString()); signIn(); };
+    go.onclick = () => { sessionStorage.setItem('eyecon_consent', new Date().toISOString()); verified() ? profile() : signIn(); };
     agree.focus();
   }
-  function signIn(){
-    if(!db || !db.online){ app.innerHTML = `${top('Sign in')}<h1>We can’t reach the server</h1><p>Check your internet connection, then try again.</p><div class="actions"><span></span><button class="btn" onclick="location.reload()">Try again</button></div>`; return; }
-    app.innerHTML = `${top('Sign in')}<h1>Who’s taking the quiz?</h1>
-      <p>Sign in so your pre-test and post-test can be matched, even on another device.</p>
-      <button class="google" id="google"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>Continue with Google</button>
-      <div class="or">or use your email</div>
-      <div class="field"><label for="email">Email</label><div class="row"><input id="email" type="email" autocomplete="email" placeholder="you@example.com"><button class="btn" id="send">Send code</button></div></div>
-      <div class="field" id="codeBox" hidden><label for="code">6-digit code from your email</label><div class="row"><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"><button class="btn" id="verify">Verify</button></div></div>
-      <p class="err" id="err" role="alert"></p>`;
-    const errEl = document.getElementById('err'), err = m => { errEl.textContent = m || ''; };
-    document.getElementById('google').onclick = async () => {
-      sessionStorage.setItem(RESUME, mode);
-      try{ await db.signInWithGoogle(); }catch(e){ err('Google sign-in failed: ' + (e.message || e)); }
-    };
-    let viaChange = false;
-    document.getElementById('send').onclick = async () => {
-      const email = document.getElementById('email').value.trim();
-      if(!/^\S+@\S+\.\S+$/.test(email)) return err('Please type a valid email.');
-      err(''); const b = document.getElementById('send'); b.disabled = true; b.textContent = 'Sending…';
-      // A guest adds the email to its own account (keeps game progress); if that email
-      // already has an account, sign in to that one instead.
-      let res = db.isGuest ? await db.client.auth.updateUser({ email }) : { error:{ message:'not a guest' } };
-      viaChange = !res.error;
-      if(res.error) res = await db.client.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
-      b.disabled = false; b.textContent = 'Send code';
-      if(res.error) return err(res.error.message);
-      document.getElementById('codeBox').hidden = false; document.getElementById('code').focus();
-      errEl.innerHTML = '<span class="ok">Code sent! Check your inbox (and spam).</span>';
-    };
-    document.getElementById('verify').onclick = async () => {
-      const email = document.getElementById('email').value.trim(), token = document.getElementById('code').value.trim();
-      if(!/^\d{6}$/.test(token)) return err('The code has 6 digits.');
-      const { error } = await db.client.auth.verifyOtp({ email, token, type: viaChange ? 'email_change' : 'email' });
-      if(error) return err(error.message);
-      location.reload(); // pick up the verified session
-    };
+  function signIn(){ // no connection: nothing to save answers to
+    app.innerHTML = `${top('Sign in')}<h1>We can’t reach the server</h1><p>Check your internet connection, then try again.</p><div class="actions"><span></span><button class="btn" onclick="location.reload()">Try again</button></div>`;
   }
   async function profile(){
     if(await respondent()) return intro();
-    app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Signed in as ${esc(db.email || '')}</p>
-      <div class="field"><label for="name">Name</label><input id="name" maxlength="40" value="${esc(db.fullName || '')}" autocomplete="name"></div>
+    app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Take both tests on this same device and browser, with the same username.</p>
+      <div class="field"><label for="name">Username</label><input id="name" maxlength="40" autocomplete="username" placeholder="e.g. juan.delacruz"></div>
       <div class="field"><label for="section">Year level and section</label><input id="section" maxlength="40" placeholder="e.g. Grade 12 - STEM A"></div>
       <div class="field"><label for="prior">Have you studied UI design before?</label><select id="prior"><option value="">Choose one</option><option value="yes">Yes</option><option value="a little">A little</option><option value="no">No</option></select></div>
       <p class="err" id="err" role="alert"></p>

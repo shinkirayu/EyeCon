@@ -377,7 +377,7 @@ test('submission restores typing and attaching a reply before recording rewards'
   await page.locator('#attach-option-edited').click();
   await expect(send).toBeEnabled();
   await send.click();
-  await expect(page.locator('#taskbar-clock')).toContainText('11:00');
+  await expect(page.locator('#taskbar-clock')).toContainText('08:00'); // a revision doesn't use up the day
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
   await expect(page.locator('#mail-list')).not.toContainText('Awaiting their reply');
   await expect(page.getByRole('dialog', { name: 'Compose reply' })).toBeHidden();
@@ -500,10 +500,12 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
 test('selection handles match the artwork bounds and retain their size when zooming',async({page})=>{
   await page.setViewportSize({width:1366,height:768});
   await page.goto('/');await beginFirstDay(page);
-  // Any resizable element (the color and text levels are locked down, so use BEAR ORAS).
+  // No level needs resizing any more (each element only allows its task's tool), so let one move element resize.
+  await page.evaluate(()=>{ const L=(EC_LEVELS.LEVELS||EC_LEVELS).find(l=>l.id==='oras-signin'); L.elements.find(e=>e.id==='role1').allow=['move','resize']; });
   await openClient(page,'BEAR ORAS');
   await page.locator('#editor-canvas .el').first().waitFor();
-  const id=await page.evaluate(()=>{ for(const el of EC_EDITOR.getElements()){ if(el.locked) continue; EC_EDITOR.selectElement(el.id); if(document.querySelector(`#editor-canvas .el[data-id="${el.id}"] .nw`)) return el.id; } });
+  const id=await page.evaluate(()=>{ EC_EDITOR.selectElement('role1'); return document.querySelector('#editor-canvas .el[data-id="role1"] .nw') ? 'role1' : null; });
+  expect(id).toBeTruthy();
   const button=page.locator(`#editor-canvas .el[data-id="${id}"]`);
   const measure=()=>button.evaluate(el=>{
     const b=el.getBoundingClientRect(),n=el.querySelector('.nw').getBoundingClientRect(),s=el.querySelector('.se').getBoundingClientRect();

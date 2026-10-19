@@ -144,15 +144,12 @@
   }
   function projectOf(level){ return (window.EC_PROJECTS || []).find(p=>p.id===level.project) || { needsGood:0, pay:40 }; }
   function projectUnlocked(profile, project){ return goodFeedbackCount(profile) >= project.needsGood; }
-  // Three submissions per workday, including revisions.
-  // Day 1 is the tutorial: no cap while it runs, and the day ends once its
-  // three jobs are done. From day 2 the usual three submissions a day.
+  // A day is a number of finished (approved) jobs; revisions don't use up the day.
+  // Day 1: levels 1-3. Day 2: levels 4-6 (Antoks, Cones, Kolehiyo). Then BEAR ORAS.
   function dailyTaskLimit(profile){
     if(!TUTORIAL_ONLY) return 3;
     profile = profile || load();
-    if(workday(profile).day === 2) return 3; // Antoks, Cones, Kolehiyo
-    if(workday(profile).day > 2) return 1;   // BEAR ORAS
-    return tutorialDone(profile) ? 0 : Infinity;
+    return workday(profile).day > 2 ? 1 : 3;
   }
   function tutorialDone(profile){ return window.EC_LEVELS.filter(l => l.levelNumber <= 3).every(l => profile.completed.includes(l.id)); }
   function workday(profile){
@@ -161,8 +158,7 @@
   }
   function beginWorkSubmission(profile){
     const day=workday(profile);
-    if(day.submissions>=dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return false;
-    day.submissions++;save(profile);return true;
+    return !(day.submissions>=dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply);
   }
   function nextWorkday(profile){
     const day=workday(profile);
@@ -193,6 +189,7 @@
     const firstClear = missionComplete && !profile.completed.includes(level.id);
     if(firstClear) profile.completed.push(level.id);
     if(missionComplete) profile.totalXp += result.xpAwarded;
+    if(missionComplete) workday(profile).submissions++; // only approved jobs use up the day
 
     // Exactly what the email promised: the base pay, plus a bonus per extra
     // star, plus the once-a-day streak bonus.

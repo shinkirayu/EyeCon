@@ -475,9 +475,9 @@ Maraming salamat,
 
 This is the BEAR ORAS internal systems team. Our new staff sign-in page went live this week, and the help desk has been flooded with calls.
 
-The sign-in card sits off to one side and nothing inside it lines up. The field labels are stuck inside the boxes, the boxes are all different sizes, and the "?" icons are scattered. Most of the text is tiny and pale, and the Sign in button looks disabled.
+The sign-in card sits off to one side and nothing inside it lines up. The field labels are stuck inside the boxes, and the boxes don't match. Most of the text is so small and pale that staff squint at it, and the Sign in button looks switched off.
 
-Please line everything up on the 8-point grid, make all the text readable, and make the card fit its contents neatly.
+You've helped other clients with each of these. Could you fix all of it on this one page?
 
 Thank you,
 BEAR ORAS Systems Team`,
@@ -485,86 +485,65 @@ BEAR ORAS Systems Team`,
       attachmentName:'oras_signin.png',
       canvas:{ w:1920, h:1080, bg:'#F4F6FB' },
       rubric:{ gridColumns:12, gridGutter:24, spacingUnit:8, weights:{ alignment:30 } },
+      // Final level: one page, all three skills. The form labels are broken three ways at once
+      // (inside the boxes, pale, tiny), so fixing them means moving, recolouring and resizing.
+      sizeLadder:true,
       elements:[
         shape('bg','background',0,0,1920,1080,'#F4F6FB',{z:0}),
         shape('header','card',0,0,1920,104,'#0A31AC',{z:1}),
-        img('logo','assets/levels/oras/logo.png',48,16,200,80,{bgSize:'contain',locked:false,allow:['move'],z:2}),
-        txt('headSign','label','Sign in',1632,40,136,32,13,'#FFFFFF',{fontFamily:'Inter',fontWeight:'500',z:2}),
+        img('logo','assets/levels/oras/logo.png',48,16,200,80,{bgSize:'contain',z:2}),
+        txt('headSign','label','Sign in',1632,40,136,32,16,'#FFFFFF',{fontFamily:'Inter',fontWeight:'500',locked:true,z:2}),
         img('userIcon','assets/levels/oras/user.svg',1776,24,56,56,{z:2}),
-        // The card: off-centre and too short; its contents are where a centred card wants them.
-        shape('card','card',608,136,592,824,'#FAFBFE',{radius:8,border:{width:2,style:'solid',color:'#D3D8E2'},locked:false,allow:['move','resize'],z:1}),
-        txt('kicker','label','For BEAR Employees Use only',712,184,480,32,13,'#1D2030',{fontFamily:'Inter',fontWeight:'600',z:2}),
-        txt('title','heading','Sign in',728,224,480,48,13,'#1D2030',{fontFamily:'Inter',fontWeight:'700',z:2}),
-        txt('roleLabel','label','Sign in as (required)',712,296,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',z:2}),
-        ...[['Head',360,712,808],['Registration Officer',416,720,984],['National Office',472,704,904]].flatMap(([t,y,x,hx],i)=>[
+        // The card is off-centre.
+        shape('card','card',608,136,592,824,'#FAFBFE',{radius:8,border:{width:2,style:'solid',color:'#D3D8E2'},locked:false,allow:['move'],z:1}),
+        txt('kicker','label','For BEAR Employees Use only',712,184,480,32,12,'#1D2030',{fontFamily:'Inter',fontWeight:'600',allow:['move','font'],z:2}),
+        txt('title','heading','Sign in',728,224,480,48,14,'#9DB0E6',{fontFamily:'Inter',fontWeight:'700',allow:['move','font','color'],z:2}),
+        txt('roleLabel','label','Sign in as (required)',712,296,480,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'500',allow:['move','font'],z:2}),
+        ...[['Head',360,712],['Registration Officer',416,720],['National Office',472,704]].flatMap(([t,y,x],i)=>[
           img('radio'+i,'assets/levels/oras/radio.svg',x,y,32,32,{locked:false,allow:['move'],z:2}),
-          txt('role'+i,'label',t,x+48,y,320,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'400',z:2}),
-          img('help'+i,'assets/levels/oras/help.svg',hx,y,32,32,{locked:false,allow:['move'],z:2}),
+          txt('role'+i,'label',t,x+48,y,320,32,11,'#1D2030',{fontFamily:'Inter',fontWeight:'400',allow:['move','font'],z:2}),
         ]),
-        // Field labels are stuck inside their boxes; boxes and button differ in size.
-        txt('emailLabel','label','Email (required)',728,592,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',z:3}),
+        // Labels stuck inside the boxes, pale and tiny; boxes and button of different sizes.
+        txt('emailLabel','label','Email (required)',728,592,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',allow:['move','font','color'],z:3}),
         shape('email','card',712,576,488,48,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},locked:false,allow:['move','resize'],z:2}),
-        txt('passLabel','label','Password (required)',728,712,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',z:3}),
+        txt('passLabel','label','Password (required)',728,712,480,32,11,'#A9ADBB',{fontFamily:'Inter',fontWeight:'500',allow:['move','font','color'],z:3}),
         shape('password','card',720,696,456,56,'#FFFFFF',{radius:8,border:{width:2,style:'solid',color:'#1D2030'},locked:false,allow:['move','resize'],z:2}),
         img('eye','assets/levels/oras/eye-off.svg',1136,712,32,32,{locked:false,allow:['move'],z:3}),
-        txt('forgot','small','Forgot Password?',720,824,224,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',z:2}),
-        txt('verify','small','Verify your email address',944,840,248,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
-        btn('signin','Sign in',704,880,472,48,13,'#FFFFFF','#C5CCF6',{fontFamily:'Inter',fontWeight:'600',radius:8,z:2}),
+        txt('forgot','small','Forgot Password?',720,824,224,32,11,'#1A1AE0',{fontFamily:'Inter',fontWeight:'400',allow:['move','font'],z:2}),
+        // White text on a pale button looks disabled.
+        btn('signin','Sign in',704,880,472,48,12,'#FFFFFF','#C5CCF6',{fontFamily:'Inter',fontWeight:'600',radius:8,locked:false,allow:['move','resize','font','color'],z:2}),
         shape('footer','card',0,992,1920,88,'#E4EAF4',{z:1}),
-        txt('version','small','Internal module v.0.6.8.0305',72,1016,520,40,12,'#B8BCC8',{fontFamily:'Inter',fontWeight:'400',z:2}),
-        txt('copyright','small','© 2026 BEAR ORAS. All rights reserved.',1192,1016,624,40,12,'#B8BCC8',{fontFamily:'Inter',fontWeight:'400',align:'right',z:2}),
+        txt('version','small','Internal module v.0.6.8.0305',72,1016,520,40,16,'#4A5068',{fontFamily:'Inter',fontWeight:'400',locked:true,z:2}),
+        txt('copyright','small','© 2026 BEAR ORAS. All rights reserved.',1192,1016,624,40,16,'#4A5068',{fontFamily:'Inter',fontWeight:'400',align:'right',locked:true,z:2}),
       ],
       goals:[
+        // One problem per element; the correct neighbours are locked, as references.
         // Alignment
-        goal('Drag the header logo and the footer text to the same left margin.', {sameX:['logo','version']},
-          'Matching page margins frame the whole screen.', 'Give the logo and "Internal module" the same X.'),
-        goal('Give the footer text the same right margin as the header icon.', {sameRight:['userIcon','copyright']},
-          'Both corners line up, so the page feels finished.', "Line up the copyright's right edge with the person icon's right edge."),
-        goal('Drag the white card to the center of the page.', {centeredX:['card']},
-          'A centred card is the obvious place to look on a sign-in page.', 'Move the card until its centre matches the page centre (960).'),
-        goal('Line up everything inside the card on the same left edge.', {sameX:['kicker','title','roleLabel','radio0','radio1','radio2','emailLabel','email','passLabel','password','forgot','signin']},
-          'One shared left edge turns a scattered form into one tidy column.', 'Give every item from "For BEAR Employees" down to the Sign in button the same X.'),
-        goal('Move the "?" icons into one right-hand column.', {sameX:['help0','help1','help2']},
-          'Help icons in a column read as a set and are easy to find.', 'Give all three "?" icons the same X, on the right of the card.'),
-        goal('Move "Email (required)" and "Password (required)" out of the boxes, above them.', {above:['emailLabel','email','passLabel','password']},
-          'Labels inside a box look like typed text and disappear once people type.', 'Place each label just above its box.'),
-        goal('Make both boxes and the Sign in button the same size.', {sameSize:['email','password','signin']},
-          'Fields and button of one size read as one form.', 'Give all three the same width and height.'),
-        goal('Make both boxes and the button at least 56px tall.', {minH:56, ids:['email','password','signin']},
-          'Taller fields are easier to click and tap.', 'Set their height to 56px or more.'),
-        goal('Put "Forgot Password?" and "Verify your email address" on one row.', {sameY:['forgot','verify']},
-          'Two links side by side on one line look intentional.', 'Give both links the same Y.'),
-        bonus('Line up "Verify your email address" with the right edge of the boxes.', {sameRight:['verify','email']},
-          'The link closes off the form on the same edge as the boxes.', "Match the link's right edge to the boxes' right edge."),
-        goal('Make the card wrap its contents with equal padding on all four sides.', {wraps:['card','kicker','title','roleLabel','radio0','radio1','radio2','role0','role1','role2','help0','help1','help2','emailLabel','email','passLabel','password','eye','forgot','verify','signin']},
-          'Equal padding makes the card feel balanced, with no empty space at the bottom.', 'Resize the card so the space around its contents is the same on every side.'),
-        // Contrast
-        goal('Darken "Email (required)" and "Password (required)".', {contrast:'AA', ids:['emailLabel','passLabel']},
-          'Pale grey labels are hard to read for everyone, and impossible for some.', 'Darken both labels to the same colour.'),
-        goal('Make the Sign in button text easy to read.', {contrast:'AA', ids:['signin']},
-          'A button that looks disabled stops people from signing in.', 'Pick a text colour that passes 4.5:1 on the button.'),
-        bonus('Darken the small grey text at the bottom of the page.', {contrast:'AA', ids:['version','copyright']},
-          'Even fine print should be readable.', 'Darken both footer lines.'),
-        // Typography
-        goal('Make the "Sign in" title the largest text in the card (at least 32px).', {minFont:32, ids:['title']},
-          'A clear heading tells staff where they are.', 'Raise the title to 32px or more.'),
-        goal('Make the "Sign in" title bigger than the line above it.', {bigger:['title','kicker']},
-          'The heading leads; the small note supports it.', 'Keep the title larger than "For BEAR Employees Use only".'),
-        goal('Make "For BEAR Employees Use only" exactly 16px.', {minFont:16, ids:['kicker']},
-          'Even the small note needs to be readable.', 'Raise it to 16px.'),
-        goal('Make "Sign in as", "Email" and "Password" labels at least 18px.', {minFont:18, ids:['roleLabel','emailLabel','passLabel']},
-          'Labels people read to fill the form must be comfortable for older eyes.', 'Raise each label to 18px.'),
-        goal('Make "Head", "Registration Officer" and "National Office" at least 18px.', {minFont:18, ids:['role0','role1','role2']},
-          'The role choices are the first decision on the form.', 'Raise each role to 18px.'),
-        goal('Make the Sign in button text at least 20px.', {minFont:20, ids:['signin']},
-          'The main action should be the easiest thing to read.', 'Raise the button text to 20px.'),
-        bonus('Make the header "Sign in" at least 18px.', {minFont:18, ids:['headSign']},
-          'Header links should be easy to spot.', 'Raise it to 18px.'),
-        bonus('Make both links exactly 16px.', {minFont:16, ids:['forgot','verify']},
-          'Small links are easy to miss.', 'Raise both links to 16px.'),
-        bonus('Make the footer text exactly 16px.', {minFont:16, ids:['version','copyright']},
-          'Even fine print should stay readable.', 'Raise both footer lines to 16px.'),
+        Object.assign(goal('Line up "Registration Officer" with the other roles.', {sameX:['role0','role1','role2']},
+          'Choices in one list share one left edge.', ''), { refs:['role0','role2'], hint:'One role doesn’t line up with the other two.' }),
+        Object.assign(goal('Move "Email (required)" out of its box, above it like "Password (required)".', {above:['emailLabel','email']},
+          'A label inside a box looks like typed text and disappears once people type.', ''), { refs:['passLabel'], hint:'This label is sitting inside its box.' }),
+        Object.assign(goal('Put "Verify your email address" on the same row as "Forgot Password?".', {sameY:['forgot','verify']},
+          'Two links side by side on one line look intentional.', ''), { refs:['forgot'], hint:'This link has dropped below the other one.' }),
+        // Contrast hierarchy
+        Object.assign(goal('Give the "Sign in" title the strongest contrast: at least 7:1.', {contrast:'AA', min:7, max:15, ids:['title']},
+          'The title is the most important text in the card, so it should stand out the most, without turning harsh.', ''),
+          { key:'title', hint:'The title should be the strongest text in the card.', tooDark:'The title is readable now, but pure black is harsh on screens. Could you soften it a little?' }),
+        Object.assign(goal('Make "Sign in as (required)" readable but soft, like the other labels: 4.5 to 7:1.', {contrast:'AA', max:7, ids:['roleLabel']},
+          'Labels support the form, so they should be readable but quieter than the title.', ''),
+          { key:'roleLabel', refs:['emailLabel','passLabel'], hint:'This label is paler than the other labels.', tooDark:'That label is now as loud as the title. It should stay a little softer.' }),
+        Object.assign(goal('Make the Sign in button readable.', {contrast:'AA', max:15, ids:['signin']},
+          'A button that looks disabled stops people from signing in.', ''), { key:'button', hint:'This button looks switched off.' }),
+        // Size ladder
+        Object.assign(goal('Make "For BEAR Employees Use only" Labels size (24px).', {minFont:24, ids:['kicker']},
+          'A small note shouldn’t compete with the title.', ''), { refs:['roleLabel','passLabel'], hint:'This note is as big as the button text.' }),
+        Object.assign(goal('Make "National Office" the same size as the other roles (24px).', {minFont:24, ids:['role2']},
+          'Choices in one list should all be easy to read.', ''), { refs:['role0','role1'], hint:'One role is much smaller than the others.' }),
+        Object.assign(goal('Make "Forgot Password?" the same size as the link beside it (24px).', {minFont:24, ids:['forgot']},
+          'Links on one row should match.', ''), { refs:['verify'], hint:'This link is smaller than the one beside it.' }),
       ],
+      // This page's size ladder (shown in the Design Panel).
+      ladderNames:['Title','Buttons and header','Labels and links','Fine print'],
       replyTemplates:{
         great:'The help desk phones finally went quiet. Everyone can find and read everything now, thank you!',
         ok:'Much tidier and easier to read, thanks. A few things still need attention.',

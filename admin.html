@@ -247,6 +247,8 @@
   small.up{color:#1d6a40;font-weight:800}small.down{color:#a3142f;font-weight:800}
   .loading{text-align:center;color:var(--ink-2);padding:40px}
   @media (max-width:600px){.bar-row{grid-template-columns:100px 1fr 48px}header{flex-wrap:wrap}}
+.cmp-row{display:grid;grid-template-columns:6rem 1fr 7rem;align-items:center;gap:.75rem;margin:.5rem 0;font-weight:700;}
+.cmp-bar{height:1.1rem;border-radius:1rem;background:#f1ece4;overflow:hidden;}.cmp-bar i{display:block;height:100%;border-radius:1rem;}
 </style>
 </head>
 <body>
@@ -538,6 +540,29 @@
   let rvFilter = 'submitted', rvSel = null, rvRows = [];
   // ───────────── Study: pre-test / post-test results (Appendix D answer key) ─────────────
   const QUIZ_AREAS = [['Alignment', 1, 7], ['Contrast', 8, 15], ['Typography', 16, 20]];
+  // Pre vs post for people who took both: means, gain, how many improved, paired t and Cohen's d.
+  // (The p-value and the Shapiro-Wilk check go in JASP/SPSS from the CSV.)
+  function compareCard(paired){
+    const n = paired.length;
+    if(!n) return '<section class="card"><h2>Pre-test vs post-test</h2><p class="empty">No one has taken both tests yet.</p></section>';
+    const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+    const pre = paired.map(r => r.pre_score), post = paired.map(r => r.post_score), gain = paired.map(r => r.gain);
+    const total = paired[0].total || 20, mg = mean(gain);
+    const sd = n > 1 ? Math.sqrt(gain.reduce((a, g) => a + (g - mg) ** 2, 0) / (n - 1)) : 0;
+    const t = sd ? mg / (sd / Math.sqrt(n)) : null, d = sd ? mg / sd : null;
+    const size = d == null ? '' : Math.abs(d) < .2 ? 'negligible' : Math.abs(d) < .5 ? 'small' : Math.abs(d) < .8 ? 'medium' : 'large';
+    const up = gain.filter(g => g > 0).length, same = gain.filter(g => g === 0).length, down = n - up - same;
+    const bar = (label, v, c) => `<div class="cmp-row"><span>${label}</span><div class="cmp-bar"><i style="width:${v / total * 100}%;background:${c}"></i></div><b>${v.toFixed(2)} / ${total}</b></div>`;
+    return `<section class="card"><div class="fun-head"><h2>Pre-test vs post-test</h2><span class="sub" style="margin:0">${n} ${n === 1 ? 'person' : 'people'} took both</span></div>
+      ${bar('Pre-test', mean(pre), '#9ed8d0')}${bar('Post-test', mean(post), '#7656b3')}
+      <table class="sorttable"><tbody>
+        <tr><td>Mean gain</td><td><b>${mg > 0 ? '+' : ''}${mg.toFixed(2)}</b> items (SD ${sd.toFixed(2)})</td></tr>
+        <tr><td>Improved / same / lower</td><td>${up} / ${same} / ${down}</td></tr>
+        <tr><td>Paired t</td><td>${t == null ? '– (needs 2+ people with different gains)' : `t(${n - 1}) = ${t.toFixed(2)}`}</td></tr>
+        <tr><td>Cohen’s d</td><td>${d == null ? '–' : `${d.toFixed(2)} (${size})`}</td></tr>
+      </tbody></table>
+      <p class="sub">For the p-value and the normality check, load the CSV below into JASP or SPSS.</p></section>`;
+  }
   async function showStudy(){
     app.innerHTML = '<p class="loading">Loading study results…</p>';
     const [{ data:rows, error }, { data:quiz, error:e2 }] = await Promise.all([
@@ -555,6 +580,7 @@
       ['📈', avgGain === '–' ? '–' : (avgGain > 0 ? '+' : '') + avgGain, 'avg. gain (items)', '#f8c5c5']];
     app.innerHTML = `
       <section class="fun-tiles" aria-label="Study overview">${tiles.map(([e, v, l, c]) => `<div class="fun-tile" style="--c:${c}"><span class="fe">${e}</span><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</section>
+      ${compareCard(paired)}
       <section class="card"><div class="fun-head"><h2>Scores by content area</h2><span class="sub" style="margin:0">average % correct · pre → post</span></div>
         <table class="sorttable"><thead><tr><th>Area</th><th>Items</th><th>Pre-test</th><th>Post-test</th><th>Change</th></tr></thead><tbody>
         ${QUIZ_AREAS.map(([n, a, b]) => { const x = areaPct(pre, a, b), y = areaPct(post, a, b); return `<tr><td>${n}</td><td>${a}–${b}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
@@ -565,8 +591,8 @@
         ${Array.from({ length:20 }, (_, i) => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
         </tbody></table></section>
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
-        ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Email</th><th>Section</th><th>Studied UI</th><th>Pre</th><th>Post</th><th>Gain</th></tr></thead><tbody>
-        ${rows.map(r => `<tr><td>${esc(r.display_name || '')}</td><td>${esc(r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td></tr>`).join('')}
+        ${rows.length ? `<table class="sorttable"><thead><tr><th>Username</th><th>Section</th><th>Studied UI</th><th>Pre</th><th>Post</th><th>Gain</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td>${esc(r.display_name || r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">No respondents yet.</p>'}
         <p class="sub">The CSV uses a respondent number instead of names and emails, ready for the paper.</p></section>`;
     document.getElementById('study-csv').onclick = () => {

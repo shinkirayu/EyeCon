@@ -48,6 +48,7 @@ test('insufficient funds and stale carts cannot charge or grant items',async()=>
 const approve=(s,p,level,stars,date)=>{
   p.completed.includes(level.id)||p.completed.push(level.id);
   p.history.unshift({levelId:level.id,date,stars,missionComplete:true});
+  if(p.workday) p.workday.submissions++; // an approved job uses up a slot in the day
 };
 
 const FIGMA=['mayo-portfolio','yappers-login','haybuhay-settings','antoks-home','cones-landing','kolehiyo-dashboard','oras-signin'];
@@ -106,25 +107,18 @@ test('approval pays exactly the advertised prize plus bonus stars and adds feedb
   assert.ok(s.commissionPrize(p,level)<base, 'a redo pays less than the first time');
 });
 
-test('revisions use all three workday slots and keep feedback totals',async()=>{
+test('revisions do not use up the day; only approved jobs do',async()=>{
   const s=await setup(),p=s.defaultProfile(),level=s.commissionInbox(p)[0];
   assert.equal(s.workday(p).day,1);
-  assert.equal(s.nextWorkday(p),false);
-  const result={stars:2,score:40,grade:'C',xpAwarded:20,categoryScores:{},mission:{complete:false}};
-  for(let i=1;i<=3;i++){
+  const fail={stars:2,score:40,grade:'C',xpAwarded:20,categoryScores:{},mission:{complete:false}};
+  for(let i=1;i<=5;i++){
     assert.equal(s.beginWorkSubmission(p),true);
-    s.recordSubmission(p,level,result,0);
-    assert.equal(s.workday(p).submissions,i);
+    s.recordSubmission(p,level,fail,0);
+    assert.equal(s.workday(p).submissions,0);
   }
-  assert.equal(s.beginWorkSubmission(p),false);
-  assert.equal(s.workday(p).reviews.length,3);
+  assert.equal(s.workday(p).reviews.length,5);
   assert.equal(s.workday(p).coins,0);
   assert.equal(s.workday(p).xp,0);
-  p.readyReply={levelId:level.id};
-  assert.equal(s.nextWorkday(p),false);
-  delete p.readyReply;
-  assert.equal(s.nextWorkday(p),true);
-  assert.equal(s.workday(p).day,2);
-  assert.equal(s.workday(p).submissions,0);
-  assert.ok(s.commissionInbox(p).some(l=>l.id===level.id));
+  assert.equal(s.nextWorkday(p),false); // the day isn't over: no job finished yet
+  assert.equal(s.dailyTaskLimit(p),3);
 });
