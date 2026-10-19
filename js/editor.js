@@ -191,7 +191,7 @@
     let progress = document.getElementById('editor-task-progress');
     if(!progress){ progress = Object.assign(document.createElement('div'), {id:'editor-task-progress', className:'editor-task-progress'}); brief.append(progress); }
     // Level 4+: no live progress (it could be gamed by sliding until it ticks). Just the job size.
-    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div><span>${results.length} things to fix</span></div>`;
+    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div class="editor-fix-count"><b>${results.length}</b><span>things to fix</span></div>`;
     else progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
       <div class="editor-task-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${results.length}" aria-valuenow="${doneCount}" aria-label="Tasks done"><i style="width:${results.length ? doneCount / results.length * 100 : 0}%"></i></div>`;
     const cards = sections.map(({cat, items}) => {
@@ -1435,7 +1435,11 @@
     if(!el || el.locked) return;
     if(e.shiftKey && state.selectedId && state.selectedId !== id){ if(!(state.lockSel && state.extraSel.has(id))) toggleExtraSel(id); e.preventDefault(); return; }
     if(state.lockSel && id !== state.selectedId) return;
+    // During Piko's first-job tour, the first click only picks an element; dragging starts once
+    // it's selected. Otherwise a quick drag could fix it and skip the alignment-lines lesson.
+    const pickOnly = document.body.classList.contains('piko-tutorial') && state.selectedId !== id;
     selectElement(id);
+    if(pickOnly) return;
     const handle = target.dataset.handle;
     if(!(handle ? can(el,'resize') : can(el,'move'))) return;
     const scale = getScale();

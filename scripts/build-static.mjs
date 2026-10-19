@@ -21,6 +21,9 @@ await Promise.all([
 const version = (process.env.VERCEL_GIT_COMMIT_SHA || Date.now().toString(36)).slice(0, 12);
 const indexPath = `${outputDir}/play.html`;
 const html = await readFile(indexPath, 'utf8');
-await writeFile(indexPath, html.replace(/((?:href|src)="(?:css|js)\/[^"?]+)"/g, `$1?v=${version}"`));
+// overview.html becomes the site root here, so links back to it point at "/".
+await writeFile(indexPath, html
+  .replace(/((?:href|src)="(?:css|js)\/[^"?]+)"/g, `$1?v=${version}"`)
+  .replace(/href="overview\.html"/g, 'href="/"'));
 
 console.log(`Static production build created in dist/ (version ${version}).`);

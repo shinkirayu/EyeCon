@@ -3054,3 +3054,18 @@ html:not(.admin-tools) .dev-levels{ display:none!important; }
 .piko-kbd{ display:inline-block; padding:.05em .45em; border:2px solid #4d0d74; border-bottom-width:4px; border-radius:.4em; background:#fff3d6; color:#4d0d74; font:800 .9em/1.3 var(--font-body); white-space:nowrap; vertical-align:.05em; }
 /* Shift keycap in Piko's lines. */
 .piko-kbd{ display:inline-block; padding:.05em .45em; border:2px solid #4d0d74; border-bottom-width:4px; border-radius:.4em; background:#fff3d6; color:#4d0d74; font:800 .9em/1.3 var(--font-body); white-space:nowrap; vertical-align:.05em; }
+/* Day-done card: sun centred. */
+#modal-workday .workday-sun{ align-self:center; margin:0 auto .5rem; }
+/* Things to fix (levels 1-3): a bigger "!" with a white ring so it's easy to spot. */
+#screen-editor .el.needs-edit:not(.selected)::after{ width:calc(32 * var(--selection-unit,1px))!important; height:calc(32 * var(--selection-unit,1px))!important; top:calc(-18 * var(--selection-unit,1px))!important; right:calc(-18 * var(--selection-unit,1px))!important; font-size:calc(20 * var(--selection-unit,1px))!important; box-shadow:0 0 0 calc(3 * var(--selection-unit,1px)) #fff, 0 calc(2 * var(--selection-unit,1px)) calc(6 * var(--selection-unit,1px)) #0005; }
+/* Level 4+: the job size in the client card, big and clear. */
+#screen-editor .editor-fix-count{ display:inline-flex; align-items:center; gap:.5rem; margin-top:.25rem; padding:.35rem .9rem .35rem .4rem; border-radius:999px; background:#fde6ea; border:2px solid #e53b42; }
+#screen-editor .editor-fix-count b{ display:grid; place-items:center; min-width:2rem; height:2rem; padding:0 .4rem; border-radius:999px; background:#e53b42; color:#fff; font:800 1.25rem/1 var(--font-display); }
+#screen-editor .editor-fix-count span{ font:800 1.125rem var(--font-body); color:#a3142f; }
+#screen-editor .editor-task-progress .editor-fix-count{ display:inline-flex!important; width:auto!important; justify-content:flex-start!important; }
+#screen-editor .editor-task-progress:has(.editor-fix-count){ display:block; }
+#screen-editor .editor-task-progress .editor-fix-count{ padding:0; border:0; background:none; }
+#modal-workday #next-workday[hidden]{ display:none!important; }
+/* Audit fixes: text on these fills now passes WCAG AA. */
+.tag.tier-novice{background:#257a47!important;}
+.profile-settings-list .qs-reset,.btn-no{background:#c8323a;}

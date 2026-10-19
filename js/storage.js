@@ -191,11 +191,10 @@
     if(missionComplete) profile.totalXp += result.xpAwarded;
     if(missionComplete) workday(profile).submissions++; // only approved jobs use up the day
 
-    // Exactly what the email promised: the base pay, plus a bonus per extra
-    // star, plus the once-a-day streak bonus.
-    const starBonus = missionComplete ? Math.max(0, stars - REVISION_STAR_THRESHOLD) * pay.perBonusStar : 0;
-    const daily = missionComplete ? claimDailyMissionBonus(profile) : { bonus:0, streak:(profile.daily||{}).streak||0, claimed:false };
-    const reward = missionComplete ? pay.base + starBonus + daily.bonus : 0;
+    // Exactly what the email promised: the client's fee, no star or streak bonus.
+    const starBonus = 0;
+    const daily = { bonus:0, streak:(profile.daily||{}).streak||0, claimed:false };
+    const reward = missionComplete ? pay.base : 0;
     profile.currency += reward;
     const shift=workday(profile);
     entry.workDay=shift.day;

@@ -475,7 +475,7 @@ Maraming salamat,
 
 This is the BEAR ORAS internal systems team. Our new staff sign-in page went live this week, and the help desk has been flooded with calls.
 
-The sign-in card sits off to one side and nothing inside it lines up. The field labels are stuck inside the boxes, and the boxes don't match. Most of the text is so small and pale that staff squint at it, and the Sign in button looks switched off.
+Some things inside the sign-in card don't line up, and the email label is stuck inside its box. A few words are so pale that staff squint at them, even the "Sign in" link up in the blue header, and the Sign in button looks switched off. Some of the text is also too small to read comfortably.
 
 You've helped other clients with each of these. Could you fix all of it on this one page?
 
@@ -520,11 +520,11 @@ BEAR ORAS Systems Team`,
         // One problem per element; the correct neighbours are locked, as references.
         // Alignment
         Object.assign(goal('Line up "Registration Officer" with the other roles.', {sameX:['role0','role1','role2']},
-          'Choices in one list share one left edge.', ''), { refs:['role0','role2'], hint:'One role doesn’t line up with the other two.' }),
+          'Choices in one list share one left edge.', ''), { key:'roles', refs:['role0','role2'], hint:'One role doesn’t line up with the other two.' }),
         Object.assign(goal('Move "Email (required)" out of its box, above it like "Password (required)".', {above:['emailLabel','email']},
-          'A label inside a box looks like typed text and disappears once people type.', ''), { refs:['passLabel'], hint:'This label is sitting inside its box.' }),
+          'A label inside a box looks like typed text and disappears once people type.', ''), { key:'emailLabel', refs:['passLabel'], hint:'This label is sitting inside its box.' }),
         Object.assign(goal('Line up the second radio button with the others.', {sameX:['radio0','radio1','radio2']},
-          'Choices in one list share one left edge.', ''), { refs:['radio0','radio2'], hint:'One radio button is out of line.' }),
+          'Choices in one list share one left edge.', ''), { key:'radios', refs:['radio0','radio2'], hint:'One radio button is out of line.' }),
         // Contrast hierarchy
         Object.assign(goal('Give the "Sign in" title the strongest contrast: at least 7:1.', {contrast:'AA', min:7, ids:['title']},
           'The title is the most important text in the card, so it should stand out the most.', ''),
@@ -538,9 +538,11 @@ BEAR ORAS Systems Team`,
           'A button that looks disabled stops people from signing in.', ''), { key:'button', hint:'This button looks switched off.' }),
         // Size ladder
         Object.assign(goal('Make "National Office" the same size as the other roles (24px).', {minFont:24, ids:['role2']},
-          'Choices in one list should all be easy to read.', ''), { refs:['role0','role1'], hint:'One role is much smaller than the others.' }),
+          'Choices in one list should all be easy to read.', ''), { key:'nationalOffice', refs:['role0','role1'], hint:'One role is much smaller than the others.' }),
+        Object.assign(goal('Put "Verify email" on the same row as "Forgot Password?".', {sameY:['forgot','verify']},
+          'Two links side by side on one line look intentional.', ''), { key:'verifyRow', refs:['forgot'], hint:'This link has dropped below the other one.' }),
         Object.assign(goal('Make "Forgot Password?" the same size as the link beside it (24px).', {minFont:24, ids:['forgot']},
-          'Links on one row should match.', ''), { refs:['verify'], hint:'This link is smaller than the one beside it.' }),
+          'Links on one row should match.', ''), { key:'forgotSize', refs:['verify'], hint:'This link is smaller than the one beside it.' }),
       ],
       // This page's size ladder (shown in the Design Panel).
       ladderNames:['Title','Buttons and header','Labels and links','Fine print'],

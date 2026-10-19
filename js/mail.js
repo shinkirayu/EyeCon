@@ -91,7 +91,7 @@
       const tag = waiting ? '<span class="tag">Sent</span>' : replied ? '<span class="tag">Reply</span>'
         : `<span class="tag tier-${level.tier}">${polish ? 'Polish' : TIER_LABEL[level.tier]}</span>`;
       const pay=S.commissionPay(profile,level);
-      const prize=waiting || replied ? '' : `<span class="mail-prize" title="Paid on approval, plus ${pay.perBonusStar} for each bonus star">${window.EC_MONEY(pay.base)} <small>+${pay.perBonusStar}/★</small></span>`;
+      const prize=waiting || replied ? '' : `<span class="mail-prize" title="Paid on approval">${window.EC_MONEY(pay.base)}</span>`;
       row.innerHTML=`<div class="avatar-circle">${level.avatarEmoji}</div><div class="mail-item-name">${level.clientName}</div><div class="mail-item-preview">${preview}</div>${prize}${tag}${replied || !seen.includes(level.id) ?'<span class="unread-dot" title="New"></span>':''}`;
       if(!waiting) row.appendChild(debugButton('Skip ⏭', 'Debug: approve this page at 5★ without editing', p => skipLevel(p, level)));
       if(clickable){

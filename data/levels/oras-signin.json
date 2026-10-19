@@ -357,7 +357,7 @@
       "type": "text",
       "role": "small",
       "text": "Forgot Password?",
-      "x": 696,
+      "x": 720,
       "y": 800,
       "w": 216,
       "h": 32,
@@ -369,7 +369,6 @@
       "bg": null,
       "align": "left",
       "allow": [
-        "move",
         "font"
       ],
       "radius": 0,
@@ -382,7 +381,7 @@
       "role": "small",
       "text": "Verify email",
       "x": 896,
-      "y": 800,
+      "y": 816,
       "w": 312,
       "h": 32,
       "fontSize": 24,
@@ -393,7 +392,7 @@
       "bg": null,
       "align": "right",
       "allow": [
-        "font"
+        "move"
       ],
       "radius": 0,
       "locked": false,

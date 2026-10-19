@@ -581,6 +581,9 @@
       masteredObjectives,
       complete: completedObjectives === objectives.length,
       mastery: masteredObjectives === objectives.length,
+      // Logged with every submission: Technical Readiness Score = met ÷ total × 100 (paper, Ch. 3).
+      met: masteredObjectives,
+      total: objectives.length,
     };
 
     return { score, grade, categoryScores: scores, activeCategories, feedback, xpAwarded, mission, stars };

@@ -16,7 +16,7 @@
   .card{width:min(44rem,100%);padding:2rem 2.25rem;border:3px solid var(--teal);border-radius:1.75rem;background:var(--cream);box-shadow:0 .5rem 0 var(--teal-dark);}
   .top{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}
   .top img{width:3rem;height:auto;}
-  .tag{font:800 .85rem 'Nunito';letter-spacing:.14em;text-transform:uppercase;color:#2f7a70;}
+  .tag{font:800 1rem 'Nunito';letter-spacing:.14em;text-transform:uppercase;color:#2f7a70;}
   .count{margin-left:auto;font:800 1rem 'Nunito';color:var(--ink);}
   .bar{height:.75rem;border-radius:999px;background:#e3f1ec;overflow:hidden;margin-bottom:1.5rem;}
   .bar i{display:block;height:100%;background:var(--purple);transition:width .3s ease;}
@@ -178,6 +178,13 @@
   }
   async function profile(){
     if(await respondent()) return intro();
+    // Answered on this browser before (the pre-test): reuse it, re-saving it to this account, and go straight on.
+    const saved = readStudy().profile;
+    if(saved && saved.name && saved.section && saved.prior){
+      await db.client.from('respondents').upsert({ id: db.userId, email: db.email, display_name: saved.name, section: saved.section, prior_ui: saved.prior,
+        consent_at: saved.consent || new Date().toISOString(), updated_at: new Date().toISOString() });
+      return intro();
+    }
     app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Take both tests on this same device and browser, with the same username.</p>
       <div class="field"><label for="name">Username</label><input id="name" maxlength="40" autocomplete="username" placeholder="e.g. juan.delacruz"></div>
       <div class="field"><label for="section">Year level and section</label><input id="section" maxlength="40" placeholder="e.g. Grade 12 - STEM A"></div>
@@ -190,6 +197,7 @@
       const { error } = await db.client.from('respondents').upsert({ id: db.userId, email: db.email, display_name: name, section, prior_ui: prior,
         consent_at: sessionStorage.getItem('eyecon_consent') || new Date().toISOString(), updated_at: new Date().toISOString() });
       if(error){ document.getElementById('err').textContent = 'Could not save: ' + error.message; return; }
+      const st = readStudy(); st.profile = { name, section, prior, consent: sessionStorage.getItem('eyecon_consent') || new Date().toISOString() }; writeStudy(st);
       intro();
     };
     document.getElementById('name').focus();
@@ -205,7 +213,7 @@
     sessionStorage.removeItem(RESUME);
     if(!verified()) return mode === 'pre' && !sessionStorage.getItem('eyecon_consent') ? consent() : signIn();
     if(await alreadyTaken()) return taken();
-    if(!sessionStorage.getItem('eyecon_consent') && !(await respondent())) return consent();
+    if(!sessionStorage.getItem('eyecon_consent') && !readStudy().profile && !(await respondent())) return consent();
     profile();
   })();
 })();

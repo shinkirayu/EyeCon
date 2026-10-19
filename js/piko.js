@@ -79,6 +79,8 @@
     basicsDone: [
       "You did it! You've finished the basics: alignment, contrast and typography.",
       "Good job today! Every screen you fixed is now easier to read for somebody out there.",
+      ["Need a refresher? Open your **Guidebook**. It covers alignment, contrast and typography, with examples.", '#taskbar-guide'],
+      ["It's always right here on your taskbar, and on your desktop too.", '#taskbar-guide'],
       "That's a wrap for your first shift. Go rest those eyes!",
       "Tomorrow, four new clients are writing in. I'll see you then!"
     ],
@@ -96,6 +98,8 @@
         fg: "This is the **foreground**: the color of the text itself.",
         bgc: "This is the **background**: the color right behind the text. Here it's the white card.",
         ratio: "Contrast compares the two. The further apart they are in lightness, the bigger the number.",
+        guide: "This is the **contrast guide**. It lists how much contrast each kind of text needs: headings, titles and buttons 7:1 and up; labels, hints and captions 4.5 to 7:1.",
+        guideRow: "The highlighted row shows where this text is right now. Ask yourself what kind of text it is, then move it into that row.",
         demo: "Same text color, different background, different contrast! It's always about the pair.",
         slider: "Here you can only change the foreground. Darker text on a light background means more contrast.",
         bar: "This is its color panel. Drag the brightness slider down to make the text darker.",

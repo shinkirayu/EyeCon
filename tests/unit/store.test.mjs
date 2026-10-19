@@ -92,14 +92,14 @@ test('with every client open there is nothing locked to work towards',async()=>{
   assert.equal(s.progression(p).nextProject,null);
 });
 
-test('approval pays exactly the advertised prize plus bonus stars and adds feedback',async()=>{
+test('approval pays exactly the advertised prize (no star or streak bonus) and adds feedback',async()=>{
   const s=await setup(),p=s.defaultProfile();
   const level=s.commissionInbox(p)[0];
-  const {base,perBonusStar}=s.commissionPay(p,level);
+  const {base}=s.commissionPay(p,level);
   const before=p.currency;
   const result={stars:5,score:100,grade:'S+',xpAwarded:100,categoryScores:{},mission:{complete:true,objectives:[]}};
   const out=s.recordSubmission(p,level,result,0);
-  assert.equal(out.currencyEarned,base+2*perBonusStar+out.daily.bonus);
+  assert.equal(out.currencyEarned,base);
   assert.equal(p.currency,before+out.currencyEarned);
   assert.equal(s.completedFeedback(p).length,1);
   assert.equal(s.goodFeedbackCount(p),1);

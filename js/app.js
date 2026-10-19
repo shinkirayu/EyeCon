@@ -305,7 +305,7 @@
         // Keep About selected for this one step so its panel is showing while Piko points at it.
         if(!elDiv(practice)?.classList.contains('selected')) window.EC_EDITOR.selectElement(practice);
         await step('#element-settings', W.controls, { left:true }); // the panel can move it too
-        await step('#screen-editor .editor-topbar', W.rulers); // alignment rulers + spacing guide (lights the whole toolbar)
+        await step('#editor-canvas-wrap', W.rulers); // the rulers and gaps appear on the canvas while dragging: light the canvas, not the toolbar
       } else {
         P.clearTarget();
         P.say(W.element, { top:true });
@@ -377,7 +377,7 @@
         if(settled()) break;
       }
       window.EC_EDITOR.freezeDesign(); // finished: everything stays exactly where it is
-      await new Promise(r => setTimeout(r, 900)); // a beat to enjoy the finished design first
+      await new Promise(r => setTimeout(r, 2000)); // a beat to enjoy the finished design first
       if(!here()) return;
       await window.EC_EDITOR.showWholeDesign(); // whole page in view, grid off, so the change is easy to see
       const btn = document.getElementById('tool-preview'), save = document.getElementById('tool-save');
@@ -393,7 +393,7 @@
       document.removeEventListener('pointerup', onUp); btn.removeEventListener('keyup', onUp);
       if(!here()){ P.clearTarget(); P.hideBubble(); return; }
       P.clearTarget(); P.hideBubble();
-      await new Promise(r => setTimeout(r, 1200)); // let the after-view sink in before Submit
+      await new Promise(r => setTimeout(r, 2500)); // let the after-view sink in before Submit
       if(!here()) return;
       P.pointAt(save); P.say(W.submitNow, { left:true });
       let sent = false; save.addEventListener('click', ()=>{ sent = true; }, { once:true });
@@ -633,6 +633,7 @@
       if(chips[0]){ P.pointAt(chips[0]); await talk(L.fg, { left:true }); }
       if(chips[1]){ P.pointAt(chips[1]); await talk(L.bgc, { left:true }); }
       if(q('#element-settings .cz-box')){ P.pointAt(q('#element-settings .cz-box')); await talk(L.ratio, { left:true }); }
+      if(q('#element-settings .cz-guide .sl-list')){ P.pointAt(q('#element-settings .cz-guide .sl-list')); await talk(L.guide, { left:true }); await talk(L.guideRow, { left:true }); }
       { // demo: the same gold on white vs navy
         const c = window.EC_EDITOR.getElements().find(e => e.id === 'title')?.color || '#FFEA96';
         const R = (a, b) => window.WCAG.contrastRatio(a, b).toFixed(1);
@@ -1898,7 +1899,9 @@
           const P = window.EC_PIKO, lines = P.SCRIPT.basicsDone;
           // After his wrap-up (and once the reward card is closed), the first day ends.
           const endDay = () => { const t = setInterval(()=>{ if(!document.getElementById('modal-reward').classList.contains('hidden')) return; clearInterval(t); showDaySummary(); }, 200); };
-          const say = i => i < lines.length ? P.say(lines[i], { top:true, onDone: ()=>say(i + 1) }) : endDay();
+          // A line may be [text, selector]: Piko points at that (the Guidebook on the taskbar).
+          const say = i => { if(i >= lines.length) return endDay(); const [t, sel] = Array.isArray(lines[i]) ? lines[i] : [lines[i]];
+            const at = sel && document.querySelector(sel); at ? P.pointAt(at) : P.clearTarget(); P.say(t, { top:true, onDone: ()=>say(i + 1) }); };
           setTimeout(()=>say(0), 1500);
         }
         return;
@@ -1978,8 +1981,10 @@
          <p>One last thing: take the post-test so we can see how much you learned.</p>
          <a class="btn btn-accept" id="post-test-link" href="quiz.html?mode=post">Take the post-test</a>`
       : `<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2>`;
-    document.getElementById('next-workday').textContent = allDone ? 'Keep playing' : 'Next day';
-    window.EC_MODAL.show(modal);document.getElementById('next-workday').focus();
+    const next = document.getElementById('next-workday');
+    next.textContent = 'Next day';
+    next.hidden = allDone; // finished every client: only the post-test link ("Keep playing" off for now)
+    window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }
 
   // and badges, with a confetti burst unless particles/motion are off.

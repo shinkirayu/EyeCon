@@ -246,7 +246,7 @@
       "id": "insta",
       "type": "rect",
       "role": "decorative",
-      "x": 408,
+      "x": 424,
       "y": 784,
       "w": 48,
       "h": 48,
@@ -255,7 +255,7 @@
       "src": "assets/levels/mayo/instagram.png",
       "radius": 0,
       "fontSize": 16,
-      "gameLocked": false
+      "gameLocked": true
     },
     {
       "id": "illus",

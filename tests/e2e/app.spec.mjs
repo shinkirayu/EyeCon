@@ -96,13 +96,13 @@ test('commission color tool adjusts lightness without opening a free color picke
   });
   const slider=page.locator('#f-color');
   await expect(slider).toHaveAttribute('type','range');
-  await expect(page.locator('#f-contrast')).toContainText('Against background');
+  await expect(page.locator('#f-contrast')).toContainText('Background');
   await expect(page.locator('.editor-tone-vertical #f-color')).toHaveCSS('writing-mode','vertical-lr');
   const before=await page.evaluate(()=>EC_EDITOR.getElements().find(el=>el.id==='title').color);
   const comparison=await slider.evaluate(input=>{input.value='20';input.dispatchEvent(new Event('input',{bubbles:true}));return document.getElementById('f-contrast')?.textContent;});
   const after=await page.evaluate(()=>EC_EDITOR.getElements().find(el=>el.id==='title').color);
   expect(after).not.toBe(before);
-  expect(comparison).toContain('Against background');
+  expect(comparison).toContain('Background');
 });
 
 test('level maker custom canvas, layer order, image upload, and target peek', async ({ page }) => {

@@ -313,10 +313,15 @@
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'reviews') return showReviews();
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'study') return showStudy();
     app.innerHTML = '<p class="loading">Loading statistics…</p>';
-    const [ov, lv, daily] = await Promise.all([sb.rpc('admin_overview'), sb.rpc('admin_level_stats'), sb.rpc('admin_daily_activity')]);
+    const [ov, lv, daily, subs] = await Promise.all([sb.rpc('admin_overview'), sb.rpc('admin_level_stats'), sb.rpc('admin_daily_activity'),
+      sb.from('play_events').select('level_id, data').eq('type', 'submit').limit(10000)]);
     const err = ov.error || lv.error || daily.error;
     if(err){ app.innerHTML = `<div class="card"><h2>Couldn’t load statistics</h2><p class="err">${esc(err.message)}</p><p class="sub">Have the migrations 0002 and 0003 been run in the Supabase SQL editor?</p><button id="retry">Retry</button></div>`; document.getElementById('retry').onclick = boot; return; }
-    render(ov.data?.[0] || {}, (lv.data || []).sort((a, b) => levelNum(a.level_id) - levelNum(b.level_id)), daily.data || []);
+    // Technical Readiness Score (paper, Ch. 3): tasks met ÷ total × 100, averaged over every submission of a level.
+    const trs = {};
+    (subs.data || []).forEach(e => { const d = e.data || {}; if(!d.total) return; (trs[e.level_id] = trs[e.level_id] || []).push(d.met / d.total * 100); });
+    const levelsWithTrs = (lv.data || []).map(r => Object.assign({}, r, { avg_trs: trs[r.level_id] ? Math.round(trs[r.level_id].reduce((a, b) => a + b, 0) / trs[r.level_id].length) : null }));
+    render(ov.data?.[0] || {}, levelsWithTrs.sort((a, b) => levelNum(a.level_id) - levelNum(b.level_id)), daily.data || []);
   }
 
   // Horizontal bars: one hue, value labelled at the end, hover for details.
@@ -364,7 +369,7 @@
         <span class="lv-ava">${l.avatarEmoji || '✉'}</span><b>${esc(l.levelNumber + '. ' + l.clientName)}</b>
         <span class="lv-mood">${face} ${say}</span>
         <span class="lv-big">${r.median_active_min == null ? '–' : (+r.median_active_min).toFixed(1)}<small> min to finish</small></span>
-        <span class="lv-chips"><i title="Players who opened it">👀 ${r.players}</i><i title="“Fix again” rounds per player">🔁 ${r.avg_resubmits ?? '–'}</i><i title="Approved on the first try">🎯 ${f == null ? '–' : f + '%'}</i><i title="Hints per player">💡 ${r.avg_hints ?? 0}</i></span>
+        <span class="lv-chips"><i title="Players who opened it">👀 ${r.players}</i><i title="“Fix again” rounds per player">🔁 ${r.avg_resubmits ?? '–'}</i><i title="Approved on the first try">🎯 ${f == null ? '–' : f + '%'}</i><i title="Hints per player">💡 ${r.avg_hints ?? 0}</i><i title="Mean Technical Readiness Score (tasks met ÷ total) over all submissions">📊 ${r.avg_trs == null ? '–' : r.avg_trs + '%'}</i></span>
         <span class="lv-bar" style="--p:${f ?? 0}%"></span></button>`;
     };
     // Activity: fixed-width bars so a single day doesn't fill the whole chart.
