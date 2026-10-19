@@ -10,7 +10,7 @@ for (const file of (await readdir(dir)).filter(f => f.endsWith('.json')).sort())
   edits[file.slice(0, -5)] = {
     canvas: data.canvas,
     // The maker calls it gameLocked; the game calls it locked.
-    elements: data.elements.map(({ gameLocked, ...el }) => ({ ...el, locked: !!gameLocked })),
+    elements: data.elements.map(({ gameLocked, ...el }) => ({ ...el, locked: !!(gameLocked || el.locked) })), // either flag locks it
   };
 }
 await writeFile(new URL('../js/level-edits.js', import.meta.url),
