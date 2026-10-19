@@ -145,11 +145,11 @@
   .quiz-pop-close:hover,.quiz-pop-close:focus-visible{background:#f9d985;}
   /* Scroll hint: a soft shadow along the bottom and a bouncing arrow until the visitor scrolls. */
   .scroll-hint{position:fixed;left:0;right:0;bottom:0;height:14vh;transform:none;zoom:1;z-index:40;pointer-events:none;display:grid;place-items:end center;padding-bottom:2vh;
-    background:linear-gradient(to top,#0008,#0000);transition:opacity .4s ease;}
+   transition:opacity .4s ease;}
   .scroll-hint i{display:grid;place-items:center;width:2.2vw;height:1.5vw; /* vw, not px: browser zoom leaves it the same size on screen */
     /* a plain dark triangle pointing down, with a soft shadow */
     filter:drop-shadow(0 4px 6px #000a);}
-  .scroll-hint i::before{content:"";width:100%;height:100%;background:#0d1b2a;opacity:.25;clip-path:polygon(0 0,100% 0,50% 100%);animation:hintBob 1.4s ease-in-out infinite;}
+  .scroll-hint i::before{content:"";width:100%;height:100%;background:#0d1b2a;opacity:.15;clip-path:polygon(0 0,100% 0,50% 100%);animation:hintBob 1.4s ease-in-out infinite;}
   .scroll-hint.gone{opacity:0;}
   @keyframes hintBob{50%{transform:translateY(8px)}}
   @media (prefers-reduced-motion:reduce){.scroll-hint i::before{animation:none;}}
