@@ -185,8 +185,8 @@
         consent_at: saved.consent || new Date().toISOString(), updated_at: new Date().toISOString() });
       return intro();
     }
-    app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Take both tests on this same device and browser, with the same username.</p>
-      <div class="field"><label for="name">Username</label><input id="name" maxlength="40" autocomplete="username" placeholder="e.g. juan.delacruz"></div>
+    app.innerHTML = `${top('About you')}<h1>Nice to meet you!</h1><p class="note">Take both tests on this same device and browser, with the same name.</p>
+      <div class="field"><label for="name">Name</label><input id="name" maxlength="40" autocomplete="name" placeholder="e.g. Juan Dela Cruz"></div>
       <div class="field"><label for="section">Year level and section</label><input id="section" maxlength="40" placeholder="e.g. 1st Year BSIT"></div>
       <div class="field"><label for="prior">Have you studied UI design before?</label><select id="prior"><option value="">Choose one</option><option value="yes">Yes</option><option value="a little">A little</option><option value="no">No</option></select></div>
       <p class="err" id="err" role="alert"></p>
