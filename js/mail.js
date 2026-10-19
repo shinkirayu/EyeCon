@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const TIER_LABEL = { novice:'NOVICE', intermediate:'NOVICE', advanced:'INTERMEDIATE', expert:'ADVANCED' }; // shown one tier down for now
+  const TIER_LABEL = { novice:'JUNIOR', intermediate:'JUNIOR', advanced:'INTERMEDIATE', expert:'SENIOR' }; // shown one tier down for now
   let handlers = { onAccept:()=>{}, onSend:()=>{}, onOpenReply:()=>{} };
   let activeLevel = null;
   let pendingGradeResult = null;

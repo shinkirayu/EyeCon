@@ -100,7 +100,7 @@
   // gives an on-demand nudge without giving away the number).
   // Client goals as separate cards (one per goal, with a PASS/TO DO badge,
   // what to do, and why it matters once met), then a handoff checklist.
-  const TIER_NAMES = { novice:'Novice', intermediate:'Intermediate', advanced:'Advanced', expert:'Expert' };
+  const TIER_NAMES = { novice:'Junior', intermediate:'Intermediate', advanced:'Senior', expert:'Senior' };
   const GOAL_TOPIC = { align:'Text alignment', sameX:'Alignment', sameY:'Alignment', sameRight:'Alignment', sameCenterX:'Alignment',
     evenGapsY:'Spacing', evenGapsX:'Spacing', safeMargin:'Margins', minW:'Size', minH:'Tap size', minFont:'Typography',
     maxFont:'Typography', bigger:'Hierarchy', contrast:'Contrast', sameColor:'Consistency' };

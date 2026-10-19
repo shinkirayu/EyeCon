@@ -571,7 +571,7 @@ test.skip('the first day starts with one email showing difficulty and reward',as
   await beginFirstDay(page);
   const rows=page.locator('#mail-list [role="listitem"]');
   await expect(rows).toHaveCount(1);
-  await expect(rows.first().locator('.tag')).toHaveText('NOVICE');
+  await expect(rows.first().locator('.tag')).toHaveText('JUNIOR');
   await expect(rows.first()).not.toContainText('Step');
   await rows.first().click();
   const reward=page.locator('#mail-detail-reward');
@@ -890,7 +890,7 @@ test('Piko shows the first job visually with "Show me"', async ({ page }) => {
   await see('Grid options'); await page.locator('#tool-grid-settings').click();
   await see('slider'); await expect(hand).toHaveClass(/g-slide-x/);
   await page.locator('#grid-opacity-slider').fill('0.6');
-  await see('Fix the rest, then Submit');
+  await see('Fix the rest first');
   await expect(page.locator('#tool-save')).toHaveCSS('pointer-events','none');
   // The classic tutorial stays one click away in Settings.
   expect(await page.evaluate(() => [EC_STORE.load().settings.tutorialStyle, EC_PIKO.getStyle()])).toEqual(['visual', 'visual']);

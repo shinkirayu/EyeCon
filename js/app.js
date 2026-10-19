@@ -374,9 +374,8 @@
       await toolStep('#screen-editor .editor-tools-left', W.toolbarUndo);
       await toolStep('#screen-editor .editor-zoom-controls', W.toolbarZoom);
       body.classList.add('piko-no-submit');
-      await step('#tool-save', W.submit, { left:true });
-      body.classList.remove('piko-no-submit');
-      P.clearTarget();
+      await step('#editor-mail-brief', W.submit, { left:true }); // light the task count, not Submit: it isn't time to send yet
+      P.clearTarget(); // Submit stays off until the before/after step (pikoCompareGuide) says so
       pikoStage = null;
       profile.onboarding.seen = true;
       document.body.classList.remove('piko-tutorial');
@@ -396,7 +395,7 @@
       const settled = () => allDone() && !window.EC_EDITOR.isDragging();
       for(;;){
         await until(()=>!here() || settled());
-        if(!here()) return; // submitted or left before finishing: nothing to show
+        if(!here()){ document.body.classList.remove('piko-no-submit'); return; } // left before finishing: Submit back on
         await new Promise(r => setTimeout(r, 400));
         if(!here()) return;
         if(settled()) break;
@@ -420,6 +419,7 @@
       P.clearTarget(); P.hideBubble();
       await new Promise(r => setTimeout(r, 2500)); // let the after-view sink in before Submit
       if(!here()) return;
+      document.body.classList.remove('piko-no-submit'); // now Submit works
       P.pointAt(save); P.say(W.submitNow, { left:true });
       let sent = false; save.addEventListener('click', ()=>{ sent = true; }, { once:true });
       await until(()=>sent || !here());
@@ -1214,10 +1214,10 @@
   }
 
   // ---------------- Mail folder switching (within the Mail app) ----------------
-  // Header progress: jobs done out of 7 (Novice 1–3, Intermediate 4–6, Advanced 7).
+  // Header progress: jobs done out of 7 (Junior 1–3, Intermediate 4–6, Senior 7).
   function renderMailProgress(){
     const done = window.EC_LEVELS.filter(l => l.levelNumber <= 7 && profile.completed.includes(l.id)).length;
-    const tier = done < 6 ? ['Novice','Intermediate'] : ['Intermediate','Advanced'];
+    const tier = ['Junior','Senior'];
     document.getElementById('mail-progress-from').textContent = tier[0];
     document.getElementById('mail-progress-to').textContent = tier[1];
     document.getElementById('mail-progress-fill').style.width = (done / 7 * 100) + '%';
@@ -2633,6 +2633,7 @@
             levelStartTime = Date.now(); startLevelSession(level);
             startTimerIfNeeded();
             finishFade();
+            document.body.classList.remove('piko-no-submit'); // only the first job's tour switches Submit off
             if(pikoStage === 'element') runPikoWorkspaceTour(level);
             else runPikoLevelTips(level, ()=>{});
           });

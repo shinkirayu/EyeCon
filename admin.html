@@ -251,6 +251,11 @@
 .cmp-bar{height:1.1rem;border-radius:1rem;background:#f1ece4;overflow:hidden;}.cmp-bar i{display:block;height:100%;border-radius:1rem;}
   .ev-cat td{background:var(--bar-soft,#eef6f4);}
   .ev-comments{margin:.5rem 0 0;padding-left:1.25rem;display:grid;gap:.4rem;}
+  .link{all:unset;cursor:pointer;color:var(--teal-dark,#2f7a70);font-weight:800;text-decoration:underline;}
+  .link:focus-visible{outline:3px solid #f5b83d;outline-offset:2px;}
+  .resp-pop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:1rem;background:#22182655;}
+  .resp-card{width:min(64rem,100%);max-height:90vh;overflow:auto;}
+  .resp-table td.ok{color:#1f6b45;} .resp-table td.bad{color:#b02a2f;font-weight:700;} .resp-table td.na{color:#6b6f7a;}
 </style>
 </head>
 <body>
@@ -593,6 +598,34 @@
       <p class="sub">Scale: 4.21–5.00 Strongly Agree · 3.41–4.20 Agree · 2.61–3.40 Neutral · 1.81–2.60 Disagree · 1.00–1.80 Strongly Disagree</p>
       <h3>Comments and suggestions (${comments.length})</h3>${comments.length ? `<ul class="ev-comments">${comments.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="empty">No comments yet.</p>'}</section>`;
   }
+  // The 20 items with their options, read from quiz.html so the wording always matches the test.
+  let QUIZ_ITEMS = null;
+  async function quizItems(){
+    if(QUIZ_ITEMS) return QUIZ_ITEMS;
+    const html = await (await fetch('quiz.html')).text();
+    const start = html.indexOf('const ALL_Q = [') + 'const ALL_Q = '.length, end = html.indexOf('\n  ];', start) + 4;
+    return QUIZ_ITEMS = new Function('return ' + html.slice(start, end))(); // our own same-origin file
+  }
+  async function showRespondent(r, results){
+    const items = await quizItems(), L = 'ABCD';
+    const pre = results.find(q => q.kind === 'pre'), post = results.find(q => q.kind === 'post');
+    const pick = (res, i) => res && (res.answers || []).find(x => x && x.q === i);
+    const cellFor = (res, i, it) => { const x = pick(res, i); if(!res) return '<td class="na">–</td>'; if(!x || x.picked == null) return '<td class="na">no answer</td>';
+      return `<td class="${x.correct ? 'ok' : 'bad'}">${x.correct ? '✓' : '✗'} ${L[x.picked]}. ${esc(it.o[x.picked] || '')}</td>`; };
+    const ev = post && (post.answers || []).find(x => x && x.eval);
+    const d = document.createElement('div'); d.className = 'resp-pop'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', 'Respondent answers');
+    d.innerHTML = `<div class="card resp-card"><div class="fun-head"><h2>${esc(r?.display_name || 'Respondent')}</h2><button class="ghost" data-close>Close ✕</button></div>
+      <p class="sub">${esc(r?.section || '')}${r?.prior_ui ? ` · design tools: ${esc(r.prior_ui)}` : ''} · Pre ${pre ? pre.score + ' / ' + pre.total : '–'} · Post ${post ? post.score + ' / ' + post.total : '–'}</p>
+      <table class="sorttable resp-table"><thead><tr><th>#</th><th>Question</th><th>Pre-test</th><th>Post-test</th><th>Correct answer</th></tr></thead><tbody>
+      ${items.map((it, i) => `<tr><td>${i + 1}</td><td>${esc(it.q)}</td>${cellFor(pre, i, it)}${cellFor(post, i, it)}<td>${L[it.a]}. ${esc(it.o[it.a])}</td></tr>`).join('')}
+      </tbody></table>
+      <h3>Software evaluation</h3>${ev ? `<table class="sorttable"><thead><tr><th>Item</th><th>Rating</th><th>Meaning</th></tr></thead><tbody>${EVAL_ITEMS.flatMap(([, ...xs]) => xs).map(([id, t]) => `<tr><td title="${esc(t)}">${id}</td><td>${ev.eval[id] ?? '–'}</td><td>${verbal(ev.eval[id])}</td></tr>`).join('')}</tbody></table>
+        <p><b>Comments:</b> ${ev.comments ? esc(ev.comments) : '<span class="sub">none</span>'}</p>` : '<p class="empty">No ratings (post-test not taken yet).</p>'}</div>`;
+    const close = () => d.remove();
+    d.addEventListener('click', e => { if(e.target === d || e.target.closest('[data-close]')) close(); });
+    d.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+    document.body.appendChild(d); d.querySelector('[data-close]').focus();
+  }
   async function showStudy(){
     app.innerHTML = '<p class="loading">Loading study results…</p>';
     const [{ data:rows, error }, { data:quiz, error:e2 }] = await Promise.all([
@@ -625,9 +658,11 @@
       ${evalCard(post)}
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
         ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Section</th><th>Used design tools</th><th>Pre</th><th>Post</th><th>Gain</th><th></th></tr></thead><tbody>
-        ${rows.map(r => `<tr><td>${esc(r.display_name || r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td><td><button class="ghost" data-del-resp="${esc(r.respondent_id)}" data-name="${esc(r.display_name || '')}">Delete</button></td></tr>`).join('')}
+        ${rows.map(r => `<tr><td><button class="link" data-view-resp="${esc(r.respondent_id)}">${esc(r.display_name || r.email || 'Respondent')}</button></td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td><td><button class="ghost" data-del-resp="${esc(r.respondent_id)}" data-name="${esc(r.display_name || '')}">Delete</button></td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">No respondents yet.</p>'}
         <p class="sub">The CSV uses a respondent number instead of names and emails, ready for the paper.</p></section>`;
+    // Click a name: that person's answers, item by item, pre vs post, plus their ratings.
+    app.querySelectorAll('[data-view-resp]').forEach(btn => btn.onclick = () => showRespondent(rows.find(r => r.respondent_id === btn.dataset.viewResp), quiz.filter(q => q.player_id === btn.dataset.viewResp)));
     // Delete a respondent (test runs) with their pre-test and post-test answers.
     app.querySelectorAll('[data-del-resp]').forEach(b => b.onclick = async () => {
       if(!confirm(`Delete ${b.dataset.name || 'this respondent'} and their pre-test and post-test answers? This can't be undone.`)) return;

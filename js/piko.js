@@ -300,7 +300,7 @@
     'piko.workspace.gridDone': { cue:'Things snap to 8px', why:'Snapping keeps sizes and gaps consistent.' },
     'piko.workspace.gridSettings': tap('Grid options', { at:'.piko-tb-glow' }),
     'piko.workspace.gridSettingsDone': { cue:'Try the slider', why:'It sets how see-through the grid is.', icon:'left', at:'#grid-settings-panel input[type=range]', gesture:'slide-x' },
-    'piko.workspace.submit': { cue:'Fix the rest, then Submit', why:'Clear every red mark first. The task list shows what’s left.' },
+    'piko.workspace.submit': { cue:'Fix the rest first', why:'This shows how many tasks are left. Submit comes when they’re all done.' },
     'piko.workspace.compare': { cue:'Hold to compare', why:'All tasks done! See your page next to the original.', icon:'left', gesture:'hold' },
     'piko.workspace.submitNow': tap('Submit', { why:'Send your fixed design to the client.' }),
     'piko.reply.arrived': tap('Open their reply', { why:'See what the client thinks of your fix.' }),

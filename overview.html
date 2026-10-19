@@ -143,6 +143,16 @@
   .quiz-pop-card iframe{width:100%;height:100%;border:0;display:block;}
   .quiz-pop-close{position:absolute;top:16px;right:16px;z-index:1;width:48px;height:48px;border:3px solid #173f58;border-radius:50%;background:#fff;color:#173f58;font:800 24px/1 sans-serif;cursor:pointer;}
   .quiz-pop-close:hover,.quiz-pop-close:focus-visible{background:#f9d985;}
+  /* Scroll hint: a soft shadow along the bottom and a bouncing arrow until the visitor scrolls. */
+  .scroll-hint{position:fixed;left:0;right:0;bottom:0;height:120px;transform:none;zoom:1;z-index:40;pointer-events:none;display:grid;place-items:end center;padding-bottom:16px;
+    background:linear-gradient(to top,#0008,#0000);transition:opacity .4s ease;}
+  .scroll-hint i{display:grid;place-items:center;width:56px;height:40px;
+    /* a plain dark triangle pointing down, with a soft shadow */
+    filter:drop-shadow(0 4px 6px #000a);}
+  .scroll-hint i::before{content:"";width:100%;height:100%;background:#0d1b2a;opacity:.45;clip-path:polygon(0 0,100% 0,50% 100%);animation:hintBob 1.4s ease-in-out infinite;}
+  .scroll-hint.gone{opacity:0;}
+  @keyframes hintBob{50%{transform:translateY(8px)}}
+  @media (prefers-reduced-motion:reduce){.scroll-hint i::before{animation:none;}}
 </style>
 </head>
 <body>
@@ -417,6 +427,14 @@
     }, true));
     document.getElementById('quiz-pop-close').onclick = close;
     addEventListener('message', e => { if(e.source === frame.contentWindow && (e.data === 'eyecon-quiz-close' || e.data === 'eyecon-quiz-done')) close(); }); // only our own quiz frame can close it
+  })();
+</script>
+<div class="scroll-hint" id="scroll-hint" aria-hidden="true"><i></i></div>
+<script>
+  (() => { // just a hint that the page scrolls: gone once the About section reaches the screen
+    const h = document.getElementById('scroll-hint'), about = document.getElementById('about');
+    const upd = () => h.classList.toggle('gone', about.getBoundingClientRect().top < innerHeight * .9);
+    addEventListener('scroll', upd, { passive:true }); addEventListener('resize', upd); upd();
   })();
 </script>
 </body>

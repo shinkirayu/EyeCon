@@ -14,7 +14,7 @@
     { id:'first_job',    emoji:'🎓', name:'First Day',        cond:p => p.history.length >= 1 },
     { id:'perfectionist',emoji:'💎', name:'Perfectionist',    cond:p => p.history.some(h => h.grade === 'S+') },
     { id:'five_jobs',    emoji:'📁', name:'Five Projects',    cond:p => p.history.length >= 5 },
-    { id:'all_novice',   emoji:'🌱', name:'Novice Cleared',   cond:p => window.EC_LEVELS.filter(l=>l.tier==='novice').every(l=>p.completed.includes(l.id)) },
+    { id:'all_novice',   emoji:'🌱', name:'Junior Cleared',   cond:p => window.EC_LEVELS.filter(l=>l.tier==='novice').every(l=>p.completed.includes(l.id)) },
     { id:'contrast_king',emoji:'◐',  name:'Contrast Champion',cond:p => p.history.filter(h=>h.scores && h.scores.contrast>=95).length >= 3 },
     { id:'no_mistakes',  emoji:'✨', name:'Flawless Run',     cond:p => p.history.some(h => h.score >= 98) },
     { id:'graduate',     emoji:'🏆', name:'Studio Graduate',  cond:p => p.completed.length >= window.EC_LEVELS.length },
