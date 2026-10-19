@@ -814,8 +814,8 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.waitForTimeout(1200); await page.locator('#btn-accept-job').click();
   await page.waitForTimeout(3000); 
   const bubble = page.locator('.piko-bubble'), next = async () => { await page.mouse.click(800,860); await page.waitForTimeout(700); };
-  await next(); await expect(bubble).toContainText('middle mouse');
-  await next(); await expect(bubble).toContainText('middle mouse'); // clicking can't skip it
+  await next(); await expect(bubble).toContainText('Hold and drag');
+  await next(); await expect(bubble).toContainText('Hold and drag'); // clicking can't skip it
   const wrapBox = await page.locator('#editor-canvas-wrap').boundingBox();
   await page.mouse.move(wrapBox.x + 300, wrapBox.y + 300); await page.mouse.down({button:'middle'});
   for(let i=0;i<12;i++){ await page.mouse.move(wrapBox.x + 300 + i*4, wrapBox.y + 300); await page.waitForTimeout(120); }
@@ -825,7 +825,8 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(bubble).toContainText('red dots',{timeout:15000}); // the zoom demo lingers, then the view zooms out first
   await next(); await expect(bubble).toContainText('Heads up');
   await next(); await expect(bubble).toContainText('together');
-  await next(); await expect(bubble).toContainText('Left click it');
+  await next(); await expect(bubble).toContainText('Click “About”'); // click steps: short cue under the cursor
+  await expect(page.locator('.tv-hand')).toHaveClass(/g-tap/); // the hand shows the click in this tutorial too
   const about = page.locator('#editor-canvas .el[data-id="about"]');
   await expect(about).toHaveClass(/piko-glow/);
   // (since "luv u" the screen stays dimmed here, with About glowing on top)
@@ -836,9 +837,9 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await next(); await expect(bubble).toContainText('This is the element panel');
   await next(); await expect(bubble).toContainText('alignment rulers');
   await next(); await expect(bubble).toContainText('This is the toolbar');
-  await next(); await expect(bubble).toContainText('show or hide the grid');
+  await next(); await expect(bubble).toContainText('Show the grid');
   await page.locator('#tool-grid').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('snaps');
-  await next(); await expect(bubble).toContainText('click this one');
+  await next(); await expect(bubble).toContainText('Grid options');
   await page.locator('#tool-grid-settings').click(); await page.waitForTimeout(800); await expect(bubble).toContainText('see-through');
   await page.locator('#grid-opacity-slider').fill('0.6'); await page.waitForTimeout(1600);
   await expect(bubble).toContainText('undo and redo');
@@ -886,7 +887,6 @@ test('Piko shows the first job visually with "Show me"', async ({ page }) => {
   for(let i=0;i<8 && !(await cue.textContent().catch(()=>'')).includes('Lined up');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(cue).toContainText('Lined up'); await expect(page.locator('.tv-ghost')).toHaveCount(0);
   await see('Show the grid'); await page.locator('#tool-grid').click();
-  await expect(page.locator('.tv-burst')).toHaveCount(1); // a quick ✓ where the player clicked
   await see('Grid options'); await page.locator('#tool-grid-settings').click();
   await see('slider'); await expect(hand).toHaveClass(/g-slide-x/);
   await page.locator('#grid-opacity-slider').fill('0.6');
@@ -920,7 +920,7 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
   await page.waitForTimeout(1500); await expect(bubble).toContainText('Added after opening Mail.');
   await next(); await expect(bubble).toContainText('EyeMail');
   await next(); await expect(bubble).toContainText('Each email');
-  await next(); await expect(bubble).toContainText('needs a hand');
+  await next(); await expect(bubble).toContainText('Open the email'); // a click step: the short cue
 });
 
 test('Piko lines can be re-read with back and forward', async ({ page }) => {

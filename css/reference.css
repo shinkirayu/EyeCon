@@ -3104,11 +3104,11 @@ html body .piko-bubble.piko-cue,html body .piko-bubble.piko-cue *{pointer-events
 .tv-ripple{position:absolute;left:1.3rem;top:.3rem;width:3.5rem;height:3.5rem;border:.25rem solid #fff;border-radius:50%;box-shadow:0 0 0 .1875rem #7656b3;opacity:0;transform:translate(-50%,-50%);}
 .tv-hand.g-tap img{animation:tvTap 1.6s ease-in-out infinite;}
 .tv-hand.g-tap .tv-ripple{animation:tvRipple 1.6s ease-out infinite;}
-@keyframes tvTap{0%{transform:translate(1.25rem,1.5rem);opacity:0}10%{opacity:1}40%{transform:none}48%{transform:scale(.82)}56%,90%{transform:none;opacity:1}100%{transform:translate(.5rem,.75rem);opacity:0}}
+@keyframes tvTap{0%{transform:translate(.5rem,.625rem);opacity:0}10%{opacity:1}40%{transform:none}48%{transform:scale(.82)}56%,90%{transform:none;opacity:1}100%{transform:translate(.25rem,.375rem);opacity:0}}
 @keyframes tvRipple{0%,46%{opacity:0;transform:translate(-50%,-50%) scale(.2)}50%{opacity:1}85%,100%{opacity:0;transform:translate(-50%,-50%) scale(1.4)}}
 .tv-hand.g-hold img{animation:tvHold 2.4s ease-in-out infinite;}
 .tv-hand.g-hold .tv-ripple{animation:tvHoldRing 2.4s linear infinite;}
-@keyframes tvHold{0%{transform:translate(1.25rem,1.5rem);opacity:0}15%{transform:none;opacity:1}22%,80%{transform:scale(.82)}88%{transform:none;opacity:1}100%{transform:translate(1.25rem,1.5rem);opacity:0}}
+@keyframes tvHold{0%{transform:translate(.5rem,.625rem);opacity:0}15%{transform:none;opacity:1}22%,80%{transform:scale(.82)}88%{transform:none;opacity:1}100%{transform:translate(.5rem,.625rem);opacity:0}}
 @keyframes tvHoldRing{0%,20%{opacity:0;transform:translate(-50%,-50%) scale(.3)}25%{opacity:1}80%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}90%,100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
 .tv-hand.g-slide-x{animation:tvSlideX 2s ease-in-out infinite;}
 .tv-hand.g-slide-y{animation:tvSlideY 2s ease-in-out infinite;}
@@ -3122,12 +3122,12 @@ html body .piko-bubble.piko-cue,html body .piko-bubble.piko-cue *{pointer-events
 /* Drag demo: a see-through copy slides onto the dashed line, then the player does it. */
 .tv-ghost{position:absolute;z-index:520;pointer-events:none;}
 .tv-ghost-line{position:absolute;top:var(--dy);height:0;border-top:4px dashed #e53b42;}
-.tv-ghost-el{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;outline:3px dashed #7656b3;outline-offset:4px;border-radius:4px;opacity:.6;transform:translateY(var(--dy));animation:tvGhost 2.2s ease-in-out infinite;}
+.tv-ghost-el{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;outline:3px dashed #7656b3;outline-offset:0;border-radius:4px;opacity:.6;transform:translateY(var(--dy));animation:tvGhost 2.2s ease-in-out infinite;}
 .tv-ghost-el img{position:absolute;left:50%;top:55%;height:1.75em;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0006);}
 @keyframes tvGhost{0%,15%{transform:none;opacity:0}25%{transform:none;opacity:.6}65%,85%{transform:translateY(var(--dy));opacity:.6}100%{transform:translateY(var(--dy));opacity:0}}
 body.eyecon-dragging .tv-ghost{display:none;}
 /* The pan/zoom "TRY IT" cards keep their moving mouse; the cue carries the words. */
-body.tut-visual .piko-demo p{display:none;}
+body:is(.tut-visual,:has(.piko-cue:not(.hidden))) .piko-demo p:not(.pd-how){display:none;} /* keep "Middle mouse button or right click" under the mouse */
 /* Little animated pictures for the ideas that used to be paragraphs. */
 .tva{position:relative;width:15rem;height:6.5rem;border-radius:1rem;background:#e3f1ec;}
 .tva-arrow{font-size:1.5rem;color:#2f7a70;animation:tvNudge 1.2s ease-in-out infinite;}

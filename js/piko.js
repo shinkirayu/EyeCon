@@ -283,15 +283,15 @@
     'piko.acceptGuide': tap('Accept the job', { why:'This opens their page in your workspace.' }),
     'piko.workspace.intro': SKIP,
     'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo' },
-    'piko.workspace.zoom': { cue:'Scroll to zoom', at:'.piko-demo' },
+    'piko.workspace.zoom': { cue:'Scroll to zoom in and out', at:'.piko-demo' },
     'piko.workspace.problems': { cue:'Red ! = needs fixing', why:'Each mark is something the client wants fixed.', at:'#editor-canvas .el.needs-edit' },
     'piko.workspace.dotsLater': SKIP, 'piko.workspace.together': SKIP,
     'piko.workspace.selectAbout': tap('Click “About”', { why:'It sits lower than Home and Contact, so the menu looks uneven.',
       onShow: () => offsetHint(['home', 'contact'], 'about'), onHide: () => offsetHint() }),
     'piko.workspace.element': { cue:'Click an item with a red !', why:'Start with any problem the client marked.', icon:'left' },
     'piko.workspace.controls': { cue:'Exact numbers live here', why:'Use them when dragging isn’t precise enough.' },
-    'piko.workspace.dragAbout': { cue:'Drag it up onto the line', why:'Items in a row should share the same top edge.', icon:'left', at:'#editor-canvas .el.piko-glow', burst:false },
-    'piko.workspace.guides': { cue:'Guides help you line things up', why:'Pink line: it lines up. Purple tags: the space between items.', at:'#editor-canvas-wrap' },
+    'piko.workspace.dragAbout': { cue:'Drag it up onto the line', why:'Items in a row should share the same top edge.', icon:'left', at:'#editor-canvas .el.piko-glow' },
+    'piko.workspace.guides': { cue:'Guides help you line things up', why:'Pink line: it lines up. Purple tags: the space between items.', at:'#editor-canvas .el.selected' },
     'piko.workspace.nice': { success:'Lined up!', why:'The menu now reads as one tidy row. That’s alignment.', at:'#editor-canvas .el.selected' },
     'piko.workspace.rulers': SKIP, 'piko.workspace.toolbar': SKIP,
     'piko.workspace.toolbarUndo': { cue:'Undo · Redo', why:'Made a mistake? Step back anytime.', at:'.piko-tb-glow' },
@@ -420,7 +420,7 @@
     document.body.classList.remove('piko-line-pending');
     document.removeEventListener('click', advanceAnywhere, true);
     if(!dom) return; // (history kept: ‹ can re-read lines from before the last action too)
-    endCue(true);
+    endCue(true); stopClassicHand();
     dom.bubble.classList.add('hidden');
     clearInterval(typeTimer);
     typeTimer = null;
@@ -432,22 +432,34 @@
     if(!cue) return;
     clearTimeout(cue.autoTimer); cancelAnimationFrame(cue.frame);
     cue.v.onHide?.();
-    // The player did what an action cue asked: a quick ✓ where they did it.
-    if(done && cue.action && cue.rect && !cue.v.success && cue.v.burst !== false) successBurst(cue.rect);
     dom.hand.className = 'tv-hand hidden';
     dom.bubble.style.left = dom.bubble.style.top = '';
     cue = null;
   }
-  function successBurst(r){
-    const b = document.createElement('div'); b.className = 'tv-burst'; b.setAttribute('aria-hidden', 'true'); b.textContent = '✓';
-    b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
-    document.body.appendChild(b);
-    window.EC_SOUND?.play?.('pikoLine');
-    setTimeout(() => b.remove(), 900);
-  }
+
   // Places the cue beside its target (below it, else above; inside the bottom of tall
   // areas like the canvas), and the hand on the target, every frame. Nothing to point
   // at: cards and greetings sit in the middle, the rest low and centred.
+  // The hand acting the move out on a target rect (tap / hold / slide-x / slide-y), or hidden.
+  function placeHand(g, r){
+    const hand = dom.hand;
+    hand.className = 'tv-hand' + (g ? ' g-' + g : ' hidden');
+    if(!g) return;
+    hand.style.left = (r.left + r.width * (g === 'slide-x' ? .3 : .5)) + 'px';
+    hand.style.top = (r.top + r.height * (g === 'slide-y' ? .3 : .55)) + 'px';
+    hand.style.setProperty('--slide', (g === 'slide-y' ? r.height * .45 : r.width * .45) + 'px');
+  }
+  // Classic tutorial ("Explain it"): Piko's words stay as they are, and the same hand
+  // shows the click (or slide / hold) on whatever an action line asks for.
+  let classicHand = null;
+  function stopClassicHand(){ if(!classicHand) return; cancelAnimationFrame(classicHand.frame); classicHand = null; dom.hand.className = 'tv-hand hidden'; }
+  function followClassicHand(){
+    if(!classicHand || !dom) return;
+    const v = classicHand.v, t = (v.at && document.querySelector(v.at)) || currentTarget;
+    const r = t && t.isConnected ? t.getBoundingClientRect() : null;
+    placeHand(r && r.width && r.height <= innerHeight * .45 ? v.gesture : null, r);
+    classicHand.frame = requestAnimationFrame(followClassicHand);
+  }
   function placeCue(){
     if(!cue || !dom) return;
     const { bubble, hand } = dom, v = cue.v;
@@ -464,13 +476,7 @@
         x = Math.max(8, panel.left - gap - cw); y = Math.min(Math.max(8, r.top + r.height / 2 - ch / 2), H - ch - 8);
       }
       cue.rect = r;
-      const g = v.gesture && !big ? v.gesture : null;
-      hand.className = 'tv-hand' + (g ? ' g-' + g : ' hidden');
-      if(g){
-        hand.style.left = (r.left + r.width * (g === 'slide-x' ? .3 : .5)) + 'px';
-        hand.style.top = (r.top + r.height * (g === 'slide-y' ? .3 : .55)) + 'px';
-        hand.style.setProperty('--slide', (g === 'slide-y' ? r.height * .45 : r.width * .45) + 'px');
-      }
+      placeHand(v.gesture && !big ? v.gesture : null, r);
     } else {
       x = (W - cw) / 2; y = v.card || v.success || v.mid ? Math.max(8, (H - ch) / 2) : Math.max(8, H - ch - 144);
       hand.className = 'tv-hand hidden';
@@ -495,10 +501,16 @@
   // (unless skipped), then lines added after it, before the game continues.
   function say(line, opts){
     opts = opts || {};
-    if(visual()){
+    // Both tutorials: Level 1's quick tips are the animated cards, and every "click this" step is the
+    // short cue with Piko under the cursor (unless an admin added lines around it).
+    const key0 = window.EC_TEXT?.keyFor(line) || '', x0 = key0 && window.EC_TEXT.extras(key0);
+    const clickStep = (opts.tap || !opts.onDone && visualFor(line, false).gesture) && !(x0 && (x0.before.length || x0.after.length)); // click / slide / hold
+    // Classic too: any line with a cue (not skipped, no admin-added lines) shows as that cue; the rest stay full lines.
+    const hasCue = /^piko\.(levels|practice)\.|^piko\.workspace\.(pan|zoom|guides)$/.test(key0) && !/^piko\.levels\.yappers\.[69]\.0$/.test(key0) && !(x0 && (x0.before.length || x0.after.length || x0.skip));
+    if(visual() || clickStep || hasCue){
       // Lines that only explain are skipped; the rest become a short cue (admin-added
       // before/after lines are left to the classic tutorial).
-      const v = visualFor(line, !!opts.onDone);
+      const v = opts.tap && !VISUAL[key0] ? { cue: line, raw:true, icon:'left', gesture:'tap' } : visualFor(line, !!opts.onDone); // an admin-added click line
       if(v.skip && opts.onDone){ hideBubble(); setTimeout(opts.onDone); return; }
       return sayOne(line, Object.assign({}, opts, { _v: v }));
     }
@@ -544,6 +556,8 @@
     const { textEl, caretEl, bubble } = ensureDom();
     const v = opts._v;
     endCue(true); // a new line replaces the cue (✓ if it had asked for an action)
+    stopClassicHand();
+    if(!v && !opts.onDone){ const g = visualFor(line, false); if(g.gesture){ classicHand = { v: g }; followClassicHand(); } }
     bubble.classList.toggle('piko-cue', !!v);
     bubble.classList.toggle('piko-cue-card', !!(v && (v.card || v.success)));
     bubble.classList.toggle('piko-cue-ok', !!(v && v.success));
@@ -716,6 +730,7 @@
 
   function clearTarget(){
     if(cue?.action) hideBubble(); // visual tutorial: the step is done, the cue leaves with its ✓
+    if(dom) stopClassicHand(); // classic: the highlight went, so did the step
     const { cursor, hole } = ensureDom();
     clearTimeout(pointTimer); // a highlight still waiting to land is cancelled too
     clearInterval(placeRetryTimer); placeRetryTimer = null;
@@ -773,7 +788,7 @@
   function demo(kind, el){
     document.querySelectorAll('.piko-demo, .tv-ghost').forEach(n => n.remove());
     if(!kind) return;
-    if(kind === 'drag' && visual() && ghostDrag(el || document.querySelector('#editor-canvas .el.piko-glow'))) return;
+    if(kind === 'drag' && ghostDrag(el || document.querySelector('#editor-canvas .el.piko-glow'))) return;
     const wrap = document.getElementById('editor-canvas-wrap');
     if(!wrap) return;
     const r = wrap.getBoundingClientRect();
@@ -783,7 +798,7 @@
     // The drag demo sits to the side: About is centred in the canvas and must stay visible.
     const cx = kind === 'drag' ? r.left + r.width * .78 : r.left + r.width / 2, cy = kind === 'drag' ? r.top + r.height * .36 : r.top + r.height / 2;
     d.style.left = cx + 'px'; d.style.top = cy + 'px';
-    const mouse = kind === 'pan' ? (visual() ? PAN_EITHER() : mouseIcon('middle', 'right')) : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
+    const mouse = kind === 'pan' ? PAN_EITHER() : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
     const label = { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' }[kind];
     // Which button(s), spelled out under the action.
     const how = { pan:'Middle mouse button or right click', zoom:'Mouse wheel', drag:'Left click' }[kind];

@@ -297,7 +297,7 @@
           P.clearTarget();
           if(lines.length === 1) await window.EC_EDITOR.focusElement(practice); // already centred above otherwise
           glow(practice); P.pointAt(elDiv(practice));
-          P.say(lines[lines.length - 1], { left:true, _x:true }); // bottom-left: keeps the page's top menu row clear
+          P.say(lines[lines.length - 1], { left:true, _x:true, tap:true }); // the click step: hand on About, Piko under it
           await until(selected);
         }
         P.clearTarget(); glow(practice);
@@ -689,7 +689,9 @@
         el(id)?.classList.remove('piko-glow');
       };
       if(phGoal && !okFor(['user','pass'])){
-        await window.EC_EDITOR.focusElement('user', 600, 1.6);
+        P.clearTarget(); P.hideBubble(); // the old highlight goes first, so nothing jumps while the page moves
+        await window.EC_EDITOR.focusElement('user', 900, 1.6); // a slow, visible glide down to the placeholders
+        await new Promise(r => setTimeout(r, 250));
         await pickStep('user', L.phPick);
         window.EC_EDITOR.lockSelection(true); // keep it picked; Shift+click can still add Password
         // Group them: Shift+click the second placeholder, then one slider moves both.

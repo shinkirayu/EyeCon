@@ -134,7 +134,7 @@
   ];
   // Items 4, 7, 9, 11 and 13 are hidden for now (0-based below). Answers keep each item's original number (q),
   // so results still line up with Appendix C / D.
-  const HIDDEN = []; // none hidden: all 20 items, as in Appendix C
+  const HIDDEN = [2, 3, 6, 8, 10, 11, 12, 17, 18, 19]; // for now: the 10-item version (items 1, 2, 5, 6, 8, 10, 14, 15, 16, 17)
   const Q = ALL_Q.map((it, n) => Object.assign({ n }, it)).filter(it => !HIDDEN.includes(it.n));
   // Local files use .html names; the live site serves the landing page at / and the game at /play.
   const LOCAL = /\.html$/.test(location.pathname), HOME = LOCAL ? 'overview.html' : '/', PLAY = LOCAL ? 'index.html' : 'play';

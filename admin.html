@@ -617,7 +617,7 @@
     d.innerHTML = `<div class="card resp-card"><div class="fun-head"><h2>${esc(r?.display_name || 'Respondent')}</h2><button class="ghost" data-close>Close ✕</button></div>
       <p class="sub">${esc(r?.section || '')}${r?.prior_ui ? ` · design tools: ${esc(r.prior_ui)}` : ''} · Pre ${pre ? pre.score + ' / ' + pre.total : '–'} · Post ${post ? post.score + ' / ' + post.total : '–'}</p>
       <table class="sorttable resp-table"><thead><tr><th>#</th><th>Question</th><th>Pre-test</th><th>Post-test</th><th>Correct answer</th></tr></thead><tbody>
-      ${items.map((it, i) => `<tr><td>${i + 1}</td><td>${esc(it.q)}</td>${cellFor(pre, i, it)}${cellFor(post, i, it)}<td>${L[it.a]}. ${esc(it.o[it.a])}</td></tr>`).join('')}
+      ${items.map((it, i) => !pick(pre, i) && !pick(post, i) ? '' : `<tr><td>${i + 1}</td><td>${esc(it.q)}</td>${cellFor(pre, i, it)}${cellFor(post, i, it)}<td>${L[it.a]}. ${esc(it.o[it.a])}</td></tr>`).join('')}
       </tbody></table>
       <h3>Software evaluation</h3>${ev ? `<table class="sorttable"><thead><tr><th>Item</th><th>Rating</th><th>Meaning</th></tr></thead><tbody>${EVAL_ITEMS.flatMap(([, ...xs]) => xs).map(([id, t]) => `<tr><td title="${esc(t)}">${id}</td><td>${ev.eval[id] ?? '–'}</td><td>${verbal(ev.eval[id])}</td></tr>`).join('')}</tbody></table>
         <p><b>Comments:</b> ${ev.comments ? esc(ev.comments) : '<span class="sub">none</span>'}</p>` : '<p class="empty">No ratings (post-test not taken yet).</p>'}</div>`;
@@ -649,7 +649,7 @@
       <section class="card"><div class="fun-head"><h2>Scores by content area</h2><span class="sub" style="margin:0">average % correct · pre → post</span></div>
         <table class="sorttable"><thead><tr><th>Area</th><th>Items</th><th>Pre-test</th><th>Post-test</th><th>Change</th></tr></thead><tbody>
         ${QUIZ_AREAS.map(([n, a, b]) => { const x = areaPct(pre, a, b), y = areaPct(post, a, b); return `<tr><td>${n}</td><td>${a}–${b}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
-        <tr><td><b>Overall</b></td><td>1–20</td><td>${avg(pre)} / 20</td><td>${avg(post)} / 20</td><td>${paired.length ? `${paired.length} paired` : ''}</td></tr>
+        <tr><td><b>Overall</b></td><td>${(pre[0] || post[0])?.total || 20} items</td><td>${avg(pre)} / ${pre[0]?.total || 20}</td><td>${avg(post)} / ${post[0]?.total || 20}</td><td>${paired.length ? `${paired.length} paired` : ''}</td></tr>
         </tbody></table></section>
       <section class="card"><div class="fun-head"><h2>Each item</h2><span class="sub" style="margin:0">% who got it right</span></div>
         <table class="sorttable"><thead><tr><th>#</th><th>Area</th><th>Pre</th><th>Post</th><th>Change</th></tr></thead><tbody>
