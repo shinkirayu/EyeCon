@@ -15,7 +15,6 @@ test.beforeEach(async ({ page }, info) => {
 test('Piko welcomes the player on the first desktop visit', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble');
   await expect(bubble).toBeVisible();
   await expect(bubble).toContainText('Piko');
@@ -802,7 +801,6 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.setViewportSize({width:1600,height:900});
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const say = async () => { await page.waitForTimeout(900); await page.locator('.piko-panel').click(); };
   await say(); await page.waitForTimeout(900);
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
@@ -852,9 +850,9 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
 test('Piko shows the first job visually with "Show me"', async ({ page }) => {
   test.setTimeout(120000);
   await page.setViewportSize({width:1600,height:900});
-  await page.goto('/');
+  await page.goto('/?admin');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /Show me/ }).click();
+  await page.getByRole('button', { name: /Show me/ }).click(); // the choice is admin-only for now
   const cue = page.locator('.piko-bubble.piko-cue:not(.hidden)'), hand = page.locator('.tv-hand:not(.hidden)');
   // Talk beats wait for a click ("Click to continue"); click through them until the step with this text.
   const see = async (text, timeout = 20000) => {
@@ -910,7 +908,6 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble'), next = async () => { await page.waitForTimeout(1200); await bubble.locator('.piko-panel').click(); };
   await page.waitForTimeout(900); await expect(bubble).toContainText("Hi, I'm Piko");
   await next(); await expect(bubble).toContainText('Added after the hello, Designer!');
@@ -929,7 +926,6 @@ test('Piko plays admin-added lines before and after a line', async ({ page }) =>
 test('Piko lines can be re-read with back and forward', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
-  await page.getByRole('button', { name: /Explain it/ }).click(); // classic tutorial
   const bubble = page.locator('.piko-bubble'), text = bubble.locator('.piko-text');
   await page.waitForTimeout(1200);
   await expect(bubble.locator('.piko-hint')).toHaveText('Click anywhere to continue');

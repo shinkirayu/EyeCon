@@ -128,6 +128,8 @@
     document.body.classList.add('piko-intro', 'piko-no-badge', 'piko-tutorial'); // apps locked while Piko talks; mail "arrives" later; Home off for the whole first-day tour
     // Hello → ask the player's name (their display name) → carry on.
     const afterName = next => {
+      // Same person as the pre-test: use its first name ("Matt Velarie" -> "Matt") instead of asking again.
+      if(!profile.displayName){ try{ const n = JSON.parse(localStorage.getItem('eyecon_study') || '{}').profile?.name; if(n && n.trim()){ profile.displayName = n.trim().split(/\s+/)[0]; save(); } }catch(_){} }
       if(profile.displayName) return next();
       const googleName = (window.EC_DB?.client && !window.EC_DB.isGuest) ? (window.EC_DB.fullName || '').split(' ')[0] : '';
       P.ask(P.SCRIPT.askName, { placeholder:'Your name', title:P.SCRIPT.askNameTitle, prefill:googleName }, name => {
@@ -168,6 +170,8 @@
   const TUTORIAL_NAMES = { visual:'Show me', classic:'Explain it' };
   function chooseTutorialStyle(done){
     if(profile.settings.tutorialStyle) return done();
+    // For now "Explain it" is everyone's tutorial; the choice (and "Show me") is admin-only (index.html?admin).
+    if(!new URLSearchParams(location.search).has('admin')) return done();
     const card = document.createElement('div');
     card.className = 'piko-name-card tut-choice';
     card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'tut-choice-title');
@@ -2205,7 +2209,7 @@
         <output for="qs-${key}">${quickLevel(key)}%</output>
       </li>`;
     const motion = !!profile.settings.reduceMotion;
-    const picker = (key, label, value) => `<li class="profile-setting${['keys','layout','theme'].includes(key) ? ' admin-only' : ''}">
+    const picker = (key, label, value) => `<li class="profile-setting${['keys','layout','theme','tutorial'].includes(key) ? ' admin-only' : ''}">
         <span id="qs-${key}-label">${label}</span>
         <div class="profile-control profile-picker" role="group" aria-labelledby="qs-${key}-label">
           <button type="button" data-pick="${key}" data-step="-1" aria-label="Previous ${label.toLowerCase()}">◀</button>

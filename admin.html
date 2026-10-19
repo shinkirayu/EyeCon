@@ -249,6 +249,8 @@
   @media (max-width:600px){.bar-row{grid-template-columns:100px 1fr 48px}header{flex-wrap:wrap}}
 .cmp-row{display:grid;grid-template-columns:6rem 1fr 7rem;align-items:center;gap:.75rem;margin:.5rem 0;font-weight:700;}
 .cmp-bar{height:1.1rem;border-radius:1rem;background:#f1ece4;overflow:hidden;}.cmp-bar i{display:block;height:100%;border-radius:1rem;}
+  .ev-cat td{background:var(--bar-soft,#eef6f4);}
+  .ev-comments{margin:.5rem 0 0;padding-left:1.25rem;display:grid;gap:.4rem;}
 </style>
 </head>
 <body>
@@ -568,6 +570,29 @@
       </tbody></table>
       <p class="sub">For the p-value and the normality check, load the CSV below into JASP or SPSS.</p></section>`;
   }
+  // Post-test Part II (ISO/IEC 25010 software quality, 5-point scale) and Part III comments.
+  // Stored with the post-test answers in Supabase (quiz_results.answers, the entry with "eval").
+  const EVAL_ITEMS = [
+    ['Functional Suitability', ['FS1','The tasks cover the main alignment, contrast, and typography standards.'],['FS2','A task ticked off only when the fix met the rule.'],['FS3','The Contrast readout showed accurate ratios and pass/fail results.'],['FS4','The tools were enough to complete every client’s tasks.']],
+    ['Interaction Capability', ['IC1','Piko’s onboarding and lessons taught the controls.'],['IC2','Emails, task list and tips made clear what to fix.'],['IC3','Dragging, snapping and the Design Panel were easy to control.'],['IC4','Reset, before/after and Back to Editor made recovering easy.'],['IC5','Hints and the UI Survival Guide helped when stuck.'],['IC6','Story, clients, fees and gifts kept them engaged.']],
+    ['Performance Efficiency', ['PE1','EyeCon loaded quickly.'],['PE2','Dragging, panning and zooming were smooth.'],['PE3','Task list and Contrast readout updated immediately.'],['PE4','EyeCon did not slow down the computer or browser.']]];
+  const verbal = m => m == null ? '' : m >= 4.21 ? 'Strongly Agree' : m >= 3.41 ? 'Agree' : m >= 2.61 ? 'Neutral' : m >= 1.81 ? 'Disagree' : 'Strongly Disagree';
+  function evalCard(post){
+    const forms = post.map(q => (q.answers || []).find(x => x && x.eval)).filter(Boolean);
+    if(!forms.length) return '<section class="card"><h2>Software evaluation</h2><p class="empty">No ratings yet. They come with each post-test.</p></section>';
+    const mean = ids => { const v = forms.flatMap(f => ids.map(id => f.eval[id]).filter(Number.isFinite)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+    const f2 = m => m == null ? '–' : m.toFixed(2);
+    const rows = EVAL_ITEMS.map(([cat, ...items]) => { const m = mean(items.map(([id]) => id));
+      return `<tr class="ev-cat"><td colspan="2"><b>${cat}</b></td><td><b>${f2(m)}</b></td><td><b>${verbal(m)}</b></td></tr>` +
+        items.map(([id, t]) => { const x = mean([id]); return `<tr><td>${id}</td><td>${esc(t)}</td><td>${f2(x)}</td><td>${verbal(x)}</td></tr>`; }).join(''); }).join('');
+    const all = mean(EVAL_ITEMS.flatMap(([, ...items]) => items.map(([id]) => id)));
+    const comments = forms.map(f => f.comments).filter(c => c && c.trim());
+    return `<section class="card"><div class="fun-head"><h2>Software evaluation</h2><span class="sub" style="margin:0">${forms.length} ${forms.length === 1 ? 'rating' : 'ratings'} · mean of 5</span></div>
+      <table class="sorttable"><thead><tr><th>Item</th><th>Statement</th><th>Mean</th><th>Interpretation</th></tr></thead><tbody>${rows}
+      <tr class="ev-cat"><td colspan="2"><b>Overall</b></td><td><b>${f2(all)}</b></td><td><b>${verbal(all)}</b></td></tr></tbody></table>
+      <p class="sub">Scale: 4.21–5.00 Strongly Agree · 3.41–4.20 Agree · 2.61–3.40 Neutral · 1.81–2.60 Disagree · 1.00–1.80 Strongly Disagree</p>
+      <h3>Comments and suggestions (${comments.length})</h3>${comments.length ? `<ul class="ev-comments">${comments.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="empty">No comments yet.</p>'}</section>`;
+  }
   async function showStudy(){
     app.innerHTML = '<p class="loading">Loading study results…</p>';
     const [{ data:rows, error }, { data:quiz, error:e2 }] = await Promise.all([
@@ -597,8 +622,9 @@
         <table class="sorttable"><thead><tr><th>#</th><th>Area</th><th>Pre</th><th>Post</th><th>Change</th></tr></thead><tbody>
         ${Array.from({ length:20 }, (_, i) => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
         </tbody></table></section>
+      ${evalCard(post)}
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
-        ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Section</th><th>Studied UI</th><th>Pre</th><th>Post</th><th>Gain</th><th></th></tr></thead><tbody>
+        ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Section</th><th>Used design tools</th><th>Pre</th><th>Post</th><th>Gain</th><th></th></tr></thead><tbody>
         ${rows.map(r => `<tr><td>${esc(r.display_name || r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td><td><button class="ghost" data-del-resp="${esc(r.respondent_id)}" data-name="${esc(r.display_name || '')}">Delete</button></td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">No respondents yet.</p>'}
         <p class="sub">The CSV uses a respondent number instead of names and emails, ready for the paper.</p></section>`;

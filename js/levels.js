@@ -392,7 +392,7 @@ Thanks for helping everyone see clearly,
       }
     },
     {
-      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, sizeGuide:[{id:'month',name:'Card title'},{id:'nav1',name:'Menu link'},{id:'unitsVal',name:'Card value'},{id:'day1',name:'Smallest text'}], tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
+      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, sizeGuide:[{id:'welcome',name:'Welcome title'},{id:'month',name:'Card title'},{id:'name',name:'Subtitle'},{id:'nav1',name:'Menu link'},{id:'unitsVal',name:'Card value'},{id:'day1',name:'Smallest text'}], tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
       emailPreview:"Our student dashboard's numbers are smaller than their labels.",
       emailBody:`Good day!
 
@@ -458,7 +458,7 @@ Maraming salamat,
         Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled" (Card value size).', {minFont:24, ids:['gwaVal']},
           'Values in matching cards should match too, so none looks more important by accident.', ''),
           { key:'gwaValue', refs:['unitsVal','enrVal'], hint:'One card value doesn\u2019t match the other two.' }),
-        Object.assign(goal('Make the program line bigger: the same size as the student name (24px).', {minFont:24, ids:['program']},
+        Object.assign(goal('Make the program line the Subtitle size (24px), like the student name.', {minFont:24, ids:['program']},
           'It sits under a 48px welcome, so 16px gets lost. A clear step down (48 to 24) keeps it readable and second in line.', ''),
           { key:'program', refs:['welcome','name'], hint:'This line is too small next to the welcome message.' }),
       ],
