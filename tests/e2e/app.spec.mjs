@@ -856,9 +856,19 @@ test('Piko shows the first job visually with "Show me"', async ({ page }) => {
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   await page.getByRole('button', { name: /Show me/ }).click();
   const cue = page.locator('.piko-bubble.piko-cue:not(.hidden)'), hand = page.locator('.tv-hand:not(.hidden)');
-  const see = async (text, timeout = 15000) => { await expect(cue).toContainText(text, { timeout }); await page.waitForTimeout(1300); }; // clicks wait out the dim
-  // Talk beats are short and move on by themselves; no "click to continue" footer.
+  // Talk beats wait for a click ("Click to continue"); click through them until the step with this text.
+  const see = async (text, timeout = 20000) => {
+    const end = Date.now() + timeout;
+    while(!((await cue.count()) && (await cue.textContent()).includes(text))){
+      if(Date.now() > end) throw new Error('No cue with: ' + text);
+      if(await page.locator('.piko-bubble.piko-cue:not(.hidden) .tv-next').count()){ await page.waitForTimeout(500); await page.mouse.click(800, 880); }
+      await page.waitForTimeout(300);
+    }
+    await page.waitForTimeout(1300); // clicks wait out the dim
+  };
+  // Talk beats show a short reason and wait for a click.
   await expect(cue).toContainText('Piko'); await expect(cue.locator('.piko-foot')).toBeHidden();
+  await expect(cue.locator('.tv-next')).toBeVisible(); await page.waitForTimeout(600); await page.mouse.click(800, 880);
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
   await see('Open Mail'); await expect(hand).toHaveClass(/g-tap/); // the hand acts out the click on Mail
   await page.locator('#icon-mail').click();

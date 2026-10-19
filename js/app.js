@@ -359,7 +359,7 @@
         P.pointAt(pill); glowTool(btn); P.say(W.gridSettings, { top:true });
         await until(()=>clicked);
         glowTool(null);
-        let changed = false; panel.addEventListener('input', ()=>{ changed = true; }, { once:true });
+        let changed = false; panel.classList.add('piko-keep'); panel.addEventListener('input', ()=>{ changed = true; panel.classList.remove('piko-keep'); }, { once:true });
         P.pointAt(document.getElementById('editor-canvas-wrap')); // panel sits on the canvas: light both
         P.say(W.gridSettingsDone, { top:true });
         await until(()=>changed || panel.hidden);

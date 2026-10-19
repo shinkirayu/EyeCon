@@ -1851,7 +1851,7 @@
     // Clicking anywhere outside the grid settings popover closes it.
     document.addEventListener('pointerdown', e=>{
       const panel = document.getElementById('grid-settings-panel');
-      if(!panel.hidden && !e.target.closest('#grid-settings-panel, #tool-grid-settings')) panel.hidden = true;
+      if(!panel.hidden && !panel.classList.contains('piko-keep') && !e.target.closest('#grid-settings-panel, #tool-grid-settings')) panel.hidden = true; // tutorial: stays open until the slider is tried
     }, true);
     document.getElementById('grid-opacity-slider').addEventListener('input', e=>{
       state.tools.gridOpacity = Number(e.target.value);

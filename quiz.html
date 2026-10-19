@@ -46,7 +46,7 @@
   .field{display:grid;gap:.35rem;margin-bottom:1rem;font:800 1rem 'Nunito';}
 .ev-h{margin:1.5rem 0 .5rem;font:800 1.2rem 'Nunito';color:var(--plum);}
   .ev{margin:0 0 .75rem;padding:.75rem 1rem;border:2px solid #e4d8ca;border-radius:.8rem;background:#fff;}
-  .ev legend{padding:0;font:700 1rem/1.4 'Nunito';color:var(--plum);float:left;width:100%;margin-bottom:.5rem;}
+  .ev-t{margin:0 0 .35rem;font:700 1rem/1.4 'Nunito';color:var(--plum);}
   .ev-scale{clear:both;display:flex;gap:.5rem;}
   .ev-scale label{flex:1;cursor:pointer;position:relative;}
   .ev-scale input{position:absolute;opacity:0;}
@@ -85,6 +85,20 @@
   .cmp-areas th,.cmp-areas td{padding:.5rem .75rem;border-bottom:2px solid #eee3d4;text-align:left;}
   .cmp-areas th{font-weight:800;color:#2f7a70;}
   .cmp-areas td.up{color:#1d6a40;font-weight:800;}.cmp-areas td.down{color:#a3142f;font-weight:800;}
+  /* Fit one question (or one rating section) on screen: no scrolling. */
+  body{padding:.75rem;}
+  .card{padding:1.25rem 1.75rem;}
+  .top{margin-bottom:.5rem;} .bar{margin-bottom:1rem;}
+  h2{margin-bottom:.75rem;font-size:1.35rem;}
+  .fig{margin-bottom:.75rem;padding:.5rem;}
+  .fig svg{max-height:clamp(6rem,24vh,12rem);}
+  .opts{gap:.6rem;margin-bottom:1rem;}
+  .opt{padding:.65rem 1rem;}
+  @media(min-width:640px){.opts{grid-template-columns:1fr 1fr;}}
+  .ev{margin-bottom:.4rem;padding:.4rem .75rem;}
+  @media(min-width:760px){.ev{display:grid;grid-template-columns:1fr 15rem;gap:1rem;align-items:center;}.ev-t{float:none;margin:0;}.ev-scale{clear:none;}} /* statement and scale side by side */
+  .ev-scale span{min-height:2.25rem;}
+  .ev-h{margin:.5rem 0;}
 </style>
 </head>
 <body>
@@ -193,19 +207,30 @@
       ['PE3', 'The task list and the Contrast readout updated immediately after each change.'],
       ['PE4', 'EyeCon did not noticeably slow down my computer or browser.']]]];
   let rating = null;
-  function evaluation(){
+  const evalScores = {};
+  // One section per page (A, B, C, then comments), so nothing needs scrolling.
+  function evaluation(page = 0){
     const scale = [[5,'Strongly Agree'],[4,'Agree'],[3,'Neutral'],[2,'Disagree'],[1,'Strongly Disagree']];
-    app.innerHTML = `${top('Part II · Software quality')}<h1>Rate EyeCon</h1><p class="note">5 = Strongly Agree, 4 = Agree, 3 = Neutral, 2 = Disagree, 1 = Strongly Disagree</p>
-      ${EVAL.map(([h, items]) => `<h2 class="ev-h">${h}</h2>${items.map(([id, t]) => `<fieldset class="ev"><legend><b>${id}.</b> ${t}</legend><div class="ev-scale">${scale.map(([v, l]) => `<label title="${l}"><input type="radio" name="${id}" value="${v}" aria-label="${v}, ${l}"><span>${v}</span></label>`).join('')}</div></fieldset>`).join('')}`).join('')}
-      <h2 class="ev-h">Part III · Comments and suggestions (optional)</h2>
-      <div class="field"><textarea id="ev-comments" rows="4" maxlength="2000" aria-label="Comments and suggestions"></textarea></div>
-      <p class="err" id="err" role="alert"></p>
-      <div class="actions"><span></span><button class="btn" id="ev-done">Finish</button></div>`;
-    document.getElementById('ev-done').onclick = () => {
-      const ids = EVAL.flatMap(([, items]) => items.map(([id]) => id)), scores = {};
-      for(const id of ids){ const c = app.querySelector(`input[name="${id}"]:checked`); if(!c){ document.getElementById('err').textContent = `Please rate every statement (${id} is missing).`; app.querySelector(`input[name="${id}"]`).focus(); return; } scores[id] = +c.value; }
-      rating = { eval: scores, comments: document.getElementById('ev-comments').value.trim() };
-      finish();
+    const last = page === EVAL.length, back = page ? '<button class="ghost" id="ev-back">Back</button>' : '<span></span>';
+    if(last){
+      app.innerHTML = `${top('Part III · Comments')}<h1>Anything to add?</h1><p class="note">Comments and suggestions (optional)</p>
+        <div class="field"><textarea id="ev-comments" rows="6" maxlength="2000" aria-label="Comments and suggestions"></textarea></div>
+        <div class="actions">${back}<button class="btn" id="ev-next">Finish</button></div>`;
+    } else {
+      const [h, items] = EVAL[page];
+      app.innerHTML = `${top(`Part II · ${page + 1} / ${EVAL.length}`)}<h2>${h}</h2><p class="note">5 = Strongly Agree · 4 = Agree · 3 = Neutral · 2 = Disagree · 1 = Strongly Disagree</p>
+        ${items.map(([id, t]) => `<div class="ev" role="radiogroup" aria-labelledby="q-${id}"><p class="ev-t" id="q-${id}"><b>${id}.</b> ${t}</p><div class="ev-scale">${scale.map(([v, l]) => `<label title="${l}"><input type="radio" name="${id}" value="${v}" aria-label="${v}, ${l}"${evalScores[id] === v ? ' checked' : ''}><span>${v}</span></label>`).join('')}</div></div>`).join('')}
+        <p class="err" id="err" role="alert"></p>
+        <div class="actions">${back}<button class="btn" id="ev-next">Next</button></div>`;
+    }
+    const keep = () => app.querySelectorAll('.ev input:checked').forEach(c => { evalScores[c.name] = +c.value; });
+    document.getElementById('ev-back')?.addEventListener('click', () => { keep(); evaluation(page - 1); });
+    document.getElementById('ev-next').onclick = () => {
+      if(last){ rating = { eval: { ...evalScores }, comments: document.getElementById('ev-comments').value.trim() }; return finish(); }
+      keep();
+      const missing = EVAL[page][1].map(([id]) => id).find(id => !(id in evalScores));
+      if(missing){ document.getElementById('err').textContent = `Please rate every statement (${missing} is missing).`; app.querySelector(`input[name="${missing}"]`).focus(); return; }
+      evaluation(page + 1);
     };
     window.scrollTo(0, 0);
   }

@@ -3085,6 +3085,9 @@ html body .piko-bubble.piko-cue,html body .piko-bubble.piko-cue *{pointer-events
 .tv-icon{display:inline-flex;align-items:center;}
 .tv-icon .piko-ico{height:2.25rem;margin:0;vertical-align:0;}
 .tv-cap{font-weight:800;color:#3b172e;}
+.tv-why{display:block;max-width:26rem;margin-top:.25rem;font:600 1.1875rem/1.4 var(--font-body);color:#4a3a52;}
+.piko-cue-card .piko-text{display:grid;justify-items:center;gap:.25rem;}
+.piko-cue .piko-panel:has(.tv-why){border-radius:1.5rem;padding-bottom:1rem;}
 .tv-keys{display:inline-flex;gap:.25rem;}
 .tv-keys kbd{display:grid;place-items:center;width:1.75rem;height:1.75rem;border:2px solid #4d0d74;border-radius:.375rem;background:#fff3d6;box-shadow:0 .1875rem 0 #4d0d74;font:800 .875rem var(--font-body);color:#3b172e;animation:tvKey 1.2s ease-in-out infinite;}
 .tv-keys kbd:nth-child(2){animation-delay:.2s}.tv-keys kbd:nth-child(3){animation-delay:.4s}
@@ -3183,7 +3186,7 @@ body.tut-visual .piko-demo p{display:none;}
 @keyframes tvBulb{0%,40%{filter:grayscale(1);opacity:.4}55%,100%{filter:none;opacity:1;transform:scale(1.1)}}
 .tva-basics{display:grid;align-content:center;justify-items:start;gap:.25rem;padding:0 2rem;}
 .tva-basics span{font:800 1.25rem var(--font-display);color:#2f7a70;}
-@media(max-width:640px){.piko-cue .piko-img{width:3rem;}.piko-cue .piko-line{font-size:1.125rem;}.tva{width:13rem;}}
+@media(max-width:640px){.piko-cue .piko-img{width:3rem;}.piko-cue .piko-line{font-size:1.125rem;}.tv-why{font-size:1.0625rem;}.tva{width:13rem;}}
 .reduce-motion :is(.tv-hand,.tv-hand *,.tva,.tva *,.tv-ghost-el,.tv-timer,.tv-ok,.tv-keys kbd){animation:none!important;}
 @media(prefers-reduced-motion:reduce){:is(.tv-hand,.tv-hand *,.tva,.tva *,.tv-ghost-el,.tv-timer,.tv-ok,.tv-keys kbd){animation:none!important;}}
 /* First day: pick how to learn. */
@@ -3199,3 +3202,13 @@ body.tut-visual .piko-demo p{display:none;}
 .tc-read{display:grid;align-content:center;gap:.375rem;width:4rem;padding:.5rem;border:3px solid #77b9af;border-radius:.75rem;background:#fcf7ef;}
 .tc-read i{display:block;height:.375rem;border-radius:999px;background:#3b172e;}.tc-read i:nth-child(2){width:80%}.tc-read i:nth-child(3){width:60%}
 .reduce-motion .tc-pic img{animation:none;}
+
+/* Pan icon: middle and right button flash in turn, so it reads as either one. */
+.tv-either{display:inline-grid;}
+.tv-either>.piko-ico{grid-area:1/1;animation:tvEither 1.6s steps(1) infinite;}
+.tv-either>.piko-ico:last-child{animation-delay:-.8s;}
+@keyframes tvEither{0%{opacity:1}50%{opacity:0}}
+.reduce-motion .tv-either>.piko-ico:last-child{display:none;}
+.tv-next{display:block;margin-top:.5rem;font:700 1rem var(--font-body);color:#5a6f6a;}
+.tv-next::after{content:" ▸";display:inline-block;animation:pikoHintNudge 1.2s ease-in-out infinite;}
+.reduce-motion .tv-next::after{animation:none;}

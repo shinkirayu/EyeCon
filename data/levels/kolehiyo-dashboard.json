@@ -1,6 +1,6 @@
 {
   "format": "eyecon-level-maker-v1",
-  "id": "kolehiyo-ng-lungsod-ng-pitipiw-piw-student-dashboard",
+  "id": "kolehiyo-dashboard",
   "name": "Kolehiyo ng Lungsod ng Pitipiw Piw · Student dashboard",
   "preset": "custom",
   "canvas": {
@@ -22,9 +22,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "main",
@@ -40,8 +40,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "side",
@@ -57,8 +57,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "school",
@@ -79,8 +79,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navhl",
@@ -96,8 +96,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "bell",
@@ -113,9 +113,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "juan",
@@ -133,8 +133,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "name",
@@ -155,8 +155,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "year",
@@ -177,8 +177,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "hero",
@@ -194,8 +194,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "stat1",
@@ -211,8 +211,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "stat2",
@@ -233,8 +233,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "stat3",
@@ -250,8 +250,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "cal",
@@ -267,8 +267,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "announce",
@@ -284,8 +284,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "logo",
@@ -302,9 +302,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "schoolArrow",
@@ -320,9 +320,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav0",
@@ -343,8 +343,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon0",
@@ -360,9 +360,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav1",
@@ -383,8 +383,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon1",
@@ -400,9 +400,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav2",
@@ -421,10 +421,10 @@
       "align": "left",
       "z": 4,
       "allow": [
-        "resize"
+        "font"
       ],
-      "gameLocked": false,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": false
     },
     {
       "id": "navicon2",
@@ -440,9 +440,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav3",
@@ -463,8 +463,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon3",
@@ -480,9 +480,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav4",
@@ -503,8 +503,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon4",
@@ -520,9 +520,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav5",
@@ -541,10 +541,10 @@
       "align": "left",
       "z": 4,
       "allow": [
-        "resize"
+        "font"
       ],
-      "gameLocked": false,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": false
     },
     {
       "id": "navicon5",
@@ -560,9 +560,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav6",
@@ -583,8 +583,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon6",
@@ -600,9 +600,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "nav7",
@@ -623,8 +623,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "navicon7",
@@ -640,9 +640,9 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
       "radius": 0,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     },
     {
       "id": "date",
@@ -663,8 +663,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "welcome",
@@ -676,7 +676,7 @@
       "w": 720,
       "h": 64,
       "fontFamily": "Niramit",
-      "fontSize": 24,
+      "fontSize": 48,
       "fontWeight": "700",
       "color": "#FFFFFF",
       "bg": null,
@@ -685,8 +685,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "program",
@@ -698,17 +698,17 @@
       "w": 720,
       "h": 32,
       "fontFamily": "Niramit",
-      "fontSize": 10,
+      "fontSize": 16,
       "fontWeight": "500",
       "color": "#FFFFFF",
       "bg": null,
       "align": "left",
       "z": 4,
       "allow": [
-        "resize"
+        "font"
       ],
-      "gameLocked": false,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": false
     },
     {
       "id": "gwaLbl",
@@ -729,8 +729,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "unitsLbl",
@@ -751,8 +751,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "enrLbl",
@@ -771,10 +771,10 @@
       "align": "left",
       "z": 4,
       "allow": [
-        "resize"
+        "font"
       ],
-      "gameLocked": false,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": false
     },
     {
       "id": "gwaVal",
@@ -795,8 +795,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": false,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": false
     },
     {
       "id": "unitsVal",
@@ -817,8 +817,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "enrVal",
@@ -839,8 +839,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "month",
@@ -861,8 +861,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow0",
@@ -883,8 +883,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow1",
@@ -905,8 +905,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow2",
@@ -927,8 +927,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow3",
@@ -949,8 +949,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow4",
@@ -971,8 +971,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow5",
@@ -993,8 +993,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "dow6",
@@ -1015,8 +1015,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "day1",
@@ -1719,8 +1719,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "radius": 0
+      "radius": 0,
+      "gameLocked": true
     },
     {
       "id": "annBody",
@@ -1736,8 +1736,8 @@
       "allow": [
         "font"
       ],
-      "gameLocked": true,
-      "fontSize": 16
+      "fontSize": 16,
+      "gameLocked": true
     }
   ],
   "hiddenTargets": []

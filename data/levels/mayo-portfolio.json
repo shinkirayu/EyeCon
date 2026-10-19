@@ -237,7 +237,7 @@
       "src": "assets/levels/mayo/card3.png",
       "radius": 0,
       "fontSize": 16,
-      "gameLocked": false,
+      "gameLocked": true,
       "allow": [
         "move"
       ]

@@ -252,7 +252,9 @@
   const playerName = () => window.EC_STORE?.load?.().displayName || 'Designer';
   // Keys pressing, for "press any key".
   const KEYS = '<span class="tv-keys" aria-hidden="true"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>';
-  const ICON = { left: () => mouseIcon('left'), pan: () => mouseIcon('middle', 'right'), wheel: () => mouseIcon('middle'), keys: () => KEYS,
+  // Either button pans: the middle and right buttons light up in turn (not both at once).
+  const PAN_EITHER = () => `<span class="tv-either">${mouseIcon('middle')}${mouseIcon('right')}</span>`;
+  const ICON = { left: () => mouseIcon('left'), pan: PAN_EITHER, wheel: () => mouseIcon('middle'), keys: () => KEYS,
     shift: () => '<kbd class="piko-kbd">⇧ Shift</kbd>' };
   // Little animated pictures for the ideas that used to be paragraphs.
   const ART = {
@@ -269,92 +271,102 @@
   const SKIP = { skip:true };
   const tap = (cue, more) => Object.assign({ cue, icon:'left', gesture:'tap' }, more);
   const VISUAL = {
-    'piko.tutorial.0': { cue:'Hi! I’m Piko 👋', mid:1, auto:1800 },
-    'piko.niceToMeet': () => ({ cue:`Hi, ${playerName()}!`, mid:1, auto:1400 }),
-    'piko.tutorial.1': { cue:'You fix clients’ designs', card:ART.fix, auto:3200 },
-    'piko.tutorial.2': tap('Open Mail'),
+    // Each cue: what to do (cue), shown on the real control, plus one short line on why it
+    // matters (why). Lines that only chat are skipped; concepts are kept, just shorter.
+    'piko.tutorial.0': { cue:'Hi! I’m Piko 👋', why:'Welcome to your first day at EyeCon Studio!', mid:1 },
+    'piko.niceToMeet': () => ({ cue:`Nice to meet you, ${playerName()}!`, mid:1, auto:1600 }),
+    'piko.tutorial.1': { cue:'You fix clients’ designs', why:'Their pages are hard to read or use. You make them work for everyone.', card:ART.fix },
+    'piko.tutorial.2': tap('Open Mail', { why:'Your first client job just arrived.' }),
     'piko.mailIntro': SKIP, 'piko.mailExplain': SKIP,
-    'piko.inboxGuide': tap('Open the email'),
-    'piko.previewGuide': tap('See their design'),
-    'piko.acceptGuide': tap('Accept the job'),
+    'piko.inboxGuide': tap('Open the email', { why:'Each email is a job: who it’s from and what they need.' }),
+    'piko.previewGuide': tap('See their design', { why:'Look at the page before you start fixing it.' }),
+    'piko.acceptGuide': tap('Accept the job', { why:'This opens their page in your workspace.' }),
     'piko.workspace.intro': SKIP,
-    'piko.workspace.pan': { cue:'Hold right-click, then drag', icon:'pan', at:'.piko-demo' },
-    'piko.workspace.zoom': { cue:'Scroll to zoom', icon:'wheel', at:'.piko-demo' },
-    'piko.workspace.problems': { cue:'Red ! = fix this', at:'#editor-canvas .el.needs-edit', auto:2600 },
+    'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo' },
+    'piko.workspace.zoom': { cue:'Scroll to zoom', at:'.piko-demo' },
+    'piko.workspace.problems': { cue:'Red ! = needs fixing', why:'Each mark is something the client wants fixed.', at:'#editor-canvas .el.needs-edit' },
     'piko.workspace.dotsLater': SKIP, 'piko.workspace.together': SKIP,
-    'piko.workspace.selectAbout': tap('Click “About”', { onShow: () => offsetHint(['home', 'contact'], 'about'), onHide: () => offsetHint() }),
-    'piko.workspace.element': { cue:'Click an item with a red !', icon:'left' },
-    'piko.workspace.controls': { cue:'You can fine-tune here too', auto:2200 },
-    'piko.workspace.dragAbout': { cue:'Drag it up onto the line', icon:'left', at:'#editor-canvas .el.piko-glow', burst:false },
-    'piko.workspace.guides': { cue:'Pink line = lined up', at:'#editor-canvas-wrap', auto:3200 },
-    'piko.workspace.nice': { success:'Lined up!', auto:1400 },
+    'piko.workspace.selectAbout': tap('Click “About”', { why:'It sits lower than Home and Contact, so the menu looks uneven.',
+      onShow: () => offsetHint(['home', 'contact'], 'about'), onHide: () => offsetHint() }),
+    'piko.workspace.element': { cue:'Click an item with a red !', why:'Start with any problem the client marked.', icon:'left' },
+    'piko.workspace.controls': { cue:'Exact numbers live here', why:'Use them when dragging isn’t precise enough.' },
+    'piko.workspace.dragAbout': { cue:'Drag it up onto the line', why:'Items in a row should share the same top edge.', icon:'left', at:'#editor-canvas .el.piko-glow', burst:false },
+    'piko.workspace.guides': { cue:'Guides help you line things up', why:'Pink line: it lines up. Purple tags: the space between items.', at:'#editor-canvas-wrap' },
+    'piko.workspace.nice': { success:'Lined up!', why:'The menu now reads as one tidy row. That’s alignment.', at:'#editor-canvas .el.selected' },
     'piko.workspace.rulers': SKIP, 'piko.workspace.toolbar': SKIP,
-    'piko.workspace.toolbarUndo': { cue:'Undo · Redo', at:'.piko-tb-glow', auto:1800 },
+    'piko.workspace.toolbarUndo': { cue:'Undo · Redo', why:'Made a mistake? Step back anytime.', at:'.piko-tb-glow' },
     'piko.workspace.toolbarZoom': { cue:'Zoom', at:'.piko-tb-glow', auto:1500 },
-    'piko.workspace.grid': tap('Show the grid', { at:'.piko-tb-glow' }),
-    'piko.workspace.gridDone': { cue:'Things snap to 8px', auto:2200 },
+    'piko.workspace.grid': tap('Show the grid', { why:'The grid helps you place things evenly.', at:'.piko-tb-glow' }),
+    'piko.workspace.gridDone': { cue:'Things snap to 8px', why:'Snapping keeps sizes and gaps consistent.' },
     'piko.workspace.gridSettings': tap('Grid options', { at:'.piko-tb-glow' }),
-    'piko.workspace.gridSettingsDone': { cue:'Try the slider', icon:'left', at:'#grid-settings-panel input[type=range]', gesture:'slide-x' },
-    'piko.workspace.submit': { cue:'Fix the rest, then Submit', auto:2800 },
-    'piko.workspace.compare': { cue:'Hold to compare', icon:'left', gesture:'hold' },
-    'piko.workspace.submitNow': tap('Submit'),
-    'piko.reply.arrived': tap('Open their reply'),
-    'piko.reply.complete': tap('Mark Completed'),
-    'piko.reply.revise': tap('Back to Editor'),
-    'piko.shop.browser': tap('Open the Browser'),
-    'piko.shop.store': tap('Visit the Store'),
-    'piko.shop.browse': { cue:'Look around, then close it', auto:2600 },
-    'piko.completed.tab': tap('Open Completed'),
-    'piko.completed.open': tap('Open this chat'),
-    'piko.nextMail': tap('New email! Open it'),
-    'piko.compose.type': { cue:'Press any key to type', icon:'keys' },
-    'piko.compose.attach': tap('Attach your design'),
+    'piko.workspace.gridSettingsDone': { cue:'Try the slider', why:'It sets how see-through the grid is.', icon:'left', at:'#grid-settings-panel input[type=range]', gesture:'slide-x' },
+    'piko.workspace.submit': { cue:'Fix the rest, then Submit', why:'Clear every red mark first. The task list shows what’s left.' },
+    'piko.workspace.compare': { cue:'Hold to compare', why:'All tasks done! See your page next to the original.', icon:'left', gesture:'hold' },
+    'piko.workspace.submitNow': tap('Submit', { why:'Send your fixed design to the client.' }),
+    'piko.reply.arrived': tap('Open their reply', { why:'See what the client thinks of your fix.' }),
+    'piko.reply.complete': tap('Mark Completed', { why:'They’re happy! This finishes the job and pays you.' }),
+    'piko.reply.revise': tap('Back to Editor', { why:'Something still feels off. Their email says what.' }),
+    'piko.shop.browser': tap('Open the Browser', { why:'Break time! Spend the coins you earned.' }),
+    'piko.shop.store': tap('Visit the Store', { why:'Buy things for your desk.' }),
+    'piko.shop.browse': { cue:'Look around, then close it', why:'Your next client writes in after.' },
+    'piko.completed.tab': tap('Open Completed', { why:'Finished jobs are kept here.' }),
+    'piko.completed.open': tap('Open this chat', { why:'Reread a client’s feedback anytime.' }),
+    'piko.nextMail': tap('New email! Open it', { why:'Your next client needs help.' }),
+    'piko.compose.type': { cue:'Press any key to type', why:'Tell your client what you fixed.', icon:'keys' },
+    'piko.compose.attach': tap('Attach your design', { why:'So they can see the fix.' }),
     'piko.compose.send': tap('Send'),
-    'piko.handoff.0': { cue:'From now on, you decide', card:ART.noDots, auto:3400 },
-    'piko.handoff.1': SKIP, 'piko.handoff.2': SKIP, 'piko.handoff.3': SKIP, 'piko.handoff.5': SKIP,
-    'piko.handoff.4': { cue:'Stuck? Use a hint', gesture:'tap', auto:2800 },
-    'piko.basicsDone.0': { cue:'Basics done!', card:ART.basics, auto:3000 },
+    // Level 4: training wheels off.
+    'piko.handoff.0': { cue:'From now on, you decide', why:'No more red marks. You find the problems yourself.', card:ART.noDots },
+    'piko.handoff.1': SKIP, 'piko.handoff.5': SKIP,
+    'piko.handoff.2': { cue:'Read the email, then fix the page', why:'Use what you learned: alignment, contrast and hierarchy.', mid:1 },
+    'piko.handoff.3': { cue:'Submit when it looks right', why:'The client will tell you if something still feels off.', mid:1 },
+    'piko.handoff.4': { cue:'Stuck? Use a hint', why:'For a few coins, I’ll show you where to look.', gesture:'tap' },
+    'piko.basicsDone.0': { cue:'Basics done!', why:'Every screen you fixed is now easier for someone to read.', card:ART.basics },
     'piko.basicsDone.1': SKIP, 'piko.basicsDone.3.0': SKIP, 'piko.basicsDone.4': SKIP,
-    'piko.basicsDone.2.0': { cue:'Guidebook: a refresher, anytime', gesture:'tap', auto:3000 },
+    'piko.basicsDone.2.0': { cue:'Your Guidebook', why:'A refresher on all three basics, with examples, anytime.', gesture:'tap' },
     'piko.basicsDone.5': { cue:'See you tomorrow!', mid:1, auto:1800 },
+    // Lessons, each right before the job that needs it.
     'piko.levels.mayo.0.0': SKIP, 'piko.levels.mayo.3.0': SKIP,
-    'piko.levels.mayo.1.0': { cue:'Line up the edges', card:ART.align, auto:2800 },
-    'piko.levels.mayo.2.0': { cue:'Keep gaps equal', card:ART.gaps, auto:2800 },
-    'piko.levels.yappers.0.0': { cue:'Contrast: text vs. background', card:ART.contrast, auto:3200 },
-    'piko.levels.yappers.1.0': SKIP,
-    'piko.levels.yappers.2.0': { cue:'Normal text: 4.5 : 1 or more', card:ART.ratio, auto:3000 },
-    'piko.levels.yappers.4.0': SKIP, 'piko.levels.yappers.6.0': SKIP, 'piko.levels.yappers.7.0': SKIP, 'piko.levels.yappers.8.0': SKIP, 'piko.levels.yappers.9.0': SKIP,
-    'piko.levels.yappers.5.0': { cue:'Grouped? Fix them all', auto:2200 },
-    'piko.levels.antoks.0.0': { cue:'Stuck? Use a hint', gesture:'tap', auto:2800 },
-    'piko.levels.haybuhay.0.0': { cue:'Typography = text size', card:ART.type, auto:2800 },
+    'piko.levels.mayo.1.0': { cue:'Alignment: line up the edges', why:'Lined-up pages feel calm and are easy to scan.', card:ART.align },
+    'piko.levels.mayo.2.0': { cue:'Spacing: keep gaps equal', why:'Equal gaps show which items belong together.', card:ART.gaps },
+    'piko.levels.yappers.0.0': { cue:'New skill: contrast', why:'Text that blends into its background is hard to read, even more on a phone in the sun.', card:ART.contrast },
+    'piko.levels.yappers.1.0': SKIP, 'piko.levels.yappers.4.0': SKIP, 'piko.levels.yappers.7.0': SKIP, 'piko.levels.yappers.8.0': SKIP,
+    'piko.levels.yappers.2.0': { cue:'Normal text: 4.5 : 1 or more', why:'Contrast is a ratio. The bigger the number, the easier to read.', card:ART.ratio },
+    'piko.levels.yappers.5.0': { cue:'Grouped? Fix them all', why:'Grouped items must match, so a task ticks only when all are fixed.' },
+    'piko.levels.yappers.6.0': { cue:'Only colors this time', why:'This job is about contrast, so leave the layout as it is.' },
+    'piko.levels.yappers.9.0': { cue:'Good to know', why:'7 : 1 for headings is a design guideline. WCAG’s minimum is 4.5 : 1.' },
+    'piko.levels.antoks.0.0': { cue:'Stuck? Use a hint', why:'Your first hint is free!', gesture:'tap' },
+    'piko.levels.haybuhay.0.0': { cue:'New skill: typography', why:'How text looks: its size, weight and spacing.', card:ART.type },
     'piko.levels.haybuhay.2.0': SKIP, 'piko.levels.haybuhay.3.0': SKIP, 'piko.levels.haybuhay.4.0': SKIP,
-    'piko.practice.yappers.pick': tap('Click the heading'),
-    'piko.practice.yappers.fg': { cue:'Text color', side:'left', auto:1700 },
-    'piko.practice.yappers.bgc': { cue:'Background color', side:'left', auto:1700 },
-    'piko.practice.yappers.ratio': { cue:'Their contrast', side:'left', auto:1900 },
-    'piko.practice.yappers.guide': { cue:'Target ranges', side:'left', auto:2400 },
-    'piko.practice.yappers.guideRow': SKIP,
-    'piko.practice.yappers.demo': { cue:'Same text, new background', at:'.piko-fgbg-demo', auto:2800 },
-    'piko.practice.yappers.slider': { cue:'Down = darker', at:'#f-color', side:'left', gesture:'slide-y', auto:2400 },
-    'piko.practice.yappers.bar': { cue:'Drag the slider down', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
-    'piko.practice.yappers.watch': { cue:'Keep going: 7 : 1 or more', at:'#element-settings .cz-box', side:'left' },
-    'piko.practice.yappers.done': { success:'Strongest text!', auto:1500 },
-    'piko.practice.yappers.phPick': tap('Click the placeholder'),
+    // Level 2 practice: see the problem, learn the idea, fix it, hear why it worked.
+    'piko.practice.yappers.pick': tap('Click the heading', { why:'Its color is too close to the white behind it, so it’s hard to read.' }),
+    'piko.practice.yappers.fg': { cue:'Text color', why:'The color of the letters.', side:'left' },
+    'piko.practice.yappers.bgc': { cue:'Background color', why:'The color right behind them: the white card.', side:'left' },
+    'piko.practice.yappers.ratio': { cue:'Their contrast', why:'How far apart the two colors are. Bigger = easier to read.', side:'left' },
+    'piko.practice.yappers.guide': { cue:'How much each text needs', why:'Headings 7 : 1 and up. Labels and hints 4.5 to 7.', side:'left' },
+    'piko.practice.yappers.guideRow': { cue:'Too faint right now', why:'It’s a heading, so it belongs in the top row.', at:'#element-settings .cz-guide li.here', side:'left' },
+    'piko.practice.yappers.demo': { cue:'Same text, new background', why:'Contrast is always about the pair of colors.', at:'.piko-fgbg-demo' },
+    'piko.practice.yappers.slider': { cue:'Down = darker', why:'Darker text on a light card means more contrast.', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.bar': { cue:'Drag the slider down', why:'Darken the text until it stands out from the white.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.watch': { cue:'Keep going: 7 : 1 or more', why:'Watch the number climb as the text darkens.', at:'#element-settings .cz-box', side:'left' },
+    'piko.practice.yappers.done': { success:'Easy to read!', why:'Dark text stands out from the white, and the heading now leads the page.', at:'#editor-canvas .el.selected' },
+    'piko.practice.yappers.phPick': tap('Click the placeholder', { why:'These hints are too faint to read, too.' }),
     'piko.practice.yappers.phSlide': SKIP,
-    'piko.practice.yappers.phShift': tap('Shift + click “Password”', { icon:'shift' }),
-    'piko.practice.yappers.phBoth': { cue:'Slide into 4.5–7 : 1', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
-    'piko.practice.yappers.phDone': { success:'Matched!', auto:1400 },
+    'piko.practice.yappers.phShift': tap('Shift + click “Password”', { why:'The two fields are a pair, so they should match.', icon:'shift' }),
+    'piko.practice.yappers.phBoth': { cue:'Slide into 4.5–7 : 1', why:'Readable, but softer than the heading, so they still look like hints.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.phDone': { success:'Matched!', why:'Readable hints that stay softer than the heading.', at:'#editor-canvas .el.selected' },
+    // Level 3 practice.
     'piko.practice.haybuhay.intro': SKIP, 'piko.practice.haybuhay.groupIntro': SKIP,
-    'piko.practice.haybuhay.ladder': { cue:'Bigger = more important', at:'.piko-ladder-demo', auto:2600 },
-    'piko.practice.haybuhay.first': { cue:'Read first', auto:1500 },
-    'piko.practice.haybuhay.last': { cue:'Read last', auto:1500 },
-    'piko.practice.haybuhay.min': { cue:'Body text: 16px or more', card:ART.min16, auto:2800 },
-    'piko.practice.haybuhay.pick': tap('Click “1920 x 1080”'),
-    'piko.practice.haybuhay.size': tap('Make it 16px', { at:'#f-size + button', side:'left' }),
-    'piko.practice.haybuhay.groupPick': tap('Click the glowing label'),
-    'piko.practice.haybuhay.shift': tap('Shift + click the glowing ones', { icon:'shift' }),
-    'piko.practice.haybuhay.both': tap('Make them 16px', { at:'#f-size + button', side:'left' }),
-    'piko.practice.haybuhay.done': { success:'All readable!', auto:1500 },
+    'piko.practice.haybuhay.ladder': { cue:'Bigger = more important', why:'This page’s text sizes, from the title down to the labels.', at:'.piko-ladder-demo' },
+    'piko.practice.haybuhay.first': { cue:'Read first', why:'The biggest text gets noticed first.' },
+    'piko.practice.haybuhay.last': { cue:'Read last', why:'Small text is for details.' },
+    'piko.practice.haybuhay.min': { cue:'Body text: 16px or more', why:'Any smaller and people squint or zoom.', card:ART.min16 },
+    'piko.practice.haybuhay.pick': tap('Click “1920 x 1080”', { why:'It’s too small to read comfortably.' }),
+    'piko.practice.haybuhay.size': tap('Make it 16px', { why:'Click the arrow, or type the number.', at:'#f-size + button', side:'left' }),
+    'piko.practice.haybuhay.groupPick': tap('Click the glowing label', { why:'These grouped labels are too small, too.' }),
+    'piko.practice.haybuhay.shift': tap('Shift + click the glowing ones', { why:'Grouped labels need the same size, so pick them all.', icon:'shift' }),
+    'piko.practice.haybuhay.both': tap('Make them 16px', { why:'One change fixes the whole group.', at:'#f-size + button', side:'left' }),
+    'piko.practice.haybuhay.done': { success:'All readable!', why:'Every label is clear, and still smaller than the titles. That’s hierarchy.', at:'#editor-canvas .el.selected' },
     // End of days 2+: one short story beat each (the day summary shows the numbers).
     'piko.dayEnd.day2.0': { cue:'Two clients down! 🎉', mid:1, auto:2200 },
     'piko.dayEnd.day3.0': { cue:'BEAR ORAS is fixed! 🐻', mid:1, auto:2200 }, 'piko.dayEnd.day3.1': { cue:'See you tomorrow!', mid:1, auto:1800 },
@@ -370,11 +382,12 @@
     return v;
   }
   function cueHtml(v, line, timed){
-    const timer = timed ? `<i class="tv-timer" style="--auto:${timed}ms"></i>` : '';
-    if(v.success) return `<span class="tv-ok" aria-hidden="true">✓</span><b class="tv-cap">${esc(v.success)}</b>${timer}`;
+    const timer = timed ? '<small class="tv-next">Click to continue</small>' : ''; // talk beats wait for a click
+    const why = v.why ? `<span class="tv-why">${esc(v.why)}</span>` : ''; // the reason, in Piko's words
+    if(v.success) return `<span class="tv-ok" aria-hidden="true">✓</span><b class="tv-cap">${esc(v.success)}</b>${why}${timer}`;
     const icon = v.icon && ICON[v.icon] ? `<span class="tv-icon">${ICON[v.icon]()}</span>` : '';
     const text = v.raw ? richText(line) : esc(v.cue);
-    return `${v.card ? `<div class="tv-art">${v.card}</div>` : ''}<span class="tv-row">${icon}<b class="tv-cap">${text}</b></span>${timer}`;
+    return `${v.card ? `<div class="tv-art">${v.card}</div>` : ''}<span class="tv-row">${icon}<b class="tv-cap">${text}</b></span>${why}${timer}`;
   }
   function setStyle(s){
     style = s === 'visual' ? 'visual' : 'classic';
@@ -567,7 +580,8 @@
     finishTyping(); // ponytail: typewriter off for now; restore the setInterval reveal to bring it back
     history.push(full); if(history.length > 30) history.shift(); view = history.length - 1; latestCanAdvance = !!opts.onDone;
     showView();
-    const autoMs = v && opts.onDone ? (v.auto || 2200) : 0;
+    const words = t => String(t || '').split(/\s+/).filter(Boolean).length;
+    const autoMs = !v || !opts.onDone ? 0 : v.why ? Math.max(v.auto || 0, 1500 + 300 * words(`${v.cue || v.success} ${v.why}`)) : v.auto || 2200;
     if(v){
       textEl.innerHTML = cueHtml(v, full, autoMs);
       cue = { v, action: !opts.onDone, frame: 0, autoTimer: 0, rect: null };
@@ -603,11 +617,11 @@
       if(!opts.onDone || lastPointerDown < shownAt) return; // an instruction: it stays until the player does it
       advance();
     };
-    // Visual tutorial: explaining beats move on by themselves (a click still skips ahead).
-    if(autoMs) cue.autoTimer = setTimeout(advance, autoMs);
+    // Visual tutorial: explaining beats wait for a click, like the classic lines.
+
   }
 
-  let placeRetryTimer = null;
+  let placeRetryTimer = null, pointTimer = null; // pointTimer: a highlight waiting to land
   let liftLeaveTimer = null;
 
   function finishLiftLeave(){
@@ -696,12 +710,14 @@
       };
       cursor._followFrame = requestAnimationFrame(follow);
     };
-    if(opts.delay) setTimeout(run, opts.delay); else run();
+    clearTimeout(pointTimer);
+    if(opts.delay) pointTimer = setTimeout(run, opts.delay); else run();
   }
 
   function clearTarget(){
     if(cue?.action) hideBubble(); // visual tutorial: the step is done, the cue leaves with its ✓
     const { cursor, hole } = ensureDom();
+    clearTimeout(pointTimer); // a highlight still waiting to land is cancelled too
     clearInterval(placeRetryTimer); placeRetryTimer = null;
     document.querySelectorAll('.piko-pointed').forEach(n => n.classList.remove('piko-pointed'));
     currentTarget = null;
@@ -767,7 +783,7 @@
     // The drag demo sits to the side: About is centred in the canvas and must stay visible.
     const cx = kind === 'drag' ? r.left + r.width * .78 : r.left + r.width / 2, cy = kind === 'drag' ? r.top + r.height * .36 : r.top + r.height / 2;
     d.style.left = cx + 'px'; d.style.top = cy + 'px';
-    const mouse = kind === 'pan' ? mouseIcon('middle', 'right') : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
+    const mouse = kind === 'pan' ? (visual() ? PAN_EITHER() : mouseIcon('middle', 'right')) : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
     const label = { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' }[kind];
     // Which button(s), spelled out under the action.
     const how = { pan:'Middle mouse button or right click', zoom:'Mouse wheel', drag:'Left click' }[kind];
