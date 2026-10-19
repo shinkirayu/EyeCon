@@ -577,7 +577,9 @@
     const avg = list => list.length ? (list.reduce((a, q) => a + q.score, 0) / list.length).toFixed(1) : '–';
     const paired = rows.filter(r => r.gain != null), avgGain = paired.length ? (paired.reduce((a, r) => a + r.gain, 0) / paired.length).toFixed(1) : '–';
     // Per item: % correct before vs after. Per area: average items correct.
-    const pct = (list, i) => { const n = list.filter(q => q.answers?.[i]); return n.length ? Math.round(n.filter(q => q.answers[i].correct).length / n.length * 100) : null; };
+    // Look items up by their original number (q), so hidden items and order changes never shift the columns.
+    const ans = (q, i) => (q?.answers || []).find(x => x.q === i);
+    const pct = (list, i) => { const n = list.filter(q => ans(q, i)); return n.length ? Math.round(n.filter(q => ans(q, i).correct).length / n.length * 100) : null; };
     const areaPct = (list, a, b) => { if(!list.length) return null; let ok = 0, n = 0; list.forEach(q => (q.answers || []).forEach(x => { if(x.q + 1 >= a && x.q + 1 <= b){ n++; if(x.correct) ok++; } })); return n ? Math.round(ok / n * 100) : null; };
     const cell = v => v == null ? '–' : v + '%';
     const delta = (a, b) => a == null || b == null ? '' : `<small class="${b - a >= 0 ? 'up' : 'down'}">${b - a >= 0 ? '+' : ''}${b - a}</small>`;
@@ -596,15 +598,23 @@
         ${Array.from({ length:20 }, (_, i) => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
         </tbody></table></section>
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
-        ${rows.length ? `<table class="sorttable"><thead><tr><th>Username</th><th>Section</th><th>Studied UI</th><th>Pre</th><th>Post</th><th>Gain</th></tr></thead><tbody>
-        ${rows.map(r => `<tr><td>${esc(r.display_name || r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td></tr>`).join('')}
+        ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Section</th><th>Studied UI</th><th>Pre</th><th>Post</th><th>Gain</th><th></th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td>${esc(r.display_name || r.email || '')}</td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td><td><button class="ghost" data-del-resp="${esc(r.respondent_id)}" data-name="${esc(r.display_name || '')}">Delete</button></td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">No respondents yet.</p>'}
         <p class="sub">The CSV uses a respondent number instead of names and emails, ready for the paper.</p></section>`;
+    // Delete a respondent (test runs) with their pre-test and post-test answers.
+    app.querySelectorAll('[data-del-resp]').forEach(b => b.onclick = async () => {
+      if(!confirm(`Delete ${b.dataset.name || 'this respondent'} and their pre-test and post-test answers? This can't be undone.`)) return;
+      b.disabled = true;
+      const { error } = await sb.rpc('admin_delete_respondent', { p_id: b.dataset.delResp });
+      if(error){ alert('Could not delete: ' + error.message + ' (Has migration 0007 been run in Supabase?)'); b.disabled = false; return; }
+      showStudy();
+    });
     document.getElementById('study-csv').onclick = () => {
       const head = ['respondent', 'section', 'prior_ui', 'pre_score', 'post_score', 'gain', ...Array.from({ length:20 }, (_, i) => `pre_q${i + 1}`), ...Array.from({ length:20 }, (_, i) => `post_q${i + 1}`)];
       const byKind = (id, k) => quiz.find(q => q.player_id === id && q.kind === k);
       const lines = rows.map((r, n) => { const a = byKind(r.respondent_id, 'pre'), b = byKind(r.respondent_id, 'post');
-        const items = q => Array.from({ length:20 }, (_, i) => q?.answers?.[i] ? (q.answers[i].correct ? 1 : 0) : '');
+        const items = q => Array.from({ length:20 }, (_, i) => ans(q, i) ? (ans(q, i).correct ? 1 : 0) : '');
         return ['R' + String(n + 1).padStart(3, '0'), r.section || '', r.prior_ui || '', r.pre_score ?? '', r.post_score ?? '', r.gain ?? '', ...items(a), ...items(b)]; });
       const csv = [head, ...lines].map(l => l.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(',')).join('\n');
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' })); a.download = 'eyecon-study.csv'; a.click();

@@ -416,8 +416,6 @@
       e.preventDefault(); e.stopImmediatePropagation(); open('quiz.html?mode=pre');
     }, true));
     document.getElementById('quiz-pop-close').onclick = close;
-    pop.addEventListener('click', e => { if(e.target === pop) close(); });
-    addEventListener('keydown', e => { if(e.key === 'Escape' && !pop.hidden) close(); });
     addEventListener('message', e => { if(e.source === frame.contentWindow && (e.data === 'eyecon-quiz-close' || e.data === 'eyecon-quiz-done')) close(); }); // only our own quiz frame can close it
   })();
 </script>

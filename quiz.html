@@ -57,6 +57,24 @@
   .err{color:#a3142f;font:800 .95rem 'Nunito';min-height:1.2em;margin:.25rem 0 0;}
   .ok{color:#1d6a40;}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+  .fig{margin:0 0 1.25rem;padding:.75rem;border:3px solid #e4d8ca;border-radius:1rem;background:#fff;animation:figIn .35s ease-out both;}
+  .fig svg{display:block;width:100%;max-height:13rem;}
+  .opt-art{flex:none;width:3.5rem;height:2.75rem;}
+  .opt-art svg{display:block;width:100%;height:100%;}
+  @keyframes figIn{from{opacity:0;transform:translateY(.5rem) scale(.98)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.fig{animation:none}}
+  .cmp{display:grid;gap:.75rem;margin:.5rem 0 1.25rem;}
+  .cmp-row{display:grid;grid-template-columns:8.5rem 1fr auto;align-items:center;gap:.75rem;font:700 1rem 'Nunito',sans-serif;color:var(--ink);}
+  .cmp-row b{font:800 1.25rem 'Baloo 2',sans-serif;text-align:right;white-space:nowrap;}
+  .cmp-track{height:1.25rem;border-radius:999px;background:#e3f1ec;overflow:hidden;}
+  .cmp-track i{display:block;height:100%;border-radius:999px;background:#b9a6de;}
+  .cmp-row.post .cmp-track i{background:var(--purple-dark);}
+  .cmp-gain{margin:.25rem 0 0;font:800 1.125rem 'Baloo 2',sans-serif;color:var(--ink);}
+  .cmp-gain.up{color:#1d6a40;}
+  .cmp-areas{width:100%;border-collapse:collapse;font:700 1rem 'Nunito',sans-serif;color:var(--ink);}
+  .cmp-areas th,.cmp-areas td{padding:.5rem .75rem;border-bottom:2px solid #eee3d4;text-align:left;}
+  .cmp-areas th{font-weight:800;color:#2f7a70;}
+  .cmp-areas td.up{color:#1d6a40;font-weight:800;}.cmp-areas td.down{color:#a3142f;font-weight:800;}
 </style>
 </head>
 <body>
@@ -64,31 +82,36 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/db.js"></script>
+<script src="js/quiz-art.js"></script>
 <script>
 (() => {
   // quiz.html?mode=pre (default) or ?mode=post. Same 20 questions; the answer key is `a`.
-  const Q = [
+  const ALL_Q = [
     { q:'A button is 34px tall. On an 8-point grid, what height should it be changed to?', o:['30px','35px','32px or 40px','36px'], a:2 },
     { q:'Which of the following spacing values follows the 8-point grid?', o:['24px','6px','10px','15px'], a:0 },
-    { q:'In UI design, what does “alignment” mean?', o:['All items use the same color','Items share the same edge or the same center','All text uses the same font size','Items are placed as far apart as possible'], a:1 },
-    { q:'In a navigation bar, “Home” and “Contact” are at Y = 56px, but “About” is at Y = 64px. What is the correct fix?', o:['Change all three links to Y = 64px','Make the “About” link bigger','Change the color of the “About” link','Change the Y value of “About” to 56px'], a:3 },
-    { q:'Why should the gaps between cards in the same row be equal?', o:['Equal gaps keep the page tidy and show that the cards belong together','Equal gaps make the text larger','Equal gaps improve color contrast','Equal gaps make the page load faster'], a:0 },
-    { q:'A restaurant client writes, “Our menu cards are all over the place.” What is the most likely fix?', o:['Change the colors of the cards','Make the text on the cards bigger','Put the cards on the same line and space them evenly','Remove some of the cards'], a:2 },
-    { q:'To center a title over a card, which must match?', o:['The top edge of the title and the top edge of the card','The color of the title and the color of the card','The font size of the title and the width of the card','The center of the title and the center of the card'], a:3 },
-    { q:'In UI design, what does “contrast” describe?', o:['How large the text is','How much text stands out from the color behind it','How far apart elements are','How many colors a page uses'], a:1 },
+    { q:'In UI design, what does “alignment” mean?', o:['All items on the page use one matching color','Items share the same edge or the same center','All text on the page uses the same font size','Items are spread out as far apart as possible'], a:1 },
+    { q:'In a navigation bar, “Home” and “Contact” are at Y = 56px, but “About” is at Y = 64px. What is the correct fix?', o:['Change the Y value of “Home” to 64px','Make the “About” link bigger than the others','Change the color of the “About” link','Change the Y value of “About” to 56px'], a:3 },
+    { q:'Why should the gaps between cards in the same row be equal?', o:['Equal gaps keep the page tidy and show that the cards belong together','Equal gaps make the text inside every card larger and easier to see','Equal gaps raise the color contrast between the cards and the page','Equal gaps make the page load faster on slow internet connections'], a:0 },
+    { q:'A restaurant client writes, “Our menu cards are all over the place.” What is the most likely fix?', o:['Change the colors of the cards so each one stands out','Make the text on every card bigger and easier to read','Put the cards on the same line and space them evenly','Remove some of the cards so the page has fewer items'], a:2 },
+    { q:'To center a title over a card, which must match?', o:['The top edge of the title and the top edge of the card','The color of the title and the color of the card border','The font size of the title and the width of the card','The center of the title and the center of the card'], a:3 },
+    { q:'In UI design, what does “contrast” describe?', o:['How large the text is compared to the rest of the page','How much text stands out from the color behind it','How far apart the elements are from one another','How many different colors a single page uses'], a:1 },
     { q:'Under WCAG 2.2 Level AA, what is the minimum contrast ratio for normal-sized text?', o:['4.5:1','2:1','3:1','7:1'], a:0 },
-    { q:'Gray text on a white background has a contrast ratio of 3.5:1. Does it pass WCAG 2.2 Level AA for normal text?', o:['Yes, because it is above 3:1','Yes, because gray is a neutral color','It depends on the font used','No, because normal text needs at least 4.5:1'], a:3 },
+    { q:'Gray text on a white background has a contrast ratio of 3.5:1. Does it pass WCAG 2.2 Level AA for normal text?', o:['Yes, because any ratio above 3:1 always passes','Yes, because gray is a neutral, readable color','It depends only on which font the text uses','No, because normal text needs at least 4.5:1'], a:3 },
     { q:'Light gray text on a white button is hard to read. What is the best fix?', o:['Make the text color lighter','Make the button smaller','Make the text color darker','Move the button to another place'], a:2 },
-    { q:'A brand uses white text on a light orange button, and the text fails the contrast check. Which fix keeps the brand look?', o:['Change the text to yellow','Use a deeper orange (or a dark text color) until the ratio passes','Remove the button','Make the button wider'], a:1 },
-    { q:'Why does low-contrast text matter even if it looks fine to the designer?', o:['It makes the website load slower','It breaks the 8-point grid','It changes the size of the text','It becomes hard to read for people with weaker eyesight or on a phone in bright sunlight'], a:3 },
-    { q:'Pure black text on a pure white background has a ratio of 21:1. What is true about it?', o:['It passes, but it can feel too harsh, so designers often use an off-black','It fails WCAG 2.2 Level AA','It is exactly the minimum required ratio','It is only allowed for headings'], a:0 },
+    { q:'A brand uses white text on a light orange button, and the text fails the contrast check. Which fix keeps the brand look?', o:['Change the text to yellow so it matches the bright orange button color','Use a deeper orange (or a dark text color) until the ratio passes','Remove the button completely and replace it with a plain text link','Make the button much wider so the white text has more room around it'], a:1 },
+    { q:'Why does low-contrast text matter even if it looks fine to the designer?', o:['It makes the website load more slowly, especially on older phones with weak internet','It breaks the 8-point grid, so the layout no longer lines up with the other elements','It changes the size of the text whenever the page is printed out on paper','It becomes hard to read for people with weaker eyesight or on a phone in bright sunlight'], a:3 },
+    { q:'Pure black text on a pure white background has a ratio of 21:1. What is true about it?', o:['It passes, but it can feel too harsh, so designers often use an off-black','It fails WCAG 2.2 Level AA because the contrast ratio is far too high','It is exactly the minimum ratio that WCAG 2.2 Level AA requires for text','It is only allowed for headings, never for body text, labels or buttons'], a:0 },
     { q:'Under WCAG 2.2 Level AA, what is the minimum contrast ratio for large text (18pt, or 14pt bold)?', o:['2:1','3:1','4.5:1','7:1'], a:1 },
     { q:'What is the commonly used minimum font size for body text on screens?', o:['10px','12px','16px','24px'], a:2 },
-    { q:'What is “visual hierarchy” in typography?', o:['Using the same size for all text','Using as many fonts as possible','Placing all text in the center','Using bigger text for headings and smaller text for details to guide the reader’s eye'], a:3 },
-    { q:'On a student dashboard, the label “GWA” is 24px but the actual grade below it is 16px. What is the problem?', o:['The grade should be larger than its label because it is the important information','The label should be removed','Both should be 8px','The grade should be a different color only'], a:0 },
-    { q:'Where should decorative fonts be avoided?', o:['In logos','In large titles on a poster','In paragraphs and key instructions','Decorative fonts should be used everywhere'], a:2 },
-    { q:'A game studio writes, “Labels, helper text, and values all look the same, so players don’t know where to look.” What should you change?', o:['Change all text to the same color','Give each type of text a different size so the most important text stands out','Move all the text to the left','Add more text to the screen'], a:1 },
+    { q:'What is “visual hierarchy” in typography?', o:['Using the same size for all text so every part of the page looks equal and calm','Using as many different fonts as possible to make the page feel lively and fun','Placing all of the text in the center of the page so the layout feels balanced','Using bigger text for headings and smaller text for details to guide the reader’s eye'], a:3 },
+    { q:'On a student dashboard, the label “GWA” is 24px but the actual grade below it is 16px. What is the problem?', o:['The grade should be larger than its label because it is the important information','The label should be removed because the grade number already explains itself well','Both the label and the grade should be 8px so that they follow the 8-point grid','The grade only needs a different color, and its size can stay exactly the same'], a:0 },
+    { q:'In a sidebar menu, three links are 24px but “Documents” is 18px. What is the best fix?', o:['Make “Documents” bold and keep it at its current size','Give every link in the menu its own different size','Make “Documents” 24px, the same as the other links','Make “Documents” even smaller so it stands out more'], a:2 },
+    { q:'A game studio writes, “Labels, helper text, and values all look the same, so players don’t know where to look.” What should you change?', o:['Change all of the text to one color so the whole screen looks calm and even','Give each type of text a different size so the most important text stands out','Move all of the text to the left side so everything lines up in one column','Add more text to the screen so players have more information to read and look at'], a:1 },
   ];
+  // Items 4, 7, 9, 11 and 13 are hidden for now (0-based below). Answers keep each item's original number (q),
+  // so results still line up with Appendix C / D.
+  const HIDDEN = []; // none hidden: all 20 items, as in Appendix C
+  const Q = ALL_Q.map((it, n) => Object.assign({ n }, it)).filter(it => !HIDDEN.includes(it.n));
   // Local files use .html names; the live site serves the landing page at / and the game at /play.
   const LOCAL = /\.html$/.test(location.pathname), HOME = LOCAL ? 'overview.html' : '/', PLAY = LOCAL ? 'index.html' : 'play';
   const mode = new URLSearchParams(location.search).get('mode') === 'post' ? 'post' : 'pre';
@@ -103,7 +126,7 @@
   function intro(){
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">EyeCon ${title}</span></div>
       <h1>${mode === 'pre' ? 'Before you clock in!' : 'One last quiz!'}</h1>
-      <p>${mode === 'pre' ? 'Answer 20 quick questions about alignment, contrast and typography. It’s okay not to know them yet: this shows us what you know before playing.' : 'The same 20 questions as before. Let’s see how much you’ve learned in the studio!'}</p>
+      <p>${mode === 'pre' ? 'Answer ' + Q.length + ' quick questions about alignment, contrast and typography. Your score here doesn’t count for anything: it just shows what you already know before playing, so answer honestly and don’t worry if you’re not sure.' : 'The same ' + Q.length + ' questions as before. Let’s see how much you’ve learned in the studio!'}</p>
       <p class="note">About 5 minutes. Pick the best answer for each one.</p>
       <div class="actions"><span></span><button class="btn" id="go">Start</button></div>`;
     document.getElementById('go').onclick = () => { started = performance.now(); i = 0; question(); };
@@ -114,7 +137,8 @@
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title}</span><span class="count">${i + 1} / ${Q.length}</span></div>
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i + 1}" aria-label="Question ${i + 1} of ${Q.length}"><i style="width:${(i + 1) / Q.length * 100}%"></i></div>
       <h2 id="q">${esc(it.q)}</h2>
-      <ul class="opts" role="group" aria-labelledby="q">${it.o.map((o, k) => `<li><button class="opt" data-k="${k}" aria-pressed="${picks[i] === k}"><b>${'ABCD'[k]}</b><span>${esc(o)}</span></button></li>`).join('')}</ul>
+      ${window.EC_QUIZ_ART?.fig(it.n) ? `<figure class="fig">${EC_QUIZ_ART.fig(it.n)}</figure>` : ''}
+      <ul class="opts" role="group" aria-labelledby="q">${it.o.map((o, k) => `<li><button class="opt" data-k="${k}" aria-pressed="${picks[i] === k}"><b>${'ABCD'[k]}</b>${window.EC_QUIZ_ART?.opt(it.n, k) ? `<span class="opt-art">${EC_QUIZ_ART.opt(it.n, k)}</span>` : ''}<span>${esc(o)}</span></button></li>`).join('')}</ul>
       <div class="actions"><button class="ghost" id="back" ${i === 0 ? 'disabled' : ''}>Back</button><button class="btn" id="next" ${picks[i] == null ? 'disabled' : ''}>${i === Q.length - 1 ? 'Finish' : 'Next'}</button></div>`;
     app.querySelectorAll('.opt').forEach(b => b.onclick = () => {
       picks[i] = +b.dataset.k;
@@ -125,22 +149,40 @@
     document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else finish(); };
     app.querySelector('.opt').focus();
   }
+  // Post-test result: before vs after, overall and per skill area (Appendix C item ranges).
+  const AREAS = [['Alignment', 1, 7], ['Contrast', 8, 15], ['Typography', 16, 20]];
+  function compareHtml(pre, post){
+    const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+    const row = (label, cls, sc, tot) => `<div class="cmp-row ${cls}"><span>${label}</span><div class="cmp-track"><i style="width:${pct(sc, tot)}%"></i></div><b>${sc} / ${tot}</b></div>`;
+    if(!pre) return `<div class="score">${post.score} / ${post.total}</div><p>Great work finishing the game!</p>`;
+    const gain = post.score - pre.score;
+    const area = (res, a, b) => { const xs = (res.answers || []).filter(x => x.q + 1 >= a && x.q + 1 <= b); return [xs.filter(x => x.correct).length, xs.length]; };
+    const areas = pre.answers ? `<table class="cmp-areas"><thead><tr><th>Skill</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${AREAS.map(([n, a, b]) => {
+      const [x, xt] = area(pre, a, b), [y, yt] = area(post, a, b), d = y - x;
+      return `<tr><td>${n}</td><td>${x} / ${xt}</td><td>${y} / ${yt}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' + d : d}</td></tr>`; }).join('')}</tbody></table>` : '';
+    return `<div class="cmp">${row('Before playing', 'pre', pre.score, pre.total)}${row('After playing', 'post', post.score, post.total)}
+      <p class="cmp-gain ${gain > 0 ? 'up' : ''}">${gain > 0 ? `+${gain} more correct. Look how much you grew!` : gain === 0 ? 'Same score as before. Thanks for giving it your best!' : 'Thanks for giving it your best!'}</p>${areas}</div>`;
+  }
   async function finish(){
-    const answers = picks.map((p, k) => ({ q:k, picked:p, correct:p === Q[k].a }));
+    const answers = picks.map((p, k) => ({ q:Q[k].n, picked:p, correct:p === Q[k].a }));
     const score = answers.filter(a => a.correct).length, duration = Math.round(performance.now() - started);
-    const study = readStudy(); study[mode] = { score, total:Q.length, at:new Date().toISOString() }; writeStudy(study);
+    const study = readStudy(); study[mode] = { score, total:Q.length, answers, at:new Date().toISOString() }; writeStudy(study);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title}</span></div><h1>Saving…</h1>`;
     // Saved to Supabase (quiz_results) when online; the local copy keeps the flow going offline.
     try{
       await window.EC_DB?.ready;
       if(window.EC_DB?.online) await window.EC_DB.client.from('quiz_results').insert({ kind:mode, score, total:Q.length, answers, duration_ms:duration });
     }catch(e){ console.warn('EyeCon: quiz not saved online.', e); }
-    const pre = study.pre;
+    let pre = study.pre;
+    // Post-test: get the pre-test answers too (this browser first, else this account's saved row) for the comparison.
+    if(mode === 'post' && !(pre && pre.answers)){
+      try{ if(window.EC_DB?.online){ const { data } = await window.EC_DB.client.from('quiz_results').select('score, total, answers').eq('player_id', window.EC_DB.userId).eq('kind', 'pre').maybeSingle(); if(data) pre = data; } }catch(e){}
+    }
     // Pre-test taken in the website popup: show the thank-you briefly, then close it (Play then opens the game).
     if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
-      ${mode === 'post' ? `<div class="score">${score} / ${Q.length}</div>${pre ? `<p>Before playing you got ${pre.score} / ${pre.total}. ${score > pre.score ? 'Look how much you grew!' : 'Thanks for giving it your best!'}</p>` : ''}` : '<p>Now let’s put on your designer hat and clock in.</p>'}
+      ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p>Now let’s put on your designer hat and clock in.</p>'}
       <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play again</a>`}</div>`;
     app.querySelector('.btn').focus();
   }
@@ -222,7 +264,6 @@
 })();
 
 // Opened as a popup on the website: "Back to home" closes the popup; other links (Play) open in the whole window.
-if(window.top !== window) addEventListener('keydown', e => { if(e.key === 'Escape') parent.postMessage('eyecon-quiz-close', '*'); });
 if(window.top !== window) document.addEventListener('click', e => {
   const a = e.target.closest('a[href]'); if(!a) return;
   e.preventDefault();

@@ -191,7 +191,9 @@
     let progress = document.getElementById('editor-task-progress');
     if(!progress){ progress = Object.assign(document.createElement('div'), {id:'editor-task-progress', className:'editor-task-progress'}); brief.append(progress); }
     // Level 4+: no live progress (it could be gamed by sliding until it ticks). Just the job size.
-    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div class="editor-fix-count"><b>${results.length}</b><span>things to fix</span></div>`;
+    // The job size counts the elements that need fixing (a task can cover several elements, and two tasks can share one).
+    const fixIds = new Set(results.flatMap(r => window.EC_GRADING.goalIds(r.goal.check)).filter(id => { const el = byId(id); return el && !el.locked; }));
+    if((state.level.levelNumber || 0) >= 4) progress.innerHTML = `<div class="editor-fix-count"><b>${fixIds.size}</b><span>${fixIds.size === 1 ? 'thing' : 'things'} to fix</span></div>`;
     else progress.innerHTML = `<div><span>${doneCount} of ${results.length} tasks done</span></div>
       <div class="editor-task-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${results.length}" aria-valuenow="${doneCount}" aria-label="Tasks done"><i style="width:${results.length ? doneCount / results.length * 100 : 0}%"></i></div>`;
     const cards = sections.map(({cat, items}) => {
