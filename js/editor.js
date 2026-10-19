@@ -874,7 +874,7 @@
   // Level 4+: a contrast hierarchy guide (like the size ladder): each kind of text on this
   // page and the contrast it should have, with the selected text's row marked.
   function contrastGuideHtml(el, inner = ''){
-    if((state.level.levelNumber || 0) < 4 || !el.text || !el.color) return '';
+    if((state.level.levelNumber || 0) < 2 || !el.text || !el.color) return ''; // level 2 (first contrast level) onward
     // Like the size ladder: a list of contrast ranges; the row this text's ratio falls in lights up.
     // It never says what kind of text this is: the player decides which range it belongs in.
     const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);

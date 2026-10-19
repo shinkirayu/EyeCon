@@ -3050,3 +3050,7 @@ html:not(.admin-tools) .dev-levels{ display:none!important; }
 #screen-editor .editor-contrast-workbench .cz-chips{ display:grid!important; grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important; }
 #screen-editor .editor-contrast-workbench .cz-chip{ min-width:0; }
 #screen-editor .editor-contrast-workbench .cz-chip code{ font-variant-numeric:tabular-nums; }
+/* Shift keycap in Piko's lines. */
+.piko-kbd{ display:inline-block; padding:.05em .45em; border:2px solid #4d0d74; border-bottom-width:4px; border-radius:.4em; background:#fff3d6; color:#4d0d74; font:800 .9em/1.3 var(--font-body); white-space:nowrap; vertical-align:.05em; }
+/* Shift keycap in Piko's lines. */
+.piko-kbd{ display:inline-block; padding:.05em .45em; border:2px solid #4d0d74; border-bottom-width:4px; border-radius:.4em; background:#fff3d6; color:#4d0d74; font:800 .9em/1.3 var(--font-body); white-space:nowrap; vertical-align:.05em; }

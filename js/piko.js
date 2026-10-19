@@ -103,7 +103,7 @@
         done: "Perfect! The heading now stands out the most. That's hierarchy!",
         phPick: "Now the placeholders. Left click \"Phone, username, or email\" to pick it.",
         phSlide: "Slide it into the green band: readable (at least 4.5:1) but lighter than the heading, so it still looks like a hint.",
-        phShift: "See the outline on \"Password\" too? Selecting an element shows which elements it's grouped with. Hold Shift and click \"Password\" to select both, then one slider changes them together!",
+        phShift: "\"Username\" and \"Password\" are grouped, so they need the same contrast. Hold Shift and click \"Password\" to select both, then one slider changes them together.",
         phBoth: "Slide both into the green band: readable (at least 4.5:1) but lighter than the heading. They stay the same contrast ratio, since they're grouped.",
         phDone: "Both placeholders match, and they stay lighter than the heading. Nice work!"
       },
@@ -117,7 +117,7 @@
         size: "Use the arrows, or type, to make it 16px. Watch it grow!",
         groupIntro: "Nice! Now the checkbox labels. Some are too small, and they're grouped, so they can be fixed together.",
         groupPick: "Left click the glowing label to pick it.",
-        shift: "See the outlines? Those labels are grouped with it. Hold Shift and click each glowing one, then set them all at once.",
+        shift: "The outlined labels are grouped, so they need the same size. Hold Shift and click each one to set them all at once.",
         both: "Make them all exactly 16px.",
         done: "Perfect! Every label reads clearly, and they're still smaller than the titles. That's hierarchy!"
       }
@@ -214,7 +214,8 @@
     [/(left mouse button|left-click|left click)/gi, () => mouseIcon('left')],
     [/(mouse wheel|scroll wheel)/gi, () => mouseIcon('middle')],
     [/(arrow keys)/gi, () => ARROWS],
-    [/\b(Shift)\b/g, () => `<svg class="piko-ico" viewBox="0 0 14 14" aria-hidden="true">${arrowKey(0, 0, 'M7 2.5l4.5 5H9.2V11H4.8V7.5H2.5z')}</svg>`],
+    // A wide Shift keycap stands in for the word itself (true = replace the word, not follow it).
+    [/\b(Shift)\b/g, () => `<kbd class="piko-kbd">⇧ Shift</kbd>`, true],
   ];
   function richText(t){
     // Any line (including admin-added ones) can say {name}: fill it with the player's name.
@@ -227,7 +228,7 @@
       .replace(/(?:[\u{1D400}-\u{1D7FF}](?:[\s'’.,!?-]*[\u{1D400}-\u{1D7FF}])*)+/gu, m => '<b>' + m.normalize('NFKC') + '</b>');
     // One pass over all rules so a phrase only gets one icon.
     const all = new RegExp(CONTROL_ICONS.map(([re]) => re.source).join('|'), 'gi');
-    html = html.replace(all, m => m + ' ' + CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m))[1]());
+    html = html.replace(all, m => { const [, icon, replace] = CONTROL_ICONS.find(([re]) => new RegExp('^(?:' + re.source + ')$', 'i').test(m)); return replace ? icon() : m + ' ' + icon(); });
     return html;
   }
   let typeTimer = null;
