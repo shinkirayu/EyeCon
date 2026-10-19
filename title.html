@@ -9,7 +9,7 @@
   /* The scene is designed at 1920x1080 and scaled as one piece (see fit()),
      so items keep their exact spacing at every resolution. The wall and desk
      colours continue past the scene's edges on wider or taller screens. */
-  :root{ --sky:#a9def2; --wall:#b6e6dc; --desk:#f3d29a; --desk-front:#f2bc85; }
+  :root{ --sky:#a9def2; --wall:#b5e4d8; --desk:#f3d29a; --desk-front:#f2bc85; }
   html,body{ margin:0; height:100%; overflow:hidden; }
   body{ background:linear-gradient(var(--sky) 50%, var(--desk-front) 50%); }
   #stage{ position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:0 0; }
@@ -48,7 +48,7 @@ const SKINS = {
   room: {
     classic: `<svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
       <rect width="1920" height="140" fill="#a9def2"/>
-      <rect y="140" width="1920" height="550" fill="#b6e6dc"/>
+      <rect y="140" width="1920" height="550" fill="#b5e4d8"/>
       <rect y="690" width="1920" height="270" fill="#f3d29a"/>
       <rect y="960" width="1920" height="120" fill="#f2bc85"/></svg>`,
   },
