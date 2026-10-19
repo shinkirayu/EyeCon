@@ -136,6 +136,13 @@
   .play-curtain.tip .pc-tip{opacity:1;transform:translateY(-50%);}
   .pc-ico{height:1.3em;width:auto;vertical-align:-.3em;margin:0 .15em}
   .pc-tip kbd{display:inline-block;padding:0 10px;border:2px solid #4d0d74;border-bottom-width:4px;border-radius:8px;background:#fff;font:inherit;}
+  /* Pre-test popup: the quiz page in a frame over the website. */
+  .quiz-pop{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;background:rgba(23,63,88,.55);}
+  .quiz-pop[hidden]{display:none;}
+  .quiz-pop-card{position:relative;width:min(840px,100%);height:min(760px,100%);border-radius:24px;overflow:hidden;background:#b8e4d8;box-shadow:0 16px 48px rgba(0,0,0,.35);}
+  .quiz-pop-card iframe{width:100%;height:100%;border:0;display:block;}
+  .quiz-pop-close{position:absolute;top:16px;right:16px;z-index:1;width:48px;height:48px;border:3px solid #173f58;border-radius:50%;background:#fff;color:#173f58;font:800 24px/1 sans-serif;cursor:pointer;}
+  .quiz-pop-close:hover,.quiz-pop-close:focus-visible{background:#f9d985;}
 </style>
 </head>
 <body>
@@ -155,7 +162,6 @@
     <a class="nav" href="#trailer">Trailer</a>
     <a class="nav" href="#objectives">Objectives</a>
     <a class="nav" href="#team">Team</a>
-    <a class="nav" href="quiz.html?mode=pre">Take Pre-test</a>
   </nav>
 </div></header>
 <main class="stage" id="stage"><i id="top" style="top:0"></i>
@@ -384,6 +390,36 @@
     addEventListener('pageshow', e => { if(e.persisted){ curtain.className = 'play-curtain'; curtain.querySelectorAll('.pc-bubble').forEach(n => n.remove()); document.body.classList.remove('leaving'); document.querySelectorAll('.boing').forEach(n => n.classList.remove('boing')); } }); // back button
   })();
   if(location.pathname.endsWith('overview.html')) document.querySelectorAll('[data-play]').forEach(a => a.href = 'index.html');
+</script>
+<div class="quiz-pop" id="quiz-pop" role="dialog" aria-modal="true" aria-label="Pre-test" hidden>
+  <div class="quiz-pop-card"><button class="quiz-pop-close" id="quiz-pop-close" aria-label="Close">✕</button><iframe id="quiz-pop-frame" title="Pre-test"></iframe></div>
+</div>
+<script>
+  // "Take Pre-test" opens the quiz in a popup instead of leaving the website.
+  (() => {
+    const pop = document.getElementById('quiz-pop'), frame = document.getElementById('quiz-pop-frame');
+    const close = () => { pop.hidden = true; frame.src = 'about:blank'; refreshPlay(); };
+    const open = href => { frame.src = href; pop.hidden = false; document.getElementById('quiz-pop-close').focus(); };
+    // Until the pre-test is done (saved by quiz.html in this browser), the Play buttons open it instead of the game.
+    const preDone = () => { try{ return !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').pre; }catch(e){ return false; } };
+    const big = document.querySelector('.play-btn[data-play]'), corner = document.querySelector('.play-corner[data-play] span');
+    const labels = { big: big?.textContent, corner: corner?.textContent };
+    function refreshPlay(){
+      const done = preDone();
+      if(big) big.textContent = done ? labels.big : 'TAKE PRE-TEST!';
+      if(corner) corner.textContent = done ? labels.corner : 'TEST!';
+      document.querySelectorAll('[data-play]').forEach(a => a.setAttribute('aria-label', done ? 'Play EyeCon' : 'Take the pre-test'));
+    }
+    refreshPlay();
+    document.querySelectorAll('[data-play]').forEach(a => a.addEventListener('click', e => {
+      if(preDone()) return; // normal Play
+      e.preventDefault(); e.stopImmediatePropagation(); open('quiz.html?mode=pre');
+    }, true));
+    document.getElementById('quiz-pop-close').onclick = close;
+    pop.addEventListener('click', e => { if(e.target === pop) close(); });
+    addEventListener('keydown', e => { if(e.key === 'Escape' && !pop.hidden) close(); });
+    addEventListener('message', e => { if(e.source === frame.contentWindow && (e.data === 'eyecon-quiz-close' || e.data === 'eyecon-quiz-done')) close(); }); // only our own quiz frame can close it
+  })();
 </script>
 </body>
 </html>

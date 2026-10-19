@@ -136,10 +136,12 @@
       if(window.EC_DB?.online) await window.EC_DB.client.from('quiz_results').insert({ kind:mode, score, total:Q.length, answers, duration_ms:duration });
     }catch(e){ console.warn('EyeCon: quiz not saved online.', e); }
     const pre = study.pre;
+    // Pre-test taken in the website popup: show the thank-you briefly, then close it (Play then opens the game).
+    if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
       ${mode === 'post' ? `<div class="score">${score} / ${Q.length}</div>${pre ? `<p>Before playing you got ${pre.score} / ${pre.total}. ${score > pre.score ? 'Look how much you grew!' : 'Thanks for giving it your best!'}</p>` : ''}` : '<p>Now let’s put on your designer hat and clock in.</p>'}
-      <div class="actions"><a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">${mode === 'pre' ? 'Play EyeCon!' : 'Play again'}</a></div>`;
+      <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play again</a>`}</div>`;
     app.querySelector('.btn').focus();
   }
   // ---------- Study gate: consent, then a username and short profile (Google/email sign-in hidden for now) ----------
@@ -162,8 +164,8 @@
       <div class="consent" tabindex="0" aria-label="Consent information">
         <p><b>EyeCon</b> is a thesis project at De La Salle Lipa about learning UI design through a game.</p>
         <p>If you take part, we will collect:</p>
-        <ul><li>a username you choose (to match your pre-test and post-test)</li><li>your section and design experience</li><li>your quiz answers and how you play the game</li></ul>
-        <p>Your answers are used only for this research. Your username is never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
+        <ul><li>your name (to match your pre-test and post-test)</li><li>your section and design experience</li><li>your quiz answers and how you play the game</li></ul>
+        <p>Your answers are used only for this research. Your name is never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
         <p class="note">This follows the Data Privacy Act of 2012 (RA 10173). Questions? Ask the researchers.</p>
       </div>
       <label class="check"><input type="checkbox" id="agree"> I have read this and I agree to take part.</label>
@@ -204,8 +206,9 @@
   }
   function taken(){
     app.innerHTML = `${top(title)}<h1>You’ve already taken the ${title.toLowerCase()}</h1><p>Thanks! Each person takes it once.</p>
-      <div class="actions"><a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play EyeCon!</a></div>`;
+      <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play EyeCon!</a>`}</div>`;
     const st = readStudy(); st[mode] = st[mode] || { at:new Date().toISOString() }; writeStudy(st);
+    if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
   }
   (async () => {
     app.innerHTML = `${top(title)}<h1>Loading…</h1>`;
@@ -217,6 +220,14 @@
     profile();
   })();
 })();
+
+// Opened as a popup on the website: "Back to home" closes the popup; other links (Play) open in the whole window.
+if(window.top !== window) addEventListener('keydown', e => { if(e.key === 'Escape') parent.postMessage('eyecon-quiz-close', '*'); });
+if(window.top !== window) document.addEventListener('click', e => {
+  const a = e.target.closest('a[href]'); if(!a) return;
+  e.preventDefault();
+  if(a.classList.contains('ghost') || a.hasAttribute('data-close')) parent.postMessage('eyecon-quiz-close', '*'); else window.top.location.href = a.href;
+});
 </script>
 </body>
 </html>
