@@ -11,9 +11,6 @@
   let volume = 0.6;
   let musicEnabled = true;
   let musicVolume = 0.28;
-  let musicTimer = null;
-  let musicStep = 0;
-  let musicBus = null;
 
   function getCtx(){
     if(ctx) return ctx;
@@ -26,121 +23,28 @@
   // Unlocks/resumes the AudioContext — browsers require a user gesture,
   // so this is called on the first pointerdown anywhere in the app.
   function unlock(){
+    startMusic(); // inside the tap itself, so Safari allows playback
     const c = getCtx();
     if(!c) return;
     loadKeyPack();
-    if(c.state === 'suspended') c.resume().then(startMusic);
-    else startMusic();
+    if(c.state === 'suspended') c.resume();
   }
 
   function setEnabled(v){ enabled = !!v; }
   function setVolume(v){ volume = Math.max(0, Math.min(1, v)); }
 
-  function getMusicBus(){
-    const c = getCtx();
-    if(!c) return null;
-    if(!musicBus){
-      musicBus = c.createGain();
-      musicBus.gain.value = 0.0001;
-      // Low-pass keeps the loop warm and tucked behind the UI, lo-fi style.
-      const warm = c.createBiquadFilter();
-      warm.type = 'lowpass'; warm.frequency.value = 2200; warm.Q.value = 0.4;
-      musicBus.connect(warm); warm.connect(c.destination);
-    }
-    musicBus.gain.setTargetAtTime(musicEnabled ? musicVolume * 0.18 : 0.0001, c.currentTime, 0.08);
-    return musicBus;
-  }
-
-  // Cozy 70 BPM lo-fi loop for a pastel design studio: soft Rhodes-like
-  // pads, a round bass, a kalimba melody, and brushed percussion (no hard
-  // snare). Audio-clock scheduling keeps it steady on slow phones.
-  // Progression: Fmaj7 – Em7 – Dm7 – Cmaj7 (voiced low, gentle).
-  const MUSIC = [[174.61,220,261.63,329.63],
-    [164.81,196,246.94,293.66],
-    [146.83,174.61,220,261.63],
-    [130.81,164.81,196,246.94]];
-  // Kalimba line, one note (or 0 = rest) per eighth, 8 per chord.
-  const MELODY = [[659.25,0,523.25,0,587.33,523.25,0,0],
-    [587.33,0,493.88,0,0,392,440,0],
-    [523.25,0,440,0,523.25,0,587.33,0],
-    [493.88,0,392,0,329.63,0,0,0]];
-  const EIGHTH = 60 / 70 / 2;
-  let nextBeat = 0;
-  function musicNote(freq, time, duration, level=0.3, type='sine', attack=0.012){
-    const c = getCtx(), bus = getMusicBus();
-    if(!c || !bus || !musicEnabled) return;
-    const osc = c.createOscillator(), gain = c.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, time);
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(level, time + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-    osc.connect(gain); gain.connect(bus);
-    osc.start(time); osc.stop(time + duration + 0.03);
-    osc.onended = ()=>{ osc.disconnect(); gain.disconnect(); };
-  }
-  function drum(time, kind){
-    const c = getCtx(), bus = getMusicBus();
-    const g = c.createGain();
-    g.connect(bus);
-    if(kind === 'kick'){
-      const o = c.createOscillator();
-      o.frequency.setValueAtTime(90,time);
-      o.frequency.exponentialRampToValueAtTime(45,time+.12);
-      g.gain.setValueAtTime(.5,time);
-      g.gain.exponentialRampToValueAtTime(.0001,time+.22);
-      o.connect(g); o.start(time); o.stop(time+.24);
-      o.onended = ()=>{o.disconnect(); g.disconnect();};
-    } else {
-      // 'brush' = soft band-passed swish on the backbeat, 'hat' = tiny tick.
-      const duration = kind === 'brush' ? .18 : .03;
-      const buffer = c.createBuffer(1, Math.ceil(c.sampleRate*duration),c.sampleRate);
-      const data = buffer.getChannelData(0);
-      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
-      const source = c.createBufferSource(), filter = c.createBiquadFilter();
-      source.buffer=buffer; filter.type='bandpass';
-      filter.frequency.value=kind === 'brush' ? 2600 : 7000; filter.Q.value=.7;
-      g.gain.setValueAtTime(kind === 'brush' ? .12 : .035,time);
-      g.gain.exponentialRampToValueAtTime(.0001,time+duration);
-      source.connect(filter); filter.connect(g); source.start(time);
-      source.onended=()=>{ source.disconnect(); filter.disconnect(); g.disconnect(); };
-    }
-  }
-  function musicTick(){
-    if(!musicEnabled || !ctx || ctx.state !== 'running' || document.hidden) return;
-    if(nextBeat < ctx.currentTime) nextBeat = ctx.currentTime + .03;
-    while(nextBeat < ctx.currentTime + .15){
-      const step = musicStep % 8;
-      const bar = Math.floor(musicStep / 8) % MUSIC.length;
-      const chord = MUSIC[bar];
-      const t = nextBeat + (step % 2 ? EIGHTH*.18 : 0); // lazy swing
-      if(step === 0){
-        // Soft pad: slow attack so chords bloom instead of stab.
-        chord.forEach((f,i)=>{ musicNote(f,t+i*.02,EIGHTH*8,.13,'sine',.18); musicNote(f*2,t+i*.02,EIGHTH*3,.025,'triangle',.05); });
-      }
-      if(step === 0 || step === 5) musicNote(chord[0]/2,t,EIGHTH*2.5,.32,'sine',.02);
-      const m = MELODY[bar][step];
-      if(m){ musicNote(m,t,.7,.07,'sine',.004); musicNote(m*3,t,.12,.012,'sine',.002); }
-      if(step === 0 || step === 5) drum(t,'kick');
-      if(step === 4) drum(t,'brush');
-      if(step % 2 === 0) drum(t,'hat');
-      musicStep = (musicStep+1)%32;
-      nextBeat += EIGHTH;
-    }
-  }
+  // Background music: music1 → music2 → music3, then back to music1.
+  const TRACKS = [1,2,3].map(n => `assets/sounds/music/music${n}.mp3`);
+  let track = 0;
+  const music = new Audio(TRACKS[0]);
+  music.preload = 'none';
+  music.addEventListener('ended', ()=>{ track = (track + 1) % TRACKS.length; music.src = TRACKS[track]; startMusic(); });
   function startMusic(){
-    const c = getCtx();
-    if(!musicEnabled || !c || c.state !== 'running' || musicTimer || document.hidden) return;
-    getMusicBus(); nextBeat = c.currentTime + .04;
-    musicTick(); musicTimer = window.setInterval(musicTick, 25);
+    if(!musicEnabled || document.hidden) return;
+    music.volume = musicVolume;
+    music.play().catch(()=>{});
   }
-  function stopMusic(){
-    if(musicTimer){ window.clearInterval(musicTimer); musicTimer = null; }
-    if(musicBus && ctx){
-      musicBus.gain.cancelScheduledValues(ctx.currentTime);
-      musicBus.gain.setTargetAtTime(0, ctx.currentTime, 0.025);
-    }
-  }
+  function stopMusic(){ music.pause(); }
   function setMusicEnabled(v){
     musicEnabled = !!v;
     if(!musicEnabled) stopMusic();
@@ -148,7 +52,7 @@
   }
   function setMusicVolume(v){
     musicVolume = Math.max(0, Math.min(1, v));
-    getMusicBus();
+    music.volume = musicVolume;
   }
 
   function tone(freq, { duration=0.12, type='sine', gain=0.22, delay=0, glideTo=null, attack=0.008 } = {}){
