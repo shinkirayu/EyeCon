@@ -401,7 +401,7 @@
         if(settled()) break;
       }
       window.EC_EDITOR.freezeDesign(); // finished: everything stays exactly where it is
-      await new Promise(r => setTimeout(r, 2000)); // a beat to enjoy the finished design first
+      await new Promise(r => setTimeout(r, 3000)); // a beat to enjoy the finished design first
       if(!here()) return;
       await window.EC_EDITOR.showWholeDesign(); // whole page in view, grid off, so the change is easy to see
       const btn = document.getElementById('tool-preview'), save = document.getElementById('tool-save');
@@ -417,7 +417,7 @@
       document.removeEventListener('pointerup', onUp); btn.removeEventListener('keyup', onUp);
       if(!here()){ P.clearTarget(); P.hideBubble(); return; }
       P.clearTarget(); P.hideBubble();
-      await new Promise(r => setTimeout(r, 2500)); // let the after-view sink in before Submit
+      await new Promise(r => setTimeout(r, 3500)); // let the after-view sink in before Submit
       if(!here()) return;
       document.body.classList.remove('piko-no-submit'); // now Submit works
       P.pointAt(save); P.say(W.submitNow, { left:true });

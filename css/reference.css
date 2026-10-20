@@ -3215,3 +3215,5 @@ body:is(.tut-visual,:has(.piko-cue:not(.hidden))) .piko-demo p:not(.pd-how){disp
 .piko-bubble.piko-cue.piko-cue-card{flex-direction:column-reverse;gap:0;} /* cards and success: Piko peeks over the top, centred */
 .piko-cue-card .piko-img{width:8rem;margin-bottom:-.75rem;position:relative;z-index:1;}
 .piko-bubble.piko-cue.piko-cue-stack{flex-direction:column;align-items:center;gap:.25rem;} /* pan/zoom: cue centred under the TRY IT card, Piko below */
+/* BEFORE badge lives inside the zoomed-out design, so it needs design-sized text to read clearly. */
+.before-badge{top:1.5rem;left:1.5rem;font-size:3rem;padding:.5rem 1.25rem;border-radius:1rem;}
