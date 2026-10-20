@@ -2010,12 +2010,11 @@
     // Just the day wrap-up: no totals or per-client list.
     // After the last client (Level 7): send the player to the post-test.
     const allDone = profile.completed.includes('oras-signin');
-    let postDone = false, joined = false; try{ const st = JSON.parse(localStorage.getItem('eyecon_study') || '{}'); postDone = !!st.post; joined = !!st.raffle; }catch(_){}
+    let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
     summary.innerHTML = allDone
       ? (postDone // already took it in this browser: just thank them; the desktop stays open to browse
         ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">All done. Thank you!</h2>
            <p>You finished every client and the post-test. Feel free to keep browsing.</p>
-           ${joined ? '' : '<a class="btn" href="quiz.html?mode=post" id="raffle-join">🎟️ Join the raffle</a>'}
            <button class="btn btn-accept" id="post-test-link" type="button">Continue playing</button>`
         : `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">You finished every client!</h2>
          <p>One last thing: take the post-test so we can see how much you learned.</p>
@@ -2030,15 +2029,6 @@
       return window.EC_CREDITS(() => { window.EC_MODAL.show(modal); document.getElementById('post-test-link').focus(); }, 'Skip ▸');
     }
     // Back to desktop for good: the card mustn't pop up again while they browse.
-    // Raffle button: the database decides (an entry cleared by an admin means they can join again).
-    if(postDone && window.EC_DB?.online && window.EC_DB.userId){
-      window.EC_DB.client.from('raffle_entries').select('entry_no').eq('player_id', window.EC_DB.userId).maybeSingle().then(({ data }) => {
-        const btn = document.getElementById('raffle-join');
-        if(data){ btn?.remove(); return; }
-        try{ const st = JSON.parse(localStorage.getItem('eyecon_study') || '{}'); delete st.raffle; localStorage.setItem('eyecon_study', JSON.stringify(st)); }catch(_){}
-        if(!btn) document.getElementById('post-test-link').insertAdjacentHTML('beforebegin', '<a class="btn" href="quiz.html?mode=post" id="raffle-join">🎟️ Join the raffle</a>');
-      });
-    }
     if(postDone) document.getElementById('post-test-link').onclick = () => { profile.finishedFree = true; save(); window.EC_MODAL.hide(modal); showScreen('screen-desktop'); };
     window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }

@@ -370,6 +370,12 @@
     if(local?.answers && !(await alreadyTaken())){
       await db.client.from('quiz_results').insert({ kind:mode, score:local.score, total:local.total, answers:local.answers });
     }
+    // Opened from the website's Raffle card: only the raffle form (after the post-test).
+    if(new URLSearchParams(location.search).has('raffle')){
+      if(!(await alreadyTaken())){ app.innerHTML = `${top('Raffle')}<h1>Finish the post-test first</h1><p>The raffle is for players who finished the game and the post-test. Play EyeCon, take the post-test, then come back to join.</p><div class="actions"><span></span><button class="btn" data-close>Okay</button></div>`; return; }
+      app.innerHTML = `${top('Raffle')}<h1>Join the raffle</h1><div class="raffle" id="raffle"></div><div class="actions"><span></span><button class="ghost" data-close>Close</button></div>`;
+      return raffleBox();
+    }
     if(await alreadyTaken()) return taken();
     if(!sessionStorage.getItem('eyecon_consent') && !readStudy().profile && !(await respondent())) return consent();
     profile();
@@ -378,6 +384,7 @@
 
 // Opened as a popup on the website: "Back to home" closes the popup; other links (Play) open in the whole window.
 if(window.top !== window) document.addEventListener('click', e => {
+  if(e.target.closest('button[data-close]')) return parent.postMessage('eyecon-quiz-close', '*'); // raffle popup's Close / Okay
   const a = e.target.closest('a[href]'); if(!a) return;
   e.preventDefault();
   if(a.classList.contains('ghost') || a.hasAttribute('data-close')) parent.postMessage('eyecon-quiz-close', '*'); else window.top.location.href = a.href;
