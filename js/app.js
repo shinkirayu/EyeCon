@@ -1974,7 +1974,7 @@
   }
 
   function showDaySummary(){
-    if(showDaySummary.wrapUp) return; // day one: Piko's wrap-up first (it calls this when done)
+    if(showDaySummary.wrapUp || profile.finishedFree) return; // day one: Piko's wrap-up first; finished everything: free to browse, no more day-end cards
     const day=window.EC_STORE.workday(profile);
     if(day.submissions<window.EC_STORE.dailyTaskLimit(profile) || profile.pendingClientReply || profile.readyReply)return;
     // Days 2+: Piko wraps up the day (once) before the sunset animation. Day 1 has its own basics lines.
@@ -2010,11 +2010,12 @@
     // Just the day wrap-up: no totals or per-client list.
     // After the last client (Level 7): send the player to the post-test.
     const allDone = profile.completed.includes('oras-signin');
-    let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
+    let postDone = false, joined = false; try{ const st = JSON.parse(localStorage.getItem('eyecon_study') || '{}'); postDone = !!st.post; joined = !!st.raffle; }catch(_){}
     summary.innerHTML = allDone
       ? (postDone // already took it in this browser: just thank them; the desktop stays open to browse
         ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">All done. Thank you!</h2>
            <p>You finished every client and the post-test. Feel free to keep browsing.</p>
+           ${joined ? '' : '<a class="btn" href="quiz.html?mode=post" id="raffle-join">🎟️ Join the raffle</a>'}
            <button class="btn btn-accept" id="post-test-link" type="button">Back to desktop</button>`
         : `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">You finished every client!</h2>
          <p>One last thing: take the post-test so we can see how much you learned.</p>
@@ -2028,7 +2029,8 @@
       profile.creditsSeen = true; save();
       return window.EC_CREDITS(() => { window.EC_MODAL.show(modal); document.getElementById('post-test-link').focus(); }, 'Skip ▸');
     }
-    if(postDone) document.getElementById('post-test-link').onclick = () => { window.EC_MODAL.hide(modal); showScreen('screen-desktop'); };
+    // Back to desktop for good: the card mustn't pop up again while they browse.
+    if(postDone) document.getElementById('post-test-link').onclick = () => { profile.finishedFree = true; save(); window.EC_MODAL.hide(modal); showScreen('screen-desktop'); };
     window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }
 

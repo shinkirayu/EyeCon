@@ -72,7 +72,9 @@
     });
     if(!levels.length){
       const prog=S.progression(profile);
-      list.innerHTML = prog.doneToday >= prog.dailyLimit
+      list.innerHTML = profile.finishedFree // finished the whole game: nothing waits, just browse
+        ? '<div class="empty-state">You finished every client! 🎉 Reread their emails in Completed, or explore the Browser and Store.</div>'
+        : prog.doneToday >= prog.dailyLimit
         ? `<div class="empty-state">It's 5 PM. Continue from the day summary to receive tomorrow's mail.</div>`
         : '<div class="empty-state">All caught up! Your finished work is in Completed.</div>';
       return;
