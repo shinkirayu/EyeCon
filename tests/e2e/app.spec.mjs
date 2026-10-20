@@ -310,18 +310,6 @@ test('desktop shortcuts open centered Settings and running taskbar apps',async({
   await expect(page.locator('#screen-shell')).toBeVisible();
 });
 
-test('the studio upgrades tab sells a guaranteed upgrade', async ({ page }) => {
-  await page.goto('/');
-  await beginFirstDay(page);
-  await page.getByRole('button', { name: 'Close Eye Mail' }).click();
-  await page.locator('#icon-shop').dispatchEvent('click');
-  await page.getByRole('button', { name: /Upgrades/ }).click();
-
-  await expect(page.getByRole('heading', { name: /Studio Upgrades/ })).toBeVisible();
-  await page.getByRole('button', { name: /90.*Buy/ }).click();
-  await expect(page.getByRole('button', { name: 'Installed' })).toBeVisible();
-});
-
 test('the canvas fills its workspace without a mission strip or resizing for settings', async ({ page }) => {
   await page.goto('/');
   await beginFirstDay(page);
@@ -480,7 +468,7 @@ test('daily store checks out chosen items and delivers them to the wardrobe', as
   await page.getByRole('button',{name:'Close Eye Mail'}).click();
   await page.locator('#icon-shop').dispatchEvent('click');
   await expect(page.getByRole('button',{name:/Gacha|Pull/})).toHaveCount(0);
-  await expect(page.locator('.daily-item')).toHaveCount(5);
+  await expect(page.locator('.daily-item')).toHaveCount(4); // every wallpaper for sale: Boris + 3
   const first=page.locator('.daily-item').first();
   await expect(first).toContainText('Boris Wallpaper');
   const name=await first.locator('h4').textContent();

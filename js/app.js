@@ -1328,7 +1328,7 @@
     const eq = profile.equipped;
     const C = window.EC_COSMETICS;
 
-    const wp = C.getItem(eq.wallpaper);
+    const wp = C.getItem(eq.wallpaper) || C.getItem(C.CATEGORY_DEFAULT.wallpaper); // a removed wallpaper falls back to the default
     const skin = C.getItem(eq.uiSkin);
 
     applyCosmeticsToScene(
@@ -1641,8 +1641,10 @@
       <button class="shop-tab-btn ${shopTab==='featured'?'active':''}" data-tab="featured">Daily Specials</button>
       <button class="shop-tab-btn ${shopTab==='wardrobe'?'active':''}" data-tab="wardrobe">🧥 Wardrobe</button>
     </div>`;
-    html = html.replace('</div>', `<button class="shop-tab-btn ${shopTab==='upgrades'?'active':''}" data-tab="upgrades">🛠️ Upgrades</button></div>`);
-    html += shopTab === 'featured' ? renderDailyShopHtml() : shopTab === 'cart' ? renderCartHtml() : shopTab === 'wardrobe' ? renderWardrobeTabHtml() : renderUpgradesTabHtml();
+    // Your coins, top of the store (Upgrades tab removed for now).
+    html = `<div class="shop-coins" aria-label="Your coins">Your coins: <b>${window.EC_MONEY(profile.currency || 0)}</b></div>` + html;
+    if(shopTab === 'upgrades') shopTab = 'featured';
+    html += shopTab === 'featured' ? renderDailyShopHtml() : shopTab === 'cart' ? renderCartHtml() : renderWardrobeTabHtml();
     panel.innerHTML = html;
 
     panel.querySelectorAll('[data-tab]').forEach(btn=>{
@@ -2016,6 +2018,11 @@
     const next = document.getElementById('next-workday');
     next.textContent = 'Next day';
     next.hidden = allDone; // finished every client: only the post-test link ("Keep playing" off for now)
+    // Finished every client: the credits roll first (once), then the post-test card.
+    if(allDone && !profile.creditsSeen && window.EC_CREDITS){
+      profile.creditsSeen = true; save();
+      return window.EC_CREDITS(() => { window.EC_MODAL.show(modal); document.getElementById('post-test-link').focus(); }, 'Skip ▸');
+    }
     window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }
 

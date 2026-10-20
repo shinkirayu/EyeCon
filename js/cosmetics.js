@@ -20,12 +20,10 @@
   const ITEMS = [
     // ---- Desktop wallpapers ----
     { id:'wp-studio',   category:'wallpaper', name:'Studio Wallpaper', rarity:'common',    emoji:'🖼️', css:"#b5a1cd url('assets/wallpapers/wallpaper-1.png') center / cover no-repeat" },
-    { id:'wp-mint',     category:'wallpaper', name:'Lavender Desk',    rarity:'common',    emoji:'🌿', css:'linear-gradient(160deg, #b6a1d1 0%, #a993ca 100%)' },
-    { id:'wp-peach',    category:'wallpaper', name:'Peach Fuzz',       rarity:'common',    emoji:'🍑', css:'linear-gradient(160deg, #ffe3d0 0%, #ffc9a8 100%)' },
-    { id:'wp-lavender', category:'wallpaper', name:'Lavender Fields',  rarity:'rare',      emoji:'💜', css:'linear-gradient(160deg, #e3d6f7 0%, #c6aef0 100%)' },
-    { id:'wp-sunset',   category:'wallpaper', name:'Sunset Studio',    rarity:'epic',      emoji:'🌅', css:'linear-gradient(160deg, #ffb385 0%, #ff7a90 55%, #a86bd0 100%)', isNew:true },
-    { id:'wp-galaxy',   category:'wallpaper', name:'Galaxy Desk',      rarity:'legendary', emoji:'🌌', css:'linear-gradient(160deg, #1b1035 0%, #3a1c6e 45%, #7b2fb5 100%)', featured:true },
     { id:'wp-boris',    category:'wallpaper', name:'Boris Wallpaper',  rarity:'rare',      emoji:'🐱', css:"#b5a1cd url('assets/wallpapers/boris.png') center / cover no-repeat", alwaysInShop:true },
+    { id:'wp-illus',    category:'wallpaper', name:'Sketchbook Dreams', rarity:'epic',      emoji:'🎨', css:"#b5a1cd url('assets/wallpapers/Illustration7.png') center / cover no-repeat", isNew:true },
+    { id:'wp-studio2',  category:'wallpaper', name:'Studio Afternoon',  rarity:'rare',      emoji:'☀️', css:"#b5a1cd url('assets/wallpapers/WAllpaper_2.png') center / cover no-repeat", isNew:true },
+    { id:'wp-mousepad', category:'wallpaper', name:'Cozy Mousepad',     rarity:'common',      emoji:'🖱️', css:"#b5a1cd url('assets/wallpapers/mouse_pas.png') center / cover no-repeat", isNew:true },
 
     // ---- Window themes (color schemes) ----
     // accent/accentDark remap --purple (selection, sidebar, tags); secondary/
@@ -94,8 +92,6 @@
 
     // ---- UI skins / visual effects ----
     { id:'skin-default',  category:'uiSkin', name:'Standard',        rarity:'common',    effect:'none' },
-    { id:'skin-sparkle',  category:'uiSkin', name:'Sparkle Trails',  rarity:'epic',      effect:'sparkle' },
-    { id:'skin-confetti', category:'uiSkin', name:'Confetti Pop',    rarity:'legendary', effect:'confetti', featured:true },
   ];
 
   const CATEGORY_LABELS = {
@@ -104,10 +100,7 @@
     deskSkin:'Desk', keyboardSkin:'Keyboard', mouseSkin:'Mouse', towerSkin:'PC Tower', monitorSkin:'Monitor',
     uiSkin:'UI Skin',
   };
-  const CATEGORY_ORDER = [
-    'wallpaper','windowTheme','iconPack','cursor','decor','poster',
-    'deskSkin','keyboardSkin','mouseSkin','towerSkin','monitorSkin','uiSkin',
-  ];
+  const CATEGORY_ORDER = ['wallpaper']; // only wallpapers for now
   // Every player starts owning (and wearing) these baseline items.
   const CATEGORY_DEFAULT = {
     wallpaper:'wp-studio', windowTheme:'theme-classic', iconPack:'icons-classic',
