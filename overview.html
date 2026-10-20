@@ -165,13 +165,13 @@
   .raffle-card .gcash{height:20px;width:auto;}
   .raffle-card .draw{position:relative;z-index:1;margin-top:16px;font:800 18px 'Nunito';color:#4d2b7a;} /* clear of the star's points */
   .raffle-card .prize-wrap{position:relative;min-height:210px;display:flex;flex-direction:column;justify-content:center;} /* tall enough for the star, so the title and draw line clear its points */
-  .raffle-card .star{position:absolute;left:50%;top:calc(50% + 6px);width:320px;transform:translate(-50%,-50%);z-index:0;}
+  .raffle-card .star{position:absolute;left:50%;top:calc(50% + 6px);width:320px;transform:translate(-50%,-50%);z-index:0;pointer-events:none;} /* decoration: never blocks clicks */
   .raffle-card .prize,.raffle-card .via{position:relative;z-index:1;}
   .raffle-card p{margin:6px 0;font:700 18px 'Nunito';}
   .raffle-card .count{font:800 24px 'Baloo 2';color:#3b172e;}
   .raffle-card .win{display:flex;justify-content:center;gap:10px;margin-top:6px;}
   .raffle-card .win b{padding:4px 12px;border-radius:999px;background:#fff3d6;font:800 22px 'Baloo 2';}
-  .raffle-card .join-btn{all:unset;box-sizing:border-box;display:block;width:100%;margin-top:12px;padding:12px 16px;border-radius:999px;background:#4d2b7a;color:#fff;font:800 17px 'Nunito';cursor:pointer;text-align:center;}
+  .raffle-card .join-btn{all:unset;box-sizing:border-box;display:block;position:relative;z-index:2;width:100%;margin-top:12px;padding:12px 16px;border-radius:999px;background:#4d2b7a;color:#fff;font:800 17px 'Nunito';cursor:pointer;text-align:center;}
   .raffle-card .join-btn[hidden]{display:none;}
   .raffle-card .join-btn:hover{background:#6b4c9d;}
   .raffle-card .join-btn:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
