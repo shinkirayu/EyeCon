@@ -1842,7 +1842,9 @@
       window.EC_DB?.track('submit', track);
     }
     profile.pendingClientReply={levelId:level.id,result,elapsedMs,elements:window.EC_EDITOR.getElements(),dueAt:Date.now()+3000,track};
-    pendingSubmission=null; save(); updateClock(); openMailApp();
+    pendingSubmission=null; save(); updateClock();
+    openApps.delete('screen-editor'); // sent: the editor closes, so the job can't be reopened and sent again
+    openMailApp();
     showToast('Reply sent! Your client is reviewing the attached design.',2800);
     scheduleClientReply();
   }
@@ -2679,8 +2681,17 @@
     window.EC_EDITOR.setOnSubmit(result => {
       stopTimer();
       const level = window.EC_EDITOR.getLevel();
+      // A finished (paid) job or one still waiting on the client can't be sent again.
+      if(profile.completed.includes(level.id) || profile.pendingClientReply || profile.readyReply){
+        showToast(profile.completed.includes(level.id) ? 'This job is already done and paid. Pick a new email in Mail.' : 'You already sent this. Wait for your client’s reply.', 3000);
+        return;
+      }
       const elapsedMs = levelStartTime ? (Date.now() - levelStartTime) : 0;
       pendingSubmission = { level, result, elapsedMs };
+      // The editor closes while the reply is written; its edits are kept as a draft, so if the
+      // email is closed unsent, opening the job from Mail (or Back to Editor) brings them back.
+      profile.revisionDrafts = Object.assign({}, profile.revisionDrafts, { [level.id]: JSON.parse(JSON.stringify(window.EC_EDITOR.getElements())) }); save();
+      openApps.delete('screen-editor');
       openMailApp(); // the reply is written in the mail app, not over the canvas
       window.EC_MAIL.openCompose(level, result);
     });
