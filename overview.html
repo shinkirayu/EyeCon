@@ -155,6 +155,25 @@
   @media (prefers-reduced-motion:reduce){.scroll-hint i::before{animation:none;}}
   .play-curtain .pc-intro{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;opacity:0;transform:none;z-index:3;transition:opacity .3s ease;} /* logo shrunk inside the file itself, so its background fills the screen in one colour */
   .play-curtain.intro .pc-intro{opacity:1;}
+  .raffle-pop{position:fixed;inset:0;z-index:250;display:grid;place-items:center;padding:16px;background:#12334477;}
+  .raffle-pop[hidden]{display:none;}
+  .raffle-card{position:relative;width:min(440px,100%);padding:32px 28px 28px;border-radius:18px;background:#f598c4;box-shadow:0 10px 0 #d9649f;transform:rotate(-2deg);text-align:center;font-family:'Nunito',sans-serif;color:#3b172e;}
+  .raffle-card .tag{position:absolute;top:-18px;right:24px;padding:6px 16px;border-radius:8px;background:#fff3d6;color:#c0285a;font:800 22px 'Baloo 2',sans-serif;transform:rotate(6deg);}
+  .raffle-card h2{position:relative;z-index:2;margin:0 0 8px;font:800 30px/1.1 'Baloo 2',sans-serif;color:#4d2b7a;}
+  .raffle-card .prize{margin:8px 0 -16px;font:800 56px 'Baloo 2',sans-serif;color:#ff1f5a;-webkit-text-stroke:2px #fff;paint-order:stroke fill;text-shadow:0 3px 0 #fff;} /* vibrant pink-red with a white outline */
+  .raffle-card .via{display:flex;align-items:center;justify-content:center;gap:5px;font:800 15px 'Nunito';color:#3b172e;}
+  .raffle-card .gcash{height:20px;width:auto;}
+  .raffle-card .draw{position:relative;z-index:1;margin-top:16px;font:800 18px 'Nunito';color:#4d2b7a;} /* clear of the star's points */
+  .raffle-card .prize-wrap{position:relative;min-height:210px;display:flex;flex-direction:column;justify-content:center;} /* tall enough for the star, so the title and draw line clear its points */
+  .raffle-card .star{position:absolute;left:50%;top:calc(50% + 6px);width:320px;transform:translate(-50%,-50%);z-index:0;}
+  .raffle-card .prize,.raffle-card .via{position:relative;z-index:1;}
+  .raffle-card p{margin:6px 0;font:700 18px 'Nunito';}
+  .raffle-card .count{font:800 24px 'Baloo 2';color:#3b172e;}
+  .raffle-card .win{display:flex;justify-content:center;gap:10px;margin-top:6px;}
+  .raffle-card .win b{padding:4px 12px;border-radius:999px;background:#fff3d6;font:800 22px 'Baloo 2';}
+  .raffle-card .join{color:#4d2b7a;font:800 16px 'Nunito';}
+  .raffle-card .close{all:unset;position:absolute;top:10px;left:14px;cursor:pointer;font:800 22px 'Nunito';color:#3b172e;}
+  .raffle-card .close:focus-visible{outline:3px solid #f5b83d;}
 </style>
 </head>
 <body>
@@ -174,6 +193,7 @@
     <a class="nav" href="#trailer">Trailer</a>
     <a class="nav" href="#objectives">Objectives</a>
     <a class="nav" href="#team">Team</a>
+    <a class="nav" href="#raffle" id="raffle-link">Raffle</a>
   </nav>
 </div></header>
 <main class="stage" id="stage"><i id="top" style="top:0"></i>
@@ -445,6 +465,38 @@
   })();
 </script>
 <script>document.addEventListener('contextmenu', e => { if(!e.target.closest('input,textarea,[contenteditable="true"]')) e.preventDefault(); }); /* no browser right-click menu (text boxes keep it for paste) */</script>
+<div class="raffle-pop" id="raffle-pop" role="dialog" aria-modal="true" aria-labelledby="raffle-h" hidden>
+  <div class="raffle-card"><button class="close" aria-label="Close">✕</button><span class="tag">RAFFLE!!!</span>
+    <h2 id="raffle-h">Finish the post-test to win!</h2>
+    <div class="prize-wrap"><img class="star" src="assets/sprites/Stars.png" alt="" aria-hidden="true"><div class="prize">₱200.67</div><div class="via">via <img src="assets/GCash_logo.svg.webp" alt="GCash" class="gcash"></div></div>
+    <p class="draw">3 winners · Draw: Sat, Oct 24, 5:00 PM</p>
+    <p class="count" id="raffle-count">Entries: …</p>
+    <div id="raffle-winners"></div>
+    <p><a href="quiz.html?mode=post" class="join">Finished the post-test? Get your entry here</a></p>
+  </div>
+</div>
+<script>
+  (() => { // Raffle tab: live entry count and, after the draw, the winning entry numbers
+    const pop = document.getElementById('raffle-pop');
+    const close = () => { pop.hidden = true; };
+    const open = async e => {
+      e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus();
+      const S = window.EC_SUPABASE || {};
+      try{
+        const r = await fetch(S.url + '/rest/v1/rpc/raffle_public', { method:'POST', headers:{ apikey:S.publishableKey, Authorization:'Bearer ' + S.publishableKey, 'Content-Type':'application/json' }, body:'{}' });
+        const d = await r.json();
+        document.getElementById('raffle-count').textContent = `Entries so far: ${d.entries}`;
+        document.getElementById('raffle-winners').innerHTML = d.winners.length
+          ? `<p>🎉 Winning entries:</p><div class="win">${d.winners.map(n => `<b>#${n}</b>`).join('')}</div>` : '<p>Winners are shown here after the draw.</p>';
+      }catch(_){ document.getElementById('raffle-count').textContent = 'Entries: can’t load right now'; }
+    };
+    document.getElementById('raffle-link').addEventListener('click', open);
+    pop.querySelector('.close').onclick = close;
+    pop.addEventListener('click', e => { if(e.target === pop) close(); });
+    pop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+  })();
+</script>
+<script src="js/config.js"></script>
 <script src="js/credits.js"></script>
 <script>
   (() => { // Foresight logo -> credits roll

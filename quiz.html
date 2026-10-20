@@ -99,6 +99,10 @@
   @media(min-width:760px){.ev{display:grid;grid-template-columns:1fr 15rem;gap:1rem;align-items:center;}.ev-t{float:none;margin:0;}.ev-scale{clear:none;}} /* statement and scale side by side */
   .ev-scale span{min-height:2.25rem;}
   .ev-h{margin:.5rem 0;}
+  .raffle{margin:1rem 0;padding:1rem 1.25rem;border:3px dashed #f08aa8;border-radius:1rem;background:#fff0f5;}
+  .rf-title{margin:0 0 .5rem;font:800 1.15rem 'Nunito';color:#3b172e;}
+  .rf-no{margin:0 0 .25rem;font:800 2.25rem 'Baloo 2';color:#c0285a;}
+  .raffle .btn{margin-top:.25rem;}
 </style>
 </head>
 <body>
@@ -234,6 +238,24 @@
     };
     window.scrollTo(0, 0);
   }
+  // Raffle (Sat, Oct 24, 5 PM; 3 winners of PHP 200.67 via GCash): one numbered entry per post-test.
+  async function raffleBox(){
+    const box = document.getElementById('raffle'); if(!box || !verified()) return;
+    const mine = (await db.client.from('raffle_entries').select('entry_no, won').eq('player_id', db.userId).maybeSingle()).data;
+    const show = e => { box.innerHTML = `<p class="rf-title">🎟️ You're in the raffle!</p><p class="rf-no">Entry #${e.entry_no}</p><p class="note">Draw: Sat, Oct 24, 5:00 PM · 3 winners of ₱200.67 via GCash. Check the Raffle tab on the website.</p>`; };
+    if(mine) return show(mine);
+    box.innerHTML = `<p class="rf-title">🎟️ Join the raffle: 3 winners of ₱200.67 via GCash</p>
+      <div class="field"><label for="gcash">Your GCash number</label><input id="gcash" inputmode="numeric" maxlength="11" placeholder="09XXXXXXXXX" autocomplete="tel"></div>
+      <p class="note">Draw: Sat, Oct 24, 5:00 PM. Your number is only used to send the prize and is never shown publicly.</p>
+      <p class="err" id="rf-err" role="alert"></p><button class="btn" id="rf-join">Get my entry</button>`;
+    document.getElementById('rf-join').onclick = async () => {
+      const gcash = document.getElementById('gcash').value.replace(/\D/g, ''), err = document.getElementById('rf-err');
+      if(!/^09\d{9}$/.test(gcash)){ err.textContent = 'Enter an 11-digit GCash number starting with 09.'; return; }
+      const { data, error } = await db.client.from('raffle_entries').insert({ gcash }).select('entry_no, won').single();
+      if(error){ err.textContent = error.code === '23505' ? 'That GCash number already has an entry. One entry per person.' : 'Could not join: ' + error.message; return; }
+      show(data);
+    };
+  }
   async function finish(){
     const answers = picks.map((p, k) => ({ q:Q[k].n, picked:p, correct:p === Q[k].a }));
     if(rating) answers.push(rating); // Part II/III ride along (no question number, so scoring ignores it)
@@ -254,9 +276,10 @@
     if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
-      ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p>Now let’s put on your designer hat and clock in.</p>'}
+      ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p>Now let’s put on your designer hat and clock in.</p>'}${mode === 'post' ? '<div class="raffle" id="raffle"></div>' : ''}
       <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><button class="btn" id="to-credits">Continue</button>`}</div>`;
     document.getElementById('to-credits')?.addEventListener('click', () => { location.href = PLAY + '#desk'; }); // credits already rolled in the game
+    if(mode === 'post') raffleBox();
     app.querySelector('.btn').focus();
   }
   // ---------- Study gate: consent, then a username and short profile (Google/email sign-in hidden for now) ----------
@@ -332,12 +355,19 @@
       <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><a class="btn" href="${PLAY}">Play EyeCon!</a>`}</div>`;
     const st = readStudy(); st[mode] = st[mode] || { at:new Date().toISOString() }; writeStudy(st);
     if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
+    if(mode === 'post'){ app.querySelector('.actions').insertAdjacentHTML('beforebegin', '<div class="raffle" id="raffle"></div>'); raffleBox(); } // can still join the raffle
   }
   (async () => {
     app.innerHTML = `${top(title)}<h1>Loading…</h1>`;
     try{ await (db && db.ready); }catch(_){}
     sessionStorage.removeItem(RESUME);
     if(!verified()) return mode === 'pre' && !sessionStorage.getItem('eyecon_consent') ? consent() : signIn();
+    // Finished this test before but it only saved in this browser (e.g. offline): upload it now,
+    // so it counts for the study and the raffle can accept their entry.
+    const local = readStudy()[mode];
+    if(local?.answers && !(await alreadyTaken())){
+      await db.client.from('quiz_results').insert({ kind:mode, score:local.score, total:local.total, answers:local.answers });
+    }
     if(await alreadyTaken()) return taken();
     if(!sessionStorage.getItem('eyecon_consent') && !readStudy().profile && !(await respondent())) return consent();
     profile();
