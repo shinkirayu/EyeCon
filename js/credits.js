@@ -12,6 +12,9 @@
   .egg .heart{margin-top:24px;font-size:22px;}
   .egg .x{all:unset;position:absolute;right:24px;bottom:24px;cursor:pointer;color:#fff3d6;font:800 18px 'Nunito';text-decoration:underline;}
   .egg .x:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
+  .egg .team2{display:grid;grid-template-columns:repeat(2,max-content);gap:24px 48px;justify-content:center;} /* Made by: two names per line */
+  .egg .team2 b{white-space:nowrap;} /* a name always stays on one line */
+  @media (max-width:640px){.egg .team2{grid-template-columns:1fr;}.egg .team2 b{white-space:normal;}}
   @keyframes eggRoll{to{transform:translateY(calc(-100% - 100vh))}}
   @media (prefers-reduced-motion:reduce){.egg .roll{position:static;animation:none;padding:48px 0;}.egg{overflow:auto;}}`;
   window.EC_CREDITS = (onEnd, closeLabel = 'Close ✕') => {
@@ -19,7 +22,7 @@
     const d = document.createElement('div'); d.className = 'egg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Credits');
     const who = (n, r) => `<p><b>${n}</b><span>${r}</span></p>`;
     d.innerHTML = `<div class="roll"><img src="assets/landing/v2/foresight.png" alt="Foresight"><p style="margin:24px 0">presents</p><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="width:300px">
-        <h2>Made by</h2>${who('Nica Caranza', 'The Greatest Animator')}${who('Nadine Santillan', 'The GOAT Artist')}${who('Auoie Dyncy Tan', 'The Brain and Face')}${who('Kryu Maro Vera Cruz', 'The Lead Larper')}
+        <h2>Made by</h2><div class="team2">${who('Nica Caranza', 'The Greatest Animator')}${who('Nadine Santillan', 'The GOAT Artist')}${who('Auoie Dyncy Tan', 'The Brain and Face')}${who('Kryu Maro Vera Cruz', 'The Lead Larper')}</div>
         <h2>Food by</h2><p><b>Almel's Canteen</b></p>
         <h2>Muse</h2><p><b>Miguel Mayor</b></p>
         <h2>Music by</h2><p><b>King Anthony Polo</b><a href="https://www.youtube.com/@CrwnlssKing" target="_blank" rel="noopener">youtube.com/@CrwnlssKing</a></p>
