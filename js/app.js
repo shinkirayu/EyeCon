@@ -25,7 +25,7 @@
     settings:['Settings','⚙️'], profile:['Profile','👤'], stats:['Stats','📊']
   };
   // Running apps use the same icon art as the desktop and taskbar.
-  const sprite = sym => `<svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#${sym}"/></svg>`;
+  const sprite = sym => `<svg class="game-taskbar-icon" aria-hidden="true"><use href="#ico-${sym}"/></svg>`;
   const iconImg = file => `<img src="assets/icons/${file}" alt="" aria-hidden="true" />`;
   const TASKBAR_ICONS = {
     'screen-shell':sprite('mail'), 'screen-shop':sprite('shop'), 'screen-editor':iconImg('maker-icon.svg'),
@@ -252,7 +252,8 @@
       await until(()=>(held += wrap.classList.contains('panning') ? 1 : 0) >= 5);
       await new Promise(r => setTimeout(r, 2000)); // let them pan around a bit more
       P.say(W.zoom, { top:true }); P.demo('zoom');
-      let zoomed = false; wrap.addEventListener('wheel', ()=>{ zoomed = true; }, { once:true });
+      // PC: the wheel (as always). Mac/touch: any real zoom (pinch, or ⌘+scroll); on a Mac the wheel pans.
+      let zoomed = false; wrap.addEventListener(window.EC_INPUT?.mode === 'pc' ? 'wheel' : 'ec-zoom', ()=>{ zoomed = true; }, { once:true });
       await until(()=>zoomed);
       await new Promise(r => setTimeout(r, 2200)); // let them play with zoom, demo still showing
       P.demo(null); P.clearTarget();
@@ -410,11 +411,11 @@
       const onDown = () => { held = true; P.pointAt(document.getElementById('editor-canvas-wrap')); };
       const onUp = () => { if(held) released = true; };
       btn.addEventListener('pointerdown', onDown); btn.addEventListener('keydown', onDown);
-      document.addEventListener('pointerup', onUp); btn.addEventListener('keyup', onUp);
+      document.addEventListener('pointerup', onUp); document.addEventListener('pointercancel', onUp); btn.addEventListener('keyup', onUp); // a cancelled touch counts as letting go
       P.pointAt(btn); P.say(W.compare, { top:true });
       await until(()=>released || !here());
       btn.removeEventListener('pointerdown', onDown); btn.removeEventListener('keydown', onDown);
-      document.removeEventListener('pointerup', onUp); btn.removeEventListener('keyup', onUp);
+      document.removeEventListener('pointerup', onUp); document.removeEventListener('pointercancel', onUp); btn.removeEventListener('keyup', onUp);
       if(!here()){ P.clearTarget(); P.hideBubble(); return; }
       P.clearTarget(); P.hideBubble();
       await new Promise(r => setTimeout(r, 3500)); // let the after-view sink in before Submit

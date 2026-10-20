@@ -502,6 +502,14 @@
   })();
 </script>
 <script src="js/config.js"></script>
+<script>
+  (() => { // the Play tip in the player's own controls: PC as written, Mac shortcuts, touch screens
+    const tip = document.querySelector('#play-curtain .pc-tip'); if(!tip) return;
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+    if(matchMedia('(pointer: coarse)').matches) tip.textContent = 'For the best experience, turn your screen sideways and play in landscape.';
+    else if(/mac/i.test(platform)){ tip.querySelector('kbd').textContent = '⌃⌘F'; tip.innerHTML = tip.innerHTML.replace(' and mouse ', ' and trackpad or mouse '); }
+  })();
+</script>
 <script src="js/credits.js"></script>
 <script>
   (() => { // Foresight logo -> credits roll

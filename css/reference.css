@@ -3229,3 +3229,14 @@ body:is(.tut-visual,:has(.piko-cue:not(.hidden))) .piko-demo p:not(.pd-how){disp
 #modal-workday button#post-test-link{margin-top:.25rem;}
 #modal-workday button#post-test-link{margin-left:auto;margin-right:auto;} /* centred under the card text */
 #modal-workday #raffle-join{margin-left:auto;margin-right:auto;}
+/* TRY IT card on a touchscreen: Piko's pointing finger instead of a mouse. */
+.piko-demo .pd-finger{height:5rem;width:auto;image-rendering:pixelated;filter:drop-shadow(0 .25rem .25rem #0004);}
+/* Narrow screens (phones held upright): the preview's close button sits inside its corner; outside, it would be off screen. */
+@media(max-width:900px){html[data-input="touch"] #modal-preview .preview-close{top:.5rem;right:.5rem;width:2.75rem;height:2.75rem;border-radius:50%;background-color:#fffffff0;box-shadow:0 .125rem .5rem #0003;z-index:2;}}
+/* Instructions for the player's controls (html[data-input] is set by js/ui-helpers.js; no mark = PC). */
+html[data-input="mac"] [data-only]:not([data-only="mac"]),html[data-input="touch"] [data-only]:not([data-only="touch"]),
+html:not([data-input="mac"]):not([data-input="touch"]) [data-only]:not([data-only="pc"]){display:none!important;}
+/* Touch: holding the compare button must not turn into a text selection, callout or scroll. */
+html[data-input="touch"] #tool-preview{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+/* Phones held upright: "Attach file" and the big Send button share one row and overlap; give Send its own line. */
+@media(max-width:640px){html[data-input="touch"] #modal-compose .compose-card .btn-send{grid-row:6;grid-column:1 / -1;justify-self:stretch;min-width:0;}}

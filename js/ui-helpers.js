@@ -2,6 +2,21 @@
    EyeCon — Shared UI helpers (animated modal show/hide)
    Exposes window.EC_MODAL
 ===================================================== */
+// How the player controls the game, for the tutorial's wording and a few gestures:
+//   'touch' – phone/tablet, no mouse (tap, drag a finger, pinch)
+//   'mac'   – Mac trackpad (two-finger scroll moves the canvas, pinch zooms, ⌘ shortcuts)
+//   'pc'    – mouse + keyboard: the original controls and tutorial, unchanged
+// The input capability decides first (a touch-first screen is 'touch' whatever it runs);
+// the platform only tells a Mac apart. ?input=touch|mac|pc forces one, for testing.
+window.EC_INPUT = (() => {
+  const forced = (location.search.match(/[?&]input=(touch|mac|pc)\b/) || [])[1];
+  const platform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent;
+  const mode = forced || (matchMedia('(pointer: coarse)').matches ? 'touch' : /mac/i.test(platform) ? 'mac' : 'pc');
+  document.documentElement.dataset.input = mode;
+  // Mac shortcut names in tooltips (the shortcuts themselves accept ⌘ as well as Ctrl).
+  if(mode === 'mac') document.querySelectorAll('[title*="Ctrl+"]').forEach(n => { n.title = n.title.replace('Ctrl+Z', '⌘Z').replace('Ctrl+Y', '⇧⌘Z').replace(/Ctrl\+/g, '⌘'); });
+  return { mode };
+})();
 (function(){
 
   const CARD_SELECTOR = '.modal-card, .mail-detail-card, .confirm-card, .compose-card, .preview-frame, .gacha-reveal-card';

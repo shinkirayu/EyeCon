@@ -226,7 +226,32 @@
     // A wide Shift keycap stands in for the word itself (true = replace the word, not follow it).
     [/\b(Shift)\b/g, () => `<kbd class="piko-kbd">⇧ Shift</kbd>`, true],
   ];
+  // ---------- Device wording ----------
+  // The lines are written for a mouse and keyboard (PC: shown exactly as written). On a
+  // touchscreen or a Mac trackpad, words naming mouse buttons or keys become the matching
+  // gesture. Done when a line is shown, so the stored text (and its admin key) never changes.
+  const INPUT = () => window.EC_INPUT?.mode || 'pc';
+  const WORDS = {
+    touch: [
+      [/Hold the middle mouse button or right click, then drag to move around the page\./g, 'Drag an empty spot with one finger to move around the page.'],
+      [/scroll your mouse wheel to zoom in and out/gi, 'pinch with two fingers to zoom in and out'],
+      [/ ?The arrow keys work too!/g, ''],
+      [/Press any key on your keyboard to start typing!/g, 'Tap the message, then type anything to start!'],
+      [/Press any key to type/g, 'Tap the message, then type'],
+      [/Hold Shift and click/g, 'Tap'], [/Shift \+ click/g, 'Tap'],
+      [/\b([Ll])eft[ -]click\b/g, (m, l) => l === 'L' ? 'Tap' : 'tap'],
+      [/\b([Cc])licking\b/g, (m, c) => c === 'C' ? 'Tapping' : 'tapping'],
+      [/\b([Cc])lick(s?)\b/g, (m, c, pl) => (c === 'C' ? 'Tap' : 'tap') + pl],
+    ],
+    mac: [
+      [/Hold the middle mouse button or right click, then drag to move around the page\./g, 'Scroll with two fingers on the trackpad (or your mouse wheel) to move around the page.'],
+      [/scroll your mouse wheel to zoom in and out/gi, 'pinch with two fingers on the trackpad (or ⌘ + scroll) to zoom in and out'],
+      [/\b([Ll])eft[ -]click\b/g, (m, l) => l === 'L' ? 'Click' : 'click'],
+    ],
+  };
+  const localize = t => (WORDS[INPUT()] || []).reduce((str, [re, to]) => str.replace(re, to), String(t));
   function richText(t){
+    t = localize(t);
     // Any line (including admin-added ones) can say {name}: fill it with the player's name.
     // (No name yet, e.g. the admin preview: "Designer", like the home screen greeting.)
     const name = window.EC_STORE?.load?.().displayName || 'Designer';
@@ -255,8 +280,12 @@
   const KEYS = '<span class="tv-keys" aria-hidden="true"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>';
   // Either button pans: the middle and right buttons light up in turn (not both at once).
   const PAN_EITHER = () => `<span class="tv-either">${mouseIcon('middle')}${mouseIcon('right')}</span>`;
-  const ICON = { left: () => mouseIcon('left'), pan: PAN_EITHER, wheel: () => mouseIcon('middle'), keys: () => KEYS,
-    shift: () => '<kbd class="piko-kbd">⇧ Shift</kbd>' };
+  // Mac: a trackpad with two fingertips. Touch: Piko's pointing-finger hand.
+  const TRACKPAD = '<svg class="piko-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="16" cy="15" r="3.4" fill="#7c3aed"/><circle cx="24" cy="15" r="3.4" fill="#7c3aed"/></svg>';
+  const FINGER = '<img class="pd-finger" src="assets/sprites/cursor-point.png" alt="">';
+  const touchless = draw => () => INPUT() === 'touch' ? '' : draw(); // nothing to press on a touchscreen
+  const ICON = { left: touchless(() => mouseIcon('left')), keys: touchless(() => KEYS), shift: touchless(() => '<kbd class="piko-kbd">⇧ Shift</kbd>'),
+    pan: touchless(() => INPUT() === 'mac' ? TRACKPAD : PAN_EITHER()), wheel: touchless(() => INPUT() === 'mac' ? TRACKPAD : mouseIcon('middle')) };
   // Little animated pictures for the ideas that used to be paragraphs.
   const ART = {
     fix: '<div class="tva tva-fix"><div class="tva-win bad"><i></i><i></i><i></i></div><b class="tva-arrow">➜</b><div class="tva-win good"><i></i><i></i><i></i></div></div>',
@@ -283,8 +312,10 @@
     'piko.previewGuide': tap('See their design', { why:'Look at the page before you start fixing it.' }),
     'piko.acceptGuide': tap('Accept the job', { why:'This opens their page in your workspace.' }),
     'piko.workspace.intro': SKIP,
-    'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo', stack:1 },
-    'piko.workspace.zoom': { cue:'Scroll to zoom in and out', at:'.piko-demo', stack:1 },
+    'piko.workspace.pan': { cue:'Hold and drag to move around', at:'.piko-demo', stack:1,
+      touch:{ cue:'Drag an empty spot to move around' }, mac:{ cue:'Scroll with two fingers to move around' } },
+    'piko.workspace.zoom': { cue:'Scroll to zoom in and out', at:'.piko-demo', stack:1,
+      touch:{ cue:'Pinch with two fingers to zoom in and out' }, mac:{ cue:'Pinch (or ⌘ + scroll) to zoom in and out' } },
     'piko.workspace.problems': { cue:'Red ! = needs fixing', why:'Each mark is something the client wants fixed.', at:'#editor-canvas .el.needs-edit' },
     'piko.workspace.dotsLater': SKIP, 'piko.workspace.together': SKIP,
     'piko.workspace.selectAbout': tap('Click “About”', { why:'It sits lower than Home and Contact, so the menu looks uneven.',
@@ -380,14 +411,14 @@
     let v = key && VISUAL[key];
     if(typeof v === 'function') v = v(line);
     if(!v) return isTalk ? SKIP : { cue: line, raw:true };
-    return v;
+    return v[INPUT()] ? Object.assign({}, v, v[INPUT()]) : v; // touch/mac wording for this step
   }
   function cueHtml(v, line, timed){
-    const timer = timed ? '<small class="tv-next">Click to continue</small>' : ''; // talk beats wait for a click
-    const why = v.why ? `<span class="tv-why">${esc(v.why)}</span>` : ''; // the reason, in Piko's words
-    if(v.success) return `<span class="tv-ok" aria-hidden="true">✓</span><b class="tv-cap">${esc(v.success)}</b>${why}${timer}`;
-    const icon = v.icon && ICON[v.icon] ? `<span class="tv-icon">${ICON[v.icon]()}</span>` : '';
-    const text = v.raw ? richText(line) : esc(v.cue);
+    const timer = timed ? `<small class="tv-next">${localize('Click to continue')}</small>` : ''; // talk beats wait for a click
+    const why = v.why ? `<span class="tv-why">${esc(localize(v.why))}</span>` : ''; // the reason, in Piko's words
+    if(v.success) return `<span class="tv-ok" aria-hidden="true">✓</span><b class="tv-cap">${esc(localize(v.success))}</b>${why}${timer}`;
+    const icon = v.icon && ICON[v.icon] && ICON[v.icon]() ? `<span class="tv-icon">${ICON[v.icon]()}</span>` : '';
+    const text = v.raw ? richText(line) : esc(localize(v.cue));
     return `${v.card ? `<div class="tv-art">${v.card}</div>` : ''}<span class="tv-row">${icon}<b class="tv-cap">${text}</b></span>${why}${timer}`;
   }
   function setStyle(s){
@@ -405,7 +436,7 @@
     const { textEl, hint, prev, next } = dom, latest = view === history.length - 1;
     textEl.innerHTML = richText(history[view]);
     dom.bubble.classList.toggle('piko-reviewing', !latest);
-    hint.textContent = !latest ? `${hintText('piko.ui.reread')} (${view + 1}/${history.length})` : latestCanAdvance ? hintText('piko.ui.continue') : '';
+    hint.textContent = !latest ? `${hintText('piko.ui.reread')} (${view + 1}/${history.length})` : latestCanAdvance ? localize(hintText('piko.ui.continue')) : '';
     prev.disabled = view <= 0;
     next.disabled = latest && !latestCanAdvance;
     prev.hidden = next.hidden = history.length < 2 && !latestCanAdvance;
@@ -510,7 +541,8 @@
     const clickStep = (opts.tap || !opts.onDone && visualFor(line, false).gesture) && !(x0 && (x0.before.length || x0.after.length)); // click / slide / hold
     // Classic too: any line with a cue (not skipped, no admin-added lines) shows as that cue; the rest stay full lines.
     const hasCue = /^piko\.(levels|practice)\.|^piko\.workspace\.(pan|zoom|guides)$/.test(key0) && !/^piko\.levels\.yappers\.[69]\.0$/.test(key0) && !(x0 && (x0.before.length || x0.after.length || x0.skip));
-    if(visual() || clickStep || hasCue){
+    const touchAction = INPUT() === 'touch' && !opts.onDone && VISUAL[key0] && VISUAL[key0] !== SKIP && !(x0 && (x0.before.length || x0.after.length));
+    if(visual() || clickStep || hasCue || touchAction){
       // Lines that only explain are skipped; the rest become a short cue (admin-added
       // before/after lines are left to the classic tutorial).
       const v = opts.tap && !VISUAL[key0] ? { cue: line, raw:true, icon:'left', gesture:'tap' } : visualFor(line, !!opts.onDone); // an admin-added click line
@@ -662,6 +694,9 @@
     const lift = el.classList.contains('desktop-icon');
     const run = () => {
       const { cursor, hole } = ensureDom();
+      // Small screens: the target can sit below the fold (e.g. a long email on a phone), and the
+      // tutorial freezes everything else, so bring it into view. (PC: already in view; unchanged.)
+      if(INPUT() !== 'pc') el.scrollIntoView?.({ block:'nearest', inline:'nearest' });
       // The icon lives inside low z-index stacking contexts, so a body-level
       // dim can never sit under it. Put a dim right beside it instead.
       if(lift){
@@ -802,10 +837,14 @@
     // The drag demo sits to the side: About is centred in the canvas and must stay visible.
     const cx = kind === 'drag' ? r.left + r.width * .78 : r.left + r.width / 2, cy = kind === 'drag' ? r.top + r.height * .36 : r.top + r.height / 2;
     d.style.left = cx + 'px'; d.style.top = cy + 'px';
-    const mouse = kind === 'pan' ? PAN_EITHER() : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
-    const label = { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' }[kind];
+    const mode = INPUT();
+    const mouse = mode === 'touch' ? FINGER : mode === 'mac' && kind !== 'drag' ? TRACKPAD
+      : kind === 'pan' ? PAN_EITHER() : kind === 'zoom' ? mouseIcon('middle') : mouseIcon('left');
+    const label = ({ touch:{ pan:'Drag', zoom:'Pinch', drag:'Drag up' }, mac:{ pan:'Two-finger scroll', zoom:'Pinch', drag:'Click + drag up' } }[mode]
+      || { pan:'Hold + drag', zoom:'Scroll', drag:'Click + drag up' })[kind];
     // Which button(s), spelled out under the action.
-    const how = { pan:'Middle mouse button or right click', zoom:'Mouse wheel', drag:'Left click' }[kind];
+    const how = ({ touch:{ pan:'One finger on an empty spot', zoom:'Two fingers', drag:'One finger' }, mac:{ pan:'Two fingers on the trackpad', zoom:'Pinch, or ⌘ + scroll', drag:'Click and drag' } }[mode]
+      || { pan:'Middle mouse button or right click', zoom:'Mouse wheel', drag:'Left click' })[kind];
     d.innerHTML = `<div class="pd-stage"><span class="pd-mouse">${mouse}</span>
       ${kind === 'pan' ? '<i class="pd-arrow l">◀</i><i class="pd-arrow r">▶</i>' : ''}
       ${kind === 'zoom' ? '<i class="pd-arrow u">▲</i><i class="pd-arrow d">▼</i><b class="pd-zoom">+ / −</b>' : ''}

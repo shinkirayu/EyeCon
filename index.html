@@ -38,6 +38,28 @@
 <link rel="stylesheet" href="css/reference.css" />
 </head>
 <body>
+<!-- Icon sheet (from assets/icons/editor-sprite.svg), kept in the page: Safari doesn't load the
+     pictures inside an icon sheet in a separate file, so those icons showed as "?" boxes on Macs. -->
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="ico-grid" viewBox="0 0 64 64"><g fill="#2F7A70"><rect x="7" y="7" width="14" height="14" rx="3"/><rect x="25" y="7" width="14" height="14" rx="3"/><rect x="43" y="7" width="14" height="14" rx="3"/><rect x="7" y="25" width="14" height="14" rx="3"/><rect x="25" y="25" width="14" height="14" rx="3"/><rect x="43" y="25" width="14" height="14" rx="3"/><rect x="7" y="43" width="14" height="14" rx="3"/><rect x="25" y="43" width="14" height="14" rx="3"/><rect x="43" y="43" width="14" height="14" rx="3"/></g></symbol>
+  <symbol id="ico-grid-settings" viewBox="0 0 64 64"><g fill="#20252B"><rect x="5" y="5" width="16" height="16" rx="3"/><rect x="24" y="5" width="16" height="16" rx="3"/><rect x="43" y="5" width="16" height="16" rx="3"/><rect x="5" y="24" width="16" height="16" rx="3"/><rect x="24" y="24" width="16" height="16" rx="3"/><rect x="43" y="24" width="16" height="16" rx="3"/><rect x="5" y="43" width="16" height="16" rx="3"/><rect x="24" y="43" width="16" height="16" rx="3"/></g><path d="M50 43l2 3 4-1 2 4-3 3 1 4-4 2-3-3-4 1-2-4 3-3-1-4z" fill="#20252B"/><circle cx="50" cy="51" r="3" fill="#FFF5DE"/></symbol>
+  <symbol id="ico-magnet" viewBox="0 0 64 64"><path d="M14 9h14v25a5 5 0 0 0 10 0V9h14v25a19 19 0 0 1-38 0z" fill="#A982E8"/><path d="M14 9h14v9H14zm24 0h14v9H38z" fill="#DED0F8"/></symbol>
+  <symbol id="ico-triangle" viewBox="0 0 64 64"><path d="M8 50V14a5 5 0 0 1 8-4l40 40a5 5 0 0 1-4 8H16a8 8 0 0 1-8-8zm13-2h18L21 30z" fill="#A982E8" fill-rule="evenodd"/></symbol>
+  <symbol id="ico-bulb" viewBox="0 0 64 64"><path d="M32 7a20 20 0 0 0-13 35c3 3 5 6 5 10h16c0-4 2-7 5-10A20 20 0 0 0 32 7z" fill="#BFE4D9"/><path d="M25 52h14v5a7 7 0 0 1-14 0z" fill="#A982E8"/><path d="M32 17a11 11 0 0 0-8 18" fill="none" stroke="#FFF5DE" stroke-width="5" stroke-linecap="round"/><g stroke="#BFE4D9" stroke-width="4" stroke-linecap="round"><path d="M32 1v3M8 12l3 3M56 12l-3 3M4 35h4M60 35h-4"/></g></symbol>
+  <symbol id="ico-eye" viewBox="0 0 64 64"><path d="M4 32c8-13 18-20 28-20s20 7 28 20c-8 13-18 20-28 20S12 45 4 32z" fill="#DED5FA"/><circle cx="32" cy="32" r="13" fill="#A982E8"/><circle cx="32" cy="32" r="7" fill="#8C61D6"/><circle cx="38" cy="25" r="5" fill="#FFF5DE"/></symbol>
+  <symbol id="ico-undo" viewBox="0 0 64 64"><image href="assets/sprites/undo-teal.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-redo" viewBox="0 0 64 64"><image href="assets/sprites/redo-teal.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-home" viewBox="0 0 64 64"><image href="assets/sprites/home.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-mail" viewBox="0 0 64 64"><image href="assets/sprites/mail.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-person" viewBox="0 0 64 64"><image href="assets/sprites/user-profile.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-settings" viewBox="0 0 64 64"><image href="assets/sprites/settings-purple.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-shop" viewBox="0 0 64 64"><image href="assets/sprites/shop.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-cart" viewBox="0 0 64 64"><image href="assets/sprites/cart.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/></symbol>
+  <symbol id="ico-spark" viewBox="0 0 64 64"><path d="M32 4 38 25l21 7-21 7-6 21-7-21L4 32l21-7z" fill="#A982E8"/><circle cx="32" cy="32" r="5" fill="#FFF5DE"/></symbol>
+  <symbol id="ico-save" viewBox="0 0 64 64"><path d="M8 8h41l7 7v41H8z" fill="#A982E8"/><path d="M17 8h28v20H17zm1 32h28v16H18z" fill="#DED5FA"/><path d="M38 9v15" stroke="#A982E8" stroke-width="5"/></symbol>
+  <symbol id="ico-book" viewBox="0 0 64 64"><path d="M32 15C24 8.5 12 7.5 3 10V54C12 51.5 24 52.5 32 59C40 52.5 52 51.5 61 54V10C52 7.5 40 8.5 32 15Z" fill="#AF89EB"/><path d="M9 15.5C17 14.5 25 16 29.5 20.5V51C24 48 16.5 47.5 9 48.5Z" fill="#FFFAF3"/><path d="M55 15.5C47 14.5 39 16 34.5 20.5V51C40 48 47.5 47.5 55 48.5Z" fill="#FFFAF3"/></symbol>
+</svg>
+
   <!-- Startup loader: shown while the game is hidden until its size settles (see the inline script in <head>). -->
   <!-- Plain colour (same as the landing page's Play transition) so the hand-off is seamless. -->
   <div class="app-loading-screen boot-loader" id="boot-loader" role="status" aria-label="Loading EyeCon"></div>
@@ -354,18 +376,18 @@
 
       <!-- Canvas toolbar: grid | undo redo | zoom | before/after + hint -->
       <div class="editor-tools-center tool-pill">
-        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid"/></svg></button>
-        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg></button>
-        <button class="tool-btn toggle-btn hidden" id="tool-targets" title="Show hidden grading boxes" aria-label="Show hidden grading boxes" aria-pressed="false"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg><span class="btn-label">Targets</span></button>
-        <button class="tool-btn toggle-btn hidden" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#magnet"/></svg></button>
-        <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#spark"/></svg></button>
+        <button class="tool-btn toggle-btn" id="tool-grid" title="Toggle grid visibility" aria-label="Toggle grid"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-grid"/></svg></button>
+        <button class="tool-btn" id="tool-grid-settings" title="Adjust grid size & opacity" aria-label="Grid settings"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-grid-settings"/></svg></button>
+        <button class="tool-btn toggle-btn hidden" id="tool-targets" title="Show hidden grading boxes" aria-label="Show hidden grading boxes" aria-pressed="false"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-grid-settings"/></svg><span class="btn-label">Targets</span></button>
+        <button class="tool-btn toggle-btn hidden" id="tool-guides" title="Toggle alignment guides" aria-label="Toggle alignment guides"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-magnet"/></svg></button>
+        <button class="tool-btn toggle-btn" id="tool-inspector" title="Toggle the Inspector — flags issues right on the canvas" aria-label="Toggle design inspector"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-spark"/></svg></button>
         <button class="tool-btn toggle-btn hidden" id="tool-measure" title="Rulers and spacing" aria-label="Rulers and spacing" aria-pressed="false"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="#b6e1da" stroke="#528f91"/><path d="M6 6v6m4-6v4m4-4v6m4-6v4" stroke="#528f91" stroke-width="2"/></svg></button>
-        <button class="tool-btn hidden" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#eye"/></svg></button>
-        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#triangle"/></svg></button>
+        <button class="tool-btn hidden" id="tool-show-clickable" title="Briefly highlight every clickable element" aria-label="Show clickable elements"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-eye"/></svg></button>
+        <button class="tool-btn hidden" id="tool-typescale" title="Typography scale guide" aria-label="Typography scale guide"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-triangle"/></svg></button>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <div class="editor-tools-left">
-          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#undo"/></svg><span class="btn-label">Undo</span></button>
-          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#redo"/></svg><span class="btn-label">Redo</span></button>
+          <button class="tool-btn" id="tool-undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-undo"/></svg><span class="btn-label">Undo</span></button>
+          <button class="tool-btn" id="tool-redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-redo"/></svg><span class="btn-label">Redo</span></button>
         </div>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <div class="editor-zoom-controls" aria-label="Canvas zoom controls">
@@ -375,11 +397,11 @@
         </div>
         <span class="tool-pill-divider" aria-hidden="true"></span>
         <button class="tool-btn" id="tool-preview" title="Press and hold to see the original" aria-label="Hold to compare with the original"><svg class="game-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="#b6e1da" stroke="#2f6f73" stroke-width="2"/><path d="M12 3v18" stroke="#2f6f73" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="#2f6f73" stroke-width="2"/><path d="M10.5 12h3" stroke="#2f6f73" stroke-width="1.4" stroke-linecap="round"/></svg></button>
-        <button class="tool-btn tool-hint-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#bulb"/></svg></button>
+        <button class="tool-btn tool-hint-btn" id="tool-hint" title="Get a hint" aria-label="Get a hint"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-bulb"/></svg></button>
         <button class="tool-btn" id="tool-controls" popovertarget="controls-pop" title="Quick controls" aria-label="Quick controls"><span class="tool-q" aria-hidden="true">?</span></button>
       </div>
     </div>
-    <button class="tool-btn btn-save editor-save-corner" id="tool-save" title="Submit for handoff" aria-label="Submit for handoff"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#save"/></svg><span class="editor-save-label">Submit</span></button>
+    <button class="tool-btn btn-save editor-save-corner" id="tool-save" title="Submit for handoff" aria-label="Submit for handoff"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-save"/></svg><span class="editor-save-label">Submit</span></button>
 
 
         <div class="editor-hint-pill" id="editor-hint-banner">
@@ -470,8 +492,8 @@
       </aside>
       <div class="maker-stage" id="maker-stage">
         <div class="maker-stage-toolbar" aria-label="Canvas controls">
-          <button id="maker-grid" type="button" aria-label="Show grid" aria-pressed="true" title="Show grid"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid"/></svg></button>
-          <button id="maker-grid-settings" type="button" aria-label="Grid settings" aria-expanded="false" aria-controls="maker-grid-panel" title="Grid size &amp; opacity"><svg class="game-tool-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#grid-settings"/></svg></button>
+          <button id="maker-grid" type="button" aria-label="Show grid" aria-pressed="true" title="Show grid"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-grid"/></svg></button>
+          <button id="maker-grid-settings" type="button" aria-label="Grid settings" aria-expanded="false" aria-controls="maker-grid-panel" title="Grid size &amp; opacity"><svg class="game-tool-icon" aria-hidden="true"><use href="#ico-grid-settings"/></svg></button>
           <div class="maker-grid-panel" id="maker-grid-panel" hidden>
             <label>Grid size <output id="maker-grid-size-out">8</output>px<input type="range" id="maker-grid-size" min="4" max="64" step="4" value="8" /></label>
             <label>Opacity <output id="maker-grid-opacity-out">35</output>%<input type="range" id="maker-grid-opacity" min="5" max="100" step="5" value="35" /></label>
@@ -513,9 +535,9 @@
   </div>
 
   <footer class="taskbar desktop-hidden" id="global-taskbar">
-    <button class="taskbar-btn taskbar-btn-primary" id="taskbar-home" title="Desktop" aria-label="Go to desktop"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#home"/></svg><span class="taskbar-btn-label">Home</span></button>
-    <button class="taskbar-btn" id="taskbar-profile" title="Profile" aria-label="Open profile" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#person"/></svg></button>
-    <button class="taskbar-btn" id="taskbar-settings" title="Settings (,)" aria-label="Open settings" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#settings"/></svg></button>
+    <button class="taskbar-btn taskbar-btn-primary" id="taskbar-home" title="Desktop" aria-label="Go to desktop"><svg class="game-taskbar-icon" aria-hidden="true"><use href="#ico-home"/></svg><span class="taskbar-btn-label">Home</span></button>
+    <button class="taskbar-btn" id="taskbar-profile" title="Profile" aria-label="Open profile" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="#ico-person"/></svg></button>
+    <button class="taskbar-btn" id="taskbar-settings" title="Settings (,)" aria-label="Open settings" aria-expanded="false"><svg class="game-taskbar-icon" aria-hidden="true"><use href="#ico-settings"/></svg></button>
     <div id="taskbar-open-apps" class="taskbar-open-apps" aria-label="Open apps"></div>
     <div class="taskbar-spacer"></div>
     <div class="taskbar-coins" id="taskbar-currency" aria-label="Your coins"></div>
@@ -567,7 +589,7 @@
   <!-- Quick controls run-down (editor "?" button) -->
   <div id="controls-pop" popover class="controls-pop" role="dialog" aria-labelledby="controls-title">
     <h2 id="controls-title">Quick controls</h2>
-    <ul class="qc-list">
+    <ul class="qc-list" data-only="pc">
       <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Left click</b><small>Select an element</small></span></li>
       <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Left click + drag</b><small>Move it (snaps to the 8px grid)</small></span></li>
       <li><span class="qc-keys"><kbd>Shift</kbd> + <svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#7c3aed"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#fff" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Shift + click</b><small>Add a grouped element to edit them together</small></span></li>
@@ -575,6 +597,23 @@
       <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#fff"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#fff"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#7c3aed" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Mouse wheel</b><small>Zoom in and out</small></span></li>
       <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 24 34" aria-hidden="true"><path d="M12 2.5H8A6 6 0 0 0 2 8.5v4h10z" fill="#fff"/><path d="M12 2.5h4a6 6 0 0 1 6 6v4H12z" fill="#7c3aed"/><rect x="2" y="2.5" width="20" height="29" rx="9.5" fill="none" stroke="#4d0d74" stroke-width="2.4"/><path d="M2 12.5h20M12 2.5v10" stroke="#4d0d74" stroke-width="2"/><rect x="9.6" y="4.5" width="4.8" height="7" rx="2.4" fill="#7c3aed" stroke="#4d0d74" stroke-width="1.8"/></svg></span><span><b>Hold middle or right + drag</b><small>Pan around the canvas</small></span></li>
       <li><span class="qc-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Y</kbd></span><span><b>Undo / Redo</b><small>Undo or redo a change</small></span></li>
+    </ul>
+    <ul class="qc-list" data-only="mac">
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="20" cy="15" r="3.6" fill="#7c3aed"/></svg></span><span><b>Click</b><small>Select an element</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="20" cy="15" r="3.6" fill="#7c3aed"/></svg></span><span><b>Click + drag</b><small>Move it (snaps to the 8px grid)</small></span></li>
+      <li><span class="qc-keys"><kbd>⇧</kbd> + <svg class="qc-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="20" cy="15" r="3.6" fill="#7c3aed"/></svg></span><span><b>⇧ Shift + click</b><small>Add a grouped element to edit them together</small></span></li>
+      <li><span class="qc-keys"><kbd>▲</kbd><kbd>▼</kbd><kbd>◀</kbd><kbd>▶</kbd></span><span><b>Arrow keys</b><small>Nudge 8px (<kbd>⇧</kbd> for 32px) · on color tasks: lighter / darker</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="16" cy="15" r="3.4" fill="#7c3aed"/><circle cx="24" cy="15" r="3.4" fill="#7c3aed"/></svg></span><span><b>Two-finger scroll</b><small>Move around the canvas (a mouse wheel works too)</small></span></li>
+      <li><span class="qc-keys"><svg class="qc-ico" viewBox="0 0 40 30" aria-hidden="true"><rect x="2" y="2" width="36" height="26" rx="5" fill="#fff" stroke="#4d0d74" stroke-width="2.4"/><circle cx="16" cy="15" r="3.4" fill="#7c3aed"/><circle cx="24" cy="15" r="3.4" fill="#7c3aed"/></svg></span><span><b>Pinch, or ⌘ + scroll</b><small>Zoom in and out</small></span></li>
+      <li><span class="qc-keys"><kbd>⌘</kbd> <kbd>Z</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>Z</kbd></span><span><b>Undo / Redo</b><small>Undo or redo a change</small></span></li>
+    </ul>
+    <ul class="qc-list" data-only="touch">
+      <li><span class="qc-keys"><img class="qc-ico" src="assets/sprites/cursor-point.png" alt="" aria-hidden="true" style="image-rendering:pixelated"></span><span><b>Tap</b><small>Select an element</small></span></li>
+      <li><span class="qc-keys"><img class="qc-ico" src="assets/sprites/cursor-point.png" alt="" aria-hidden="true" style="image-rendering:pixelated"></span><span><b>Drag</b><small>Move it (snaps to the 8px grid)</small></span></li>
+      <li><span class="qc-keys"><kbd>&lt;</kbd><kbd>&gt;</kbd></span><span><b>Arrows in Design tools</b><small>Nudge 8px, or change a size or value</small></span></li>
+      <li><span class="qc-keys"><img class="qc-ico" src="assets/sprites/cursor-point.png" alt="" aria-hidden="true" style="image-rendering:pixelated"></span><span><b>Drag an empty spot</b><small>Move around the canvas</small></span></li>
+      <li><span class="qc-keys"><img class="qc-ico" src="assets/sprites/cursor-point.png" alt="" aria-hidden="true" style="image-rendering:pixelated"><img class="qc-ico" src="assets/sprites/cursor-point.png" alt="" aria-hidden="true" style="image-rendering:pixelated"></span><span><b>Pinch</b><small>Zoom in and out</small></span></li>
+      <li><span class="qc-keys"><kbd>↶</kbd><kbd>↷</kbd></span><span><b>Undo / Redo buttons</b><small>On the toolbar above the canvas</small></span></li>
     </ul>
     <button type="button" class="btn btn-accept" popovertarget="controls-pop" popovertargetaction="hide">Got it</button>
   </div>

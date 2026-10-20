@@ -517,9 +517,9 @@ test('editor settings cards and pastel toolbar icons remain usable',async({page}
   await openClient(page,'Yappers.com');
   await page.locator('#editor-canvas .el[data-id="login"]').waitFor(); await page.evaluate(()=>EC_EDITOR.selectElement('login'));
   await expect(page.locator('#settings-fields .editor-setting-card summary').first()).toBeVisible();
-  await expect(page.locator('#tool-grid .game-tool-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#grid');
+  await expect(page.locator('#tool-grid .game-tool-icon use')).toHaveAttribute('href','#ico-grid');
   expect(await page.locator('#tool-grid .game-tool-icon use').evaluate(el=>el.getBBox().width)).toBeGreaterThan(0);
-  await expect(page.locator('#taskbar-home .game-taskbar-icon use')).toHaveAttribute('href','assets/icons/editor-sprite.svg#home');
+  await expect(page.locator('#taskbar-home .game-taskbar-icon use')).toHaveAttribute('href','#ico-home');
   const card=page.locator('#settings-fields .editor-setting-card').first();
   // Sections always stay open; clicking a heading does not collapse it.
   await card.locator('summary').click();
@@ -763,6 +763,8 @@ test('workday clock and closing summary persist and continue to 8 AM',async({pag
   await expect(summary).toBeHidden();
   await expect(page.locator('#taskbar-clock')).toContainText('Day 3');
   await expect(page.locator('#taskbar-clock')).toContainText('08:00');
+  await expect(page.locator('#screen-desktop')).toHaveClass(/active/); // a free moment on the desktop first
+  await page.getByRole('button', { name: 'Open Mail app' }).click();
   await expect(page.locator('#mail-list .mail-item').first()).toBeVisible();
 });
 
@@ -789,6 +791,8 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.setViewportSize({width:1600,height:900});
   await page.goto('/');
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
+  // Phones and tablets get touch wording for the same steps (PC wording stays as written).
+  const touch = await page.evaluate(() => window.EC_INPUT.mode === 'touch');
   const say = async () => { await page.waitForTimeout(900); await page.locator('.piko-panel').click(); };
   await say(); await page.waitForTimeout(900);
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
@@ -802,8 +806,9 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await page.waitForTimeout(1200); await page.locator('#btn-accept-job').click();
   await page.waitForTimeout(3000); 
   const bubble = page.locator('.piko-bubble'), next = async () => { await page.mouse.click(800,860); await page.waitForTimeout(700); };
-  await next(); await expect(bubble).toContainText('Hold and drag');
-  await next(); await expect(bubble).toContainText('Hold and drag'); // clicking can't skip it
+  const PAN = touch ? 'Drag an empty spot' : 'Hold and drag';
+  await next(); await expect(bubble).toContainText(PAN);
+  await next(); await expect(bubble).toContainText(PAN); // clicking can't skip it
   const wrapBox = await page.locator('#editor-canvas-wrap').boundingBox();
   await page.mouse.move(wrapBox.x + 300, wrapBox.y + 300); await page.mouse.down({button:'middle'});
   for(let i=0;i<12;i++){ await page.mouse.move(wrapBox.x + 300 + i*4, wrapBox.y + 300); await page.waitForTimeout(120); }
@@ -813,13 +818,13 @@ test('Piko tours the first email and the workspace', async ({ page }) => {
   await expect(bubble).toContainText('red dots',{timeout:15000}); // the zoom demo lingers, then the view zooms out first
   await next(); await expect(bubble).toContainText('Heads up');
   await next(); await expect(bubble).toContainText('together');
-  await next(); await expect(bubble).toContainText('Click “About”'); // click steps: short cue under the cursor
+  await next(); await expect(bubble).toContainText(touch ? 'Tap “About”' : 'Click “About”'); // click steps: short cue under the cursor
   await expect(page.locator('.tv-hand')).toHaveClass(/g-tap/); // the hand shows the click in this tutorial too
   const about = page.locator('#editor-canvas .el[data-id="about"]');
   await expect(about).toHaveClass(/piko-glow/);
   // (since "luv u" the screen stays dimmed here, with About glowing on top)
   await page.evaluate(()=>EC_EDITOR.selectElement('about')); await page.waitForTimeout(1200);
-  await expect(bubble).toContainText('Drag it upwards');
+  await expect(bubble).toContainText(touch ? 'Drag it up onto the line' : 'Drag it upwards'); // touch: a cue that never covers About
   for(let i=0;i<8 && !(await bubble.textContent()).includes('Perfect');i++){ await page.keyboard.press('ArrowUp'); await page.waitForTimeout(400); }
   await expect(bubble).toContainText('Perfect');
   await next(); await expect(bubble).toContainText('This is the element panel');
@@ -863,7 +868,7 @@ test('Piko shows the first job visually with "Show me"', async ({ page }) => {
   await see('See their design'); await page.locator('#attachment-chip').click();
   await page.waitForTimeout(800); await page.locator('#btn-close-preview').click();
   await see('Accept'); await page.locator('#btn-accept-job').click();
-  await see('drag'); await expect(page.locator('.piko-demo')).toBeVisible(); // the moving-mouse "TRY IT" card
+  await see('move around'); await expect(page.locator('.piko-demo')).toBeVisible(); // the moving-mouse "TRY IT" card
   const wrap = await page.locator('#editor-canvas-wrap').boundingBox();
   await page.mouse.move(wrap.x + 300, wrap.y + 300); await page.mouse.down({button:'middle'});
   for(let i=0;i<12;i++){ await page.mouse.move(wrap.x + 300 + i*4, wrap.y + 300); await page.waitForTimeout(120); }
@@ -916,7 +921,7 @@ test('Piko lines can be re-read with back and forward', async ({ page }) => {
   await page.getByRole('button', { name: 'Open EyeCon' }).click();
   const bubble = page.locator('.piko-bubble'), text = bubble.locator('.piko-text');
   await page.waitForTimeout(1200);
-  await expect(bubble.locator('.piko-hint')).toHaveText('Click anywhere to continue');
+  await expect(bubble.locator('.piko-hint')).toHaveText(/^(Click|Tap) anywhere to continue$/); // Tap on touchscreens
   await page.mouse.click(400, 400); await page.waitForTimeout(1200); // → name card
   await page.locator('.piko-name-form input').fill('Alex'); await page.locator('.piko-name-form button').click();
   await page.waitForTimeout(1500); await expect(text).toContainText('Nice to meet you, Alex');

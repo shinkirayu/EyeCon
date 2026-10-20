@@ -447,6 +447,23 @@
   }
 
   // Smoothly pans so an element sits in the middle of the workspace (current zoom).
+  // Where to centre things vertically. Touch layouts can float panels over the canvas (a phone
+  // held upright), so there it's the middle of the tallest strip of canvas you can see and touch.
+  // PC: the plain centre, exactly as before.
+  function visibleMidY(wrap){
+    if(window.EC_INPUT?.mode !== 'touch') return wrap.clientHeight / 2;
+    // Hit-test what the player can see: the tutorial's tap locks are lifted for this instant only.
+    const locks = [...document.body.classList].filter(c => /^piko-(line-pending|view-lock|tour-lock|focus|lock-all)$/.test(c));
+    document.body.classList.remove(...locks);
+    const r = wrap.getBoundingClientRect(); let best = null, run = null;
+    for(let y = 4; y < r.height; y += 8){
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + y);
+      if(hit && wrap.contains(hit)){ run = run ? { a: run.a, b: y } : { a: y, b: y }; if(!best || run.b - run.a > best.b - best.a) best = { ...run }; }
+      else run = null;
+    }
+    document.body.classList.add(...locks);
+    return best ? (best.a + best.b) / 2 - wrap.clientTop : wrap.clientHeight / 2;
+  }
   function focusElement(id, ms = 600, zoomTo = null){
     const el = state.elements.find(e => e.id === id);
     const wrap = document.getElementById('editor-canvas-wrap');
@@ -458,7 +475,7 @@
     if(zoomTo != null) state.zoom = toZ;
     const scale = base * toZ;
     const toX = wrap.clientWidth / 2 - (el.x + el.w / 2) * scale;
-    const toY = wrap.clientHeight / 2 - (el.y + el.h / 2) * scale;
+    const toY = visibleMidY(wrap) - (el.y + el.h / 2) * scale;
     const start = performance.now();
     return new Promise(done => {
       const frame = now => {
@@ -538,6 +555,7 @@
     };
     state.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, state.zoom * factor));
     runZoomAnimation();
+    wrap.dispatchEvent(new Event('ec-zoom'));
   }
 
   function buildCanvas(){
@@ -1442,7 +1460,9 @@
     const id = elDiv.dataset.id;
     const el = byId(id);
     if(!el || el.locked) return;
-    if(e.shiftKey && state.selectedId && state.selectedId !== id){ if(!(state.lockSel && state.extraSel.has(id))) toggleExtraSel(id); e.preventDefault(); return; }
+    // Touch has no Shift key: while a lesson holds the selection, tapping the glowing group member adds it.
+    const addToGroup = e.shiftKey || (e.pointerType !== 'mouse' && state.lockSel && elDiv.classList.contains('piko-glow'));
+    if(addToGroup && state.selectedId && state.selectedId !== id){ if(!(state.lockSel && state.extraSel.has(id))) toggleExtraSel(id); e.preventDefault(); return; }
     if(state.lockSel && id !== state.selectedId) return;
     // During Piko's first-job tour, the first click only picks an element; dragging starts once
     // it's selected. Otherwise a quick drag could fix it and skip the alignment-lines lesson.
@@ -1884,6 +1904,7 @@
     compareBtn.addEventListener('contextmenu', e=>e.preventDefault());
     document.addEventListener('pointerup', hideBeforeOverlay);
     document.addEventListener('pointercancel', hideBeforeOverlay);
+    document.addEventListener('pointercancel', hideBeforeOverlay);
     // Keyboard users: Enter/Space toggles it like a normal button press+release.
     compareBtn.addEventListener('keydown', e=>{
       if(e.key==='Enter' || e.key===' '){ e.preventDefault(); showBeforeOverlay(); }
@@ -1908,12 +1929,37 @@
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
 
+    let wheelPanTimer = null;
     canvasWrap.addEventListener('wheel', e=>{
       if(!state.level) return;
       e.preventDefault();
-      const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+      const mac = window.EC_INPUT?.mode === 'mac';
+      // Mac trackpad: two-finger scroll moves around the page (like Figma); a pinch arrives as
+      // ctrl+wheel and ⌘+scroll also zooms. On a PC the wheel zooms, as it always has.
+      if(mac && !e.ctrlKey && !e.metaKey){
+        if(zoomAnimId){ cancelAnimationFrame(zoomAnimId); zoomAnimId = null; }
+        const k = e.deltaMode === 1 ? 16 : 1; // lines -> px
+        state.panX -= e.deltaX * k; state.panY -= e.deltaY * k;
+        applyCanvasTransform();
+        canvasWrap.classList.add('panning'); // same signal as a mouse pan (the tutorial waits for it)
+        clearTimeout(wheelPanTimer); wheelPanTimer = setTimeout(()=>canvasWrap.classList.remove('panning'), 200);
+        return;
+      }
+      const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY * (mac && e.ctrlKey ? 6 : 1)); // pinch steps are small
       zoomAt(e.clientX, e.clientY, factor);
     }, { passive:false });
+
+    // Safari (Mac) sends a trackpad pinch as gesture events instead of ctrl+wheel. Phones and
+    // tablets pinch through the touch code below, so this is Mac only (no double zoom).
+    let gestureZoom = null;
+    canvasWrap.addEventListener('gesturestart', e=>{ if(window.EC_INPUT?.mode !== 'mac') return; e.preventDefault(); gestureZoom = state.zoom; });
+    canvasWrap.addEventListener('gesturechange', e=>{
+      if(gestureZoom == null || !state.level) return;
+      e.preventDefault();
+      const r = canvasWrap.getBoundingClientRect(); // anchor on the fingers, else the canvas centre
+      zoomAt(e.clientX ?? r.left + r.width / 2, e.clientY ?? r.top + r.height / 2, gestureZoom * e.scale / state.zoom);
+    });
+    canvasWrap.addEventListener('gestureend', ()=>{ gestureZoom = null; });
 
     // Middle-mouse-button drag to pan around the canvas, like Figma/Miro.
     // Adjusts state.panX/panY directly (the same values the zoom transform
@@ -2007,18 +2053,20 @@
           state.panX = (mid.x - rect.left) - pinchState.anchorCanvasX*scale;
           state.panY = (mid.y - rect.top) - pinchState.anchorCanvasY*scale;
           applyCanvasTransform();
+          canvasWrap.dispatchEvent(new Event('ec-zoom'));
         }
       } else if(touchPanState && e.pointerId === touchPanState.pointerId){
         state.panX = touchPanState.startPanX + (e.clientX - touchPanState.startX);
         state.panY = touchPanState.startPanY + (e.clientY - touchPanState.startY);
         applyCanvasTransform();
+        canvasWrap.classList.add('panning');
       }
     });
 
     function endTouch(e){
       if(e.pointerType !== 'touch') return;
       activeTouches.delete(e.pointerId);
-      if(touchPanState && e.pointerId === touchPanState.pointerId) touchPanState = null;
+      if(touchPanState && e.pointerId === touchPanState.pointerId){ touchPanState = null; if(!panState) canvasWrap.classList.remove('panning'); }
       if(pinchState && activeTouches.size < 2){
         pinchState = null;
         const remainingIds = Array.from(activeTouches.keys());
@@ -2034,6 +2082,7 @@
     document.addEventListener('keydown', e=>{
       if(!document.getElementById('screen-editor').classList.contains('active')) return;
       const typing = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+      if(e.metaKey && e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); redo(); return; } // Mac redo
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
       if(typing) return;

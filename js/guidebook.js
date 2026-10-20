@@ -112,7 +112,7 @@
     if(e.key === 'ArrowRight') show(at + 1);
   });
 
-  const btn = Object.assign(document.createElement('button'), { id:'taskbar-guide', className:'taskbar-btn', title:'UI Survival Guide', innerHTML:'<svg class="game-taskbar-icon" aria-hidden="true"><use href="assets/icons/editor-sprite.svg#book"/></svg>' });
+  const btn = Object.assign(document.createElement('button'), { id:'taskbar-guide', className:'taskbar-btn', title:'UI Survival Guide', innerHTML:'<svg class="game-taskbar-icon" aria-hidden="true"><use href="#ico-book"/></svg>' });
   btn.setAttribute('aria-label', 'Open the UI Survival Guide');
   document.getElementById('taskbar-settings')?.after(btn);
   btn.addEventListener('click', () => modal.classList.contains('hidden') ? open() : close());
