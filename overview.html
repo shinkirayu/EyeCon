@@ -457,7 +457,7 @@
       e.preventDefault(); e.stopImmediatePropagation(); open('quiz.html?mode=pre');
     }, true));
     document.getElementById('quiz-pop-close').onclick = close;
-    addEventListener('message', e => { if(e.source === frame.contentWindow && (e.data === 'eyecon-quiz-close' || e.data === 'eyecon-quiz-done')) close(); }); // only our own quiz frame can close it
+    addEventListener('message', e => { if(e.source === frame.contentWindow && (e.data === 'eyecon-quiz-close' || e.data === 'eyecon-quiz-done')) close(); if(e.source === frame.contentWindow && e.data === 'eyecon-quiz-play'){ close(); document.querySelector('[data-play]')?.click(); } }); // only our own quiz frame can close it
   })();
 </script>
 <div class="scroll-hint" id="scroll-hint" aria-hidden="true"><i></i></div>

@@ -174,7 +174,7 @@
       document.getElementById('next').disabled = false;
     });
     document.getElementById('back').onclick = () => { i--; question(); };
-    document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else mode === 'post' ? evaluation() : finish(); };
+    document.getElementById('next').onclick = () => { if(i < Q.length - 1){ i++; question(); } else if(mode === 'post') isPro().then(p => { if(p && EVAL.length === 3) EVAL.push(VALIDATION); evaluation(); }); else finish(); };
     app.querySelector('.opt').focus();
   }
   // Post-test result: before vs after, overall and per skill area (Appendix C item ranges).
@@ -210,11 +210,22 @@
       ['PE2', 'Dragging elements, panning, and zooming responded smoothly without lag.'],
       ['PE3', 'The task list and the Contrast readout updated immediately after each change.'],
       ['PE4', 'EyeCon did not noticeably slow down my computer or browser.']]]];
+  // Instrument validation sheet (Appendix F), only for UI design professionals, rated 4–1.
+  const VALIDATION = ['Instrument Validation', [
+    ['IV1', 'The items are aligned with the objectives of the study.'],
+    ['IV2', 'The items are technically accurate (WCAG 2.2, 8-Point Grid, typography).'],
+    ['IV3', 'The items are clearly and simply worded.'],
+    ['IV4', 'Each test item has only one correct answer.'],
+    ['IV5', 'The difficulty of the items is appropriate for the respondents.'],
+    ['IV6', 'The survey items correctly represent the ISO/IEC 25010 characteristics.'],
+    ['IV7', 'The instruments can be completed within the allotted time.']],
+    [[4,'Very Good'],[3,'Good'],[2,'Fair'],[1,'Poor']]];
+  const isPro = async () => /^UI design professional/.test(readStudy().profile?.section || (await respondent().catch(() => null))?.section || '');
   let rating = null;
   const evalScores = {};
   // One section per page (A, B, C, then comments), so nothing needs scrolling.
   function evaluation(page = 0){
-    const scale = [[5,'Strongly Agree'],[4,'Agree'],[3,'Neutral'],[2,'Disagree'],[1,'Strongly Disagree']];
+    const scale = EVAL[page]?.[2] || [[5,'Strongly Agree'],[4,'Agree'],[3,'Neutral'],[2,'Disagree'],[1,'Strongly Disagree']];
     const last = page === EVAL.length, back = page ? '<button class="ghost" id="ev-back">Back</button>' : '<span></span>';
     if(last){
       app.innerHTML = `${top('Part III · Comments')}<h1>Anything to add?</h1><p class="note">Comments and suggestions (optional)</p>
@@ -222,7 +233,7 @@
         <div class="actions">${back}<button class="btn" id="ev-next">Finish</button></div>`;
     } else {
       const [h, items] = EVAL[page];
-      app.innerHTML = `${top(`Part II · ${page + 1} / ${EVAL.length}`)}<h2>${h}</h2><p class="note">5 = Strongly Agree · 4 = Agree · 3 = Neutral · 2 = Disagree · 1 = Strongly Disagree</p>
+      app.innerHTML = `${top(`Part II · ${page + 1} / ${EVAL.length}`)}<h2>${h}</h2><p class="note">${scale.map(([v, l]) => `${v} = ${l}`).join(' · ')}</p>
         ${items.map(([id, t]) => `<div class="ev" role="radiogroup" aria-labelledby="q-${id}"><p class="ev-t" id="q-${id}"><b>${id}.</b> ${t}</p><div class="ev-scale">${scale.map(([v, l]) => `<label title="${l}"><input type="radio" name="${id}" value="${v}" aria-label="${v}, ${l}"${evalScores[id] === v ? ' checked' : ''}><span>${v}</span></label>`).join('')}</div></div>`).join('')}
         <p class="err" id="err" role="alert"></p>
         <div class="actions">${back}<button class="btn" id="ev-next">Next</button></div>`;
@@ -274,12 +285,10 @@
     if(mode === 'post' && !(pre && pre.answers)){
       try{ if(window.EC_DB?.online){ const { data } = await window.EC_DB.client.from('quiz_results').select('score, total, answers').eq('player_id', window.EC_DB.userId).eq('kind', 'pre').maybeSingle(); if(data) pre = data; } }catch(e){}
     }
-    // Pre-test taken in the website popup: show the thank-you briefly, then close it (Play then opens the game).
-    if(window.top !== window && mode === 'pre') setTimeout(() => parent.postMessage('eyecon-quiz-done', '*'), 2500);
     app.innerHTML = `<div class="top"><img src="assets/sprites/piko.png" alt=""><span class="tag">${title} done</span></div>
       <h1>${mode === 'pre' ? 'Thanks! Your studio is ready.' : 'Thank you for helping our study!'}</h1>
-      ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p>Now let’s put on your designer hat and clock in.</p>'}${mode === 'post' ? '<div class="raffle" id="raffle"></div>' : ''}
-      <div class="actions">${mode === 'pre' ? `<span></span><a class="btn" data-close href="${HOME}">Back to website</a>` : `<a class="ghost" href="${HOME}">Back to home</a><button class="btn" id="to-credits">Continue</button>`}</div>`;
+      ${mode === 'post' ? compareHtml(pre, { score, total:Q.length, answers }) : '<p><b>You can play the game now!</b> Put on your designer hat and clock in.</p>'}${mode === 'post' ? '<div class="raffle" id="raffle"></div>' : ''}
+      <div class="actions">${mode === 'pre' ? `<a class="ghost" data-close href="${HOME}">Back to website</a><a class="btn" href="${PLAY}" target="_top">Play EyeCon!</a>` : `<a class="ghost" href="${HOME}">Back to home</a><button class="btn" id="to-credits">Continue</button>`}</div>`;
     document.getElementById('to-credits')?.addEventListener('click', () => { location.href = PLAY + '#desk'; }); // credits already rolled in the game
     if(mode === 'post') raffleBox();
     app.querySelector('.btn').focus();
@@ -389,7 +398,7 @@ if(window.top !== window) document.addEventListener('click', e => {
   if(e.target.closest('button[data-close]')) return parent.postMessage('eyecon-quiz-close', '*'); // raffle popup's Close / Okay
   const a = e.target.closest('a[href]'); if(!a) return;
   e.preventDefault();
-  if(a.classList.contains('ghost') || a.hasAttribute('data-close')) parent.postMessage('eyecon-quiz-close', '*'); else window.top.location.href = a.href;
+  if(a.classList.contains('ghost') || a.hasAttribute('data-close')) parent.postMessage('eyecon-quiz-close', '*'); else parent.postMessage('eyecon-quiz-play', '*'); // the website closes the popup and runs its Play animation
 });
 </script>
 <script>document.addEventListener('contextmenu', e => { if(!e.target.closest('input,textarea,[contenteditable="true"]')) e.preventDefault(); }); /* no browser right-click menu (text boxes keep it for paste) */</script>
