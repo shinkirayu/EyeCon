@@ -259,7 +259,7 @@
 </style>
 </head>
 <body>
-<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button><button data-tab="reviews">Level reviews</button><button data-tab="study">Study</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
+<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button><button data-tab="reviews">Level reviews</button><button data-tab="study">Study</button><button data-tab="raffle">Raffle</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
 <main id="app"><p class="loading">Loading…</p></main>
 <div id="tip" role="tooltip"></div>
 
@@ -315,7 +315,7 @@
     const out = document.getElementById('signout'); out.hidden = false;
     out.onclick = async () => { await sb.auth.signOut(); location.reload(); };
     const tabs = document.getElementById('tabs'); tabs.hidden = false;
-    tabs.onclick = e => { const b = e.target.closest('[data-tab]'); if(!b) return; tabs.querySelectorAll('button').forEach(x => x.toggleAttribute('aria-current', x === b)); b.dataset.tab === 'text' ? showText() : b.dataset.tab === 'reviews' ? showReviews() : b.dataset.tab === 'study' ? showStudy() : boot(); };
+    tabs.onclick = e => { const b = e.target.closest('[data-tab]'); if(!b) return; tabs.querySelectorAll('button').forEach(x => x.toggleAttribute('aria-current', x === b)); b.dataset.tab === 'text' ? showText() : b.dataset.tab === 'reviews' ? showReviews() : b.dataset.tab === 'study' ? showStudy() : b.dataset.tab === 'raffle' ? showRaffle() : boot(); };
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'text') return showText();
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'reviews') return showReviews();
     if(tabs.querySelector('[aria-current]')?.dataset.tab === 'study') return showStudy();
@@ -627,6 +627,8 @@
     document.body.appendChild(d); d.querySelector('[data-close]').focus();
   }
   // Raffle (Sat, Oct 24, 5 PM): entries with GCash numbers (admins only) and the draw.
+  // Raffle tab: its own page (the Study tab is just the study).
+  function showRaffle(){ app.innerHTML = '<section class="card" id="raffle-card"><h2>Raffle</h2><p class="empty">Loading…</p></section>'; raffleCard(); }
   async function raffleCard(){
     const box = document.getElementById('raffle-card'); if(!box) return;
     const [{ data, error }, { data:people }] = await Promise.all([sb.from('raffle_entries').select('entry_no, code, player_id, gcash, won, created_at').order('entry_no'), sb.from('respondents').select('id, display_name')]);
@@ -675,13 +677,11 @@
         ${Array.from({ length:20 }, (_, i) => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
         </tbody></table></section>
       ${evalCard(post)}
-      <section class="card" id="raffle-card"><h2>Raffle</h2><p class="empty">Loading…</p></section>
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
         ${rows.length ? `<table class="sorttable"><thead><tr><th>Name</th><th>Section</th><th>Used design tools</th><th>Pre</th><th>Post</th><th>Gain</th><th>Raffle</th><th></th></tr></thead><tbody>
         ${rows.map(r => `<tr><td><button class="link" data-view-resp="${esc(r.respondent_id)}">${esc(r.display_name || r.email || 'Respondent')}</button></td><td>${esc(r.section || '')}</td><td>${esc(r.prior_ui || '')}</td><td>${r.pre_score ?? '–'}</td><td>${r.post_score ?? '–'}</td><td>${r.gain == null ? '–' : (r.gain > 0 ? '+' : '') + r.gain}</td><td>${raffleNo[r.respondent_id] || '–'}</td><td><button class="ghost" data-del-resp="${esc(r.respondent_id)}" data-name="${esc(r.display_name || '')}">Delete</button></td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">No respondents yet.</p>'}
         <p class="sub">The CSV uses a respondent number instead of names and emails, ready for the paper.</p></section>`;
-    raffleCard();
     // Click a name: that person's answers, item by item, pre vs post, plus their ratings.
     app.querySelectorAll('[data-view-resp]').forEach(btn => btn.onclick = () => showRespondent(rows.find(r => r.respondent_id === btn.dataset.viewResp), quiz.filter(q => q.player_id === btn.dataset.viewResp)));
     // Delete a respondent (test runs) with their pre-test and post-test answers.

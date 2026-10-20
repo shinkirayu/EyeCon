@@ -3227,3 +3227,5 @@ body:is(.tut-visual,:has(.piko-cue:not(.hidden))) .piko-demo p:not(.pd-how){disp
 #modal-workday #raffle-join{margin-top:.5rem;border:2px solid #d9649f;background:#f598c4;color:#3b172e;box-shadow:.25rem .4375rem .5rem #bca68640;}
 #modal-workday #raffle-join:hover,#modal-workday #raffle-join:focus-visible{background:#f7aacf;}
 #modal-workday button#post-test-link{margin-top:.25rem;}
+#modal-workday button#post-test-link{margin-left:auto;margin-right:auto;} /* centred under the card text */
+#modal-workday #raffle-join{margin-left:auto;margin-right:auto;}
