@@ -19,12 +19,12 @@
     const d = document.createElement('div'); d.className = 'egg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Credits');
     const who = (n, r) => `<p><b>${n}</b><span>${r}</span></p>`;
     d.innerHTML = `<div class="roll"><img src="assets/landing/v2/foresight.png" alt="Foresight"><p style="margin:24px 0">presents</p><img src="assets/sprites/logo-eyecon.png" alt="EyeCon" style="width:300px">
-        <h2>Made by</h2>${who('Nica Caranza', 'The Greatest Animator')}${who('Nadine Santillan', 'The GOAT Artist')}${who('Auoie Dyncy Tan', 'The Brain')}${who('Kryu Maro Vera Cruz', 'The Lead Larper')}
+        <h2>Made by</h2>${who('Nica Caranza', 'The Greatest Animator')}${who('Nadine Santillan', 'The GOAT Artist')}${who('Auoie Dyncy Tan', 'The Brain and Face')}${who('Kryu Maro Vera Cruz', 'The Lead Larper')}
         <h2>Food by</h2><p><b>Almel's Canteen</b></p>
-        <h2>Support</h2><p><b>Miguel Mayor</b></p>
+        <h2>Muse</h2><p><b>Miguel Mayor</b></p>
         <h2>Music by</h2><p><b>King Anthony Polo</b><a href="https://www.youtube.com/@CrwnlssKing" target="_blank" rel="noopener">youtube.com/@CrwnlssKing</a></p>
         <h2>Level 1 portfolio</h2><p><b>Ate Girnielle</b><a href="https://linktr.ee/mayonnaisegee" target="_blank" rel="noopener">linktr.ee/mayonnaisegee</a></p>
-        <h2>Fur babies</h2><p><b>Natto · Brimmy · Tsukki · Boris · Bunsu · Boni · Cotton</b></p>
+        <h2>Fur babies</h2><p><b>Natto · Brimmy · Tsukki · Boris · Bunsu · Boni · Cotton · Mavis</b></p>
         <h2>In loving memory of</h2><p><b>Blue · Bogs</b></p>
         <h2>Special thanks</h2><p><b>BINI</b></p>
         <p class="heart">Thank you for playing ♥</p></div><button class="x"></button>`;
