@@ -172,6 +172,7 @@
   .raffle-card .win{display:flex;justify-content:center;gap:10px;margin-top:6px;}
   .raffle-card .win b{padding:4px 12px;border-radius:999px;background:#fff3d6;font:800 22px 'Baloo 2';}
   .raffle-card .join-btn{all:unset;box-sizing:border-box;display:block;width:100%;margin-top:12px;padding:12px 16px;border-radius:999px;background:#4d2b7a;color:#fff;font:800 17px 'Nunito';cursor:pointer;text-align:center;}
+  .raffle-card .join-btn[hidden]{display:none;}
   .raffle-card .join-btn:hover{background:#6b4c9d;}
   .raffle-card .join-btn:focus-visible{outline:3px solid #f5b83d;outline-offset:3px;}
   .raffle-card .close{all:unset;position:absolute;top:10px;left:14px;cursor:pointer;font:800 22px 'Nunito';color:#3b172e;}
@@ -482,6 +483,9 @@
     const close = () => { pop.hidden = true; };
     const open = e => { e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus(); }; // winners are paid by GCash directly
     document.getElementById('raffle-link').addEventListener('click', open);
+    // Only for visitors who finished the post-test in this browser.
+    let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
+    document.getElementById('raffle-join-btn').hidden = !postDone;
     document.getElementById('raffle-join-btn').onclick = () => { close(); window.EC_OPEN_QUIZ('quiz.html?mode=post&raffle=1'); }; // just the raffle form, in the popup
     pop.querySelector('.close').onclick = close;
     pop.addEventListener('click', e => { if(e.target === pop) close(); });

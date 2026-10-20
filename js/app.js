@@ -2029,6 +2029,13 @@
       return window.EC_CREDITS(() => { window.EC_MODAL.show(modal); document.getElementById('post-test-link').focus(); }, 'Skip ▸');
     }
     // Back to desktop for good: the card mustn't pop up again while they browse.
+    // Raffle: finished everything but hasn't joined (the database decides, so a cleared entry can join again).
+    if(postDone && window.EC_DB?.online && window.EC_DB.userId){
+      window.EC_DB.client.from('raffle_entries').select('entry_no').eq('player_id', window.EC_DB.userId).maybeSingle().then(({ data }) => {
+        if(data || document.getElementById('raffle-join')) return;
+        document.getElementById('post-test-link').insertAdjacentHTML('beforebegin', '<a class="btn" href="quiz.html?mode=post&raffle=1" id="raffle-join">🎟️ Join the raffle</a>');
+      });
+    }
     if(postDone) document.getElementById('post-test-link').onclick = () => { profile.finishedFree = true; save(); window.EC_MODAL.hide(modal); showScreen('screen-desktop'); };
     window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }

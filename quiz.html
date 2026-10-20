@@ -382,6 +382,8 @@
   })();
 })();
 
+// Full page (opened from the game): the raffle form's Close / Okay go back to the game's desktop.
+if(window.top === window) document.addEventListener('click', e => { if(e.target.closest('button[data-close]')) location.href = (/.html$/.test(location.pathname) ? 'index.html' : 'play') + '#desk'; });
 // Opened as a popup on the website: "Back to home" closes the popup; other links (Play) open in the whole window.
 if(window.top !== window) document.addEventListener('click', e => {
   if(e.target.closest('button[data-close]')) return parent.postMessage('eyecon-quiz-close', '*'); // raffle popup's Close / Okay
