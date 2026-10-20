@@ -2010,10 +2010,15 @@
     // Just the day wrap-up: no totals or per-client list.
     // After the last client (Level 7): send the player to the post-test.
     const allDone = profile.completed.includes('oras-signin');
+    let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
     summary.innerHTML = allDone
-      ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">You finished every client!</h2>
+      ? (postDone // already took it in this browser: just thank them; the desktop stays open to browse
+        ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">All done. Thank you!</h2>
+           <p>You finished every client and the post-test. Feel free to keep browsing.</p>
+           <button class="btn btn-accept" id="post-test-link" type="button">Back to desktop</button>`
+        : `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">You finished every client!</h2>
          <p>One last thing: take the post-test so we can see how much you learned.</p>
-         <a class="btn btn-accept" id="post-test-link" href="quiz.html?mode=post">Take the post-test</a>`
+         <a class="btn btn-accept" id="post-test-link" href="quiz.html?mode=post">Take the post-test</a>`)
       : `<div class="workday-sun" aria-hidden="true">☀</div><h2 id="workday-title">Day ${day.day} done!</h2>`;
     const next = document.getElementById('next-workday');
     next.textContent = 'Next day';
@@ -2023,6 +2028,7 @@
       profile.creditsSeen = true; save();
       return window.EC_CREDITS(() => { window.EC_MODAL.show(modal); document.getElementById('post-test-link').focus(); }, 'Skip ▸');
     }
+    if(postDone) document.getElementById('post-test-link').onclick = () => { window.EC_MODAL.hide(modal); showScreen('screen-desktop'); };
     window.EC_MODAL.show(modal);(allDone ? document.getElementById('post-test-link') : next).focus();
   }
 

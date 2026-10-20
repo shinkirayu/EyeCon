@@ -39,3 +39,37 @@ grant execute on function public.admin_draw_raffle(int) to authenticated;
 
 -- One entry per GCash number too (same person on another browser can't enter twice).
 alter table public.raffle_entries add constraint raffle_entries_gcash_key unique (gcash);
+
+-- One entry per respondent name too (a new browser/account under the same name can't enter again).
+create or replace function public.raffle_one_per_name() returns trigger language plpgsql security definer set search_path = public as $$
+declare me text;
+begin
+  select lower(trim(display_name)) into me from respondents where id = new.player_id;
+  if me is not null and exists (
+    select 1 from raffle_entries e join respondents r on r.id = e.player_id where lower(trim(r.display_name)) = me
+  ) then
+    raise exception 'This name already has a raffle entry.' using errcode = '23505';
+  end if;
+  return new;
+end $$;
+create trigger raffle_one_per_name before insert on public.raffle_entries for each row execute function public.raffle_one_per_name();
+
+-- A random, unused 3-digit code per entry (000-999), shown to the player and as the winning numbers.
+create or replace function public.raffle_new_code() returns text language plpgsql volatile set search_path = public as $$
+declare c text;
+begin
+  loop
+    c := lpad((floor(random() * 1000))::int::text, 3, '0');
+    exit when not exists (select 1 from raffle_entries where code = c);
+  end loop;
+  return c;
+end $$;
+alter table public.raffle_entries add column code text unique;
+update public.raffle_entries set code = public.raffle_new_code() where code is null;
+alter table public.raffle_entries alter column code set default public.raffle_new_code(), alter column code set not null;
+create or replace function public.raffle_public()
+returns json language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'entries', (select count(*) from raffle_entries),
+    'winners', coalesce((select json_agg(code order by code) from raffle_entries where won), '[]'::json));
+$$;

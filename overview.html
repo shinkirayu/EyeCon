@@ -469,10 +469,9 @@
   <div class="raffle-card"><button class="close" aria-label="Close">✕</button><span class="tag">RAFFLE!!!</span>
     <h2 id="raffle-h">Finish the post-test to win!</h2>
     <div class="prize-wrap"><img class="star" src="assets/sprites/Stars.png" alt="" aria-hidden="true"><div class="prize">₱200.67</div><div class="via">via <img src="assets/GCash_logo.svg.webp" alt="GCash" class="gcash"></div></div>
-    <p class="draw">3 winners · Draw: Sat, Oct 24, 5:00 PM</p>
-    <p class="count" id="raffle-count">Entries: …</p>
+    <p class="draw">3 winners · Draw: Sat, Oct 24</p>
     <div id="raffle-winners"></div>
-    <p><a href="quiz.html?mode=post" class="join">Finished the post-test? Get your entry here</a></p>
+    <p><a href="quiz.html?mode=post" class="join">Finished the post-test? Join the raffle here</a></p>
   </div>
 </div>
 <script>
@@ -485,10 +484,9 @@
       try{
         const r = await fetch(S.url + '/rest/v1/rpc/raffle_public', { method:'POST', headers:{ apikey:S.publishableKey, Authorization:'Bearer ' + S.publishableKey, 'Content-Type':'application/json' }, body:'{}' });
         const d = await r.json();
-        document.getElementById('raffle-count').textContent = `Entries so far: ${d.entries}`;
         document.getElementById('raffle-winners').innerHTML = d.winners.length
-          ? `<p>🎉 Winning entries:</p><div class="win">${d.winners.map(n => `<b>#${n}</b>`).join('')}</div>` : '<p>Winners are shown here after the draw.</p>';
-      }catch(_){ document.getElementById('raffle-count').textContent = 'Entries: can’t load right now'; }
+          ? `<p>🎉 Winning numbers:</p><div class="win">${d.winners.map(n => `<b>${n}</b>`).join('')}</div>` : '';
+      }catch(_){ /* winners just don't show if the database can't be reached */ }
     };
     document.getElementById('raffle-link').addEventListener('click', open);
     pop.querySelector('.close').onclick = close;

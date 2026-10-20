@@ -241,18 +241,19 @@
   // Raffle (Sat, Oct 24, 5 PM; 3 winners of PHP 200.67 via GCash): one numbered entry per post-test.
   async function raffleBox(){
     const box = document.getElementById('raffle'); if(!box || !verified()) return;
-    const mine = (await db.client.from('raffle_entries').select('entry_no, won').eq('player_id', db.userId).maybeSingle()).data;
-    const show = e => { box.innerHTML = `<p class="rf-title">🎟️ You're in the raffle!</p><p class="rf-no">Entry #${e.entry_no}</p><p class="note">Draw: Sat, Oct 24, 5:00 PM · 3 winners of ₱200.67 via GCash. Check the Raffle tab on the website.</p>`; };
+    // Already entered (this account, or remembered in this browser): just show the number.
+    const mine = (await db.client.from('raffle_entries').select('entry_no, code, won').eq('player_id', db.userId).maybeSingle()).data || readStudy().raffle;
+    const show = e => { const st = readStudy(); st.raffle = { entry_no:e.entry_no, code:e.code }; writeStudy(st); box.innerHTML = `<p class="rf-title">🎟️ You're in the raffle!</p><p class="rf-no">Your number: ${e.code}</p><p class="note">Draw: Sat, Oct 24 · 3 winners of ₱200.67 via GCash. Winning numbers show on the website's Raffle tab.</p>`; };
     if(mine) return show(mine);
     box.innerHTML = `<p class="rf-title">🎟️ Join the raffle: 3 winners of ₱200.67 via GCash</p>
       <div class="field"><label for="gcash">Your GCash number</label><input id="gcash" inputmode="numeric" maxlength="11" placeholder="09XXXXXXXXX" autocomplete="tel"></div>
-      <p class="note">Draw: Sat, Oct 24, 5:00 PM. Your number is only used to send the prize and is never shown publicly.</p>
-      <p class="err" id="rf-err" role="alert"></p><button class="btn" id="rf-join">Get my entry</button>`;
+      <p class="note">Draw: Sat, Oct 24. Your number is only used to send the prize and is never shown publicly.</p>
+      <p class="err" id="rf-err" role="alert"></p><button class="btn" id="rf-join">Join the raffle</button>`;
     document.getElementById('rf-join').onclick = async () => {
       const gcash = document.getElementById('gcash').value.replace(/\D/g, ''), err = document.getElementById('rf-err');
       if(!/^09\d{9}$/.test(gcash)){ err.textContent = 'Enter an 11-digit GCash number starting with 09.'; return; }
-      const { data, error } = await db.client.from('raffle_entries').insert({ gcash }).select('entry_no, won').single();
-      if(error){ err.textContent = error.code === '23505' ? 'That GCash number already has an entry. One entry per person.' : 'Could not join: ' + error.message; return; }
+      const { data, error } = await db.client.from('raffle_entries').insert({ gcash }).select('entry_no, code, won').single();
+      if(error){ err.textContent = error.code === '23505' ? 'You (or that GCash number) already have an entry. One entry per person.' : 'Could not join: ' + error.message; return; }
       show(data);
     };
   }
