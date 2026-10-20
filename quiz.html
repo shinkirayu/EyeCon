@@ -241,9 +241,10 @@
   // Raffle (Sat, Oct 24, 5 PM; 3 winners of PHP 200.67 via GCash): one numbered entry per post-test.
   async function raffleBox(){
     const box = document.getElementById('raffle'); if(!box || !verified()) return;
-    // Already entered (this account, or remembered in this browser): just show the number.
-    const mine = (await db.client.from('raffle_entries').select('entry_no, code, won').eq('player_id', db.userId).maybeSingle()).data || readStudy().raffle;
-    const show = e => { const st = readStudy(); st.raffle = { entry_no:e.entry_no, code:e.code }; writeStudy(st); box.innerHTML = `<p class="rf-title">🎟️ You're in the raffle!</p><p class="rf-no">Your number: ${e.code}</p><p class="note">Draw: Sat, Oct 24 · 3 winners of ₱200.67 via GCash. Winning numbers show on the website's Raffle tab.</p>`; };
+    // Already entered (the database decides; the browser copy only mirrors it).
+    const mine = (await db.client.from('raffle_entries').select('entry_no, code, won').eq('player_id', db.userId).maybeSingle()).data;
+    if(!mine){ const st = readStudy(); if(st.raffle){ delete st.raffle; writeStudy(st); } } // entry cleared on the admin side: they can join again
+    const show = e => { const st = readStudy(); st.raffle = { entry_no:e.entry_no, code:e.code }; writeStudy(st); box.innerHTML = `<p class="rf-title">🎟️ You're in the raffle!</p><p class="note">Your entry is saved. If you win, ₱200.67 will be sent straight to your GCash. Draw: Sat, Oct 24 · 3 winners.</p>`; };
     if(mine) return show(mine);
     box.innerHTML = `<p class="rf-title">🎟️ Join the raffle: 3 winners of ₱200.67 via GCash</p>
       <div class="field"><label for="gcash">Your GCash number</label><input id="gcash" inputmode="numeric" maxlength="11" placeholder="09XXXXXXXXX" autocomplete="tel"></div>

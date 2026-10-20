@@ -470,7 +470,6 @@
     <h2 id="raffle-h">Finish the post-test to win!</h2>
     <div class="prize-wrap"><img class="star" src="assets/sprites/Stars.png" alt="" aria-hidden="true"><div class="prize">₱200.67</div><div class="via">via <img src="assets/GCash_logo.svg.webp" alt="GCash" class="gcash"></div></div>
     <p class="draw">3 winners · Draw: Sat, Oct 24</p>
-    <div id="raffle-winners"></div>
     <p><a href="quiz.html?mode=post" class="join">Finished the post-test? Join the raffle here</a></p>
   </div>
 </div>
@@ -478,16 +477,7 @@
   (() => { // Raffle tab: live entry count and, after the draw, the winning entry numbers
     const pop = document.getElementById('raffle-pop');
     const close = () => { pop.hidden = true; };
-    const open = async e => {
-      e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus();
-      const S = window.EC_SUPABASE || {};
-      try{
-        const r = await fetch(S.url + '/rest/v1/rpc/raffle_public', { method:'POST', headers:{ apikey:S.publishableKey, Authorization:'Bearer ' + S.publishableKey, 'Content-Type':'application/json' }, body:'{}' });
-        const d = await r.json();
-        document.getElementById('raffle-winners').innerHTML = d.winners.length
-          ? `<p>🎉 Winning numbers:</p><div class="win">${d.winners.map(n => `<b>${n}</b>`).join('')}</div>` : '';
-      }catch(_){ /* winners just don't show if the database can't be reached */ }
-    };
+    const open = e => { e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus(); }; // winners are paid by GCash directly
     document.getElementById('raffle-link').addEventListener('click', open);
     pop.querySelector('.close').onclick = close;
     pop.addEventListener('click', e => { if(e.target === pop) close(); });
