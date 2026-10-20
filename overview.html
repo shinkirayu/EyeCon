@@ -481,11 +481,20 @@
   (() => { // Raffle tab: live entry count and, after the draw, the winning entry numbers
     const pop = document.getElementById('raffle-pop');
     const close = () => { pop.hidden = true; };
-    const open = e => { e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus(); }; // winners are paid by GCash directly
+    const refreshJoin = () => {
+  // Only for visitors who finished the post-test in this browser.
+      let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
+      document.getElementById('raffle-join-btn').hidden = !postDone;
+      // Already joined? Ask the database with this browser's own sign-in (kept by the game/tests) and hide it.
+      try{
+        const S = window.EC_SUPABASE || { url:'https://nnybcikbhzmvufeqscoy.supabase.co' }, sess = JSON.parse(localStorage.getItem('sb-nnybcikbhzmvufeqscoy-auth-token') || 'null');
+        if(postDone && sess?.access_token && sess.user?.id) fetch(S.url + '/rest/v1/raffle_entries?select=entry_no&player_id=eq.' + sess.user.id, { headers:{ apikey:(window.EC_SUPABASE || {}).publishableKey, Authorization:'Bearer ' + sess.access_token } })
+          .then(r => r.json()).then(rows => { if(Array.isArray(rows) && rows.length) document.getElementById('raffle-join-btn').hidden = true; }).catch(() => {});
+      }catch(_){}
+    };
+    const open = e => { e?.preventDefault(); pop.hidden = false; pop.querySelector('.close').focus(); refreshJoin(); }; // winners are paid by GCash directly
     document.getElementById('raffle-link').addEventListener('click', open);
-    // Only for visitors who finished the post-test in this browser.
-    let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
-    document.getElementById('raffle-join-btn').hidden = !postDone;
+
     document.getElementById('raffle-join-btn').onclick = () => { close(); window.EC_OPEN_QUIZ('quiz.html?mode=post&raffle=1'); }; // just the raffle form, in the popup
     pop.querySelector('.close').onclick = close;
     pop.addEventListener('click', e => { if(e.target === pop) close(); });
