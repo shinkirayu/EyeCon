@@ -10,3 +10,6 @@ dist/
 
 # Local-only keyboard sound pack (not ours to redistribute)
 assets/sounds/keyboard/
+
+# Database backups (participant data)
+backups/

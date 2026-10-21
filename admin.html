@@ -259,7 +259,7 @@
 </style>
 </head>
 <body>
-<header><img src="assets/sprites/logo-eyecon.png" alt="EyeCon"><h1>Admin dashboard</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button><button data-tab="reviews">Level reviews</button><button data-tab="study">Study</button><button data-tab="raffle">Raffle</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
+<header><h1>EyeCon Admin</h1><nav class="tabs" id="tabs" hidden><button data-tab="stats" aria-current="page">Statistics</button><button data-tab="text">Dialogue &amp; text</button><button data-tab="reviews">Level reviews</button><button data-tab="study">Study</button><button data-tab="raffle">Raffle</button></nav><small id="who"></small><button class="ghost" id="signout" hidden>Sign out</button></header>
 <main id="app"><p class="loading">Loading…</p></main>
 <div id="tip" role="tooltip"></div>
 
@@ -671,6 +671,13 @@
     app.innerHTML = '<p class="loading">Loading study results…</p>';
     const [{ data:rows, error }, { data:quiz, error:e2 }] = await Promise.all([
       sb.rpc('admin_study'), sb.from('quiz_results').select('player_id, kind, score, total, answers, duration_ms, created_at')]);
+    // Score everyone on the test's current items only (quiz.html HIDDEN), so early 20-item runs
+    // are re-scored on the same 10 items and every total matches.
+    const html = await (await fetch('quiz.html')).text(), hid = JSON.parse(html.match(/const HIDDEN = (\[[^\]]*\])/)[1]);
+    const CUR = Array.from({ length:20 }, (_, i) => i).filter(i => !hid.includes(i));
+    (quiz || []).forEach(q => { q.answers = (q.answers || []).filter(x => !x || x.q == null || CUR.includes(x.q)); q.score = q.answers.filter(x => x && x.q != null && x.correct).length; q.total = CUR.length; });
+    (rows || []).forEach(r => { const s = k => quiz.find(q => q.player_id === r.respondent_id && q.kind === k)?.score;
+      r.pre_score = s('pre') ?? null; r.post_score = s('post') ?? null; r.total = CUR.length; r.gain = r.pre_score != null && r.post_score != null ? r.post_score - r.pre_score : null; });
     const raffleNo = Object.fromEntries(((await sb.from('raffle_entries').select('player_id, code')).data || []).map(e => [e.player_id, e.code]));
     if(error || e2){ app.innerHTML = `<div class="card"><h2>Couldn’t load the study</h2><p class="err">${esc((error || e2).message)}</p><p class="sub">Have migrations 0005 and 0006 been run in the Supabase SQL editor?</p></div>`; return; }
     const pre = quiz.filter(q => q.kind === 'pre'), post = quiz.filter(q => q.kind === 'post');
@@ -691,11 +698,11 @@
       <section class="card"><div class="fun-head"><h2>Scores by content area</h2><span class="sub" style="margin:0">average % correct · pre → post</span></div>
         <table class="sorttable"><thead><tr><th>Area</th><th>Items</th><th>Pre-test</th><th>Post-test</th><th>Change</th></tr></thead><tbody>
         ${QUIZ_AREAS.map(([n, a, b]) => { const x = areaPct(pre, a, b), y = areaPct(post, a, b); return `<tr><td>${n}</td><td>${a}–${b}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
-        <tr><td><b>Overall</b></td><td>${(pre[0] || post[0])?.total || 20} items</td><td>${avg(pre)} / ${pre[0]?.total || 20}</td><td>${avg(post)} / ${post[0]?.total || 20}</td><td>${paired.length ? `${paired.length} paired` : ''}</td></tr>
+        <tr><td><b>Overall</b></td><td>${CUR.length} items</td><td>${avg(pre)} / ${pre[0]?.total || 20}</td><td>${avg(post)} / ${post[0]?.total || 20}</td><td>${paired.length ? `${paired.length} paired` : ''}</td></tr>
         </tbody></table></section>
       <section class="card"><div class="fun-head"><h2>Each item</h2><span class="sub" style="margin:0">% who got it right</span></div>
         <table class="sorttable"><thead><tr><th>#</th><th>Area</th><th>Pre</th><th>Post</th><th>Change</th></tr></thead><tbody>
-        ${Array.from({ length:20 }, (_, i) => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
+        ${CUR.map(i => { const x = pct(pre, i), y = pct(post, i); return `<tr><td>${i + 1}</td><td>${QUIZ_AREAS.find(([, a, b]) => i + 1 >= a && i + 1 <= b)[0]}</td><td>${cell(x)}</td><td>${cell(y)}</td><td>${delta(x, y)}</td></tr>`; }).join('')}
         </tbody></table></section>
       ${evalCard(post)}
       <section class="card"><div class="fun-head"><h2>Respondents</h2><button class="ghost" id="study-csv">Download CSV</button></div>
@@ -714,10 +721,10 @@
       showStudy();
     });
     document.getElementById('study-csv').onclick = () => {
-      const head = ['respondent', 'section', 'prior_ui', 'pre_score', 'post_score', 'gain', ...Array.from({ length:20 }, (_, i) => `pre_q${i + 1}`), ...Array.from({ length:20 }, (_, i) => `post_q${i + 1}`)];
+      const head = ['respondent', 'section', 'prior_ui', 'pre_score', 'post_score', 'gain', ...CUR.map(i => `pre_q${i + 1}`), ...CUR.map(i => `post_q${i + 1}`)];
       const byKind = (id, k) => quiz.find(q => q.player_id === id && q.kind === k);
       const lines = rows.map((r, n) => { const a = byKind(r.respondent_id, 'pre'), b = byKind(r.respondent_id, 'post');
-        const items = q => Array.from({ length:20 }, (_, i) => ans(q, i) ? (ans(q, i).correct ? 1 : 0) : '');
+        const items = q => CUR.map(i => ans(q, i) ? (ans(q, i).correct ? 1 : 0) : '');
         return ['R' + String(n + 1).padStart(3, '0'), r.section || '', r.prior_ui || '', r.pre_score ?? '', r.post_score ?? '', r.gain ?? '', ...items(a), ...items(b)]; });
       const csv = [head, ...lines].map(l => l.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(',')).join('\n');
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' })); a.download = 'eyecon-study.csv'; a.click();
