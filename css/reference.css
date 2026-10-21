@@ -3314,3 +3314,16 @@ body.piko-slider-lock #element-settings .editor-bright-bar{pointer-events:none;}
 #screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift.piko-leaving .desktop-icon-glyph::after{animation:pikoOutlinePulse 1.2s ease-in-out infinite,pikoDimOut 1.2s ease both;}
 .reduce-motion #screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift .desktop-icon-glyph::after{animation:none;}
 .browser-bookmark{min-width:0;}.browser-bookmark small{max-width:100%;overflow-wrap:anywhere;text-align:center;} /* long site addresses wrap inside the card */
+.browser-note:empty{display:none;}
+/* Level 4–7 client sites fill the Browser window (no page tab, no margins). */
+.browser-tabs:empty{display:none;}
+#screen-browser .browser-view.design-site-view{padding:0;gap:0;justify-content:flex-start;background:#fff;overflow:auto;}
+.design-site-view .browser-page{position:relative;}
+.design-site-view .browser-page > div{border-radius:0!important;box-shadow:none!important;}
+.browser-site-status{position:fixed;left:50%;bottom:6rem;transform:translateX(-50%);margin:0;z-index:2;box-shadow:0 .25rem .75rem #0003;}
+/* Client sites: the footer sits at the bottom even on short pages; Mayonnaisegee's design header on every page. */
+.client-site{display:flex;flex-direction:column;min-height:100%;flex:1 0 auto;}
+.client-site .client-content{flex:1 0 auto;width:100%;margin:0 auto;}
+.client-design-header{flex:none;overflow:hidden;width:100%;}
+.client-design-header > div{border-radius:0!important;box-shadow:none!important;}
+.client-site:has(.client-original-layout) .client-content{padding:0;} /* the design starts right at the top */

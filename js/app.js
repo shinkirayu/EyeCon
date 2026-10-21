@@ -1455,6 +1455,8 @@
     view.replaceChildren();
     view.scrollTop=0;
     view.classList.toggle('client-site-view', browserPage.kind==='site' && ['mayo','yappers','haybuhay'].includes(browserPage.project));
+    view.classList.toggle('design-site-view', browserPage.kind==='site' && !view.classList.contains('client-site-view'));
+    view.style.background = '';
     if(view.classList.contains('client-site-view')){
       const project=window.EC_PROJECTS.find(p=>p.id===browserPage.project);
       window.EC_CLIENT_SITES.render(view, project, profile, browserPage.route || 'home', route=>{
@@ -1478,34 +1480,20 @@
       const pages = window.EC_LEVELS.filter(l => l.project === project.id);
       const level = pages[browserPage.page] || pages[0];
       address.textContent = `https://www.${slug(project.name)}.com/${level.pageIndex ? slug(level.pageLabel) : ''}`;
-      pages.forEach((p, i) => {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'browser-tab' + (p === level ? ' active' : '');
-        tab.textContent = p.pageLabel;
-        tab.setAttribute('aria-pressed', String(p === level));
-        tab.addEventListener('click', () => { browserPage = { kind:'site', project:project.id, page:i }; renderBrowser(); });
-        tabs.appendChild(tab);
-      });
       const design = (profile.designs || {})[level.id];
-      if(!design){
-        const note = document.createElement('p');
-        note.className = 'browser-note';
-        note.textContent = profile.completed.includes(level.id)
-          ? 'You finished this page before designs were saved, so this is the original version.'
-          : "This page hasn't been redesigned yet. This is how it looks today.";
-        view.appendChild(note);
-      }
       const frame = document.createElement('div');
       frame.className = 'browser-page';
       view.appendChild(frame);
       const status = document.createElement('p'); status.className = 'browser-note'; status.setAttribute('role', 'status');
       const box = view.getBoundingClientRect(), route = browserPage.route || 'home';
       // The page is a working site: its menu links and buttons can be clicked.
-      window.EC_CLIENT_SITES.renderDesign(frame, level, design || level.elements, route, r => {
+      const { level:site, elements:els } = window.EC_CLIENT_SITES.fill(level, design || level.elements, box.width, box.height), W = level.canvas.w; // fills a taller window
+      window.EC_CLIENT_SITES.renderDesign(frame, site, els, route, r => {
         browserPage = { kind:'site', project:project.id, page:browserPage.page, route:r }; renderBrowser();
-      }, { fitW: Math.max(200, box.width - 48), fitH: Math.max(160, box.height - (design ? 96 : 144)) }, status);
-      view.appendChild(status);
+      }, { fitW: Math.max(200, box.width), fitH: Math.max(200, box.width) * site.canvas.h / W }, status); // full width, scrolls like levels 1–3
+      if(!view._fitWatch){ let w = 0; view._fitWatch = new ResizeObserver(() => { const nw = Math.round(view.clientWidth); if(view.classList.contains('design-site-view') && w && (nw !== w || Math.round(view.clientHeight) !== view._fitH)){ w = nw; renderBrowser(); } else w = nw; view._fitH = Math.round(view.clientHeight); }); view._fitWatch.observe(view); }
+      view.style.background = level.canvas.bg; // any space below the page matches the site
+      status.classList.add('browser-site-status'); frame.appendChild(status);
       if(route !== 'home') address.textContent += slug(((design || level.elements).find(e => e.id === route) || {}).text || '');
       return;
     }

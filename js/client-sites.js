@@ -45,6 +45,14 @@
       set('--client-body-color','#f6eaff');
     }
   }
+  // A design drawn at width w grows to fill a window of height h: full-height backgrounds and side panels
+  // stretch (pictures keep their shape), and a full-width footer band moves down with the bottom edge.
+  function fill(level,elements,w,h){
+    const W=level.canvas.w,H=level.canvas.h,extra=Math.max(0,Math.round(W*h/Math.max(1,w))-H);
+    if(!extra)return{level,elements};
+    const band=elements.find(e=>!e.text&&e.w>=W*.9&&e.y>=H*.75&&e.h<H*.2),foot=band?band.y:Infinity;
+    return{level:{...level,canvas:{...level.canvas,h:H+extra}},elements:elements.map(e=>e.y>=foot?{...e,y:e.y+extra}:e.y+e.h>=H-8&&e.y<H*.5&&!e.src?{...e,h:e.h+extra}:e)};
+  }
   function render(host,project,profile,route,navigate){
     designObserver?.disconnect();
     const s=specs[project.id];
@@ -55,6 +63,17 @@
     host.innerHTML=`<article class="client-site site-${project.id}"><header class="client-nav"><button class="client-brand" data-route="home">${project.avatarEmoji}<span>${project.name}</span></button><nav aria-label="${project.name} navigation">${routes.map(([r,label])=>`<button data-route="${r}" ${route===r?'aria-current="page"':''}>${label}</button>`).join('')}</nav></header><main class="client-content"></main><footer class="client-footer"><span>${project.name} · A little space of our own.</span><button data-route="contact">Let’s talk ↗</button></footer></article>`;
     const main=host.querySelector('main');
     applyClientStyle(host.querySelector('.client-site'),project,profile);
+    // Mayonnaisegee: every page keeps the portfolio's own header (cut from the design), not a generic one.
+    if(project.id==='mayo'&&route!=='home'){
+      const level=window.EC_LEVELS.find(l=>l.project==='mayo'), els=(profile.designs||{})[level.id]||level.elements;
+      const navs=els.filter(e=>['home','about','contact'].includes(e.id)), navB=Math.max(...navs.map(e=>e.y+e.h)), band=els.filter(e=>!e.text&&!e.src&&e.y<=navs[0].y&&e.y+e.h>=navB&&e.w>=level.canvas.w*.9&&e.h<level.canvas.h/2).sort((a,b)=>a.h-b.h)[0], cut=band?band.y+band.h:navB+40; // the header's white band
+      const head=document.createElement('div'); head.className='client-design-header';
+      host.querySelector('.client-nav').replaceWith(head);
+      const draw=()=>{const w=head.clientWidth; if(!w) return; head.style.height=(cut*w/level.canvas.w)+'px';
+        window.EC_EDITOR.renderStatic(head,level,els,{fitW:w,fitH:w*level.canvas.h/level.canvas.w,onElement:(node,el)=>{
+          if(['home','about','contact'].includes(el.id)){node.setAttribute('role','button');node.tabIndex=0;node.style.cursor='pointer';node.addEventListener('click',()=>navigate(el.id));if(el.id===route)node.setAttribute('aria-current','page');}}});};
+      designObserver=new ResizeObserver(draw); designObserver.observe(head); draw();
+    }
     const cards=()=>`<div class="client-cards">${s.cards.map((title,i)=>`<button class="client-card" data-detail="${i}">${project.id==='mayo'?`<img src="assets/levels/mayo/card${i+1}.png" alt="${title}" />`:`<span class="client-card-symbol" aria-hidden="true">${(project.id==='yappers'?['✦','☀','♡']:['✧','❀','☾'])[i]}</span>`}<small>0${i+1}</small><h3>${title}</h3><span>Take a closer look ↗</span></button>`).join('')}</div><div class="client-detail" hidden></div>`;
     if(route==='home' && project.id!=='haybuhay'){
       const level=window.EC_LEVELS.find(l=>l.project===project.id);
@@ -72,7 +91,8 @@
       const resize=()=>{
         const width=frame.clientWidth;
         if(!width)return;
-        window.EC_EDITOR.renderStatic(frame,level,elements,{fitW:width,fitH:width*level.canvas.h/level.canvas.w,onElement:(node,el)=>{
+        const f=fill(level,elements,width,host.clientHeight-(host.querySelector('.client-nav')?.offsetHeight||0)); // the window, not the page (which grows)
+        window.EC_EDITOR.renderStatic(frame,f.level,f.elements,{fitW:width,fitH:width*f.level.canvas.h/f.level.canvas.w,onElement:(node,el)=>{
           if(project.id==='mayo'){
             if(['home','about','contact'].includes(el.id)) activate(node,el.text,()=>navigate(el.id));
             if(/^card[123]$/.test(el.id)) activate(node,'View artwork '+el.id.slice(-1),()=>{status.textContent='Interested in this artwork? Visit Contact to discuss a commission.';});
@@ -107,9 +127,9 @@
       main.querySelector('input[type="checkbox"]').addEventListener('change',e=>{settings.music=e.target.checked;});
       const quality=main.querySelector('select');quality.value=settings.quality;quality.addEventListener('change',()=>{settings.quality=quality.value;});
     }else{
-      main.innerHTML=`<section class="client-section"><p class="client-eyebrow">${workLabel.toUpperCase()}</p><h1>${project.id==='mayo'?'Explore for more!':project.id==='yappers'?'Find your kind of people.':'There’s a whole world waiting.'}</h1><p>${s.intro}</p>${cards()}</section><section class="client-section client-approved"><h2>${project.id==='mayo'?'The portfolio':project.id==='yappers'?'A familiar welcome':'Inside the game'}</h2><p>Your studio design, brought along for the journey.</p><div class="client-saved-design"></div></section>`;
+      main.innerHTML=`<section class="client-section"><p class="client-eyebrow">${workLabel.toUpperCase()}</p><h1>${project.id==='mayo'?'Explore for more!':project.id==='yappers'?'Find your kind of people.':'There’s a whole world waiting.'}</h1><p>${s.intro}</p>${cards()}</section>${project.id==='yappers'?'':`<section class="client-section client-approved"><h2>${project.id==='mayo'?'The portfolio':'Inside the game'}</h2><p>Your studio design, brought along for the journey.</p><div class="client-saved-design"></div></section>`}`;
       const level=window.EC_LEVELS.find(l=>l.project===project.id);
-      if(level){
+      if(level&&main.querySelector('.client-saved-design')){
         const frame=main.querySelector('.client-saved-design');
         const resize=()=>{if(!frame.isConnected){observer.disconnect();return;} const width=frame.clientWidth;if(width)window.EC_EDITOR.renderStatic(frame,level,(profile.designs||{})[level.id]||level.elements,{fitW:width,fitH:width*level.canvas.h/level.canvas.w});};
         const observer=new ResizeObserver(resize);designObserver=observer;observer.observe(frame);resize();
@@ -129,37 +149,67 @@
   }
   // Levels 4–7: the player's real design is the site. Its menu links open that page (same header or
   // sidebar, colors and fonts; only the content area changes) and its buttons answer like a demo.
+  // A little something on each menu page (levels 4–7), keyed by the link text.
+  const PAGES={
+    antoks:{Delivery:['Hot, crispy and on its way!','Order before 7 PM for same-day delivery anywhere in the city.',['🛵 Free delivery on orders over 500 PHP','⏱️ 30–45 minutes, still crunchy','🍗 Lechong Manok travels best whole']],
+      About:['From one grill to your table.','Antoks Manoks started as a single charcoal grill on a busy corner. Same family recipe, same smoky skin, now with a lot more chickens.',['🔥 Charcoal-grilled every morning','🧄 Garlic, lemongrass and a secret sauce','❤️ Family-run since day one']]},
+    cones:{Learn:['How your eyes see color','Your eyes have three kinds of cones: red, green and blue. When one works differently, some colors get hard to tell apart.',['👁️ About 1 in 12 men see color differently','🎨 Red and green are the most common mix-up','✅ Good contrast helps everyone']],
+      Tools:['Try it yourself','Play with our tools to see the world through different eyes.',['🔬 Color blindness simulator','🧪 Quick color vision test','🖍️ Palette checker for designers']],
+      About:['Made for every kind of eye.','Cones is a small team of designers and eye-care fans making color easier to understand.',['💡 Free to use, always','📚 Made with eye doctors','🌈 For people who see color differently']]},
+    kolehiyo:{'My Profile':['Dela Cruz, Juan','BS Entertainment and Multimedia Computing · 3rd Year',['🎓 Student no. 2025-04127','📧 juan.delacruz@klpp.edu.ph','🏠 Pitipiw Piw City']],
+      Enrollment:['You’re enrolled!','First Semester, A.Y. 2027–2028. 24 units, all set.',['✅ Fees paid','✅ Subjects confirmed','📄 Download your registration form']],
+      Schedule:['This week','Classes from Monday to Friday.',['MON 8:00 · Game Design 2','TUE 10:00 · 3D Animation','WED 1:00 · UI/UX Design','THU 8:00 · Audio for Games','FRI 3:00 · Capstone 1']],
+      Grades:['Last semester','General Weighted Average: 1.75. Nice work!',['Game Design 1 · 1.50','Digital Illustration · 1.75','Web Development · 2.00','Physical Education · 1.25']],
+      Documents:['Your files','Request school documents in a few clicks.',['📄 Certificate of Enrollment','📄 Transcript of Records','📄 Good Moral Certificate']],
+      Announcements:['What’s new','News from around campus.',['📣 Enrollment for 2nd sem opens on Dec 1','🎮 Game Jam this Friday at the Media Lab','🌧️ No classes if typhoon signal no. 2 is raised']]}};
   function renderDesign(frame,level,elements,route,navigate,fit,status){
     const navs=elements.filter(e=>e.role==='nav'&&e.text);
     const home=navs[0]?.id;
     const say=t=>{status.textContent=t;};
+    const nodes={};
     window.EC_EDITOR.renderStatic(frame,level,elements,Object.assign({},fit,{onElement:(node,el)=>{
+      nodes[el.id]=node;
       const go=action=>{node.setAttribute('role','button');node.tabIndex=0;node.style.cursor='pointer';node.addEventListener('click',action);node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();action();}});};
       if(el.role==='nav'&&el.text){go(()=>navigate(el.id===home?'home':el.id));if((route==='home'?home:route)===el.id)node.setAttribute('aria-current','page');}
-      else if(el.role==='button'&&el.text)go(()=>say(`“${el.text}” works in the full site. This preview is just for looking around.`));
+      else if(el.role==='button'&&el.text&&level.levelNumber!==7)go(()=>say(`“${el.text}” works in the full site. This preview is just for looking around.`));
     }}));
     if(route==='home'||!navs.length)return;
     const page=navs.find(n=>n.id===route); if(!page)return;
+    // The menu's "you are here" highlight (e.g. Kolehiyo's blue pill) moves to this link, colors swapped.
+    const hl=elements.find(e=>!e.text&&e.role!=='nav'&&e.y<=navs[0].y&&e.y+e.h>=navs[0].y+navs[0].h&&e.x<=navs[0].x&&e.x+e.w>=navs[0].x+navs[0].w&&e.w*e.h<level.canvas.w*level.canvas.h*.1);
+    if(hl&&nodes[hl.id]){nodes[hl.id].style.transform=`translate(${page.x-navs[0].x}px,${page.y-navs[0].y}px)`;
+      if(nodes[page.id])nodes[page.id].style.color=navs[0].color; if(nodes[navs[0].id])nodes[navs[0].id].style.color=page.color;}
     // Content area: below a top menu, or right of a side menu.
     const L=Math.min(...navs.map(n=>n.x)),T=Math.min(...navs.map(n=>n.y)),R=Math.max(...navs.map(n=>n.x+n.w)),B=Math.max(...navs.map(n=>n.y+n.h));
     const side=B-T>R-L,W=level.canvas.w,H=level.canvas.h;
-    const area=side?{x:R+24,y:0,w:W-R-24,h:H}:{x:0,y:B+24,w:W,h:H-B-24};
-    const inArea=e=>side?e.x>=area.x-24:e.y>=area.y-24;
-    const big=e=>e.w*e.h>W*H*.6;
+    const area=side?{x:R+24,y:T-24,w:W-R-48,h:H-T}:{x:0,y:B+24,w:W,h:H-B-24};
+    // A side menu's own panel stays whole: start the content right after it.
+    if(side){const panel=elements.filter(e=>!e.text&&e.x<=L&&e.x+e.w>=R&&e.y<=T&&e.y+e.h>=B&&e.w<W/2).sort((a,b)=>b.x+b.w-a.x-a.w)[0];if(panel&&panel.x+panel.w>area.x){const d=panel.x+panel.w-area.x;area.x+=d;area.w-=d;}}
+    elements.forEach(e=>{const big0=e.w*e.h>W*H*.6;if(!big0&&e.x>=area.x-24&&e.y<area.y&&e.y+e.h>area.y&&e.y>(side?0:B)){const d=area.y-e.y;area.y-=d;area.h+=d;}});
     const inner=frame.firstChild?.firstChild; if(!inner)return;
-    elements.forEach(e=>{if(inArea(e)&&!big(e))inner.querySelector(`[data-id="${e.id}"]`)?.style.setProperty('visibility','hidden');});
-    // Styled from the page itself: its biggest text sets the heading, a 24px-ish text the body.
-    const texts=elements.filter(e=>e.text&&e.color);
-    const head=texts.slice().sort((a,b)=>b.fontSize-a.fontSize)[0]||{},body=texts.find(e=>e.role==='body')||texts.find(e=>e.fontSize<=24)||head;
+    // The content area is covered with the page's own background (the solid shape under its middle).
+    const cx=area.x+area.w/2,cy=area.y+area.h/2, solid=e=>!e.text&&!e.src&&typeof e.bg==='string'&&/^#/.test(e.bg);
+    const under=elements.filter(e=>solid(e)&&e.x<=cx&&e.x+e.w>=cx&&e.y<=cy&&e.y+e.h>=cy).sort((a,b)=>b.w*b.h-a.w*a.h)[0];
+    const bg=under?.bg||level.canvas.bg, C=window.WCAG.contrastRatio;
+    const texts=elements.filter(e=>e.text&&/^#/.test(e.color||''));
+    const readable=texts.filter(e=>C(e.color,bg)>=4.5);
+    const head=(readable.length?readable:texts).slice().sort((a,b)=>b.fontSize-a.fontSize)[0]||{};
+    const body=readable.find(e=>e.fontSize<=24)||head;
     const box=document.createElement('div');
-    box.style.cssText=`position:absolute;left:${area.x+64}px;top:${area.y+48}px;width:${area.w-128}px;font-family:"${body.fontFamily||'Quicksand'}",sans-serif;color:${body.color||'#222'};`;
+    box.style.cssText=`position:absolute;left:${area.x}px;top:${area.y}px;width:${area.w}px;height:${area.h}px;box-sizing:border-box;padding:48px 64px;background:${bg};z-index:999;font-family:"${body.fontFamily||'Quicksand'}",sans-serif;color:${body.color||'#222'};`;
     const contact=/contact|help/i.test(page.text);
-    box.innerHTML=`<h1 style="margin:0 0 24px;font:${head.fontWeight||700} ${Math.min(64,head.fontSize||48)}px/1.1 '${head.fontFamily||'Quicksand'}',sans-serif;color:${head.color||'inherit'}"></h1><p style="margin:0 0 32px;font-size:28px;line-height:1.5"></p>`+
+    box.innerHTML=`<h1 style="margin:0 0 24px;font:${head.fontWeight||700} ${Math.max(48,Math.min(64,head.fontSize||48))}px/1.1 '${head.fontFamily||'Quicksand'}',sans-serif;color:${head.color||'inherit'}"></h1><p style="margin:0 0 32px;font-size:28px;line-height:1.5"></p>`+
       (contact?`<form style="display:grid;gap:16px;max-width:800px;font-size:24px"><input required placeholder="Your name" style="font:inherit;padding:16px;border:2px solid currentColor;border-radius:12px;background:#fff8;color:inherit"><textarea required rows="3" placeholder="Your message" style="font:inherit;padding:16px;border:2px solid currentColor;border-radius:12px;background:#fff8;color:inherit"></textarea><button style="justify-self:start;font:inherit;font-weight:700;padding:12px 32px;border:0;border-radius:12px;background:${head.color||'#333'};color:#fff;cursor:pointer">Send</button></form>`:'');
-    box.querySelector('h1').textContent=page.text;
-    box.querySelector('p').textContent=contact?'Questions or orders? Leave a note and we’ll get back to you.':`Nothing new on ${page.text} yet. Check back soon!`;
+    const fun=(PAGES[level.project]||{})[page.text];
+    box.querySelector('h1').textContent=fun?fun[0]:page.text;
+    box.querySelector('p').textContent=fun?fun[1]:contact?'Questions or orders? Leave a note and we’ll get back to you.':`Nothing new on ${page.text} yet. Check back soon!`;
+    if(fun){const ul=document.createElement('ul');ul.style.cssText='margin:0;padding:0;list-style:none;display:grid;gap:16px;font-size:28px;';fun[2].forEach(t=>{const li=document.createElement('li');li.textContent=t;li.style.cssText='padding:16px 24px;border-radius:16px;background:#ffffff99;';ul.appendChild(li);});box.appendChild(ul);}
+    // Inside a card styled like the page's own (e.g. Kolehiyo's white rounded panels), when it has one.
+    const cardEl=elements.filter(e=>solid(e)&&e!==under&&e.x>=area.x-24&&e.y>=area.y-24&&e.w*e.h<W*H*.5&&e.w>200&&e.h>120&&C(e.bg,body.color||'#222')>=4.5).sort((a,b)=>b.w*b.h-a.w*a.h)[0];
+    if(cardEl){const card=document.createElement('div');card.style.cssText=`background:${cardEl.bg};border-radius:${cardEl.radius||0}px;padding:48px 64px;${cardEl.shadow?.enabled?`box-shadow:0 4px ${cardEl.shadow.blur}px ${cardEl.shadow.color};`:''}`;
+      card.append(...box.childNodes);box.appendChild(card);box.style.padding='32px';box.querySelectorAll('li').forEach(li=>li.style.background=bg);}
     box.querySelector('form')?.addEventListener('submit',e=>{e.preventDefault();say('Thanks! Your demo message was received here. Nothing was sent.');e.target.reset();});
     inner.appendChild(box);
   }
-  window.EC_CLIENT_SITES={render,renderDesign};
+  window.EC_CLIENT_SITES={render,renderDesign,fill};
 })();
