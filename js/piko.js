@@ -74,6 +74,7 @@
       "Read the client's email, look at the page, and decide for yourself what's wrong and how it should look. Use what you learned: alignment, contrast and hierarchy.",
       "When you think it's ready, send it. The client will tell you if something still feels off.",
       "If you ever feel stuck, that's okay! Tap the hint button. For a few coins, I'll gently show you where to look.",
+      "You could read your **Guidebook** too! It has every rule, with examples.",
       "I'll always be right here cheering you on. Go get 'em, designer!"
     ],
     basicsDone: [
@@ -378,7 +379,7 @@
     'piko.practice.yappers.guide': { cue:'How much each text needs', why:'Headings 7 : 1 and up. Labels and hints 4.5 to 7.', side:'left' },
     'piko.practice.yappers.guideRow': { cue:'Too faint right now', why:'It’s a heading, so it belongs in the top row.', at:'#element-settings .cz-guide li.here', side:'left' },
     'piko.practice.yappers.demo': { cue:'Same text, new background', why:'Contrast is always about the pair of colors.', at:'.piko-fgbg-demo' },
-    'piko.practice.yappers.slider': { cue:'Down = darker', why:'Darker text on a light card means more contrast.', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.slider': { cue:'Down = darker', why:'Darker text on a light card means more contrast.', at:'#f-color', side:'left' },
     'piko.practice.yappers.bar': { cue:'Drag the slider down', why:'Darken the text until it stands out from the white.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
     'piko.practice.yappers.watch': { cue:'Keep going: 7 : 1 or more', why:'Watch the number climb as the text darkens.', at:'#element-settings .cz-box', side:'left' },
     'piko.practice.yappers.done': { success:'Easy to read!', why:'Dark text stands out from the white, and the heading now leads the page.', at:'#editor-canvas .el.selected' },

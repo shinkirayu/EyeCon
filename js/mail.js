@@ -181,7 +181,7 @@
    ['mail.approved.giftDefault', "we'll be recommending EyeCon to all our friends"],
   ].forEach(([k, v]) => T.register(k, v, 'emails', 'Client approval email'));
   [['mail.revise.greeting', 'Hi, {client} here.'],
-   ['mail.revise.notYet', "A few things still aren't quite right."],
+   ['mail.revise.notYet', "A few things still aren't quite right. Could you take another look?"],
    ['mail.revise.ask', 'Could you take another look? We would still love it if you could:'],
    ['mail.revise.fallback', 'Give it a little more polish.'],
    ['mail.revise.closing', 'Send us an updated version when you can. Thanks!'],
@@ -191,6 +191,11 @@
    ['mail.revise.vague.typography', 'Some text sizes still feel off: it\u2019s hard to tell what matters most.'],
   ].forEach(([k, v]) => T.register(k, v, 'feedback', '“Fix again” email'));
   T.register('mail.myReply', 'Good day, {client} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon', 'emails', 'The reply the player types out');
+  // The player's own studio address, from their first name (e.g. matt@eyecon.studio).
+  function myAddress(){
+    const name = (window.EC_STORE.load().displayName || '').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
+    return (name || 'junior.designer') + '@eyecon.studio';
+  }
   function buildClientReplyText(level, result, missionComplete){
     const stars = result.stars;
     const goals = result.feedback.filter(f => f.category === 'Goals');
@@ -210,15 +215,8 @@
     }
     const lines = [T.t('mail.revise.greeting', { client: level.clientName }), ''];
     {
-      lines.push(templates.bad || T.t('mail.revise.notYet'), T.t('mail.revise.ask'), '');
-      const bad = relevant('bad').filter(f => !f.bonus);
-      if((level.levelNumber || 0) >= 4){
-        // Level 4+: say what kind of problem is left, not which element (no answer key).
-        const G = window.EC_GRADING, kinds = new Set();
-        bad.forEach(f => { const g = (level.goals || []).find(x => x.label === f.title || x.tooDark === f.title || x.done === f.title); kinds.add(g ? (G.GOAL_TOOL[G.goalKind(g.check)] || 'position') : 'position'); });
-        const vague = [...kinds].map(k => T.t('mail.revise.vague.' + (k === 'align' ? 'position' : k))).filter(Boolean);
-        (vague.length ? [...new Set(vague)] : [T.t('mail.revise.fallback')]).forEach(t => lines.push(`\u2022 ${t}`));
-      } else (bad.length ? bad : [{title:T.t('mail.revise.fallback')}]).forEach(f => lines.push(`\u2022 ${f.title}`));
+      // The client can tell something's off, not what: finding it is the designer's job.
+      lines.push(templates.bad || T.t('mail.revise.notYet'));
       lines.push('', T.t('mail.revise.closing'), '', `— ${level.clientName}`);
     }
     return lines.join('\n');
@@ -236,7 +234,7 @@
   }
   function setEmailHeader(level, subject, fromMe){
     const client = `${esc(level.emailFrom || level.clientName)} <span>&lt;${emailAddress(level)}&gt;</span>`;
-    const me = 'You <span>&lt;junior.designer@eyecon.studio&gt;</span>';
+    const me = `You <span>&lt;${myAddress()}&gt;</span>`;
     document.getElementById('mail-detail-title').textContent = subject;
     document.getElementById('mail-detail-avatar').innerHTML = level.avatarEmoji || '✉';
     document.getElementById('mail-detail-meta').innerHTML =
@@ -288,7 +286,7 @@
     document.getElementById('mail-detail-attachment').innerHTML = '';
     document.getElementById('mail-detail-reward').innerHTML = '';
     const btn = document.getElementById('btn-accept-job');
-    btn.style.display = '';
+    btn.style.display = ''; btn.disabled = false;
     btn.textContent = missionComplete ? 'Mark Completed' : window.EC_STORE.workday(window.EC_STORE.load()).submissions>=window.EC_STORE.dailyTaskLimit() ? 'Finish workday' : 'Back to Editor';
     btn.onclick = () => { window.EC_MODAL.hide('modal-mail-detail'); btn.onclick = null; replyMode = false; onContinue(); };
     window.EC_MODAL.show('modal-mail-detail');
@@ -325,12 +323,14 @@
     document.getElementById('mail-detail-attachment').innerHTML = readOnly ? '' :
       `<button type="button" class="attachment-card" id="attachment-chip" aria-label="Preview ${level.attachmentName}"><span class="attachment-thumb"></span><span class="attachment-name"><b>PNG</b>${level.attachmentName}</span></button>`;
     if(!readOnly){
-      window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, level.elements, { maxSize:280 });
-      document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, level.elements));
+      // A job being revised or polished shows the player's latest version, which is what the editor reopens.
+      const shown = profile.revisionDrafts?.[level.id] || level.elements;
+      window.EC_EDITOR.renderStatic(document.querySelector('#attachment-chip .attachment-thumb'), level, shown, { maxSize:280 });
+      document.getElementById('attachment-chip').addEventListener('click', ()=>openPreview(level, shown));
     }
     const acceptBtn = document.getElementById('btn-accept-job');
-    acceptBtn.textContent = 'Accept';
-    acceptBtn.style.display = readOnly ? 'none' : '';
+    acceptBtn.textContent = handlers.isEditing?.(level) ? 'Continue Editing' : 'Accept'; // this job is already open in the editor
+    acceptBtn.style.display = readOnly ? 'none' : ''; acceptBtn.disabled = false;
     window.EC_MODAL.show('modal-mail-detail');
   }
 
@@ -396,7 +396,7 @@
     document.getElementById('compose-avatar').innerHTML = level.avatarEmoji || '✉';
     document.getElementById('compose-subject').textContent = 'Re: ' + emailSubject(level);
     document.getElementById('compose-meta').innerHTML =
-      `<dd class="mail-detail-name">From: You <span>&lt;junior.designer@eyecon.studio&gt;</span></dd><dd class="mail-detail-to">To: ${esc(level.emailFrom || level.clientName)} <span>&lt;${emailAddress(level)}&gt;</span></dd>`;
+      `<dd class="mail-detail-name">From: You <span>&lt;${myAddress()}&gt;</span></dd><dd class="mail-detail-to">To: ${esc(level.emailFrom || level.clientName)} <span>&lt;${emailAddress(level)}&gt;</span></dd>`;
 
     composeState = {
       fullText: myReplyText(level),
@@ -404,7 +404,7 @@
       attached: false,
       attachedFileName: '',
       editedLevel: (window.EC_EDITOR.getLevel && window.EC_EDITOR.getLevel()) || level,
-      editedElements: (window.EC_EDITOR.getElements && window.EC_EDITOR.getElements()) || level.elements,
+      editedElements: JSON.parse(JSON.stringify((window.EC_EDITOR.getElements && window.EC_EDITOR.getElements()) || level.elements)), // a copy: later edits mustn't change what was sent
     };
     renderComposeText();
     document.getElementById('compose-attachment-chip').classList.add('hidden');

@@ -127,5 +127,39 @@
       detail.scrollIntoView({behavior:'smooth',block:'nearest'});
     }));
   }
-  window.EC_CLIENT_SITES={render};
+  // Levels 4–7: the player's real design is the site. Its menu links open that page (same header or
+  // sidebar, colors and fonts; only the content area changes) and its buttons answer like a demo.
+  function renderDesign(frame,level,elements,route,navigate,fit,status){
+    const navs=elements.filter(e=>e.role==='nav'&&e.text);
+    const home=navs[0]?.id;
+    const say=t=>{status.textContent=t;};
+    window.EC_EDITOR.renderStatic(frame,level,elements,Object.assign({},fit,{onElement:(node,el)=>{
+      const go=action=>{node.setAttribute('role','button');node.tabIndex=0;node.style.cursor='pointer';node.addEventListener('click',action);node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();action();}});};
+      if(el.role==='nav'&&el.text){go(()=>navigate(el.id===home?'home':el.id));if((route==='home'?home:route)===el.id)node.setAttribute('aria-current','page');}
+      else if(el.role==='button'&&el.text)go(()=>say(`“${el.text}” works in the full site. This preview is just for looking around.`));
+    }}));
+    if(route==='home'||!navs.length)return;
+    const page=navs.find(n=>n.id===route); if(!page)return;
+    // Content area: below a top menu, or right of a side menu.
+    const L=Math.min(...navs.map(n=>n.x)),T=Math.min(...navs.map(n=>n.y)),R=Math.max(...navs.map(n=>n.x+n.w)),B=Math.max(...navs.map(n=>n.y+n.h));
+    const side=B-T>R-L,W=level.canvas.w,H=level.canvas.h;
+    const area=side?{x:R+24,y:0,w:W-R-24,h:H}:{x:0,y:B+24,w:W,h:H-B-24};
+    const inArea=e=>side?e.x>=area.x-24:e.y>=area.y-24;
+    const big=e=>e.w*e.h>W*H*.6;
+    const inner=frame.firstChild?.firstChild; if(!inner)return;
+    elements.forEach(e=>{if(inArea(e)&&!big(e))inner.querySelector(`[data-id="${e.id}"]`)?.style.setProperty('visibility','hidden');});
+    // Styled from the page itself: its biggest text sets the heading, a 24px-ish text the body.
+    const texts=elements.filter(e=>e.text&&e.color);
+    const head=texts.slice().sort((a,b)=>b.fontSize-a.fontSize)[0]||{},body=texts.find(e=>e.role==='body')||texts.find(e=>e.fontSize<=24)||head;
+    const box=document.createElement('div');
+    box.style.cssText=`position:absolute;left:${area.x+64}px;top:${area.y+48}px;width:${area.w-128}px;font-family:"${body.fontFamily||'Quicksand'}",sans-serif;color:${body.color||'#222'};`;
+    const contact=/contact|help/i.test(page.text);
+    box.innerHTML=`<h1 style="margin:0 0 24px;font:${head.fontWeight||700} ${Math.min(64,head.fontSize||48)}px/1.1 '${head.fontFamily||'Quicksand'}',sans-serif;color:${head.color||'inherit'}"></h1><p style="margin:0 0 32px;font-size:28px;line-height:1.5"></p>`+
+      (contact?`<form style="display:grid;gap:16px;max-width:800px;font-size:24px"><input required placeholder="Your name" style="font:inherit;padding:16px;border:2px solid currentColor;border-radius:12px;background:#fff8;color:inherit"><textarea required rows="3" placeholder="Your message" style="font:inherit;padding:16px;border:2px solid currentColor;border-radius:12px;background:#fff8;color:inherit"></textarea><button style="justify-self:start;font:inherit;font-weight:700;padding:12px 32px;border:0;border-radius:12px;background:${head.color||'#333'};color:#fff;cursor:pointer">Send</button></form>`:'');
+    box.querySelector('h1').textContent=page.text;
+    box.querySelector('p').textContent=contact?'Questions or orders? Leave a note and we’ll get back to you.':`Nothing new on ${page.text} yet. Check back soon!`;
+    box.querySelector('form')?.addEventListener('submit',e=>{e.preventDefault();say('Thanks! Your demo message was received here. Nothing was sent.');e.target.reset();});
+    inner.appendChild(box);
+  }
+  window.EC_CLIENT_SITES={render,renderDesign};
 })();

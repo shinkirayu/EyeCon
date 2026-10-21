@@ -373,7 +373,7 @@ test('submission restores typing and attaching a reply before recording rewards'
   await expect.poll(() => page.evaluate(() => !!EC_STORE.load().readyReply)).toBe(true);
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(0);
   await page.locator('#mail-list .mail-item.unread').click();
-  await expect(page.locator('#mail-detail-body')).toContainText('Could you take another look');
+  await expect(page.locator('#mail-detail-body')).toContainText('another look');
   await page.getByRole('button', { name: 'Back to Editor' }).click();
   expect(await page.evaluate(()=>EC_STORE.load().history.length)).toBe(1);
   expect(await page.evaluate(()=>EC_STORE.load().totalXp)).toBe(0);

@@ -265,6 +265,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/cosmetics.js"></script>
 <script src="js/text.js"></script>
 <script src="js/level-edits.js"></script>
 <script src="js/levels.js"></script>
@@ -329,6 +330,24 @@
     (subs.data || []).forEach(e => { const d = e.data || {}; if(!d.total) return; (trs[e.level_id] = trs[e.level_id] || []).push(d.met / d.total * 100); });
     const levelsWithTrs = (lv.data || []).map(r => Object.assign({}, r, { avg_trs: trs[r.level_id] ? Math.round(trs[r.level_id].reduce((a, b) => a + b, 0) / trs[r.level_id].length) : null }));
     render(ov.data?.[0] || {}, levelsWithTrs.sort((a, b) => levelNum(a.level_id) - levelNum(b.level_id)), daily.data || []);
+    wallpaperStats();
+  }
+
+  // For fun: which shop wallpapers players bought (from each saved game's inventory; the free starter doesn't count).
+  async function wallpaperStats(){
+    const box = document.getElementById('wp-stats'); if(!box) return;
+    const { data, error } = await sb.from('profiles').select('state').limit(10000);
+    if(error){ box.innerHTML = `<h2>Most bought wallpapers</h2><p class="err">${esc(error.message)}</p>`; return; }
+    const C = window.EC_COSMETICS, free = C.CATEGORY_DEFAULT.wallpaper;
+    const walls = C.ITEMS.filter(i => i.category === 'wallpaper' && i.id !== free);
+    const count = id => (data || []).filter(r => (r.state?.inventory || []).includes(id)).length;
+    const using = id => (data || []).filter(r => r.state?.equipped?.wallpaper === id).length;
+    const rows = walls.map(w => ({ level_id: w.id, name: w.name, emoji: w.emoji, n: count(w.id), on: using(w.id) })).sort((a, b) => b.n - a.n);
+    const total = rows.reduce((a, r) => a + r.n, 0);
+    const max = Math.max(1, ...rows.map(r => r.n));
+    box.innerHTML = `<div class="fun-head"><h2>Most bought wallpapers</h2><span class="sub" style="margin:0">${total} bought in all</span></div>
+      ${total ? `<div class="bars">${rows.map(r => `<div class="bar-row" data-tip="${esc(r.name)}: bought by ${r.n}, using it now: ${r.on}"><span class="name">${r.emoji} ${esc(r.name)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${r.n / max * 100}%"></div></div><span class="val">${r.n}</span></div>`).join('')}</div>` : '<p class="empty">No wallpapers bought yet.</p>'}`;
   }
 
   // Horizontal bars: one hue, value labelled at the end, hover for details.
@@ -387,6 +406,8 @@
 
       <section class="card"><div class="fun-head"><h2>How each level is going</h2><span class="sub" style="margin:0">Tap a level for every player’s run</span></div>
         <div class="lv-grid">${allLv.map(card).join('')}</div></section>
+
+      <section class="card" id="wp-stats"><h2>Most bought wallpapers</h2><p class="loading">Counting…</p></section>
 
       <section class="card"><div class="fun-head"><h2>Designs sent per day</h2><span class="sub" style="margin:0">last 30 days</span></div>
         ${daily.length ? `<div class="mini-cols">${daily.map(d => `<div class="mini-col" data-tip="${esc(d.day)}: ${d.submissions} sent by ${d.players} player${d.players == 1 ? '' : 's'}"><i style="height:${Math.max(6, +d.submissions / maxDay * 100)}%"></i><small>${esc(String(d.day).slice(5))}</small></div>`).join('')}</div>` : '<p class="empty">No designs sent yet.</p>'}

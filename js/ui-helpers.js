@@ -155,6 +155,7 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><img class="
     if(matchMedia('(pointer:coarse)').matches && document.getElementById('screen-editor')?.classList.contains('active')){
       size *= 1.3;
     }
+    if(document.fullscreenElement && w > 900) size = ui; // fullscreen on a computer: full 16px text, no shrinking
     root.style.setProperty('--fit', (size / ui).toFixed(4));
     root.style.setProperty('--visible-h', h + 'px');
   }
@@ -167,6 +168,7 @@ window.EC_MONEY = n => `<span class="money" aria-label="${n} coins"><img class="
   window.addEventListener('load', () => { fit(); Promise.resolve(window.EC_DB?.ready).then(() => setTimeout(() => { fit(); requestAnimationFrame(reveal); }, 250)); });
   setTimeout(reveal, 20000); // wait for every asset; only give up on a very slow connection
   window.addEventListener('resize', fit);
+  document.addEventListener('fullscreenchange', fit);
   window.addEventListener('orientationchange', fit);
   // Safari's address bar showing/hiding changes the visible area without a resize.
   if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);

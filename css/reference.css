@@ -3240,3 +3240,77 @@ html:not([data-input="mac"]):not([data-input="touch"]) [data-only]:not([data-onl
 html[data-input="touch"] #tool-preview{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 /* Phones held upright: "Attach file" and the big Send button share one row and overlap; give Send its own line. */
 @media(max-width:640px){html[data-input="touch"] #modal-compose .compose-card .btn-send{grid-row:6;grid-column:1 / -1;justify-self:stretch;min-width:0;}}
+/* Guidebook: grid-paper pages (updated design) and a looping editor-style demo beside each rule. */
+.gb-page:not(.gb-cover-page){background:#fffbea;background-image:linear-gradient(#efe6c4 1px,transparent 1px),linear-gradient(90deg,#efe6c4 1px,transparent 1px);background-size:1.1em 1.1em;}
+.gb-row{display:flex;align-items:center;gap:.6em;width:100%;margin-top:.2em;}
+.gb-row.r{flex-direction:row-reverse;}
+.gb-row .gb-rule{flex:1;width:auto;margin:0;align-self:auto;border-radius:1em;}
+.gb-demo{position:relative;flex:0 0 38%;aspect-ratio:4/3;border:.15em solid #d9d2f0;border-radius:.5em;overflow:hidden;background:#fff;background-image:linear-gradient(#ece7fb 1px,transparent 1px),linear-gradient(90deg,#ece7fb 1px,transparent 1px);background-size:12.5% 12.5%;box-shadow:0 .2em .4em #0001;}
+.gb-demo i{position:absolute;display:block;font-style:normal;--t:5s;}
+.gd-mv{left:var(--x0);top:var(--y0);animation:gd-move var(--t) ease-in-out infinite;}
+@keyframes gd-move{0%,22%{left:var(--x0);top:var(--y0)}50%,90%{left:var(--x1);top:var(--y1)}100%{left:var(--x0);top:var(--y0)}}
+.gd-box{background:#f6b8c8;border-radius:.3em;}
+.gd-bar{height:10%;border-radius:.2em;background:#b9a9e6;}
+.gd-line{height:9%;border-radius:.2em;background:#8fc7d6;}
+.gd-chip{width:28%;height:18%;border-radius:.3em;background:#f9d985;z-index:1;}
+.gd-card{top:12%;height:76%;border:.12em dashed #9a86d8;border-radius:.4em;background:#f3efff;}
+.gd-title{height:14%;border-radius:.2em;background:#4a3a8c;}
+.gd-sel{outline:.12em solid #9368dc;outline-offset:.1em;}
+.gd-hand{width:18%;aspect-ratio:1;background:url("../assets/sprites/cursor-grab.png") center/contain no-repeat;image-rendering:pixelated;z-index:3;}
+.gd-guide{left:0;right:0;height:0;border-top:.1em dashed #e34c70;}
+.gd-guide.gd-v{top:0;bottom:0;right:auto;width:0;height:auto;border-top:0;border-left:.1em dashed #e34c70;}
+.gd-gap{left:2%;font:800 .7em var(--font-body);color:#e34c70;}
+.gd-b4{animation:gd-b4 var(--t) infinite;}.gd-af{opacity:0;animation:gd-af var(--t) infinite;}
+@keyframes gd-b4{0%,40%{opacity:1}48%,94%{opacity:0}100%{opacity:1}}
+@keyframes gd-af{0%,48%{opacity:0}55%,90%{opacity:1}96%,100%{opacity:0}}
+.gd-tag{left:50%;bottom:6%;transform:translateX(-50%);padding:.1em .5em;border-radius:1em;background:#fff;box-shadow:0 .1em .2em #0002;font:800 .7em var(--font-body);color:#4a3a8c;white-space:nowrap;}
+.gd-tag.gd-b4{color:#c2334f;}.gd-tag.gd-af{color:#2f7a52;}
+.gd-text{inset:8% 0 30%;display:grid !important;place-items:center;font:800 2.2em/1 var(--font-display);}
+.gd-text.gd-big{font-size:2.8em;}
+.gd-fade{color:var(--c0);animation:gd-fade var(--t) infinite;}
+@keyframes gd-fade{0%,22%{color:var(--c0);border-color:var(--c0)}50%,90%{color:var(--c1);border-color:var(--c1)}100%{color:var(--c0);border-color:var(--c0)}}
+.gd-btn{left:20%;right:20%;top:25%;padding:.3em 0;border:.15em solid;border-radius:.4em;text-align:center;font:800 .85em var(--font-body);}
+.gd-field{left:12%;right:12%;top:25%;height:24%;border:.15em solid #e34c70;border-radius:.3em;background:#fff;}
+.gd-tag.gd-warn{left:12%;bottom:auto;top:55%;transform:none;color:#c2334f;}
+.gd-sw{top:18%;width:28%;height:44%;border-radius:.3em;border:.12em solid #0002;background:var(--c0);animation:gd-bg var(--t) infinite;}
+.gd-sw:not(.gd-fade){background:#fff;animation:none;}
+@keyframes gd-bg{0%,22%{background:var(--c0)}50%,90%{background:var(--c1)}100%{background:var(--c0)}}
+.gd-grow{height:var(--h0);animation:gd-grow var(--t) ease-in-out infinite;}
+@keyframes gd-grow{0%,22%{height:var(--h0)}50%,90%{height:var(--h1)}100%{height:var(--h0)}}
+.gd-word{inset:0 0 25%;display:grid !important;place-items:center;font:800 1.3em var(--font-body);color:#2b2540;}
+.gd-zoom{animation:gd-zoom var(--t) ease-in-out infinite;}
+@keyframes gd-zoom{0%,22%{font-size:.7em}50%,90%{font-size:1.3em}100%{font-size:.7em}}
+.gd-lines{left:15%;right:15%;top:12%;display:flex !important;flex-direction:column;gap:3%;height:76%;animation:gd-lines var(--t) ease-in-out infinite;}
+.gd-lines b{height:9%;border-radius:.2em;background:#8fc7d6;}
+@keyframes gd-lines{0%,22%{gap:1%}50%,90%{gap:11%}100%{gap:1%}}
+@media (prefers-reduced-motion: reduce){.gb-demo *{animation:none !important;}.gd-mv{left:var(--x1);top:var(--y1);}.gd-af{opacity:1;}.gd-b4{opacity:0;}}
+.gd-hier{width:30%;height:7%;animation:gd-move var(--t) ease-in-out infinite,gd-hier var(--t) ease-in-out infinite;}
+@keyframes gd-hier{0%,22%{width:30%;height:7%}50%,90%{width:70%;height:16%}100%{width:30%;height:7%}}
+.gd-lbl{left:12%;top:10%;font:800 .65em var(--font-body);color:#4a3a8c;}
+.gd-err{left:12%;top:52%;font:800 .65em var(--font-body);color:#c2334f;}
+.gb-close.gb-ready{animation:goal-pulse 1.4s ease-in-out infinite;color:#ffe25c;}
+.gb-must{margin:0;color:#ffe25c;font:800 1rem var(--font-body);text-shadow:0 .1rem .2rem #0008;}.gb-must:empty{display:none;}
+.gb-demo{isolation:isolate;} .gb-demo *{animation-delay:var(--gd-off,0s) !important;} /* demo pieces stay inside their page during a turn; all demos share one clock so re-drawn pages carry on seamlessly */
+.browser-close-btn{flex:0 0 3rem;width:3rem;height:3rem;margin-left:auto;border:0;border-radius:.5rem;background:transparent;color:inherit;font-size:1.5rem;cursor:pointer;}.browser-close-btn:hover,.browser-close-btn:focus-visible{background-color:#b4b8bc33;}
+.gd-p1{animation:gd-p1 var(--t) infinite;}.gd-p2{opacity:0;animation:gd-p2 var(--t) infinite;}.gd-p3{opacity:0;animation:gd-p3 var(--t) infinite;}.gd-p23{opacity:0;animation:gd-p23 var(--t) infinite;}
+@keyframes gd-p1{0%,28%{opacity:1}33%,95%{opacity:0}100%{opacity:1}}
+@keyframes gd-p2{0%,30%{opacity:0}35%,60%{opacity:1}65%,100%{opacity:0}}
+@keyframes gd-p3{0%,62%{opacity:0}67%,94%{opacity:1}99%,100%{opacity:0}}
+@keyframes gd-p23{0%,30%{opacity:0;color:#f7d96a}35%,60%{opacity:1;color:#f7d96a}67%,94%{opacity:1;color:#2b2540}99%,100%{opacity:0;color:#2b2540}}
+.gd-sale{inset:14% 18% 34%;background:#fff;border:.12em solid #0002;border-radius:.3em;}
+.gd-nav{left:8%;right:8%;top:28%;display:flex !important;justify-content:space-around;font:800 .8em var(--font-body);color:#4a3a8c;}
+.gd-odd{animation:gd-odd var(--t) infinite;}
+@keyframes gd-odd{0%,40%{font-family:'Brush Script MT',cursive;font-style:italic;font-size:1.25em}48%,92%{font-family:var(--font-body);font-style:normal;font-size:1em}100%{font-family:'Brush Script MT',cursive;font-style:italic;font-size:1.25em}}
+.gd-steps{left:15%;right:15%;top:10%;height:58%;display:flex !important;align-items:flex-end;gap:8%;}
+.gd-steps b{flex:1;height:var(--h0);border-radius:.2em;background:#b9a9e6;display:flex;align-items:flex-start;justify-content:center;font:800 .55em var(--font-body);color:#fff;padding-top:.2em;animation:gd-steps var(--t) ease-in-out infinite;}
+.gd-steps b:first-child{background:#4a3a8c;}
+@keyframes gd-steps{0%,22%{height:var(--h0)}50%,90%{height:var(--h1)}100%{height:var(--h0)}}
+#element-settings .cz-guide li.cz-goal{border-radius:.3rem;background:#fff3c9;box-shadow:inset 0 0 0 .15rem #f4b63f;}
+body.piko-slider-lock #element-settings .editor-bright-bar{pointer-events:none;}
+/* Piko's highlight hugs the app picture (like Mail), not the whole icon with its label. */
+#screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift::after{content:none;}
+#screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift .desktop-icon-glyph{position:relative;}
+#screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift .desktop-icon-glyph::after{content:'';position:absolute;inset:2.27% 5.33% 8.33% 4%;border-radius:23.5%/27%;outline:.3125rem solid #fff;pointer-events:none;animation:pikoOutlinePulse 1.2s ease-in-out infinite,pikoDimIn 1.2s ease both;}
+#screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift.piko-leaving .desktop-icon-glyph::after{animation:pikoOutlinePulse 1.2s ease-in-out infinite,pikoDimOut 1.2s ease both;}
+.reduce-motion #screen-desktop :is(#icon-maker,#icon-browser,#icon-guide).piko-lift .desktop-icon-glyph::after{animation:none;}
+.browser-bookmark{min-width:0;}.browser-bookmark small{max-width:100%;overflow-wrap:anywhere;text-align:center;} /* long site addresses wrap inside the card */

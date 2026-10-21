@@ -74,6 +74,7 @@
   // or it'll measure a still-display:none element and compute a bogus size.
   function showScreen(name, onShown, options={}){
     if(name !== 'screen-editor' && document.getElementById('screen-editor')?.classList.contains('active')) endLevelSessionIfLeft();
+    if(name !== 'screen-editor') document.body.classList.remove('piko-slider-lock'); // a lesson left midway mustn't keep the slider locked
     // Guarantee any content currently on loan to the monitor popup (see
     // openMonitorAppPopup) is back in its real screen before that screen
     // might be shown for real — otherwise it would appear empty. Instant,
@@ -588,8 +589,9 @@
         document.body.appendChild(d); P.clearTarget();
         await talk(L.ladder);
         d.remove();
-        P.pointAt(el(steps[0].id)); await talk(L.first);
-        P.pointAt(el(steps[steps.length - 1].id)); await talk(L.last);
+        // Zoom and pan to each one before pointing at it.
+        await E.focusElement(steps[0].id, 700, 1.6); P.pointAt(el(steps[0].id)); await talk(L.first);
+        await E.focusElement(steps[steps.length - 1].id, 700, 1.6); P.pointAt(el(steps[steps.length - 1].id)); await talk(L.last);
       }
       P.clearTarget(); await talk(L.min);
       const valGoal = level.goals.find(g => g.check.minFont && G.goalIds(g.check).includes('sizeVal'));
@@ -653,13 +655,16 @@
       await until(()=>title()?.classList.contains('selected'));
       title()?.classList.remove('piko-glow');
       window.EC_EDITOR.lockSelection(true); // stays picked until it's on target
+      document.body.classList.add('piko-slider-lock'); // the slider waits until Piko says to move it
       // Foreground vs background, before touching the slider.
       const q = s => document.querySelector(s);
       const chips = [...document.querySelectorAll('#element-settings .cz-chip')];
       if(chips[0]){ P.pointAt(chips[0]); await talk(L.fg, { left:true }); }
       if(chips[1]){ P.pointAt(chips[1]); await talk(L.bgc, { left:true }); }
       if(q('#element-settings .cz-box')){ P.pointAt(q('#element-settings .cz-box')); await talk(L.ratio, { left:true }); }
-      if(q('#element-settings .cz-guide .sl-list')){ P.pointAt(q('#element-settings .cz-guide .sl-list')); await talk(L.guide, { left:true }); await talk(L.guideRow, { left:true }); }
+      if(q('#element-settings .cz-guide .sl-list')){ P.pointAt(q('#element-settings .cz-guide .sl-list')); await talk(L.guide, { left:true }); // "It's a heading": the Headings row lights up too, so they see where it belongs.
+        const top = q('#element-settings .cz-guide .sl-list li'); top?.classList.add('cz-goal');
+        await talk(L.guideRow, { left:true }); top?.classList.remove('cz-goal'); }
       { // demo: the same gold on white vs navy
         const c = window.EC_EDITOR.getElements().find(e => e.id === 'title')?.color || '#FFEA96';
         const R = (a, b) => window.WCAG.contrastRatio(a, b).toFixed(1);
@@ -672,6 +677,7 @@
       if(q('#f-color')){ P.spotlight([q('#f-color').closest('.editor-bright-bar'), title()]); await talk(L.slider, { left:true }); P.spotlight(null); }
       let slid = false; const onSlide = e => { if(e.target.id === 'f-color') slid = true; };
       document.addEventListener('input', onSlide, true);
+      document.body.classList.remove('piko-slider-lock');
       litPanel(true);
       if(!met()){ P.say(L.bar, { left:true }); await until(()=>slid || met()); }
       document.removeEventListener('input', onSlide, true);
@@ -720,7 +726,7 @@
       // Only the line about hints lights up the hint button; the rest have no spotlight.
       const say = i => {
         if(i >= H.length){ P.clearTarget(); done(); return; }
-        if(/hint/i.test(H[i])) P.pointAt(document.getElementById('tool-hint')); else P.clearTarget();
+        if(/hint/i.test(H[i])) P.pointAt(document.getElementById('tool-hint')); else if(/Guidebook/.test(H[i])) P.pointAt(document.getElementById('taskbar-guide')); else P.clearTarget();
         P.say(H[i], { top:true, onDone: ()=>say(i + 1) });
       };
       requestAnimationFrame(()=>say(0));
@@ -1493,8 +1499,14 @@
       const frame = document.createElement('div');
       frame.className = 'browser-page';
       view.appendChild(frame);
-      const box = view.getBoundingClientRect();
-      window.EC_EDITOR.renderStatic(frame, level, design || level.elements, { fitW: Math.max(200, box.width - 48), fitH: Math.max(160, box.height - (design ? 48 : 96)) });
+      const status = document.createElement('p'); status.className = 'browser-note'; status.setAttribute('role', 'status');
+      const box = view.getBoundingClientRect(), route = browserPage.route || 'home';
+      // The page is a working site: its menu links and buttons can be clicked.
+      window.EC_CLIENT_SITES.renderDesign(frame, level, design || level.elements, route, r => {
+        browserPage = { kind:'site', project:project.id, page:browserPage.page, route:r }; renderBrowser();
+      }, { fitW: Math.max(200, box.width - 48), fitH: Math.max(160, box.height - (design ? 96 : 144)) }, status);
+      view.appendChild(status);
+      if(route !== 'home') address.textContent += slug(((design || level.elements).find(e => e.id === route) || {}).text || '');
       return;
     }
     address.textContent = 'eyecon://home';
@@ -1560,9 +1572,8 @@
   function renderDailyShopHtml(){
     const S = window.EC_STORE, C = window.EC_COSMETICS;
     const shop = S.dailyShop(), cart = S.getCart(profile);
-    const hours = Math.ceil((shop.refreshAt-Date.now())/3600000);
-    return `<section class="daily-store-hero"><span class="store-eyebrow">SHOPPEYEE / COSMETICS</span><h2>A little refresh for your desk.</h2><p>Boris Wallpaper is always here, alongside four daily finds.</p><span>New daily selection in ${hours}h &middot; Refreshes at 00:00 UTC</span></section>
-      <div class="store-section-head"><h3>Daily Specials</h3><button class="btn" data-tab="cart">&#128722; Cart (${cart.ids.length})</button></div>
+    return `<section class="daily-store-hero"><span class="store-eyebrow">SHOPPEYEE / COSMETICS</span><h2>A little refresh for your desk.</h2><p>Wallpapers for your desktop.</p></section>
+      <div class="store-section-head"><h3>Wallpapers</h3><button class="btn" data-tab="cart">&#128722; Cart (${cart.ids.length})</button></div>
       <div class="daily-store-grid">${shop.items.map(item=>{
         const owned=profile.inventory.includes(item.id), added=cart.ids.includes(item.id);
         return `<article class="daily-item">${itemPreviewHtml(item)}<h4>${item.name}</h4><p>${C.RARITY[item.rarity].label} &middot; ${C.CATEGORY_LABELS[item.category]}</p><strong>${window.EC_MONEY(S.itemPrice(item))}</strong><button class="btn" data-cart-id="${item.id}" ${owned?'disabled':''}>${owned?'Owned':added?'Remove from cart':'Add to cart'}</button><button class="store-preview" data-preview-id="${item.id}">Preview</button></article>`;
@@ -1639,7 +1650,7 @@
   function renderShopPanel(){
     const panel = document.getElementById('shop-panel');
     let html = `<div class="shop-tabs">
-      <button class="shop-tab-btn ${shopTab==='featured'?'active':''}" data-tab="featured">Daily Specials</button>
+      <button class="shop-tab-btn ${shopTab==='featured'?'active':''}" data-tab="featured">Shop</button>
       <button class="shop-tab-btn ${shopTab==='wardrobe'?'active':''}" data-tab="wardrobe">🧥 Wardrobe</button>
     </div>`;
     // Your coins, top of the store (Upgrades tab removed for now).
@@ -1764,7 +1775,7 @@
     document.getElementById('cosmetic-preview-name').textContent = item.name;
     document.getElementById('cosmetic-preview-status').textContent = owned
       ? (equipped ? 'Equipped on your desktop' : 'Owned — not currently equipped')
-      : 'Not owned yet - watch for it in Daily Specials';
+      : 'Not owned yet - buy it in the Shop';
 
     const equipBtn = document.getElementById('cosmetic-preview-equip');
     if(owned){
@@ -1904,6 +1915,14 @@
         }, { once:true });
       }, 2000); // a moment to read their message first
     }
+    // The first job ever sent back: once they've had a moment to read it, Piko explains what a revision means.
+    if(!missionComplete && pikoEnabled && pikoStage !== 'reply' && !profile.onboarding?.firstRevision){
+      const P = window.EC_PIKO;
+      setTimeout(()=>{ if(document.getElementById('modal-mail-detail').classList.contains('hidden')) return; // closed already: try next time
+        profile.onboarding = profile.onboarding || {}; profile.onboarding.firstRevision = true; save();
+        const back = document.getElementById('btn-accept-job'); back.disabled = true; // Back to Editor waits until he's done talking
+        P.say('Ohh, not everything is right yet! Something still needs fixing. Look around the page and read the labels to find it.', { top:true, onDone: ()=>{ back.disabled = false; } }); }, 1200);
+    }
     window.EC_MAIL.openClientReply(level, result, missionComplete, ()=>{
       delete profile.readyReply;
       const prevLevel = window.EC_STORE.levelFromTotalXp(profile.totalXp).level;
@@ -1937,7 +1956,10 @@
           const endDay = () => { const t = setInterval(()=>{ if(!document.getElementById('modal-reward').classList.contains('hidden')) return; clearInterval(t); showDaySummary.wrapUp = false; showDaySummary(); }, 200); };
           // A line may be [text, selector]: Piko points at that (the Guidebook on the taskbar).
           const say = i => { if(i >= lines.length) return endDay(); const [t, sel] = Array.isArray(lines[i]) ? lines[i] : [lines[i]];
-            const at = sel && document.querySelector(sel); at ? P.pointAt(at) : P.clearTarget(); P.say(t, { top:true, onDone: ()=>say(i + 1) }); };
+            const at = sel && document.querySelector(sel); at ? P.pointAt(at) : P.clearTarget();
+            // The Guidebook line: the book opens and the tutorial waits until every page has been read.
+            const next = sel === '#taskbar-guide' && !say.read ? ()=>{ say.read = true; P.clearTarget(); P.hideBubble(); window.EC_GUIDE.open({ mustRead:true, onDone: ()=>say(i + 1) }); } : ()=>say(i + 1);
+            P.say(t, { top:true, onDone: next }); };
           setTimeout(()=>say(0), 1500);
         }
         return;
@@ -1949,6 +1971,11 @@
           levelStartTime = Date.now(); startLevelSession(level);
           startTimerIfNeeded();
           finishFade();
+          // Piko on levels 4–7: every 3rd revision of the same job, he offers the hint.
+          profile.revisionCount = Object.assign({}, profile.revisionCount, { [level.id]: (profile.revisionCount?.[level.id] || 0) + 1 }); save();
+          const n = profile.revisionCount[level.id], P = window.EC_PIKO;
+          if(pikoEnabled && level.levelNumber >= 4 && level.levelNumber <= 7 && n % 3 === 0)
+            setTimeout(()=>{ P.pointAt(document.getElementById('tool-hint')); P.say('Stuck on this one? You can use a hint! Click the light bulb.', { top:true, onDone: ()=>P.clearTarget() }); }, 900);
         });
       });
     });
@@ -2014,6 +2041,7 @@
     // After the last client (Level 7): send the player to the post-test.
     const allDone = profile.completed.includes('oras-signin');
     let postDone = false; try{ postDone = !!JSON.parse(localStorage.getItem('eyecon_study') || '{}').post; }catch(_){}
+    if(new URLSearchParams(location.search).has('admin')) postDone = true; // admins testing the game skip the post-test
     summary.innerHTML = allDone
       ? (postDone // already took it in this browser: just thank them; the desktop stays open to browse
         ? `<div class="workday-sun" aria-hidden="true">🏆</div><h2 id="workday-title">All done. Thank you!</h2>
@@ -2554,7 +2582,12 @@
       showScreen('screen-maker', ()=>window.EC_MAKER.open());
     });
     document.getElementById('icon-browser').addEventListener('click', ()=>openBrowserApp());
-    document.getElementById('browser-back-btn').addEventListener('click', ()=>{ returnShopPanel(); showScreen('screen-desktop'); });
+    document.getElementById('browser-close-btn').addEventListener('click', ()=>{ returnShopPanel(); showScreen('screen-desktop'); });
+    // Back: from a site, first back to eyecon://home; from home, close the Browser.
+    document.getElementById('browser-back-btn').addEventListener('click', ()=>{
+      if(browserPage?.kind !== 'home'){ returnShopPanel(); browserPage = { kind:'home' }; renderBrowser(); return; }
+      returnShopPanel(); showScreen('screen-desktop');
+    });
     document.getElementById('browser-home-btn').addEventListener('click', ()=>{ browserPage = { kind:'home' }; renderBrowser(); });
     document.getElementById('icon-stats').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'stats'));
     document.getElementById('icon-profile').addEventListener('click', e=>openTaskbarStatsPopup(e.currentTarget,'profile'));
@@ -2652,9 +2685,14 @@
         else runPikoLevelTips(level, ()=>{});
       });
     }));
+    const isEditing = level => openApps.has('screen-editor') && window.EC_EDITOR.getLevel()?.id === level.id;
     window.EC_MAIL.setHandlers({
+      isEditing,
       onAccept: level => {
+        // Already open in the editor (left via Home): go straight back to it, edits as they were.
+        if(isEditing(level)){ openApps.delete('screen-shell'); showScreen('screen-editor'); return; }
         if(profile.pendingClientReply || profile.readyReply){showToast('Read your client reply before starting another task.',2500);return;}
+        openApps.delete('screen-shell'); // Mail closes once the job opens in the editor
         showLoadingTransition((finishFade)=>{
           showScreen('screen-editor', ()=>{
             window.EC_EDITOR.open(level,profile.revisionDrafts?.[level.id]);

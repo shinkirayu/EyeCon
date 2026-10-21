@@ -179,7 +179,7 @@ Yappers.com Product Design Team`,
       replyTemplates:{
         great:'Clean, friendly and readable. That is unmistakably Yappers. Happy yapping!',
         ok:'Much easier to read, thanks. A few bits are still faint.',
-        bad:'Some text still fails contrast. Could you have another go?'
+        bad:'Some text is still hard to read. Could you have another go?'
       }
     },
     {
@@ -392,7 +392,7 @@ Thanks for helping everyone see clearly,
       }
     },
     {
-      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, sizeGuide:[{id:'welcome',name:'Welcome title'},{id:'month',name:'Card title'},{id:'name',name:'Subtitle'},{id:'nav1',name:'Menu link'},{id:'unitsVal',name:'Card value'},{id:'day1',name:'Smallest text'}], tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
+      id:'kolehiyo-dashboard', project:'kolehiyo', levelNumber:6, sizeGuide:[{id:'welcome',name:'Welcome title'},{id:'unitsVal',name:'Card values & month'},{id:'name',name:'Name, menu & card labels'},{id:'day1',name:'Smallest text'}], tools:['typography'], pageLabel:'Student dashboard', concept:'Text sizes',
       emailPreview:"Our student dashboard's numbers are smaller than their labels.",
       emailBody:`Good day!
 
@@ -430,14 +430,14 @@ Maraming salamat,
         shape('stat1','card',512,488,200,128,'#FFFFFF',{radius:24,z:3}),
         shape('stat2','card',744,488,200,128,'#FFFFFF',{radius:24,border:{width:2,style:'solid',color:'#023EC6'},z:3}),
         shape('stat3','card',984,488,432,128,'#FFFFFF',{radius:24,z:3}),
-        txt('gwaLbl','label','GWA :',528,496,168,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
-        txt('unitsLbl','label','UNITS :',768,496,168,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
-        txt('enrLbl','label','ENROLLMENT :',1000,496,400,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
-        txt('gwaVal','subheading','1.75',552,552,144,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
-        txt('unitsVal','subheading','24',792,552,144,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
-        txt('enrVal','subheading','Enrolled',1048,552,352,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        txt('gwaLbl','label','GWA :',528,496,168,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('unitsLbl','label','UNITS :',768,496,168,48,24,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('enrLbl','label','ENROLLMENT :',1000,496,400,48,32,'#011E60',{fontFamily:'Niramit',fontWeight:'700',z:4}),
+        txt('gwaVal','subheading','1.75',552,552,144,48,48,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        txt('unitsVal','subheading','24',792,552,144,48,32,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
+        txt('enrVal','subheading','Enrolled',1048,552,352,48,32,'#011E60',{fontFamily:'Niramit',fontWeight:'600',z:4}),
         shape('cal','card',1456,488,384,384,'#FFFFFF',{radius:24,z:3}),
-        txt('month','subheading','July, 2027',1480,504,320,48,36,'#011E60',{fontFamily:'Niramit',fontWeight:'700',locked:true,z:4}),
+        txt('month','subheading','July, 2027',1480,504,320,48,32,'#011E60',{fontFamily:'Niramit',fontWeight:'700',locked:true,z:4}),
         // July 2027 starts on a Thursday.
         ...['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>txt('dow'+i,'small',d,1480+i*48,568,40,32,14,'#6A6A6A',{fontFamily:'Niramit',fontWeight:'700',align:'center',locked:true,z:4})),
         ...Array.from({length:31},(_,n)=>{ const c=(n+4)%7, r=Math.floor((n+4)/7);
@@ -452,10 +452,10 @@ Maraming salamat,
         Object.assign(goal('Make "Enrollment" and "Documents" the same size as the other sidebar links (Menu link size).', {minFont:24, ids:['nav2','nav5']},
           'Links that do the same job should look the same, so the menu reads as one list.', ''),
           { key:'sidebar', refs:['nav1','nav3','nav4','nav6'], hint:'These menu links don\u2019t match the ones around them.' }),
-        Object.assign(goal('Make "ENROLLMENT :" the same size as "GWA :" and "UNITS :" (Card title size).', {minFont:36, ids:['enrLbl']},
-          'The three stat cards are one set, so their titles should match.', ''),
-          { key:'enrLabel', refs:['gwaLbl','unitsLbl'], hint:'One card title doesn\u2019t match the other two.' }),
-        Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled" (Card value size).', {minFont:24, ids:['gwaVal']},
+        Object.assign(goal('Make "ENROLLMENT :" the same size as "GWA :" and "UNITS :" (Card label size).', {minFont:24, ids:['enrLbl']},
+          'The three stat cards are one set, so their labels should match. The value is what matters, so the label stays smaller.', ''),
+          { key:'enrLabel', refs:['gwaLbl','unitsLbl'], hint:'One card label doesn\u2019t match the other two.' }),
+        Object.assign(goal('Make the GWA value the same size as "24" and "Enrolled" (Card value size).', {minFont:32, ids:['gwaVal']},
           'Values in matching cards should match too, so none looks more important by accident.', ''),
           { key:'gwaValue', refs:['unitsVal','enrVal'], hint:'One card value doesn\u2019t match the other two.' }),
         Object.assign(goal('Make the program line the Subtitle size (24px), like the student name.', {minFont:24, ids:['program']},

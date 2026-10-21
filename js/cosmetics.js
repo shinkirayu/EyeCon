@@ -23,7 +23,8 @@
     { id:'wp-boris',    category:'wallpaper', name:'Boris Wallpaper',  rarity:'rare',      emoji:'🐱', css:"#b5a1cd url('assets/wallpapers/boris.png') center / cover no-repeat", alwaysInShop:true },
     { id:'wp-illus',    category:'wallpaper', name:'Sketchbook Dreams', rarity:'epic',      emoji:'🎨', css:"#b5a1cd url('assets/wallpapers/Illustration7.png') center / cover no-repeat", isNew:true },
     { id:'wp-studio2',  category:'wallpaper', name:'Studio Afternoon',  rarity:'rare',      emoji:'☀️', css:"#b5a1cd url('assets/wallpapers/WAllpaper_2.png') center / cover no-repeat", isNew:true },
-    { id:'wp-mousepad', category:'wallpaper', name:'Cozy Mousepad',     rarity:'common',      emoji:'🖱️', css:"#b5a1cd url('assets/wallpapers/mouse_pas.png') center / cover no-repeat", isNew:true },
+    { id:'wp-mousepad', category:'wallpaper', name:'Cherry Blossoms',     rarity:'common',      emoji:'🌸', css:"#b5a1cd url('assets/wallpapers/mouse_pas.png') center / cover no-repeat", isNew:true },
+    { id:'wp-catnap',   category:'wallpaper', name:'The Starry Nap',         rarity:'rare',      emoji:'😺', css:"#1d3a6e url('assets/wallpapers/cat-nap.jpg') center / cover no-repeat", isNew:true },
 
     // ---- Window themes (color schemes) ----
     // accent/accentDark remap --purple (selection, sidebar, tags); secondary/

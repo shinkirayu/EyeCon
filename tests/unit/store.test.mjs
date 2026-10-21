@@ -14,7 +14,7 @@ test('daily specials are stable, unique and rotate across UTC midnight',async()=
   const first=s.dailyShop(date), same=s.dailyShop(new Date('2026-09-15T00:00:00Z'));
   assert.deepEqual(first.items.map(i=>i.id),same.items.map(i=>i.id));
   assert.equal(new Set(first.items.map(i=>i.id)).size,first.items.length); // no repeats
-  assert.equal(first.items.length,4); // only 4 wallpapers for sale now, so every day shows all of them
+  assert.equal(first.items.length,5); // only 5 wallpapers for sale now, so every day shows all of them
 });
 test('Boris wallpaper stays available to buy and equip',async()=>{
   const s=await setup(),p=s.defaultProfile(),shop=s.dailyShop();
