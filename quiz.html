@@ -309,19 +309,24 @@
     return !!data;
   }
   function consent(){
-    app.innerHTML = `${top('Before we start')}<h1>Help our study</h1>
-      <div class="consent" tabindex="0" aria-label="Consent information">
-        <p><b>EyeCon</b> is a thesis project at De La Salle Lipa about learning UI design through a game.</p>
-        <p>If you take part, we will collect:</p>
-        <ul><li>your name (to match your pre-test and post-test)</li><li>your section and design experience</li><li>your quiz answers and how you play the game</li></ul>
-        <p>Your answers are used only for this research. Your name is never shown in the paper; results are reported as numbers only. Only the researchers can see the data, and you can stop at any time.</p>
-        <p class="note">This follows the Data Privacy Act of 2012 (RA 10173). Questions? Ask the researchers.</p>
+    app.innerHTML = `${top('Before we start')}<h1>Informed Consent Form</h1>
+      <div class="consent" tabindex="0" aria-label="Informed consent form">
+        <p>EyeCon: An Interactive 2D Web-Based Simulation Game for Enhancing Visual Interface Standards and Accessibility Literacy</p>
+        <p><b>Researchers.</b> Ma. Veronica M. Caranza, Nadine R. Santillan, Auoie Dyncy Tan, and Kryu Maro R. Vera Cruz, BS Entertainment and Multimedia Computing, De La Salle Lipa. <b>Adviser:</b> Ms. Kyle Danes A. Navarro.</p>
+        <p><b>Purpose.</b> You are invited to take part in a study that evaluates EyeCon, a browser-based training simulation for UI design and accessibility standards.</p>
+        <p><b>What you will do.</b> <b>Student participants</b> will (1) answer a 10-item test, (2) play EyeCon's client levels, (3) answer the same test again, and (4) complete a short Software Quality survey, for a total of about 35–40 minutes. <b>UI design professionals</b> will explore EyeCon and complete the survey including the Instrument Validation Sheet.</p>
+        <p><b>Risks and benefits.</b> There are no known risks beyond those of normal computer use. You may benefit by practicing industry UI and accessibility standards.</p>
+        <p><b>Voluntary participation.</b> Participation is voluntary. You may stop at any time without penalty, and your decision will not affect your grades or standing in any way.</p>
+        <p><b>Privacy and confidentiality.</b> In accordance with Republic Act No. 10173 (Data Privacy Act of 2012), your test answers, survey responses, and gameplay data will be stored securely in the database of the study. Your username is used only to match your pre-test and post-test; results are analyzed under an anonymous code, and findings will be reported only as group results. All collected data will be securely deleted after the completion of data collection, in accordance with the study's data management procedures.</p>
+        <p><b>Contact.</b> For questions, contact <b>ma_veronica_caranza@dlsl.edu.ph</b>.</p>
+        <p>By selecting “I Agree,” I confirm that I am at least eighteen (18) years old, that I have read and understood this form, and that I voluntarily agree to participate.</p>
       </div>
-      <label class="check"><input type="checkbox" id="agree"> I have read this and I agree to take part.</label>
+      <label class="check"><input type="radio" name="agree" id="agree"> I Agree</label>
+      <label class="check"><input type="radio" name="agree" id="disagree"> I Do Not Agree</label>
       <div class="actions"><a class="ghost" href="${HOME}">Not now</a><button class="btn" id="go" disabled>Continue</button></div>`;
     const agree = document.getElementById('agree'), go = document.getElementById('go');
-    agree.onchange = () => { go.disabled = !agree.checked; };
-    go.onclick = () => { sessionStorage.setItem('eyecon_consent', new Date().toISOString()); verified() ? profile() : signIn(); };
+    app.querySelectorAll('[name=agree]').forEach(r => r.onchange = () => { go.disabled = false; });
+    go.onclick = () => { if(!agree.checked) return location.href = HOME; sessionStorage.setItem('eyecon_consent', new Date().toISOString()); verified() ? profile() : signIn(); };
     agree.focus();
   }
   function signIn(){ // no connection: nothing to save answers to

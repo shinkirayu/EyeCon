@@ -1970,14 +1970,14 @@
   }
 
   // Celebration card after marking a task complete: stars, coins, XP, streak
-  // End-of-day animation (placeholder): a sunset over the hills before the
+  // End-of-day animation: the day-to-night video (assets/day-night.mp4) before the
   // recap. Click or any key skips it; reduced motion shows it briefly, still.
   function playDayEndAnimation(dayNumber, done){
     const reduce = document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const el = document.createElement('div');
     el.className = 'day-end-scene' + (reduce ? ' still' : '');
     el.setAttribute('role','status');
-    el.innerHTML = `<div class="day-end-sun"></div><div class="day-end-hill"></div><div class="day-end-text"><b>Day ${dayNumber} · 17:00</b><span>Clocking out…</span></div>`;
+    el.innerHTML = `<video src="assets/day-night.mp4" muted playsinline${reduce?'':' autoplay'}></video><div class="day-end-text"><b>Day ${dayNumber} · 17:00</b><span>Clocking out…</span></div>`;
     document.body.appendChild(el);
     let finished = false;
     const finish = () => {
@@ -1988,7 +1988,8 @@
     };
     el.addEventListener('click', finish);
     document.addEventListener('keydown', finish, true);
-    setTimeout(finish, reduce ? 1200 : 2600);
+    const vid = el.querySelector('video'); vid.onended = finish; vid.onerror = () => setTimeout(finish, 1200);
+    setTimeout(finish, reduce ? 1200 : 8000); // fallback if the video stalls
   }
 
   function showDaySummary(){
