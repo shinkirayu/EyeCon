@@ -21,8 +21,10 @@ test('WCAG AA distinguishes readable and unreadable normal text', async () => {
   assert.equal(wcag.passesWCAG('#9AA0A6', '#FFFFFF', 12, false, 'AA').pass, false);
 });
 
-test('all text, large or small, needs 4.5:1', async () => {
+test('AA: 3:1 for large text (24px, or 18.66px bold), 4.5:1 otherwise', async () => {
   const wcag = await loadWcag();
-  assert.equal(wcag.requiredRatio(19, true, 'AA'), 4.5);
+  assert.equal(wcag.requiredRatio(24, false, 'AA'), 3);
+  assert.equal(wcag.requiredRatio(19, true, 'AA'), 3);
   assert.equal(wcag.requiredRatio(19, false, 'AA'), 4.5);
+  assert.equal(wcag.requiredRatio(16, false, 'AAA'), 7);
 });

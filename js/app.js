@@ -544,6 +544,9 @@
     (async ()=>{
       await until(()=>hidden('modal-reward'));
       await new Promise(r => setTimeout(r, 800));
+      // First pay: Piko shows where the money went (the coins on the taskbar).
+      const coins = document.getElementById('taskbar-currency');
+      if(coins){ P.pointAt(coins); await new Promise(r => P.say(C.money, { top:true, onDone: r })); P.clearTarget(); }
       const tab = document.querySelector('.side-btn[data-folder="completed"]');
       if(tab && currentFolder !== 'completed'){
         let clicked = false; tab.addEventListener('click', ()=>{ clicked = true; }, { once:true });
@@ -662,8 +665,10 @@
       if(chips[0]){ P.pointAt(chips[0]); await talk(L.fg, { left:true }); }
       if(chips[1]){ P.pointAt(chips[1]); await talk(L.bgc, { left:true }); }
       if(q('#element-settings .cz-box')){ P.pointAt(q('#element-settings .cz-box')); await talk(L.ratio, { left:true }); }
+      // Its size decides the minimum: large text (24px+, or 18.66px+ bold) only needs 3:1.
+      if(q('#selection-dimensions .sel-font')){ P.pointAt(q('#selection-dimensions .sel-font')); await talk(L.size, { left:true }); }
       if(q('#element-settings .cz-guide .sl-list')){ P.pointAt(q('#element-settings .cz-guide .sl-list')); await talk(L.guide, { left:true }); // "It's a heading": the Headings row lights up too, so they see where it belongs.
-        const top = q('#element-settings .cz-guide .sl-list li'); top?.classList.add('cz-goal');
+        const top = q('#element-settings .cz-guide .sl-list li:nth-child(3)'); top?.classList.add('cz-goal'); // the heading is large text: the 3:1 row
         await talk(L.guideRow, { left:true }); top?.classList.remove('cz-goal'); }
       { // demo: the same gold on white vs navy
         const c = window.EC_EDITOR.getElements().find(e => e.id === 'title')?.color || '#FFEA96';
@@ -989,8 +994,6 @@
       { tab:'accessibility', id:'reduceMotion', label:'Reduce Motion', desc:'Turns off animations, transitions and drifting particles.',
         tip:'For motion sensitivity — disables screen transitions, pop-ins and background effects app-wide.', type:'toggle' },
 
-      { tab:'gameplay', id:'panButton', label:'Pan the Canvas With', desc:'Which mouse button drags you around the design. Left click always selects and moves things.',
-        tip:'Scroll the mouse wheel to zoom.', type:'seg', options:[['both','Right or Middle'],['right','Right'],['middle','Middle']] },
       { tab:'gameplay', id:'timedMode', label:'Timed Challenge Mode', desc:'Adds a 5-minute countdown to each client project.',
         tip:'When time runs out, your current design is auto-submitted as-is.', type:'toggle' },
     ];
@@ -1223,11 +1226,11 @@
   }
 
   // ---------------- Mail folder switching (within the Mail app) ----------------
-  // Header progress in two stages: the 3 basics fill Junior -> Intermediate; then the bar resets
-  // and the next 4 jobs fill Intermediate -> Senior.
+  // Header progress in two stages: jobs 1-3 fill Junior -> Intermediate, jobs 4-6 fill
+  // Intermediate -> Senior, so finishing job 6 makes you Senior for the job 7 capstone.
   function renderMailProgress(){
     const done = window.EC_LEVELS.filter(l => l.levelNumber <= 7 && profile.completed.includes(l.id)).length;
-    const [from, to, n, max] = done < 3 ? ['Junior', 'Intermediate', done, 3] : ['Intermediate', 'Senior', done - 3, 4];
+    const [from, to, n, max] = done < 3 ? ['Junior', 'Intermediate', done, 3] : ['Intermediate', 'Senior', Math.min(done - 3, 3), 3];
     document.getElementById('mail-progress-from').textContent = from;
     document.getElementById('mail-progress-to').textContent = to;
     document.getElementById('mail-progress-fill').style.width = (n / max * 100) + '%';
@@ -1977,7 +1980,7 @@
     const el = document.createElement('div');
     el.className = 'day-end-scene' + (reduce ? ' still' : '');
     el.setAttribute('role','status');
-    el.innerHTML = `<video src="assets/day-night.mp4" muted playsinline${reduce?'':' autoplay'}></video><div class="day-end-text"><b>Day ${dayNumber} · 17:00</b><span>Clocking out…</span></div>`;
+    el.innerHTML = `<video src="assets/day-night.mp4" muted playsinline${reduce?'':' autoplay'}></video><div class="day-end-text"><b>Day ${dayNumber} · 17:00</b></div>`;
     document.body.appendChild(el);
     let finished = false;
     const finish = () => {
@@ -2001,7 +2004,7 @@
       showDaySummary.talkedDay = day.day;
       const D = window.EC_PIKO.SCRIPT.dayEnd, approved = day.reviews.filter(r => r.approved).length;
       const fill = t => t.replace('{jobs}', day.submissions).replace('{approved}', approved).replace('{coins}', day.coins).replace('{xp}', day.xp);
-      const lines = (D['day' + day.day] || D.later).map(fill);
+      const lines = (profile.completed.includes('oras-signin') ? D.finale : D['day' + day.day] || D.later).map(fill); // last client done: Piko's goodbye
       const waitReward = () => new Promise(r => { const t = setInterval(()=>{ if(document.getElementById('modal-reward').classList.contains('hidden')){ clearInterval(t); r(); } }, 200); });
       waitReward().then(()=>{
         const say = i => i < lines.length ? window.EC_PIKO.say(lines[i], { top:true, onDone: ()=>say(i + 1) }) : (window.EC_PIKO.hideBubble(), showDaySummary());
@@ -2246,7 +2249,6 @@
     Object.keys(localStorage).filter(k => /^eyecon/.test(k) && !keep.includes(k)).forEach(k => localStorage.removeItem(k));
     location.reload();
   }
-  const PAN_NAMES = { both:'Right / Middle', right:'Right', middle:'Middle' };
   function quickSettingsList(){
     const slider = (key, name, min, step) => `<li class="profile-setting">
         <label for="qs-${key}">${name}</label>
@@ -2275,7 +2277,6 @@
         <div class="profile-control profile-control-wide"><button type="button" class="profile-switch" role="switch" aria-checked="${motion}" aria-labelledby="qs-motion-label" data-setting="motion"><span></span></button></div>
       </li>
       ${picker('keys','Keyboard sound',window.EC_SOUND.KEY_PACKS[window.EC_SOUND.getKeyPack()].name)}
-      ${picker('pan','Pan with',PAN_NAMES[profile.settings.panButton || 'both'])}
       ${picker('tutorial','Tutorial',TUTORIAL_NAMES[profile.settings.tutorialStyle || 'classic'])}
       ${inEditor ? '' : editorRows}
       <li class="profile-setting admin-only">
@@ -2310,13 +2311,6 @@
     });
     root.querySelectorAll('[data-pick]').forEach(btn=>btn.addEventListener('click', ()=>{
       const key = btn.dataset.pick;
-      if(key === 'pan'){
-        const ids = Object.keys(PAN_NAMES), i = ids.indexOf(profile.settings.panButton || 'both');
-        profile.settings.panButton = ids[(i + Number(btn.dataset.step) + ids.length) % ids.length];
-        save();
-        btn.closest('.profile-picker').querySelector('output').textContent = PAN_NAMES[profile.settings.panButton];
-        return;
-      }
       if(key === 'tutorial'){ // two styles: either arrow switches
         profile.settings.tutorialStyle = profile.settings.tutorialStyle === 'visual' ? 'classic' : 'visual';
         save(); applySettings();

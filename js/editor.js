@@ -838,10 +838,10 @@
     const band = contrastBand(el), r1 = Math.round(res.ratio * 10) / 10;
     const tooDark = band.max != null && r1 > band.max, tooWeak = res.pass && band.min != null && r1 < band.min;
     const free = (state.level.levelNumber || 0) >= 4; // no target verdicts: the player judges hierarchy
-    const tone = free ? (res.pass ? 'pass' : 'fail') : !res.pass || tooWeak ? 'fail' : tooDark || zone.id === 'harsh' || offHue ? 'warn' : 'pass';
+    const tone = !res.pass || tooWeak ? 'fail' : tooDark ? 'warn' : free ? 'pass' : zone.id === 'harsh' || offHue ? 'warn' : 'pass';
     const target = band.max != null ? `Target ${band.min ?? res.required}–${band.max}:1` : band.min != null ? `Target ${band.min}:1+` : '';
-    const sub = tooDark ? 'Too dark for a hint' : tooWeak ? 'Not strong enough yet' : !res.pass ? (close ? 'Almost there' : 'Too light to read') : target || `Zone: ${zone.name}`;
-    const piko = tooDark ? 'Readable, but now it looks like someone already typed here. Placeholders should be lighter than real text. Slide up a little.'
+    const sub = tooDark ? 'Stronger than needed' : tooWeak ? 'Not strong enough yet' : !res.pass ? (close ? 'Almost there' : 'Too light to read') : target || `Zone: ${zone.name}`;
+    const piko = tooDark ? 'Readable, but stronger than needed. Very high contrast is harsh on screens. Slide up until it is under 7:1.'
       : tooWeak ? `This is the most important text. Give it the strongest contrast: slide down to a deep ${name}.`
       : !res.pass ? (close ? `Almost! Slide a bit darker and keep it ${name}.` : `Too faint to read. Slide down toward a darker ${name}.`)
       : band.max != null ? 'Nice! Readable, but still clearly a hint.'
@@ -900,17 +900,20 @@
     // It never says what kind of text this is: the player decides which range it belongs in.
     const bg = window.EC_GRADING.effectiveBg(state.elements, state.level.canvas.bg, el);
     const r = Math.round(window.WCAG.contrastRatio(el.color, bg) * 10) / 10;
+    // WCAG AA: every range always shown; each row this ratio satisfies lights up (4.5–7 passes both). It never says
+    // whether the selected text is large: the player checks its size and decides which row it needs.
     const rows = [
-      ['Headings, titles and buttons', '7:1 and up', r >= 7],
-      ['Labels, hints and captions', '4.5–7:1', r >= 4.5 && r < 7],
-      ['Too faint to read', 'under 4.5:1', r < 4.5],
-    ].map(([name, range, here]) => `<li class="${here ? 'here' : ''}"><b>${name}</b><code>${range}</code></li>`).join('');
-    return `<div class="cz-guide"><small class="sl-label">Contrast guide</small><ol class="sl-list">${rows}</ol>${inner}</div>`;
+      ['Stronger than needed', 'over 7:1', r > 7, 'warn'],
+      ['Normal text', '4.5–7:1', r >= 4.5 && r <= 7],
+      ['Large text (24px+, or 18.66px+ bold)', '3–7:1', r >= 3 && r <= 7], // overlaps: 4.5–7 passes both
+      ['Too faint to read', 'under 3:1', r < 3],
+    ].map(([name, range, here, tone]) => `<li class="${here ? 'here' : ''} ${here && tone ? tone : ''}"><b>${name}</b><code>${range}</code></li>`).join('');
+    return `<div class="cz-guide"><small class="sl-label">Contrast guide (WCAG AA)</small><ol class="sl-list">${rows}</ol>${inner}</div>`;
   }
   // Target band from the level's contrast task for this element (min / max ratio).
   function contrastBand(el){
     const g = (state.level.goals || []).find(g => g.check.contrast && window.EC_GRADING.goalIds(g.check).includes(el.id));
-    return g ? { min: g.check.min ?? null, max: g.check.max ?? null } : { min:null, max:null };
+    return { min: g?.check.min ?? null, max: g?.check.max ?? 7 }; // 7:1 cap: stronger than needed
   }
   // Comfort zones on top of WCAG's minimum (the 15:1 "too harsh" line is a comfort
   // guideline, not a WCAG rule): fail · large text only · AA · great · too harsh.
@@ -1001,7 +1004,8 @@
     const fields = document.getElementById('settings-fields');
     const isLocked = !!el.locked;
     document.getElementById('element-settings-title').textContent = state.extraSel.size ? `${state.extraSel.size + 1} elements selected` : friendlyElementName(el);
-    document.getElementById('selection-dimensions').textContent = `${Math.round(el.w)} x ${Math.round(el.h)} px`;
+    // Text also shows its font size and weight, so contrast levels can tell normal from large text.
+    document.getElementById('selection-dimensions').innerHTML = `${Math.round(el.w)} x ${Math.round(el.h)} px` + (el.text && el.fontSize ? `<b class="sel-font">Font size ${el.fontSize}px${Number(el.fontWeight) >= 700 ? ' Bold' : ''}</b>` : ''); // Bold matters: 18.66px bold counts as large text
 
     if(isLocked){
       fields.innerHTML = `<p class="settings-placeholder">This is a structural background element and can't be edited directly.</p>`;
@@ -1966,7 +1970,7 @@
     // uses) rather than native scroll, so it composes cleanly with zooming.
     let panState = null;
     // Which buttons pan: Settings > Gameplay > Pan the canvas with.
-    const panButtons = () => ({ middle:[1], right:[2] }[window.EC_STORE.load().settings?.panButton] || [1, 2]);
+    const panButtons = () => [1, 2]; // middle or right button always pans
     canvasWrap.addEventListener('contextmenu', e=>{ if(panButtons().includes(2)) e.preventDefault(); });
     canvasWrap.addEventListener('pointerdown', e=>{
       if(!panButtons().includes(e.button)) return;

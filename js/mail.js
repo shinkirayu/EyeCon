@@ -4,7 +4,7 @@
 ===================================================== */
 (function(){
 
-  const TIER_LABEL = { novice:'JUNIOR', intermediate:'JUNIOR', advanced:'INTERMEDIATE', expert:'SENIOR' }; // shown one tier down for now
+  const TIER_LABEL = { novice:'JUNIOR', intermediate:'INTERMEDIATE', advanced:'SENIOR', expert:'SENIOR' }; // levels 1–3 Junior, 4–6 Intermediate, 7 (Bear Oras) Senior
   let handlers = { onAccept:()=>{}, onSend:()=>{}, onOpenReply:()=>{} };
   let activeLevel = null;
   let pendingGradeResult = null;
@@ -123,6 +123,10 @@
     const shift = window.EC_STORE.workday(p);
     shift.submissions++;
     shift.reviews.push({ name:level.clientName, page:level.pageLabel, stars:5, approved:true, reward:0 });
+    // A skip that fills the day starts the next one right away, so the next emails arrive
+    // without playing out the day's end (lets admins skip straight through to the last client).
+    if(shift.submissions >= window.EC_STORE.dailyTaskLimit(p) && !p.pendingClientReply && !p.readyReply)
+      p.workday = { day:shift.day + 1, submissions:0, reviews:[], coins:0, xp:0 };
   }
   function repeatLevel(p, level){
     p.completed = p.completed.filter(id => id !== level.id);

@@ -64,7 +64,6 @@
       uiScale: 1,
       reduceMotion:false,
       timedMode:false,
-      panButton:'both',
       soundEnabled:true,
       soundVolume:0.6,
       musicEnabled:true,

@@ -41,9 +41,10 @@
     return false;
   }
 
-  // The game asks for 4.5:1 on all text, big or small, to keep the rule simple.
+  // WCAG 2.2: AA needs 4.5:1 (3:1 for large text); AAA needs 7:1 (4.5:1 for large text).
   function requiredRatio(fontSizePx, bold, level){
-    return (level || 'AA') === 'AAA' ? 7 : 4.5;
+    const large = isLargeText(fontSizePx, bold);
+    return (level || 'AA') === 'AAA' ? (large ? 4.5 : 7) : (large ? 3 : 4.5);
   }
 
   function passesWCAG(hex1, hex2, fontSizePx, bold, level){

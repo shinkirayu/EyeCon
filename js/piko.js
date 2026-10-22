@@ -57,6 +57,7 @@
       browse: "Have a look around! Close the store or go Home when you're done."
     },
     completed: {
+      money: "This is your money! Clients pay you for every job they approve. Spend it in the Shop, or on hints when you're stuck.",
       tab: "Finished jobs go to Completed. Click it to take a look!",
       open: "This is the history of your chats with each client. Open it to read it again, then close it when you're done."
     },
@@ -65,7 +66,14 @@
     dayEnd: {
       day2: ["Two clients down! Antoks and Cones learned what spacing and readable color can do.", "You did {jobs} jobs today and earned {coins} coins. Tomorrow there's a bigger one waiting. Get some sleep!"],
       day3: ["BEAR ORAS's sign-in screen finally makes sense. That one had everything: alignment, contrast and size.", "You're becoming a real UI designer. See you tomorrow!"],
-      later: ["{jobs} jobs done today, {approved} approved. Nice work!", "Clock out, rest your eyes, and come back fresh."]
+      later: ["{jobs} jobs done today, {approved} approved. Nice work!", "Clock out, rest your eyes, and come back fresh."],
+      // After the last client (BEAR ORAS): Piko says goodbye.
+      finale: [
+        "That was the last client! BEAR ORAS was the toughest one, and you nailed it.",
+        "I'm really going to miss working with you.",
+        "I enjoyed every step of our journey together, from your very first email to this one.",
+        "Keep making screens that everyone can read. Goodbye for now, designer!"
+      ]
     },
     // Level 4: training wheels off.
     handoff: [
@@ -99,18 +107,19 @@
         fg: "This is the **foreground**: the color of the text itself.",
         bgc: "This is the **background**: the color right behind the text. Here it's the white card.",
         ratio: "Contrast compares the two. The further apart they are in lightness, the bigger the number.",
-        guide: "This is the **contrast guide**. It lists how much contrast each kind of text needs: headings, titles and buttons 7:1 and up; labels, hints and captions 4.5 to 7:1.",
-        guideRow: "The highlighted row shows where this text is right now. Ask yourself what kind of text it is, then move it into that row.",
+        size: "Check the font size here. This heading is 64px, so it counts as **large text**. Larger text is easier to read, so it only needs 3:1. Normal text needs 4.5:1.",
+        guide: "This is the **contrast guide**. Normal text needs 4.5:1. Large text, 24px and up or 18.66px and up in bold, only needs 3:1.",
+        guideRow: "The highlighted row shows where this text is right now. Check its size: this heading is large text, so it needs at least the large text row.",
         demo: "Same text color, different background, different contrast! It's always about the pair.",
         slider: "Here you can only change the foreground. Darker text on a light background means more contrast.",
         bar: "This is its color panel. Drag the brightness slider down to make the text darker.",
-        watch: "See the contrast number climb? Keep going until it says On target: 7:1 or more.",
-        done: "Perfect! The heading now stands out the most. That's hierarchy!",
+        watch: "See the contrast number climb? This heading is large text, so keep going until it passes 3:1.",
+        done: "Perfect! The heading is easy to read now.",
         phPick: "Now the placeholders. Left click \"Phone, username, or email\" to pick it.",
-        phSlide: "Slide it into the green band: readable (at least 4.5:1) but lighter than the heading, so it still looks like a hint.",
+        phSlide: "Slide it down until it passes 4.5:1. Placeholders are small text, so they need more contrast than the heading.",
         phShift: "\"Username\" and \"Password\" are grouped, so they need the same contrast. Hold Shift and click \"Password\" to select both, then one slider changes them together.",
-        phBoth: "Slide both into the green band: readable (at least 4.5:1) but lighter than the heading. They stay the same contrast ratio, since they're grouped.",
-        phDone: "Both placeholders match, and they stay lighter than the heading. Nice work!"
+        phBoth: "Slide both down until they pass 4.5:1. They keep the same contrast ratio, since they're grouped.",
+        phDone: "Both placeholders are readable now, and they match. Nice work!"
       },
       haybuhay: {
         intro: "Typography is how text looks: its size, weight and font.",
@@ -137,14 +146,14 @@
       yappers: [
         ["New skill: CONTRAST! It's how much the text color stands out from what's behind it."],
         ["Low contrast, like light gray on white, is really hard to read. Even more so on a phone in the sun, or with weaker eyesight."],
-        ["We measure it as a ratio. Normal text needs at least 4.5:1."],
+        ["We measure it as a ratio. Normal text needs at least 4.5:1, and large text at least 3:1."],
         ["Select some text, then move its color sliders. Darker text on a light background, or lighter text on a dark one.", '#element-settings'],
         ["Watch the ratio badge in the panel. A green check means it passes."],
         ["Heads up: some elements are grouped. Fix every element in the group, and only then will the task be done."],
         ["Tip: you only need to change the color, not the layout. Go for it!"],
-        ["One more thing: contrast also shows what matters most. The heading gets the strongest contrast, at least 7:1."],
-        ["Placeholders are hints, so keep them softer: readable, but not as dark as real text. Aim for 4.5 to 7:1."],
-        ["Heads up: that 7:1 limit is a design guideline, not a WCAG rule. WCAG only sets the 4.5:1 minimum."]
+        ["Big text is easier to read, so it gets a lower minimum. Headings and big buttons need at least 3:1."],
+        ["Small text, like the placeholders, needs the full 4.5:1."],
+        ["Large text means 24px and up, or 18.66px and up in bold. These are the WCAG Level AA rules most websites follow."]
       ],
       antoks: [
         ["Click the hint button to help you! Your first hint is on us!", '#tool-hint']
@@ -184,7 +193,9 @@
     bubble.innerHTML =
       '<div class="piko-panel"><p class="piko-name">PIKO</p><h4 class="piko-line"><span class="piko-text"></span><span class="piko-caret">|</span></h4>' +
       '<div class="piko-foot"><button type="button" class="piko-nav prev" aria-label="Previous line">‹</button><span class="piko-hint"></span><button type="button" class="piko-nav next" aria-label="Next line">›</button></div></div>' +
-      '<img class="piko-img" src="assets/sprites/piko.png" alt="Piko, the EyeCon guide, waves hello." />';
+      '<img class="piko-img" src="assets/sprites/piko.png" alt="Piko, the EyeCon guide, waves hello." />' +
+      '<video class="piko-img piko-vid" muted playsinline preload="auto" hidden aria-hidden="true"></video>' +
+      '<video class="piko-img piko-vid" muted playsinline preload="auto" hidden aria-hidden="true"></video>';
     // Visual tutorial: a hand that acts out the move (tap / hold / slide) on the target.
     const hand = document.createElement('div'); hand.className = 'tv-hand hidden'; hand.setAttribute('aria-hidden', 'true');
     hand.innerHTML = '<i class="tv-ripple"></i><img src="assets/sprites/cursor-point.png" alt="">';
@@ -363,11 +374,12 @@
     'piko.levels.mayo.1.0': { cue:'Alignment: line up the edges', why:'Lined-up pages feel calm and are easy to scan.', card:ART.align },
     'piko.levels.mayo.2.0': { cue:'Spacing: keep gaps equal', why:'Equal gaps show which items belong together.', card:ART.gaps },
     'piko.levels.yappers.0.0': { cue:'New skill: contrast', why:'Text that blends into its background is hard to read, even more on a phone in the sun.', card:ART.contrast },
-    'piko.levels.yappers.1.0': SKIP, 'piko.levels.yappers.4.0': SKIP, 'piko.levels.yappers.7.0': SKIP, 'piko.levels.yappers.8.0': SKIP,
+    'piko.levels.yappers.1.0': SKIP, 'piko.levels.yappers.4.0': SKIP, 'piko.levels.yappers.8.0': SKIP,
+    'piko.levels.yappers.7.0': { cue:'Large text: 3 : 1 or more', why:'Headings and big buttons are easier to read, so they need less.' },
     'piko.levels.yappers.2.0': { cue:'Normal text: 4.5 : 1 or more', why:'Contrast is a ratio. The bigger the number, the easier to read.', card:ART.ratio },
     'piko.levels.yappers.5.0': { cue:'Grouped? Fix them all', why:'Grouped items must match, so a task ticks only when all are fixed.' },
     'piko.levels.yappers.6.0': { cue:'Only colors this time', why:'This job is about contrast, so leave the layout as it is.' },
-    'piko.levels.yappers.9.0': { cue:'Good to know', why:'7 : 1 for headings is a design guideline. WCAG’s minimum is 4.5 : 1.' },
+    'piko.levels.yappers.9.0': { cue:'Good to know', why:'Large text is 24px+, or 18.66px+ bold. That’s WCAG Level AA.' },
     'piko.levels.antoks.0.0': { cue:'Stuck? Use a hint', why:'Your first hint is free!', gesture:'tap' },
     'piko.levels.haybuhay.0.0': { cue:'New skill: typography', why:'How text looks: its size, weight and spacing.', card:ART.type },
     'piko.levels.haybuhay.2.0': SKIP, 'piko.levels.haybuhay.3.0': SKIP, 'piko.levels.haybuhay.4.0': SKIP,
@@ -376,18 +388,19 @@
     'piko.practice.yappers.fg': { cue:'Text color', why:'The color of the letters.', side:'left' },
     'piko.practice.yappers.bgc': { cue:'Background color', why:'The color right behind them: the white card.', side:'left' },
     'piko.practice.yappers.ratio': { cue:'Their contrast', why:'How far apart the two colors are. Bigger = easier to read.', side:'left' },
-    'piko.practice.yappers.guide': { cue:'How much each text needs', why:'Headings 7 : 1 and up. Labels and hints 4.5 to 7.', side:'left' },
-    'piko.practice.yappers.guideRow': { cue:'Too faint right now', why:'It’s a heading, so it belongs in the top row.', at:'#element-settings .cz-guide li.here', side:'left' },
+    'piko.practice.yappers.size': { cue:'64px = large text', why:'Larger text only needs 3 : 1. Normal text needs 4.5 : 1.', at:'#selection-dimensions .sel-font', side:'left' },
+    'piko.practice.yappers.guide': { cue:'How much each text needs', why:'Normal text 4.5 : 1. Large text 3 : 1. Check the size to know which.', side:'left' },
+    'piko.practice.yappers.guideRow': { cue:'Too faint right now', why:'It’s large text, so it needs at least the 3 : 1 row.', at:'#element-settings .cz-guide li.here', side:'left' },
     'piko.practice.yappers.demo': { cue:'Same text, new background', why:'Contrast is always about the pair of colors.', at:'.piko-fgbg-demo' },
     'piko.practice.yappers.slider': { cue:'Down = darker', why:'Darker text on a light card means more contrast.', at:'#f-color', side:'left' },
     'piko.practice.yappers.bar': { cue:'Drag the slider down', why:'Darken the text until it stands out from the white.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
-    'piko.practice.yappers.watch': { cue:'Keep going: 7 : 1 or more', why:'Watch the number climb as the text darkens.', at:'#element-settings .cz-box', side:'left' },
-    'piko.practice.yappers.done': { success:'Easy to read!', why:'Dark text stands out from the white, and the heading now leads the page.', at:'#editor-canvas .el.selected' },
+    'piko.practice.yappers.watch': { cue:'Keep going: 3 : 1 or more', why:'Watch the number climb as the text darkens.', at:'#element-settings .cz-box', side:'left' },
+    'piko.practice.yappers.done': { success:'Easy to read!', why:'Dark text stands out from the white card.', at:'#editor-canvas .el.selected' },
     'piko.practice.yappers.phPick': tap('Click the placeholder', { why:'These hints are too faint to read, too.' }),
     'piko.practice.yappers.phSlide': SKIP,
     'piko.practice.yappers.phShift': tap('Shift + click “Password”', { why:'The two fields are a pair, so they should match.', icon:'shift' }),
-    'piko.practice.yappers.phBoth': { cue:'Slide into 4.5–7 : 1', why:'Readable, but softer than the heading, so they still look like hints.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
-    'piko.practice.yappers.phDone': { success:'Matched!', why:'Readable hints that stay softer than the heading.', at:'#editor-canvas .el.selected' },
+    'piko.practice.yappers.phBoth': { cue:'Slide to 4.5 : 1 or more', why:'Small text needs the full 4.5 : 1.', icon:'left', at:'#f-color', side:'left', gesture:'slide-y' },
+    'piko.practice.yappers.phDone': { success:'Matched!', why:'Readable hints that match.', at:'#editor-canvas .el.selected' },
     // Level 3 practice.
     'piko.practice.haybuhay.intro': SKIP, 'piko.practice.haybuhay.groupIntro': SKIP,
     'piko.practice.haybuhay.ladder': { cue:'This is hierarchy', why:'Bigger = more important. This page’s sizes, from the title down to the labels.', at:'.piko-ladder-demo' },
@@ -577,6 +590,43 @@
     };
     step(0);
   }
+  // Animated Piko (transparent WebM; Safari can't show WebM transparency, so it keeps the picture).
+  // Which clip plays on which line (by text key, or by the exact text for lines written in app.js).
+  const MOODS = {
+    'piko.tutorial.0':'happy', 'piko.niceToMeet':'happy', 'piko.workspace.nice':'happy', 'piko.workspace.gridDone':'happy',
+    'piko.reply.complete':'happy', 'piko.handoff.0':'happy', 'piko.basicsDone.1':'happy', 'piko.dayEnd.day2.0':'happy',
+    'piko.nextMail':'excited', 'piko.completed.money':'excited', 'piko.reply.arrived':'excited', 'piko.workspace.compare':'excited', 'piko.shop.browser':'excited',
+    'piko.basicsDone.0':'excited', 'piko.handoff.6':'excited', 'piko.dayEnd.day3.0':'excited', 'piko.dayEnd.finale.0':'excited',
+    'piko.workspace.problems':'thinking', 'piko.reply.revise':'thinking', 'piko.handoff.2':'thinking',
+    'Ohh, not everything is right yet! Something still needs fixing. Look around the page and read the labels to find it.':'thinking',
+    'Stuck on this one? You can use a hint! Click the light bulb.':'thinking',
+    'piko.dayEnd.finale.1':'sad', 'piko.dayEnd.finale.2':'sad', 'piko.dayEnd.finale.3':'sad'
+  };
+  const canMood = (() => { const ua = navigator.userAgent; return !(/Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); })();
+  // Between moods Piko idles: mostly the blink clip, now and then (1 in 5) the look-around clip.
+  // Two video players take turns: the next clip loads in the hidden one and swaps in once it is
+  // playing, so changing clips (e.g. happy → idle on Continue) never flashes blank.
+  let pikoNow = '';
+  function pikoMood(key, line){
+    const vids = [...dom.bubble.querySelectorAll('.piko-vid')], img = dom.bubble.querySelector('img.piko-img');
+    if(!canMood){ vids.forEach(v => v.hidden = true); img.hidden = false; return; }
+    if(dom.bubble.classList.contains('hidden')) vids.forEach(v => v.classList.remove('no-pop')); // bubble opening again: bounce again
+    const name = MOODS[key] || MOODS[line] || 'idle';
+    if(name === 'idle' && pikoNow === 'idle') return;
+    if(name !== 'idle' && name === pikoNow) return; // same mood on the next line: let it keep playing // already idling: keep going between lines
+    const play = clip => {
+      const on = vids.find(v => !v.hidden) || null, next = vids.find(v => v !== on);
+      pikoNow = clip.startsWith('idle') ? 'idle' : clip;
+      next.classList.toggle('no-pop', !!on); // pop in only when Piko first appears, not on a clip swap
+      next.onplaying = () => { next.onplaying = null; next.hidden = false; img.hidden = true; if(on){ on.hidden = true; on.pause(); } };
+      next.onerror = () => { if(!on) img.hidden = false; };
+      next.onended = () => play(Math.random() < 0.2 ? 'idle-look' : 'idle-blink');
+      next.src = 'assets/piko/' + clip + '.webm'; next.play().catch(() => {});
+    };
+    play(name === 'idle' ? 'idle-blink' : name);
+  }
+
+
   function sayOne(line, opts){
     opts = opts || {};
     saidAgain = true;
@@ -594,6 +644,7 @@
     endCue(true); // a new line replaces the cue (✓ if it had asked for an action)
     stopClassicHand();
     if(!v && !opts.onDone){ const g = visualFor(line, false); if(g.gesture){ classicHand = { v: g }; followClassicHand(); } }
+    pikoMood(window.EC_TEXT?.keyFor(line) || '', String(line));
     bubble.classList.toggle('piko-cue', !!v);
     bubble.classList.toggle('piko-cue-card', !!(v && (v.card || v.success)));
     bubble.classList.toggle('piko-cue-ok', !!(v && v.success));

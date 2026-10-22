@@ -137,7 +137,7 @@
         const bold = Number(el.fontWeight) >= 700 || el.fontWeight === 'bold';
         const r = Math.round(window.WCAG.contrastRatio(el.color, effectiveBg(elements, level.canvas.bg, el)) * 10) / 10;
         return window.WCAG.passesWCAG(el.color, effectiveBg(elements, level.canvas.bg, el), el.fontSize, bold, 'AA').pass
-          && (check.min == null || r >= check.min) && (check.max == null || r <= check.max);
+          && (check.min == null || r >= check.min) && r <= (check.max ?? 7); // over 7:1 is stronger than needed: not accepted
       });
       // [biggest, ..., smallest]: each step's font is bigger than the next (size hierarchy).
       // Grouped text that does one job: every font size identical.

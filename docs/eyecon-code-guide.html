@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EyeCon Code Guide and Audit</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --ink:#1f1a2e; --muted:#5b556b; --accent:#5b3fa6; --teal:#1f7a6e; --line:#ddd6ea; --soft:#f5f2fb; --hi:#b3304f; --med:#9a5600; --lo:#2f6f8f; }
+  body { font: 10.5pt/1.55 "Segoe UI", Arial, sans-serif; color: var(--ink); margin: 0; background:#fff; }
+  h1 { font-size: 26pt; margin: 0 0 6pt; color: var(--accent); line-height:1.15; }
+  h2 { font-size: 16pt; color: var(--accent); margin: 22pt 0 6pt; padding-bottom: 3pt; border-bottom: 2px solid var(--line); break-after: avoid; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; color: var(--ink); break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 18pt; }
+  li { margin: 0 0 3pt; }
+  code, .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.2pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  pre { font-family: Consolas, monospace; font-size: 8.8pt; line-height: 1.45; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 8pt 10pt; white-space: pre-wrap; break-inside: avoid; margin: 0 0 9pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.4pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 4pt 6pt; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  tr { break-inside: avoid; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; break-after: page; }
+  .cover .sub { font-size: 13pt; color: var(--muted); max-width: 140mm; }
+  .cover .meta { margin-top: 18pt; font-size: 10pt; color: var(--muted); }
+  .toc ol { columns: 2; column-gap: 18pt; }
+  .note { border-left: 4px solid var(--teal); background: #eef7f5; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+  .warn { border-left: 4px solid var(--hi); background: #fbeff2; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+  .sev { font-weight: 700; white-space: nowrap; }
+  .High { color: var(--hi); } .Medium { color: var(--med); } .Low { color: var(--lo); }
+  .flow { font-family: Consolas, monospace; font-size: 9pt; background: var(--soft); border:1px solid var(--line); border-radius:6px; padding:8pt 10pt; break-inside: avoid; margin:0 0 9pt; white-space: pre; }
+  .page { break-before: page; }
+  .small { font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <h1>EyeCon<br>Code Guide and Audit</h1>
+  <p class="sub">How the game is built, file by file, from page load to the thesis database, plus an audit of what is solid, what is fragile and what to fix. Written so you can explain any part of the code to a panel.</p>
+  <p class="meta">Repository: EyeCon.old (master) · About 19,600 lines across HTML, JavaScript and CSS · Prepared October 2026</p>
+</section>
+
+<section class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li>The project in one page</li>
+    <li>Repository map</li>
+    <li>How a page boots</li>
+    <li>The data model</li>
+    <li>The game loop, step by step</li>
+    <li>The grading engine and WCAG math</li>
+    <li>The editor</li>
+    <li>Piko and the editable text system</li>
+    <li>Saving: localStorage and Supabase</li>
+    <li>The study pipeline: quiz, consent, admin</li>
+    <li>The other pages and systems</li>
+    <li>Build, test and deploy</li>
+    <li>Audit findings</li>
+    <li>Defense cheat sheet</li>
+    <li>Learning path: exercises</li>
+  </ol>
+</section>
+
+<h2>1. The project in one page</h2>
+<p>EyeCon is a static website with no framework and no server of its own. Every page is plain HTML that loads plain JavaScript files in a fixed order. Each script wraps itself in a function, so its variables stay private, and publishes one object on <code>window</code> for the others to use. Supabase (hosted PostgreSQL) stores saves, analytics and study data, and Vercel serves the files.</p>
+<table>
+  <tr><th>Layer</th><th>What it is</th><th>Where</th></tr>
+  <tr><td>Pages</td><td>Website (<code>overview.html</code>), game (<code>index.html</code>, served as <code>/play</code>), test and survey (<code>quiz.html</code>), researcher dashboard (<code>admin.html</code>)</td><td>repo root</td></tr>
+  <tr><td>Game logic</td><td>Vanilla JavaScript modules, one global each (<code>window.EC_*</code>)</td><td><code>js/</code></td></tr>
+  <tr><td>Styling</td><td><code>style.css</code> (base) and <code>reference.css</code> (later design pass that overrides it)</td><td><code>css/</code></td></tr>
+  <tr><td>Content</td><td>Level layouts exported from the Level Maker, then compiled into <code>js/level-edits.js</code></td><td><code>data/levels/</code></td></tr>
+  <tr><td>Backend</td><td>Supabase: anonymous auth, 12 tables with Row Level Security, admin RPC functions</td><td><code>supabase/migrations/</code></td></tr>
+  <tr><td>Tooling</td><td>Vite (dev server), Node scripts (build, syntax check), Node test runner, Playwright</td><td><code>scripts/</code>, <code>tests/</code></td></tr>
+</table>
+<div class="note"><b>The one-sentence architecture:</b> the browser is the whole application; it keeps the save in localStorage and mirrors it to Supabase, while Supabase only stores data and enforces who may read it.</div>
+
+<h2>2. Repository map</h2>
+<table>
+  <tr><th>File</th><th>Lines</th><th>Global</th><th>Responsibility</th></tr>
+  <tr><td><code>js/app.js</code></td><td>2,746</td><td>(none; runs <code>init</code>)</td><td>The conductor: screens, desktop, mail app wiring, Piko tutorial flows, settings, shop, browser app, day cycle, rewards. 92 functions.</td></tr>
+  <tr><td><code>js/editor.js</code></td><td>2,291</td><td><code>EC_EDITOR</code></td><td>The design canvas: rendering elements, select, drag, snap, guides, zoom and pan, Design Panel, task list, hints, undo and redo.</td></tr>
+  <tr><td><code>js/levels.js</code></td><td>1,595</td><td><code>EC_LEVELS</code>, <code>EC_PROJECTS</code></td><td>Clients, pages, elements and goals (71 goals). Applies Level Maker layouts from <code>level-edits.js</code>.</td></tr>
+  <tr><td><code>js/piko.js</code></td><td>1,014</td><td><code>EC_PIKO</code></td><td>Mascot dialogue engine: script, speech bubble, spotlight, cursor demos, visual tutorial, mood videos.</td></tr>
+  <tr><td><code>js/maker.js</code></td><td>805</td><td><code>EC_MAKER</code></td><td>Admin-only Level Maker used to author level layouts.</td></tr>
+  <tr><td><code>js/grading.js</code></td><td>603</td><td><code>EC_GRADING</code></td><td>Goal checks and the score, stars and feedback for a submission.</td></tr>
+  <tr><td><code>js/mail.js</code></td><td>514</td><td><code>EC_MAIL</code></td><td>Inbox, client emails, compose and reply, arrivals, admin Skip and Repeat.</td></tr>
+  <tr><td><code>js/storage.js</code></td><td>363</td><td><code>EC_STORE</code></td><td>The save: profile defaults, load and save, workday, inbox rules, pay, XP, badges, shop.</td></tr>
+  <tr><td><code>js/sound.js</code></td><td>229</td><td><code>EC_SOUND</code></td><td>Sound effects and the music playlist.</td></tr>
+  <tr><td><code>js/client-sites.js</code></td><td>215</td><td><code>EC_CLIENT_SITES</code></td><td>The Browser app's interactive client websites.</td></tr>
+  <tr><td><code>js/ui-helpers.js</code></td><td>191</td><td><code>EC_MODAL</code> and others</td><td>Modals, focus traps, fullscreen and small UI helpers.</td></tr>
+  <tr><td><code>js/db.js</code></td><td>158</td><td><code>EC_DB</code>, <code>EC_ACTIVE</code></td><td>Supabase sign-in, cloud save, analytics events, active-time clock.</td></tr>
+  <tr><td><code>js/guidebook.js</code></td><td>156</td><td><code>EC_GUIDE</code></td><td>The UI Survival Guide book with looping demos.</td></tr>
+  <tr><td><code>js/cosmetics.js</code></td><td>120</td><td><code>EC_COSMETICS</code></td><td>Shop items (wallpapers live; other categories dormant).</td></tr>
+  <tr><td><code>js/text.js</code></td><td>68</td><td><code>EC_TEXT</code></td><td>Registry of every player-facing string, with admin overrides from Supabase.</td></tr>
+  <tr><td><code>js/wcag.js</code></td><td>59</td><td><code>WCAG</code></td><td>Relative luminance and contrast ratio.</td></tr>
+  <tr><td><code>quiz.html</code></td><td>418</td><td>(page)</td><td>Consent, profile, pre-test and post-test, ISO survey, validation sheet, raffle.</td></tr>
+  <tr><td><code>admin.html</code></td><td>964</td><td>(page)</td><td>Statistics, dialogue editor, level reviews, study results and CSV, raffle.</td></tr>
+  <tr><td><code>overview.html</code></td><td>529</td><td>(page)</td><td>The public website and the test popup.</td></tr>
+  <tr><td><code>css/reference.css</code></td><td>3,338</td><td>–</td><td>Current look; overrides <code>style.css</code> (2,216).</td></tr>
+</table>
+
+<h2 class="page">3. How a page boots</h2>
+<p><code>index.html</code> loads scripts in this exact order. Order matters because each file reads globals created by the files above it.</p>
+<div class="flow">supabase-js (CDN) → config.js → text.js → db.js → wcag.js → sound.js → ui-helpers.js
+→ level-edits.js → levels.js → cosmetics.js → storage.js → grading.js → editor.js
+→ mail.js → piko.js → maker.js → client-sites.js → credits.js → app.js → guidebook.js</div>
+<h3>The module pattern used everywhere</h3>
+<pre>(function(){
+  const KEY = 'eyecon_profile_v1';      // private to this file
+  function load(){ ... }
+  function save(profile){ ... }
+  window.EC_STORE = { load, save, ... }; // the only thing other files see
+})();</pre>
+<p>This is the classic "IIFE plus namespace" pattern. It avoids a bundler, keeps names from colliding and makes the dependency order explicit in the HTML. The trade-off is that nothing checks the order for you: if <code>storage.js</code> moved above <code>cosmetics.js</code>, <code>defaultProfile()</code> would crash because <code>EC_COSMETICS</code> would not exist yet.</p>
+<h3>What happens on load</h3>
+<ol>
+  <li><code>db.js</code> starts signing in anonymously (8-second timeout). If Supabase is unreachable, the game plays offline.</li>
+  <li><code>levels.js</code> builds the client and level list, then overlays Level Maker layouts from <code>EC_LEVEL_EDITS</code>.</li>
+  <li><code>app.js</code> runs <code>init()</code>: loads the profile, applies settings and cosmetics, wires the mail app and editor callbacks, schedules client replies and shows the title screen.</li>
+  <li>When <code>EC_DB.ready</code> resolves, the cloud copy may replace the local save (whichever is newer), and published dialogue text is swapped in through <code>EC_TEXT.load</code>.</li>
+</ol>
+
+<h2>4. The data model</h2>
+<h3>Element: one thing on a client's page</h3>
+<pre>{ id:'title', type:'text' | 'rect', role:'heading' | 'nav' | 'button' | 'label' | 'decorative' | ...,
+  text:'Welcome Bak!', x:160, y:96, w:640, h:72, z:2,
+  fontFamily:'Quicksand', fontSize:48, fontWeight:'700', color:'#958958', bg:null,
+  align:'left', radius:8, src:'assets/...png', locked:true, allow:['move'] }</pre>
+<p>Coordinates are canvas pixels on a fixed design canvas (for example 1920 × 1080). <code>locked</code> elements are artwork the player cannot move; <code>allow</code> limits what an editable element may change.</p>
+<h3>Level: one client page</h3>
+<pre>{ id:'yappers-login', levelNumber:2, project:'yappers', clientName, tier:'novice',
+  canvas:{ w, h, bg }, elements:[...], goals:[ goal(label, check, why, tip) ... ] }</pre>
+<h3>Goal: one task in the task list</h3>
+<pre>goal('Give "Welcome Bak!" the strongest contrast: at least 7:1, still gold.',
+     { contrast:'AA', min:7, ids:['title'] }, why, tip)</pre>
+<p>The <code>check</code> object names one rule (<code>sameY</code>, <code>evenGapsX</code>, <code>contrast</code>, <code>minFont</code>, <code>ladder</code>, <code>stronger</code> and more) plus the element ids it applies to. The grading engine looks the rule up in a <code>switch</code>.</p>
+<h3>Profile: the save (localStorage key <code>eyecon_profile_v1</code>)</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td><code>completed</code></td><td>Level ids the client approved.</td></tr>
+  <tr><td><code>history</code></td><td>Every reply received (stars, quote, reply text).</td></tr>
+  <tr><td><code>workday</code></td><td><code>{ day, submissions, reviews, coins, xp }</code>: drives which emails can arrive.</td></tr>
+  <tr><td><code>currency</code>, <code>totalXp</code></td><td>Service Fees and experience.</td></tr>
+  <tr><td><code>inventory</code>, <code>equipped</code>, <code>purchases</code></td><td>Shop state.</td></tr>
+  <tr><td><code>designs</code>, <code>revisionDrafts</code></td><td>The player's edited elements per level.</td></tr>
+  <tr><td><code>onboarding</code>, <code>revisionCount</code></td><td>Which tutorial beats have played; revision counter for hint offers.</td></tr>
+  <tr><td><code>pendingClientReply</code>, <code>readyReply</code></td><td>A sent job waiting for, or holding, the client's answer.</td></tr>
+</table>
+
+<h2 class="page">5. The game loop, step by step</h2>
+<div class="flow">Title screen → Desktop → Mail (inbox from EC_STORE.commissionInbox)
+  → open email → Accept → Editor opens (EC_EDITOR.open)
+  → player edits → live task list (EC_GRADING.checkGoals on every change)
+  → Submit → compose reply in Mail (type, attach, Send)
+  → finishMissionSubmission → gradeSubmission → recordSubmission (save)
+  → client reply arrives (scheduleClientReply) → approve or "Back to Editor"
+  → Mark Completed → Service Fee → next email or end of day (sunset video)</div>
+<h3>Which emails can arrive</h3>
+<p><code>commissionInbox()</code> in <code>storage.js</code> decides. In the study build (<code>TUTORIAL_ONLY</code>), day 1 offers levels 1 to 3 one at a time; day 2 offers level 4, then 5 and 6 together; day 3 offers level 7. A day ends when <code>workday.submissions</code> reaches <code>dailyTaskLimit()</code> (3, then 1 from day 3), and <code>nextWorkday()</code> starts the next.</p>
+<h3>Approval and pay</h3>
+<p>A job is approved when <code>stars ≥ 3</code> and every required goal is met (<code>missionComplete</code> in <code>app.js</code> and <code>storage.js</code>). Pay is the client's fixed fee (40 to 80); star and streak bonuses are switched off.</p>
+<h3>Tutorial choreography</h3>
+<p>Most of <code>app.js</code> is Piko choreography: <code>runPikoIntro</code>, <code>runPikoWorkspaceTour</code>, <code>initPikoComposeGuide</code> and others. They use three tools: <code>EC_PIKO.say(line, {onDone})</code> for a line, <code>pointAt(element)</code> for the spotlight, and body classes (<code>piko-focus</code>, <code>piko-allow</code>, <code>piko-lock-all</code>) that CSS uses to freeze everything except the control being taught. Progress is stored in <code>profile.onboarding</code> so a beat plays once.</p>
+
+<h2>6. The grading engine and WCAG math</h2>
+<h3>Contrast (js/wcag.js)</h3>
+<pre>channel c = value / 255
+linear    = c ≤ 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4
+L         = 0.2126 R + 0.7152 G + 0.0722 B
+ratio     = (L_lighter + 0.05) / (L_darker + 0.05)</pre>
+<p>A pair passes when the ratio, rounded to one decimal as the player sees it, meets the requirement. The game asks for 4.5:1 on all text (<code>requiredRatio</code> ignores size); individual goals can demand more with <code>min:7</code>.</p>
+<h3>What text sits on (effectiveBg)</h3>
+<p>For text with no fill of its own, the engine finds the highest filled shape underneath the text's centre point (lower <code>z</code>, overlapping), and falls back to the canvas colour. This is how contrast is measured against cards and banners, not just the page background.</p>
+<h3>Goal checks (checkGoal)</h3>
+<table>
+  <tr><th>Rule</th><th>Passes when</th></tr>
+  <tr><td><code>sameY</code>, <code>sameX</code>, <code>sameCenterX</code></td><td>All listed elements share that coordinate.</td></tr>
+  <tr><td><code>evenGapsX</code> / <code>evenGapsY</code></td><td>Gaps between neighbours are equal and inside <code>minGap</code>–<code>maxGap</code>.</td></tr>
+  <tr><td><code>contrast</code></td><td>Each element meets <code>min</code>/<code>max</code> against its effective background (and equal ratios when grouped).</td></tr>
+  <tr><td><code>minFont</code></td><td>Font size equals the target exactly (the name says "min", the rule is "exactly").</td></tr>
+  <tr><td><code>ladder</code>, <code>bigger</code></td><td>Sizes strictly decrease along the list.</td></tr>
+  <tr><td><code>stronger</code></td><td>One element's contrast beats another's.</td></tr>
+</table>
+<p><code>gradeSubmission</code> then turns results into a 0–100 score, stars (<code>scoreToStars</code>: 96, 85, 70, 50 thresholds), feedback and XP. Levels with <code>goals</code> are scored on goals only; the older rubric path (placement, hierarchy and others) remains for levels without goals.</p>
+
+<h2 class="page">7. The editor</h2>
+<p>All editor state lives in one object in <code>editor.js</code>:</p>
+<pre>state = { level, elements, original, selectedId, extraSel, history, future,
+          tools:{ gridVisible, snap, guides, gridSize:8, gridOpacity },
+          zoom, panX, panY, dragging, domNodes, onSubmit }</pre>
+<ul>
+  <li><b>Rendering:</b> <code>buildCanvas</code> creates one DOM node per element (<code>createElementDom</code>); edits call <code>refreshElementDom</code> for that node only.</li>
+  <li><b>Snapping:</b> <code>roundTo8(n) = max(8, round(n / 8) × 8)</code> when snap is on.</li>
+  <li><b>Undo:</b> <code>pushHistory</code> stores a deep copy (<code>JSON.parse(JSON.stringify)</code>) before each change; <code>undo</code> and <code>redo</code> move between two stacks.</li>
+  <li><b>Zoom and pan:</b> a CSS transform on the canvas, eased toward a target zoom (<code>ZOOM_EASE</code>), with wheel zoom anchored at the cursor (<code>zoomAt</code>).</li>
+  <li><b>Live tasks:</b> <code>updateLiveScore</code> re-runs <code>checkGoals</code> after every change and ticks tasks; from level 4 the ticks and counter are hidden by design.</li>
+  <li><b>Read-only rendering:</b> <code>EC_EDITOR.renderStatic</code> draws a design without editing, used by mail attachments and the Browser app.</li>
+</ul>
+
+<h2>8. Piko and the editable text system</h2>
+<h3>EC_TEXT (js/text.js)</h3>
+<p>Every player-facing string is registered with a key (for example <code>piko.handoff.0</code>) and a default. On start, published overrides from the <code>content_text</code> table replace defaults, so researchers can edit dialogue in <code>admin.html</code> without a deploy. <code>t(key, vars)</code> fills <code>{name}</code>-style placeholders and remembers which key produced the text, which is how <code>keyFor(text)</code> can identify a filled-in line later.</p>
+<h3>EC_PIKO (js/piko.js)</h3>
+<ul>
+  <li><code>SCRIPT</code> holds the dialogue tree; it is bound to <code>EC_TEXT</code> under the <code>piko.</code> prefix.</li>
+  <li><code>say(line, opts)</code> queues admin-added "before" and "after" lines, then <code>sayOne</code> types the line into the bubble.</li>
+  <li>The visual tutorial ("Show me") turns action lines into short cues with an animated hand.</li>
+  <li><b>Moods:</b> <code>MOODS</code> maps keys (or exact text) to a clip (<code>happy</code>, <code>excited</code>, <code>thinking</code>, <code>sad</code>). Two <code>&lt;video&gt;</code> players alternate so a clip swaps in only once it is playing (no blank frame). Idle is mostly <code>idle-blink</code> with a 1-in-5 <code>idle-look</code>. Safari keeps the still picture because it cannot show transparent WebM.</li>
+</ul>
+
+<h2>9. Saving: localStorage and Supabase</h2>
+<p>The game is local-first. <code>EC_STORE.save</code> writes localStorage immediately and asks <code>EC_DB.queueSave</code> to upload; uploads are debounced by 1.2 seconds and flushed on <code>pagehide</code>. On start, whichever copy is newer wins (cloud if its <code>updated_at</code> is at least the local <code>savedAt</code> minus 2 seconds).</p>
+<table>
+  <tr><th>Table</th><th>Written by</th><th>Holds</th></tr>
+  <tr><td><code>profiles</code></td><td>db.js</td><td>Whole save as JSON (<code>state</code>), name, coins, XP.</td></tr>
+  <tr><td><code>submissions</code></td><td>db.js <code>logSubmission</code></td><td>One row per client reply: stars, score, approved, design.</td></tr>
+  <tr><td><code>level_progress</code></td><td>db.js</td><td>Best stars and completion per player and level.</td></tr>
+  <tr><td><code>play_events</code></td><td>db.js <code>track</code></td><td>Analytics: level_open, submit, reply, hint, level_leave, with attempt and active time.</td></tr>
+  <tr><td><code>respondents</code>, <code>quiz_results</code>, <code>raffle_entries</code></td><td>quiz.html</td><td>Study profile, test answers and survey, raffle.</td></tr>
+  <tr><td><code>content_text</code>, <code>levels</code>, <code>clients</code>, <code>level_versions</code></td><td>admin.html</td><td>Editable text and level content.</td></tr>
+  <tr><td><code>admins</code></td><td>(manual)</td><td>Who counts as an admin (read only by <code>is_admin()</code>).</td></tr>
+</table>
+<p><b>Security model:</b> the browser holds only the public key. Row Level Security limits players to their own rows (<code>player_id = auth.uid()</code>); researchers read everything through <code>is_admin()</code>. Admin actions are <code>SECURITY DEFINER</code> functions that check <code>is_admin()</code> first.</p>
+<p><b>Active time:</b> <code>EC_ACTIVE</code> counts time only while the tab is visible and the player has touched the mouse or keyboard within the last 60 seconds. That is the "completion time" in the gameplay logs.</p>
+
+<h2 class="page">10. The study pipeline</h2>
+<div class="flow">overview.html popup → quiz.html?mode=pre
+  consent (I Agree / I Do Not Agree) → profile → 10 items → quiz_results(kind='pre')
+play the game (index.html)
+quiz.html?mode=post → same 10 items → ISO/IEC 25010 survey (+ validation sheet for professionals)
+  → quiz_results(kind='post', answers include { eval:{FS1..PE4, IV1..IV7}, comments })
+admin.html → Study tab: pre vs post, items, survey means, respondent CSV</div>
+<ul>
+  <li><b>Item bank:</b> <code>ALL_Q</code> holds 20 items; <code>HIDDEN</code> hides 10, leaving the 10-item test. Answers keep each item's original number <code>q</code>, so results stay comparable if the visible set changes.</li>
+  <li><b>Pairing:</b> pre-test and post-test are matched by the anonymous Supabase user id, so both must be taken in the same browser.</li>
+  <li><b>Scoring:</b> computed in the browser and inserted directly. The admin page re-scores everyone on the current visible items.</li>
+  <li><b>Professionals:</b> <code>isPro()</code> checks the respondent type and adds the Instrument Validation Sheet to the post-test.</li>
+</ul>
+
+<h2>11. The other pages and systems</h2>
+<ul>
+  <li><b>overview.html:</b> the public site at <code>/</code>; opens the test in an iframe popup and talks to it with <code>postMessage</code> (close, done, play).</li>
+  <li><b>client-sites.js:</b> turns a level's elements into an interactive website for the Browser app (nav subpages, a moving highlight pill, stretched to fill any window with <code>fill()</code>).</li>
+  <li><b>guidebook.js:</b> the UI Survival Guide spreads; each rule has a CSS-animated demo sharing one clock so page turns don't restart them.</li>
+  <li><b>cosmetics.js and the Shop:</b> five wallpapers are live; window themes and other categories are defined but hidden (<code>CATEGORY_ORDER = ['wallpaper']</code>).</li>
+  <li><b>sound.js:</b> sound effects and a music playlist (music1 → music2 → music3, looping), started after the first user interaction because browsers block autoplay with sound.</li>
+  <li><b>maker.js:</b> the Level Maker. Its exports go to <code>data/levels/*.json</code>, and <code>node scripts/build-level-edits.mjs</code> compiles them into <code>js/level-edits.js</code>.</li>
+</ul>
+
+<h2>12. Build, test and deploy</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td><code>npm run dev</code></td><td>Vite dev server (port 4173 in this project's workflow).</td></tr>
+  <tr><td><code>npm test</code></td><td><code>check:syntax</code> (<code>node --check</code> on 14 scripts) then the unit tests (wcag, grid, grading, levels, store).</td></tr>
+  <tr><td><code>npm run test:e2e</code></td><td>Playwright: about 35 browser tests of the app and client sites.</td></tr>
+  <tr><td><code>npm run build</code></td><td>Copies the site into <code>dist/</code>: <code>overview.html</code> becomes <code>index.html</code>, the game becomes <code>play.html</code>, and game CSS and JS URLs get <code>?v=&lt;commit&gt;</code> for cache busting.</td></tr>
+</table>
+<p>Vercel runs <code>npm run build</code> and serves <code>dist/</code> with security headers (<code>nosniff</code>, <code>SAMEORIGIN</code> frames, a strict referrer policy) and one-year immutable caching for <code>/css</code> and <code>/js</code>.</p>
+
+<h2 class="page">13. Audit findings</h2>
+<p>Severity is about risk to the thesis and to users, not code style. "High" means it can produce wrong study data, a security problem or a broken deploy.</p>
+<table>
+  <tr><th>#</th><th>Severity</th><th>Finding</th><th>Why it matters</th><th>Fix</th></tr>
+  <tr><td>1</td><td class="sev High">High</td><td>The large-text test item's key is 3:1 (WCAG AA), while the guide and lessons teach 7:1 for headings and say large text needs 7:1.</td><td>The game teaches against its own test item; Contrast barely improved. Panels will notice.</td><td>Keep the key; fix the guide text (3:1 minimum, 7:1 as EyeCon's AAA-based target) and explain the gap in the paper.</td></tr>
+  <tr><td>2</td><td class="sev High">High</td><td><code>quiz.html</code>, <code>admin.html</code> and <code>overview.html</code> load <code>/js</code> and <code>/css</code> without the <code>?v=</code> version; only <code>play.html</code> gets it, but all of <code>/js</code> is cached as immutable for a year.</td><td>After a deploy, returning visitors can run old <code>db.js</code>, <code>levels.js</code> or <code>config.js</code> on those pages.</td><td>Apply the same version rewrite to every HTML file in <code>build-static.mjs</code>.</td></tr>
+  <tr><td>3</td><td class="sev High">High</td><td>Test scores, survey answers and game progress are computed in the browser and inserted directly.</td><td>A technical user could submit any score for themselves (they cannot touch others' rows).</td><td>Acknowledge as a limitation; optionally re-score from <code>answers</code> server-side (the admin page already re-scores).</td></tr>
+  <tr><td>4</td><td class="sev Medium">Medium</td><td>The CI workflow runs on pushes to <code>main</code>, but the repository's branch is <code>master</code>.</td><td>Tests never run automatically on push.</td><td>Change the branch filter to <code>master</code>.</td></tr>
+  <tr><td>5</td><td class="sev Medium">Medium</td><td><code>check-syntax.mjs</code> lists 14 files and skips <code>text.js</code>, <code>db.js</code>, <code>guidebook.js</code>, <code>credits.js</code>, <code>dialogue-flow.js</code>, <code>quiz-art.js</code>, <code>config.js</code> and all inline page scripts.</td><td>A syntax error in those files ships silently.</td><td>Glob <code>js/*.js</code> instead of a hand list.</td></tr>
+  <tr><td>6</td><td class="sev Medium">Medium</td><td>Supabase JS loads from a CDN by major version (<code>@2</code>) without integrity hashes.</td><td>Any new 2.x release reaches players untested; a compromised CDN could run code.</td><td>Pin an exact version and add <code>integrity</code>, or vendor the file.</td></tr>
+  <tr><td>7</td><td class="sev Medium">Medium</td><td>Admin functions are executable by the <code>anon</code> role (they check <code>is_admin()</code> inside, so no data leaks).</td><td>Defense in depth; Supabase's advisor flags it.</td><td><code>REVOKE EXECUTE ... FROM anon</code>; fix <code>touch_updated_at</code>'s search path.</td></tr>
+  <tr><td>8</td><td class="sev Medium">Medium</td><td>The paper's Chapter 4 shows the luminance threshold as 0.04045; the code uses 0.03928.</td><td>Both appear in W3C materials and give the same results for 8-bit colours, but the paper should match the code.</td><td>Use 0.03928 in the paper, or note both.</td></tr>
+  <tr><td>9</td><td class="sev Low">Low</td><td><code>app.js</code> is 2,746 lines with 92 functions, mixing tutorial scripting, UI and game rules.</td><td>Hard to test and change safely.</td><td>Split Piko flows, shop and settings into their own files.</td></tr>
+  <tr><td>10</td><td class="sev Low">Low</td><td>Dormant code: 15 clients defined, 7 used; the legacy rubric path in <code>grading.js</code>; hidden shop categories; <code>isLargeText</code> unused; leftover lines in <code>gridColumnPositions</code>.</td><td>Readers (and panelists) may think it is live.</td><td>Delete or mark clearly as future content.</td></tr>
+  <tr><td>11</td><td class="sev Low">Low</td><td><code>minFont</code> means "exactly this size".</td><td>Misleading name for future maintainers.</td><td>Rename to <code>exactFont</code>.</td></tr>
+  <tr><td>12</td><td class="sev Low">Low</td><td>Admin Skip and Repeat buttons ship to production, hidden by CSS unless <code>?admin</code>.</td><td>Anyone adding <code>?admin</code> can skip levels in their own save (no study impact on others).</td><td>Fine for the study; remove before a public release.</td></tr>
+  <tr><td>13</td><td class="sev Low">Low</td><td><code>level_leave</code> events are rarely recorded (29 of about 2,200 events).</td><td>Drop-off analysis is unreliable.</td><td>Also send it on <code>pagehide</code> with <code>sendBeacon</code>.</td></tr>
+  <tr><td>14</td><td class="sev Low">Low</td><td>Several tutorial waits poll with <code>setInterval</code> every 200 ms.</td><td>Works, but costs CPU and can leak if a step never finishes.</td><td>Use events or a <code>MutationObserver</code> (already used in the compose guide).</td></tr>
+</table>
+<h3>What is solid</h3>
+<ul>
+  <li>Row Level Security on every table, with admin actions behind <code>is_admin()</code>; only the public key is in the browser.</li>
+  <li>Local-first saving: the game keeps working offline and syncs later.</li>
+  <li>Pure, testable core: <code>wcag.js</code> and <code>grading.js</code> have no DOM dependencies and have unit tests.</li>
+  <li>Content separated from code: levels come from Level Maker JSON, dialogue from <code>EC_TEXT</code> with admin overrides.</li>
+  <li>Accessibility care in the UI itself: reduced-motion support, AA-checked badge colours, focus handling in modals.</li>
+</ul>
+
+<h2 class="page">14. Defense cheat sheet</h2>
+<table>
+  <tr><th>Likely question</th><th>Answer</th></tr>
+  <tr><td>Why no framework?</td><td>The game is a canvas of positioned elements plus modals; vanilla JavaScript keeps it light, needs no build step to run, and every file is readable on its own. Vite is only the dev server.</td></tr>
+  <tr><td>How does the game know contrast is right?</td><td>It computes WCAG relative luminance for the text colour and for the colour actually behind it (<code>effectiveBg</code>), then the ratio (L1 + 0.05) / (L2 + 0.05).</td></tr>
+  <tr><td>How is a level graded?</td><td>Each task is a rule object; <code>checkGoal</code> evaluates it on the current elements. Approval needs every required task met and at least 3 stars.</td></tr>
+  <tr><td>Where is data stored and is it safe?</td><td>localStorage first, mirrored to Supabase. Each player signs in anonymously and RLS lets them touch only their own rows. Researchers read through admin-only functions.</td></tr>
+  <tr><td>Can a player cheat?</td><td>On their own data, yes: scores are computed in the browser. They cannot change anyone else's data. This is listed as a limitation.</td></tr>
+  <tr><td>How do you match pre-test and post-test?</td><td>By the anonymous Supabase user id of the browser, which is why both tests are taken on the same device and browser.</td></tr>
+  <tr><td>How was completion time measured?</td><td><code>EC_ACTIVE</code> counts only visible-tab time with input in the last 60 seconds, so idle time is excluded.</td></tr>
+  <tr><td>How can researchers change dialogue?</td><td>Every string has a key in <code>EC_TEXT</code>; the admin page saves drafts to <code>content_text</code> and publishing makes them live on the next load.</td></tr>
+  <tr><td>How are levels authored?</td><td>In the Level Maker; its JSON export is compiled into <code>level-edits.js</code> and applied over the level definitions.</td></tr>
+  <tr><td>How do you deploy?</td><td>Push to GitHub; Vercel runs the build script and serves <code>dist/</code> with cache-busted game assets and security headers.</td></tr>
+</table>
+
+<h2>15. Learning path: exercises</h2>
+<p>Do these in order with the dev server running. Each one makes you touch one system end to end.</p>
+<ol>
+  <li><b>Read the math:</b> in the browser console, run <code>WCAG.contrastRatio('#958958', '#ffffff')</code> and confirm 3.5. Then work it out by hand with the formula in Section 6.</li>
+  <li><b>Trace a goal:</b> find the Yappers "Welcome Bak!" goal in <code>levels.js</code>, then follow <code>contrast</code> through <code>checkGoal</code> in <code>grading.js</code>. Change <code>min:7</code> to <code>min:6</code> and watch the task tick earlier.</li>
+  <li><b>Inspect the save:</b> run <code>EC_STORE.load()</code>, look at <code>workday</code> and <code>completed</code>, then skip a level with <code>?admin</code> and look again.</li>
+  <li><b>Follow a submission:</b> put a breakpoint in <code>finishMissionSubmission</code> (app.js), submit a level, and step into <code>gradeSubmission</code> and <code>recordSubmission</code>.</li>
+  <li><b>Watch the network:</b> open DevTools → Network, filter "supabase", play a level and match each request to a table in Section 9.</li>
+  <li><b>Edit dialogue live:</b> change a Piko line in <code>admin.html</code>, publish, reload the game, and find where <code>EC_TEXT.load</code> applied it.</li>
+  <li><b>Add a Piko mood:</b> add a key to <code>MOODS</code> in <code>piko.js</code> and trigger the line with <code>EC_PIKO.say(...)</code>.</li>
+  <li><b>Write a test:</b> add a case to <code>tests/unit/wcag.test.mjs</code> for black on white (21:1) and run <code>npm test</code>.</li>
+  <li><b>Fix an audit item:</b> start with #5 (glob all scripts in the syntax check). It is small, safe and teaches the build scripts.</li>
+</ol>
+<p class="small">Line counts and behaviour were read from the repository on the date above. If code changes, re-check the specific function before quoting it in the defense.</p>
+
+</body>
+</html>
