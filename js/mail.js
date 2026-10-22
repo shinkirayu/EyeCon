@@ -194,51 +194,6 @@
    ['mail.revise.vague.color', 'Some text still doesn\u2019t read right: the most important parts should stand out more than the rest.'],
    ['mail.revise.vague.typography', 'Some text sizes still feel off: it\u2019s hard to tell what matters most.'],
   ].forEach(([k, v]) => T.register(k, v, 'feedback', '“Fix again” email'));
-  // One line per client task, in the level's goal order. The client describes what
-  // still feels off before launch, never what to fix: finding the problem is the designer's job.
-  const MISSED_LINES = {
-    'mayo-portfolio': [
-      'Looking at it again, something still feels slightly unpolished.',
-      'I still don’t think it’s quite ready to show galleries.',
-      'It still feels a little rushed in places.'],
-    'yappers-login': [
-      'We went over it as a team and it still doesn’t feel welcoming enough.',
-      'We’re worried new users might still get confused.',
-      'It still doesn’t feel easy enough to get started.'],
-    'haybuhay-settings': [
-      'Something still looks inconsistent to us.',
-      'The screen is still tiring on the eyes after a while.',
-      'Parts of it still feel uncomfortable to read.',
-      'It now feels harder to scan than before.'],
-    'antoks-home': [
-      'It still doesn’t look ready for launch.',
-      'The page still feels a bit cluttered to us.',
-      'Something still feels slightly unbalanced.'],
-    'cones-landing': [
-      'We still feel the page doesn’t get our message across.',
-      'It still isn’t clear enough what we offer.',
-      'Some parts of the page still feel easy to miss.',
-      'We’re worried people won’t want to try our tools.',
-      'It still doesn’t invite people to take action.'],
-    'kolehiyo-dashboard': [
-      'Some parts still feel inconsistent to us.',
-      'It still doesn’t look uniform enough.',
-      'We’re worried students still won’t find what matters most.',
-      'Some details still feel hard to read.'],
-    'oras-signin': [
-      'Parts of the form still look disorganized.',
-      'Something about the form still feels misleading.',
-      'It still looks uneven in places.',
-      'We’re worried some citizens will still struggle to read it.',
-      'Part of the form still feels easy to overlook.',
-      'Signing in still doesn’t feel easy to find.',
-      'Something still makes the page feel unfinished.',
-      'Not every option feels equally important yet.',
-      'The page still looks untidy in places.',
-      'Some links still don’t feel right.'],
-  };
-  Object.entries(MISSED_LINES).forEach(([id, list]) => list.forEach((v, i) =>
-    T.bind(`mail.revise.${id}.${i + 1}`, v, 'feedback', `“Fix again” email: ${id} task ${i + 1}`, nv => { list[i] = nv; })));
   T.register('mail.myReply', 'Good day, {client} team,\n\nI have attached the updated design for your review. Let me know what you think, and I will be happy to make any adjustments.\n\nBest regards,\nEyeCon', 'emails', 'The reply the player types out');
   // The player's own studio address, from their first name (e.g. matt@eyecon.studio).
   function myAddress(){
@@ -265,9 +220,7 @@
     const lines = [T.t('mail.revise.greeting', { client: level.clientName }), ''];
     {
       // The client can tell something's off, not what: finding it is the designer's job.
-      const said = MISSED_LINES[level.id] || [];
-      const missed = goals.map((g, i) => g.type === 'bad' && said[i]).filter(Boolean);
-      lines.push(missed.length ? missed.join(' ') : templates.bad || T.t('mail.revise.notYet'));
+      lines.push(templates.bad || T.t('mail.revise.notYet'));
       lines.push('', T.t('mail.revise.closing'), '', `— ${level.clientName}`);
     }
     return lines.join('\n');
