@@ -64,12 +64,13 @@
     nextMail: "Ooh, you got another email! {client} needs your help next. Open it up!",
     // End of each day (2+), before the sunset. {jobs} {approved} {coins} {xp} are filled in.
     dayEnd: {
-      day2: ["Two clients down! Antoks and Cones learned what spacing and readable color can do.", "You did {jobs} jobs today and earned {coins} coins. Tomorrow there's a bigger one waiting. Get some sleep!"],
+      day2: ["Three clients down! Antoks, Cones and Kolehiyo now know what spacing, contrast and type size can do."],
       day3: ["BEAR ORAS's sign-in screen finally makes sense. That one had everything: alignment, contrast and size.", "You're becoming a real UI designer. See you tomorrow!"],
       later: ["{jobs} jobs done today, {approved} approved. Nice work!", "Clock out, rest your eyes, and come back fresh."],
       // After the last client (BEAR ORAS): Piko says goodbye.
       finale: [
-        "That was the last client! BEAR ORAS was the toughest one, and you nailed it.",
+        "That was the last client! BEAR ORAS mixed alignment, contrast and type size, and you fixed all of it.",
+        "Seven clients, seven websites that everyone can read. You're a real UI designer now!",
         "I'm really going to miss working with you.",
         "I enjoyed every step of our journey together, from your very first email to this one.",
         "Keep making screens that everyone can read. Goodbye for now, designer!"
@@ -600,7 +601,8 @@
     'piko.workspace.problems':'thinking', 'piko.reply.revise':'thinking', 'piko.handoff.2':'thinking',
     'Ohh, not everything is right yet! Something still needs fixing. Look around the page and read the labels to find it.':'thinking',
     'Stuck on this one? You can use a hint! Click the light bulb.':'thinking',
-    'piko.dayEnd.finale.1':'sad', 'piko.dayEnd.finale.2':'sad', 'piko.dayEnd.finale.3':'sad'
+    'piko.dayEnd.finale.1':'excited',
+    'piko.dayEnd.finale.2':'sad', 'piko.dayEnd.finale.3':'sad', 'piko.dayEnd.finale.4':'sad'
   };
   const canMood = (() => { const ua = navigator.userAgent; return !(/Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); })();
   // Between moods Piko idles: mostly the blink clip, now and then (1 in 5) the look-around clip.
