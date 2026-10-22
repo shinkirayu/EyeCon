@@ -2363,7 +2363,7 @@ html body.piko-line-pending .piko-allow,html body.piko-line-pending .piko-allow 
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-main{padding-left:1rem;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-mode-corner{display:none;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-brand{display:block;position:absolute;z-index:85;left:1.5rem;top:calc((var(--editor-topbar-h) - 2.75rem) / 2);height:2.75rem;width:auto;}
-  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-heading{display:block;position:absolute;z-index:85;margin:0;left:calc((100% - var(--studio-right) - 1rem) / 2);top:calc(var(--editor-topbar-h) / 2);transform:translate(-50%,-50%);font:800 1.75rem var(--font-display);color:#5b3f4f;pointer-events:none;}
+  #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-heading{display:block;position:absolute;z-index:85;margin:0;left:50%;top:calc(var(--editor-topbar-h) / 2);transform:translate(-50%,-50%);font:800 1.75rem var(--font-display);color:#5b3f4f;pointer-events:none;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-topbar{left:calc((100% - var(--studio-right) - 1rem) / 2);max-width:calc(100% - var(--studio-right) - 4rem);}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail{display:flex;flex-direction:column;gap:1rem;}
   #screen-editor.editor-studio[data-layout][data-ed-theme] .editor-right-rail .editor-rail-card{flex:0 0 auto;max-height:none;}
